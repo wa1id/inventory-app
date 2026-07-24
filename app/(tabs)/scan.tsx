@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Alert, FlatList, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useIsFocused, useRouter } from 'expo-router';
 
 import { useInventoryQuery } from '@/hooks/useInventoryQuery';
 import { strings } from '@/i18n/strings';
@@ -31,9 +31,15 @@ export default function ScanScreen() {
   const [state, setState] = useState<ScanState>({ phase: 'scanning' });
   const [active, setActive] = useState(true);
 
+  // Tab screens stay mounted when you switch away from them, so the camera has
+  // to be unmounted explicitly — detaching the scan handler alone leaves the
+  // hardware running, draining battery, holding the OS camera indicator on, and
+  // blocking other apps from the camera.
+  const isFocused = useIsFocused();
+
   const containers = useInventoryQuery(() => repos.containers.listAllWithSpace(), 'all-containers');
 
-  // Stop decoding while the screen is off-view so a stale scan cannot fire.
+  // Re-arm decoding on focus so returning to the tab starts a fresh scan.
   useFocusEffect(
     useCallback(() => {
       setActive(true);
@@ -220,12 +226,14 @@ export default function ScanScreen() {
 
   return (
     <View style={styles.container}>
-      <CameraView
-        style={StyleSheet.absoluteFill}
-        facing="back"
-        barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-        onBarcodeScanned={active ? ({ data }) => void onScanned(data) : undefined}
-      />
+      {isFocused ? (
+        <CameraView
+          style={StyleSheet.absoluteFill}
+          facing="back"
+          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+          onBarcodeScanned={active ? ({ data }) => void onScanned(data) : undefined}
+        />
+      ) : null}
       <View style={styles.scanOverlay} pointerEvents="none">
         <View style={styles.reticle} />
         <Text style={styles.scanHint}>{strings.scan.hint}</Text>
