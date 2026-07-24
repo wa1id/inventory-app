@@ -43,11 +43,17 @@
       "expo-router",
       "expo-status-bar",
       "expo-sqlite",
-      "expo-secure-store",
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
       [
         "expo-camera",
         {
           "cameraPermission": "Inventory uses the camera so you can photograph items you are adding and scan QR labels on your containers.",
+          "microphonePermission": false,
           "recordAudioAndroid": false
         }
       ],

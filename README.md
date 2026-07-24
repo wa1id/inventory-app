@@ -19,7 +19,9 @@ Expo.
 | JDK                | 17 or 21                    |
 | Xcode (iOS only)   | 16 or newer, on macOS       |
 
-Supported OS versions: **iOS 15.1+** and **Android 7.0+ (API 24)**.
+Supported OS versions: **iOS 16.4+** and **Android 7.0+ (API 24)**.
+These are read from the built artifacts, not assumed: the signed `.ipa`
+reports `MinimumOSVersion 16.4` and the APK reports `minSdkVersion 24`.
 
 ## Setup
 
