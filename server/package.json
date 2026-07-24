@@ -1,0 +1,23 @@
+{
+  "name": "inventory-recognition",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types test/*.test.ts",
+    "dev": "vercel dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "ai": "^7.0.37",
+    "zod": "^4.4.3"
+  },
+  "private": true,
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^5.9.3"
+  }
+}
