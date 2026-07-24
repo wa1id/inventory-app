@@ -1,11 +1,12 @@
-import { DEFAULT_ADAPTER_ID } from '../src/adapters/index.ts';
+import { DEFAULT_ADAPTER_ID } from '../src/adapters/index.js';
+import { checkAuth } from '../src/auth.js';
 import {
   parseRequest,
   statusForAdapterError,
   suggestionResponse,
   unrecognizedResponse,
-} from '../src/contract.ts';
-import { UnknownAdapterError, getAdapter, hasAdapter } from '../src/registry.ts';
+} from '../src/contract.js';
+import { UnknownAdapterError, getAdapter, hasAdapter } from '../src/registry.js';
 
 /** Wall-clock budget for one provider call, below the client's own timeout. */
 const TIMEOUT_MS = Number(process.env.RECOGNITION_TIMEOUT_MS ?? 12_000);
@@ -27,11 +28,15 @@ function json(body: unknown, status: number): Response {
  * Logging records timings and outcome classes only — never the image, the
  * suggestion text, or anything the user typed.
  */
-export default async function handler(request: Request): Promise<Response> {
+export async function POST(request: Request): Promise<Response> {
   const startedAt = Date.now();
 
-  if (request.method !== 'POST') {
-    return json({ error: 'Method not allowed.' }, 405);
+  // Rejected before the body is read, so an unauthenticated caller cannot make
+  // us buffer an 8 MB upload.
+  const auth = checkAuth(request);
+  if (!auth.ok) {
+    console.log(JSON.stringify({ event: 'recognize_unauthorized' }));
+    return json({ error: auth.error }, auth.status);
   }
 
   let body: unknown;

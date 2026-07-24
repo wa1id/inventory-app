@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { CONTRACT_VERSION, parseRequest, statusForAdapterError } from '../src/contract.ts';
-import { toRawSuggestion } from '../src/prompt.ts';
+import { AUTH_HEADER, checkAuth } from '../src/auth.js';
+import { CONTRACT_VERSION, parseRequest, statusForAdapterError } from '../src/contract.js';
+import { toRawSuggestion } from '../src/prompt.js';
 import {
   UnknownAdapterError,
   getAdapter,
@@ -10,7 +11,7 @@ import {
   listAdapterIds,
   registerAdapter,
   resetRegistry,
-} from '../src/registry.ts';
+} from '../src/registry.js';
 
 const validImage = Buffer.from('fake-jpeg-bytes').toString('base64');
 
@@ -150,4 +151,35 @@ test('registry refuses duplicate registration', () => {
       })),
     /already registered/,
   );
+});
+
+test('auth is open when no secret is configured', () => {
+  delete process.env.RECOGNITION_SHARED_SECRET;
+  assert.equal(checkAuth(new Request('https://x/api/recognize')).ok, true);
+});
+
+test('auth rejects a missing or wrong key when a secret is set', () => {
+  process.env.RECOGNITION_SHARED_SECRET = 'correct-horse';
+
+  const missing = checkAuth(new Request('https://x/api/recognize'));
+  assert.equal(missing.ok, false);
+  if (!missing.ok) assert.equal(missing.status, 401);
+
+  const wrong = checkAuth(
+    new Request('https://x/api/recognize', { headers: { [AUTH_HEADER]: 'battery-staple' } }),
+  );
+  assert.equal(wrong.ok, false);
+
+  // A wrong key of a different length must also fail, not throw.
+  const shortKey = checkAuth(
+    new Request('https://x/api/recognize', { headers: { [AUTH_HEADER]: 'x' } }),
+  );
+  assert.equal(shortKey.ok, false);
+
+  const right = checkAuth(
+    new Request('https://x/api/recognize', { headers: { [AUTH_HEADER]: 'correct-horse' } }),
+  );
+  assert.equal(right.ok, true);
+
+  delete process.env.RECOGNITION_SHARED_SECRET;
 });

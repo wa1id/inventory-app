@@ -1,4 +1,4 @@
-import type { AdapterFactory, VisionAdapter } from './port.ts';
+import type { AdapterFactory, VisionAdapter } from './port.js';
 
 /**
  * The registry: `id → adapter`.

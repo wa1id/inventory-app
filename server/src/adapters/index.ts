@@ -1,5 +1,5 @@
-import { registerAdapter } from '../registry.ts';
-import { createGatewayVisionAdapter } from './gatewayVision.ts';
+import { registerAdapter } from '../registry.js';
+import { createGatewayVisionAdapter } from './gatewayVision.js';
 
 /**
  * Adapter registrations — the plug-in point.

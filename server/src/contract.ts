@@ -1,4 +1,4 @@
-import type { AdapterOutcome, RawSuggestion } from './port.ts';
+import type { AdapterOutcome, RawSuggestion } from './port.js';
 
 /**
  * Wire contract v1 — must stay byte-compatible with the mobile client's

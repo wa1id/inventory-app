@@ -79,10 +79,11 @@ export async function recognizeItem({
       headers: {
         'Content-Type': 'application/json',
         'X-Contract-Version': String(RECOGNITION_CONTRACT_VERSION),
+        ...(appConfig.recognitionKey ? { 'x-inventory-key': appConfig.recognitionKey } : {}),
       },
       body: JSON.stringify({
         contractVersion: RECOGNITION_CONTRACT_VERSION,
-        image: { data: base64, encoding: 'base64' },
+        image: { data: base64, encoding: 'base64', mediaType: 'image/jpeg' },
       }),
       signal: controller.signal,
     });

@@ -1,7 +1,7 @@
 import { Output, generateText } from 'ai';
 
-import type { AdapterErrorKind, AdapterOutcome, RecognizeOptions, VisionAdapter } from '../port.ts';
-import { SYSTEM_PROMPT, USER_PROMPT, extractionSchema, toRawSuggestion } from '../prompt.ts';
+import type { AdapterErrorKind, AdapterOutcome, RecognizeOptions, VisionAdapter } from '../port.js';
+import { SYSTEM_PROMPT, USER_PROMPT, extractionSchema, toRawSuggestion } from '../prompt.js';
 
 /**
  * Adapter over the Vercel AI Gateway.

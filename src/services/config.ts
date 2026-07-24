@@ -14,6 +14,15 @@
 export interface AppConfig {
   /** Base URL of the recognition backend, or null when not configured. */
   recognitionEndpoint: string | null;
+  /**
+   * Shared key the recognition service expects.
+   *
+   * This ships inside the app bundle and is therefore extractable by anyone who
+   * unpacks the build — it raises the cost of casual abuse, nothing more. The
+   * server's rate limit is the real spend cap, and proper auth waits on
+   * accounts (issue #15).
+   */
+  recognitionKey: string | null;
   /** Wall-clock budget for one recognition request. */
   recognitionTimeoutMs: number;
   environment: 'development' | 'preview' | 'production';
@@ -27,6 +36,7 @@ function readEnvironment(): AppConfig['environment'] {
 
 export const appConfig: AppConfig = {
   recognitionEndpoint: process.env.EXPO_PUBLIC_RECOGNITION_URL?.trim() || null,
+  recognitionKey: process.env.EXPO_PUBLIC_RECOGNITION_KEY?.trim() || null,
   recognitionTimeoutMs: Number(process.env.EXPO_PUBLIC_RECOGNITION_TIMEOUT_MS ?? 15_000),
   environment: readEnvironment(),
 };
