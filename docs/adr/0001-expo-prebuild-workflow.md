@@ -52,18 +52,28 @@ bare app with no rewrite.
 - CI regenerates the native project on every run, so a drifted local `android/`
   directory cannot mask a broken configuration.
 
-## iOS constraint on the current development machine
+## iOS on a Linux development machine
 
 The development machine for this work is Linux, and the only attached physical
 device is Android (Samsung SM-G973F, Android 12). Apple's toolchain requires
-macOS, so **iOS builds and physical iOS validation cannot be performed here.**
+macOS, so no iOS build can be produced _locally_.
 
-This does not change the architecture — the codebase, config plugins, and
-`Info.plist` permission strings are all in place, and `eas.json` defines iOS
-build profiles. It does mean:
+This turned out not to block the iOS target: **EAS builds it remotely.** A
+signed ad-hoc `.ipa` has been produced from this machine, which confirms the
+prebuild configuration is correct for both platforms — every native module
+(`expo-camera`, `expo-sqlite`, `react-native-svg`, `expo-image-manipulator`)
+compiles and links on Apple's toolchain from the same `app.json`.
 
-- The iOS release path runs through EAS or a macOS machine
-  (`.github/workflows/release.yml`).
-- Issue #8's requirement to validate on a physical iOS device is **outstanding**
-  and cannot be closed from this environment. It is recorded in
-  `docs/known-limitations.md`.
+Two consequences worth recording:
+
+- Apple credentials are created once through an interactive login (Apple ID plus
+  2FA) and then stored on EAS, after which iOS builds run non-interactively —
+  including from CI, via `.github/workflows/release.yml`.
+- Building is not validating. Nothing has run on a physical iPhone; see
+  [known limitations](../known-limitations.md).
+
+Inspecting the first `.ipa` also caught a class of bug that only appears in a
+built artifact: config plugins had injected `NSMicrophoneUsageDescription` and
+`NSFaceIDUsageDescription` by default, declaring permissions the app never uses
+and contradicting its own privacy notice. Unpacking the artifact and reading
+`Info.plist` is worth doing after any change to the plugin list.

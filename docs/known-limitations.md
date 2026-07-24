@@ -3,28 +3,35 @@
 State of the MVP as built. Deliberate MVP scope cuts are listed separately at
 the bottom — those are not defects.
 
-## Blocked: iOS build and physical iOS validation
+## Outstanding: physical iOS validation
 
-**Issue #8 cannot be fully closed from the current development environment.**
+Signed release-candidate builds now exist for **both** platforms, produced on
+EAS:
 
-The development machine is Linux, and the only attached test device is Android
-(Samsung SM-G973F, Android 12). Apple's toolchain requires macOS, so from here
-it is not possible to produce an iOS build or validate anything on a physical
-iOS device.
+| Platform | Artifact | Verified                                                    |
+| -------- | -------- | ----------------------------------------------------------- |
+| Android  | APK      | Installed and exercised on a physical SM-G973F (Android 12) |
+| iOS      | `.ipa`   | Artifact inspected only — **not run on a device**           |
 
-What _is_ in place: the shared codebase is platform-neutral, `Info.plist`
-permission strings and the iOS bundle identifier are configured in `app.json`,
-and `eas.json` plus `.github/workflows/release.yml` define the iOS build path.
+The iOS build is codesigned with an ad-hoc profile and installs on the devices
+registered to the Apple team. Its `Info.plist` was checked directly: correct
+bundle identifier, `MinimumOSVersion` 16.4, encryption exemption declared, and
+exactly two permission strings (camera and photo library).
 
-What is outstanding, and must happen on macOS or EAS before release:
+**What is still outstanding for issue #8** is validation, not building. The
+development machine is Linux and the attached device is Android, so nothing has
+been run on an iPhone. Someone with the device must complete
+[the beta checklist](beta-checklist.md), paying particular attention to the
+places iOS genuinely diverges from Android:
 
-- An iOS development build run from a clean checkout.
-- A full pass of [the beta checklist](beta-checklist.md) on a physical iPhone,
-  particularly camera capture, photo orientation, QR scanning, and permission
-  flows, which are the areas most likely to differ from Android.
-- A signed iOS release-candidate build.
+- **Photo orientation** after capture and after gallery import. EXIF handling
+  differs between platforms, and this is the most likely place to see a
+  sideways image.
+- **Permission prompts.** iOS asks once and a denial is stickier than on
+  Android, so the denied and permanently-denied recovery paths need exercising.
+- **QR scanning** through the iOS camera stack.
 
-Android has been built and installed on a physical device from this machine.
+Until that happens, treat iOS as built-but-unvalidated.
 
 ## Not yet verified
 
