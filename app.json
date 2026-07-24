@@ -14,7 +14,8 @@
       "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "Inventory uses the camera so you can photograph items you are adding and scan QR labels on your containers.",
-        "NSPhotoLibraryUsageDescription": "Inventory can import a photo from your library to illustrate an item you are adding."
+        "NSPhotoLibraryUsageDescription": "Inventory can import a photo from your library to illustrate an item you are adding.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -27,7 +28,7 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.wystudio.inventory",
       "versionCode": 1,
-      "permissions": ["android.permission.CAMERA"],
+      "permissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"],
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.READ_EXTERNAL_STORAGE",
@@ -59,6 +60,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "8c2fe54e-a90e-43ef-ad56-5905d4f8905e"
+      }
+    },
+    "owner": "wa1id"
   }
 }
