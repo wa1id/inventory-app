@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { toExtraction } from '../src/adapters/mimoVision.js';
 import { AUTH_HEADER, checkAuth } from '../src/auth.js';
 import { CONTRACT_VERSION, parseRequest, statusForAdapterError } from '../src/contract.js';
 import { toRawSuggestion } from '../src/prompt.js';
@@ -112,6 +113,55 @@ test('normalization drops a non-ISO currency', () => {
     currency: 'euros',
     confidence: 0.5,
   });
+  assert.equal(raw.currency, null);
+});
+
+// MiMo answers HTTP 200 with a partial object rather than the schema it was
+// given. These are the two shapes observed against the live API; both must
+// survive, because the strict schema throws on either.
+test('MiMo: a bare identified=false stays an honest "could not tell"', () => {
+  const extraction = toExtraction({ identified: false });
+
+  assert.equal(extraction.identified, false);
+  assert.equal(extraction.name, null);
+  assert.deepEqual(extraction.tags, []);
+  assert.equal(extraction.confidence, 0);
+});
+
+test('MiMo: an omitted identified is inferred from the name', () => {
+  const extraction = toExtraction({
+    name: 'Cordless drill',
+    category: 'Power Tools',
+    tags: ['drill'],
+    estimatedValue: 35,
+    currency: 'USD',
+    confidence: 0.95,
+  });
+
+  assert.equal(extraction.identified, true, 'a usable name is an identification');
+  assert.equal(extraction.name, 'Cordless drill');
+  assert.equal(extraction.confidence, 0.95);
+});
+
+test('MiMo: a blank name is not an identification', () => {
+  assert.equal(toExtraction({ name: '   ' }).identified, false);
+  assert.equal(toExtraction({}).identified, false);
+});
+
+test('MiMo: an omitted confidence is never invented', () => {
+  const extraction = toExtraction({ name: 'Drill' });
+  assert.equal(extraction.confidence, 0, 'scores zero so the contract filters it out');
+});
+
+test('MiMo: nulls survive the trip to normalization', () => {
+  const raw = toRawSuggestion(
+    toExtraction({ identified: true, name: 'Drill', estimatedValue: null, currency: null }),
+  );
+
+  assert.equal(raw.name, 'Drill');
+  assert.equal(raw.category, null);
+  assert.deepEqual(raw.tags, []);
+  assert.equal(raw.estimatedValue, null);
   assert.equal(raw.currency, null);
 });
 

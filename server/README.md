@@ -17,7 +17,8 @@ src/port.ts             VisionAdapter interface    │  depends only on the port
 src/prompt.ts           shared prompt + schema     │
 src/registry.ts         id → adapter               │
 src/adapters/
-  gatewayVision.ts      one adapter, many models  ─┘  depends on a vendor SDK
+  gatewayVision.ts      one adapter, many models  ─┐  depends on a vendor SDK
+  mimoVision.ts         Xiaomi MiMo, direct API   ─┘
   index.ts              registrations
 ```
 
@@ -70,12 +71,33 @@ directly:
 
 Nothing else changes: not the HTTP layer, not the contract, not the client.
 
+`mimoVision.ts` is the worked example. Xiaomi MiMo is not on the gateway, and
+although its API is OpenAI-shaped, only the *transport* is:
+
+- **Tool calls are unusable.** The model writes `<tool_call>…</tool_call>` into
+  the message content and returns `tool_calls: null`. Structured output has to
+  go through JSON mode.
+- **`strict: true` on the JSON schema is accepted and ignored.** A photo it
+  cannot name comes back as `{"identified": false}` with every other field
+  missing, HTTP 200. Validating that against the shared schema throws, which
+  would have reported an honest "could not tell" as a provider failure — the
+  user would read "suggestions are unavailable" instead of being sent to manual
+  entry. The adapter parses loosely and fills the gaps itself.
+
+That is the pattern to copy: absorb a provider's quirks inside its adapter, and
+hand the rest of the service the same shape every other provider hands it.
+
 ## Choosing which model answers
 
 | Where | How |
 | --- | --- |
-| Per deployment | `RECOGNITION_ADAPTER` env var (default `claude-haiku`) |
+| Per deployment | `RECOGNITION_ADAPTER` env var (default `mimo`) |
 | Per request | `"adapter": "<id>"` in the request body, for A/B runs |
+
+The gateway adapters authenticate via Vercel OIDC and need no key. `mimo` is
+called directly, so **any deployment serving it needs `MIMO_API_KEY` set** —
+without it every request answers 502 (immediately, without spending a call).
+`GET /api/adapters` keeps working either way, so it stays usable for diagnosis.
 
 Unknown ids are rejected rather than silently falling back — quietly serving a
 different model than requested makes A/B results meaningless and cost
@@ -112,12 +134,13 @@ a redeploy actually changed the model. Exposes no secrets.
 ```bash
 npm install
 npx vercel env pull .env.local   # writes VERCEL_OIDC_TOKEN for gateway auth
+echo "MIMO_API_KEY=sk-..." >> .env.local   # only for the mimo adapter
 npm run typecheck
 npm test                         # contract, registry, and normalization
 ```
 
 `npm test` covers everything except the provider call itself; hitting a real
-model needs gateway credit.
+model needs gateway credit or a MiMo key.
 
 ## Privacy
 

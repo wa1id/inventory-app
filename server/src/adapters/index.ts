@@ -1,5 +1,6 @@
 import { registerAdapter } from '../registry.js';
 import { createGatewayVisionAdapter } from './gatewayVision.js';
+import { createMimoVisionAdapter } from './mimoVision.js';
 
 /**
  * Adapter registrations — the plug-in point.
@@ -39,7 +40,22 @@ registerAdapter('gemini-flash', () =>
 );
 
 /**
+ * Xiaomi MiMo is not fronted by the gateway, so it needs its own adapter
+ * module — the second case described above, not a registration line.
+ */
+registerAdapter('mimo', () =>
+  createMimoVisionAdapter({
+    id: 'mimo',
+    label: 'Xiaomi MiMo v2.5 (direct API, needs MIMO_API_KEY)',
+    model: 'mimo-v2.5',
+  }),
+);
+
+/**
  * Default when the request does not name one. Overridable per deployment so
  * switching models is a redeploy, not a code change.
+ *
+ * A deployment defaulting to `mimo` must have `MIMO_API_KEY` set; the gateway
+ * adapters authenticate via Vercel OIDC and need no key.
  */
-export const DEFAULT_ADAPTER_ID = process.env.RECOGNITION_ADAPTER?.trim() || 'claude-haiku';
+export const DEFAULT_ADAPTER_ID = process.env.RECOGNITION_ADAPTER?.trim() || 'mimo';

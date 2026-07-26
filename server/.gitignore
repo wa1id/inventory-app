@@ -3,3 +3,7 @@ node_modules
 .env
 .env.local
 .env*
+
+# The template carries names and comments only, never values — and it is the
+# one place a new environment learns which keys it needs.
+!.env.example
