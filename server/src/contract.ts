@@ -111,7 +111,9 @@ export function unrecognizedResponse() {
  * 429 → `rate_limited`, anything else 5xx → `server_error`, and a client-side
  * abort → `timeout`.
  */
-export function statusForAdapterError(outcome: Extract<AdapterOutcome, { status: 'error' }>): number {
+export function statusForAdapterError(
+  outcome: Extract<AdapterOutcome, { status: 'error' }>,
+): number {
   switch (outcome.kind) {
     case 'rate_limited':
       return 429;

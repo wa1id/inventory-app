@@ -30,6 +30,9 @@ yarn-error.*
 .DS_Store
 *.pem
 
+# test output
+coverage/
+
 # local env files
 .env*.local
 
