@@ -32,14 +32,11 @@ export const SPACE_PRESETS = [
   { name: 'Cellar', icon: '🚪', color: SPACE_COLORS[4] },
 ] as const;
 
-/**
- * Readable foreground for an arbitrary space colour.
- *
- * Space tiles fill with the user's colour, so the label contrast depends on
- * that choice rather than the theme. Uses the WCAG relative-luminance formula
- * so a light swatch (the yellow) flips to dark text instead of failing.
- */
-export function onColor(hex: string): '#FFFFFF' | '#12161C' {
+const ON_LIGHT = '#12161C';
+const ON_DARK = '#FFFFFF';
+
+/** WCAG relative luminance of a hex colour. */
+function luminance(hex: string): number {
   const value = hex.replace('#', '');
   const full =
     value.length === 3
@@ -52,8 +49,27 @@ export function onColor(hex: string): '#FFFFFF' | '#12161C' {
     const srgb = parseInt(full.slice(offset, offset + 2), 16) / 255;
     return srgb <= 0.03928 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
   };
-  const luminance = 0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4);
-  return luminance > 0.4 ? '#12161C' : '#FFFFFF';
+  return 0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4);
+}
+
+/**
+ * Readable foreground for an arbitrary space colour.
+ *
+ * Space tiles and headers fill with the user's colour, so label contrast
+ * depends on that choice rather than the theme. Rather than flipping at a
+ * guessed lightness, this compares the actual WCAG contrast ratio of both
+ * candidates and returns the better one — the mid-tone blues and teals in the
+ * palette look like they want white text but measure far better with dark
+ * (3.2:1 against 5.6:1 for the default blue), which is the difference between
+ * failing and passing AA (issue #8).
+ */
+export function onColor(hex: string): typeof ON_DARK | typeof ON_LIGHT {
+  const background = luminance(hex);
+  const ratio = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+
+  return ratio(luminance(ON_DARK), background) >= ratio(luminance(ON_LIGHT), background)
+    ? ON_DARK
+    : ON_LIGHT;
 }
 
 export const CONTAINER_ICONS: Record<string, string> = {
