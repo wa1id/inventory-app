@@ -112,6 +112,8 @@ export interface ItemWithContext extends Item {
   tags: string[];
   spaceId: string;
   spaceName: string;
+  spaceIcon: string;
+  spaceColor: string;
   containerName: string | null;
   containerShortCode: string;
 }

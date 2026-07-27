@@ -47,6 +47,15 @@ describe('search', () => {
     expect(results.items[0]?.matchKind).toBe('direct');
   });
 
+  it('carries the space icon and colour so a result can be placed at a glance', async () => {
+    const { repos } = await seedInventory();
+    const results = await repos.search.search('DRILL');
+
+    expect(results.items[0]?.spaceName).toBe('Garage');
+    expect(results.items[0]?.spaceIcon).toBe('car');
+    expect(results.items[0]?.spaceColor).toBe('#5B8DEF');
+  });
+
   it('matches by category and by tag', async () => {
     const { repos } = await seedInventory();
 

@@ -22,7 +22,7 @@ import {
 import { logEvent } from '@/services/telemetry';
 import { EmptyState } from '@/ui/components/EmptyState';
 import { ErrorState, Screen } from '@/ui/components/Screen';
-import { CONTAINER_ICONS, MIN_TOUCH_TARGET, radius, spacing, useTheme } from '@/ui/theme';
+import { CONTAINER_ICONS, MIN_TOUCH_TARGET, onColor, radius, spacing, useTheme } from '@/ui/theme';
 
 /** Short enough to feel instant, long enough to skip most intermediate keystrokes. */
 const DEBOUNCE_MS = 200;
@@ -255,15 +255,26 @@ function ItemRow({
           {item.name}
         </Text>
 
-        {/* Tapping the path opens the container without redoing the search. */}
+        {/* Tapping the location opens the container without redoing the
+            search. The space reads as its own colour chip so a result is
+            placed at a glance, the way the tile grid teaches it. */}
         <Pressable
           onPress={onOpenContainer}
           accessibilityRole="button"
           accessibilityLabel={`Open ${formatLocationPath(item)}`}
           hitSlop={spacing.sm}
+          style={styles.location}
         >
-          <Text style={[styles.path, { color: colors.primary }]} numberOfLines={1}>
-            {formatLocationPath(item)}
+          <View style={[styles.spacePill, { backgroundColor: item.spaceColor }]}>
+            <Text
+              style={[styles.spacePillText, { color: onColor(item.spaceColor) }]}
+              numberOfLines={1}
+            >
+              {item.spaceIcon} {item.spaceName}
+            </Text>
+          </View>
+          <Text style={[styles.containerLabel, { color: colors.textMuted }]} numberOfLines={1}>
+            {item.containerName ?? item.containerShortCode}
           </Text>
         </Pressable>
 
@@ -321,6 +332,26 @@ const styles = StyleSheet.create({
   },
   rowGlyph: {
     fontSize: 22,
+  },
+  location: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flexWrap: 'wrap',
+  },
+  spacePill: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+    maxWidth: '70%',
+  },
+  spacePillText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  containerLabel: {
+    fontSize: 13,
+    flexShrink: 1,
   },
   thumb: {
     width: 52,

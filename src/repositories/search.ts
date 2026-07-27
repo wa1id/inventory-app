@@ -95,6 +95,8 @@ export function createSearchRepository(db: SqlDatabase) {
                    JOIN tags t ON t.id = it.tag_id WHERE it.item_id = i.id) AS tag_names,
                 c.space_id AS space_id,
                 s.name AS space_name,
+                s.icon AS space_icon,
+                s.color AS space_color,
                 c.name AS container_name,
                 c.short_code AS container_short_code,
                 CASE WHEN ${directExpr} THEN 1 ELSE 0 END AS direct_match
@@ -216,6 +218,8 @@ interface ItemSearchRow {
   tag_names: string | null;
   space_id: string;
   space_name: string;
+  space_icon: string;
+  space_color: string;
   container_name: string | null;
   container_short_code: string;
   direct_match: number;
@@ -237,6 +241,8 @@ function toItemSearchResult(row: ItemSearchRow): ItemSearchResult {
     tags: splitTagNames(row.tag_names),
     spaceId: row.space_id,
     spaceName: row.space_name,
+    spaceIcon: row.space_icon,
+    spaceColor: row.space_color,
     containerName: row.container_name,
     containerShortCode: row.container_short_code,
     matchKind: row.direct_match === 1 ? 'direct' : 'location',
