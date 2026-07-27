@@ -1,6 +1,7 @@
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
+import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
 import { useInventoryQuery } from '@/hooks/useInventoryQuery';
 import { strings } from '@/i18n/strings';
 import { useRepositories } from '@/providers/DatabaseProvider';
@@ -68,6 +69,7 @@ export default function SpacesScreen() {
     () => repos.spaces.listWithCounts(),
     'spaces',
   );
+  const unsorted = useInventoryQuery(() => repos.items.countUnsorted(), 'drop-zone-count');
 
   if (loading && data === null) {
     return (
@@ -105,6 +107,39 @@ export default function SpacesScreen() {
           ) : (
             <SpaceCard space={item} onPress={() => router.push(`/space/${item.id}`)} />
           )
+        }
+        ListHeaderComponent={
+          <Pressable
+            onPress={() => router.push('/drop-zone')}
+            accessibilityRole="button"
+            accessibilityLabel={`${strings.dropZone.title}. ${strings.dropZone.count(
+              unsorted.data ?? 0,
+            )}`}
+            testID="drop-zone-card"
+            style={({ pressed }) => [
+              styles.dropZone,
+              { borderColor: colors.primary, opacity: pressed ? 0.8 : 1 },
+            ]}
+          >
+            <View style={styles.dropZoneBody}>
+              <Text style={[styles.dropZoneTitle, { color: colors.text }]}>
+                📥 {strings.dropZone.title}
+              </Text>
+              <Text style={[styles.dropZoneMeta, { color: colors.textMuted }]}>
+                {(unsorted.data ?? 0) > 0
+                  ? strings.dropZone.count(unsorted.data ?? 0)
+                  : strings.dropZone.tagline}
+              </Text>
+            </View>
+            <Button
+              label={strings.dropZone.quickSnap}
+              icon="📸"
+              onPress={() =>
+                router.push(`/capture?containerId=${DROP_ZONE_CONTAINER_ID}&mode=fast`)
+              }
+              testID="quick-snap"
+            />
+          </Pressable>
         }
         ListEmptyComponent={
           <EmptyState
@@ -151,6 +186,27 @@ const styles = StyleSheet.create({
   },
   column: {
     gap: spacing.md,
+  },
+  dropZone: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+  },
+  dropZoneBody: {
+    flex: 1,
+    gap: 2,
+  },
+  dropZoneTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  dropZoneMeta: {
+    fontSize: 14,
   },
   spacer: {
     flex: 1,

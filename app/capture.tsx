@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
 import { strings } from '@/i18n/strings';
 import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
 import { recognizeItem } from '@/services/ai/recognition';
@@ -24,7 +25,10 @@ type CaptureMode = 'single' | 'fast';
  * entry one tap away — a camera problem must never block adding an item.
  */
 export default function CaptureScreen() {
-  const { containerId } = useLocalSearchParams<{ containerId: string }>();
+  const { containerId, mode: initialMode } = useLocalSearchParams<{
+    containerId: string;
+    mode?: CaptureMode;
+  }>();
   const router = useRouter();
   const { colors } = useTheme();
 
@@ -37,7 +41,10 @@ export default function CaptureScreen() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [mode, setMode] = useState<CaptureMode>('single');
+  // Context-aware default: the drop zone is for clearing a shelf, a container
+  // is usually one deliberate thing, so each entry point opens in the mode that
+  // matches the job rather than making you switch every time.
+  const [mode, setMode] = useState<CaptureMode>(initialMode === 'fast' ? 'fast' : 'single');
   // Fast-mode tallies, kept apart on purpose. `captured` counts shutter presses
   // that produced a row, `completed` how many have finished the pipeline, and
   // `recognized` how many of those came back with a usable name — reporting
@@ -164,7 +171,9 @@ export default function CaptureScreen() {
 
   function finishFast() {
     invalidate();
-    router.replace(`/container/${containerId}`);
+    router.replace(
+      containerId === DROP_ZONE_CONTAINER_ID ? '/drop-zone' : `/container/${containerId}`,
+    );
   }
 
   const pending = captured - completed;
@@ -263,6 +272,16 @@ export default function CaptureScreen() {
   return (
     <View style={styles.container}>
       <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" flash={flash} />
+
+      {/* Corner guides, as the reference has: they tell you how much of the
+          frame the item should fill, which is what makes a photo recognisable
+          — framing is the one thing the person holding the phone controls. */}
+      <View style={styles.reticle} pointerEvents="none">
+        <View style={[styles.corner, styles.cornerTopLeft]} />
+        <View style={[styles.corner, styles.cornerTopRight]} />
+        <View style={[styles.corner, styles.cornerBottomLeft]} />
+        <View style={[styles.corner, styles.cornerBottomRight]} />
+      </View>
 
       <SafeAreaView style={styles.overlay}>
         <View style={styles.topBar}>
@@ -416,6 +435,47 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'space-between',
+  },
+  reticle: {
+    position: 'absolute',
+    top: '22%',
+    bottom: '28%',
+    left: '10%',
+    right: '10%',
+  },
+  corner: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    borderColor: 'rgba(255,255,255,0.85)',
+  },
+  cornerTopLeft: {
+    top: 0,
+    left: 0,
+    borderTopWidth: 3,
+    borderLeftWidth: 3,
+    borderTopLeftRadius: radius.md,
+  },
+  cornerTopRight: {
+    top: 0,
+    right: 0,
+    borderTopWidth: 3,
+    borderRightWidth: 3,
+    borderTopRightRadius: radius.md,
+  },
+  cornerBottomLeft: {
+    bottom: 0,
+    left: 0,
+    borderBottomWidth: 3,
+    borderLeftWidth: 3,
+    borderBottomLeftRadius: radius.md,
+  },
+  cornerBottomRight: {
+    bottom: 0,
+    right: 0,
+    borderBottomWidth: 3,
+    borderRightWidth: 3,
+    borderBottomRightRadius: radius.md,
   },
   topBar: {
     flexDirection: 'row',

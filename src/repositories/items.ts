@@ -1,5 +1,5 @@
 import { newId } from '@/core/id';
-import { splitTagNames } from '@/db/constants';
+import { DROP_ZONE_CONTAINER_ID, splitTagNames } from '@/db/constants';
 import type { Item, ItemPhoto, ItemWithContext, SqlDatabase } from '@/db/types';
 
 interface ItemRow {
@@ -158,6 +158,24 @@ export function createItemsRepository(db: SqlDatabase) {
       return rows.map(toItemWithContext);
     },
 
+    /** Everything waiting in the drop zone, newest first (issue #26). */
+    async listUnsorted(): Promise<ItemWithContext[]> {
+      const rows = await db.getAllAsync<ItemContextRow>(
+        `${ITEM_CONTEXT_SELECT} WHERE i.container_id = ? ORDER BY i.created_at DESC`,
+        [DROP_ZONE_CONTAINER_ID],
+      );
+      return rows.map(toItemWithContext);
+    },
+
+    /** Cheap enough for the dashboard badge to read on every focus. */
+    async countUnsorted(): Promise<number> {
+      const row = await db.getFirstAsync<{ count: number }>(
+        'SELECT COUNT(*) AS count FROM items WHERE container_id = ?',
+        [DROP_ZONE_CONTAINER_ID],
+      );
+      return row?.count ?? 0;
+    },
+
     async getById(id: string): Promise<ItemWithContext | null> {
       const row = await db.getFirstAsync<ItemContextRow>(`${ITEM_CONTEXT_SELECT} WHERE i.id = ?`, [
         id,
@@ -251,7 +269,11 @@ export function createItemsRepository(db: SqlDatabase) {
       }
 
       const name = input.name === undefined ? existing.name : input.name.trim();
-      if (!name) throw new Error('Item name is required.');
+      // Same rule as create: only an *explicitly* blank name is an error. An
+      // item that is already unnamed must stay editable — otherwise filing a
+      // drop-zone capture into a container fails purely because it has no name
+      // yet, which is exactly the state the drop zone exists to hold.
+      if (input.name !== undefined && !name) throw new Error('Item name is required.');
 
       const category =
         input.category === undefined ? existing.category : input.category?.trim() || null;

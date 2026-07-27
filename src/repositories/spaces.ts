@@ -59,6 +59,7 @@ export function createSpacesRepository(db: SqlDatabase) {
                  WHERE c.space_id = s.id)
                  AS item_count
           FROM spaces s
+         WHERE s.kind = 'normal'
          ORDER BY s.name COLLATE NOCASE ASC
       `);
 

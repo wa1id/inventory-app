@@ -1,6 +1,7 @@
 import { rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 
+import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
 import { LATEST_SCHEMA_VERSION, MIGRATIONS, migrate } from '@/db/migrations';
 import { createRepositories, initializeRepositories } from '@/db/repositories';
 import type { Repositories } from '@/db/repositories';
@@ -127,10 +128,75 @@ describe('spaces', () => {
 
     expect(result.deleted).toBe(true);
     expect(result.orphanedPhotoUris).toEqual(['file:///photos/drill.jpg']);
-    await expectCount(repos.db, 'containers', 0);
+    // The system drop-zone container is seeded by migration 3 and survives:
+    // deleting a user's space must not take the holding area with it.
+    await expectCount(repos.db, 'containers', 1);
     await expectCount(repos.db, 'items', 0);
     await expectCount(repos.db, 'item_photos', 0);
     await expectCount(repos.db, 'qr_bindings', 0);
+  });
+});
+
+describe('drop zone', () => {
+  it('collects items captured without a container and keeps them out of the dashboard', async () => {
+    const repos = await freshRepos();
+    const { container } = await seedSpaceAndContainer(repos);
+
+    await repos.items.create({ containerId: DROP_ZONE_CONTAINER_ID, name: 'Mystery cable' });
+    await repos.items.create({ containerId: container.id, name: 'Drill' });
+
+    expect(await repos.items.countUnsorted()).toBe(1);
+    expect((await repos.items.listUnsorted()).map((item) => item.name)).toEqual(['Mystery cable']);
+
+    // The holding area is not a place you browse to.
+    const spaces = await repos.spaces.listWithCounts();
+    expect(spaces.map((space) => space.id)).not.toContain('drop-zone-space');
+  });
+
+  it('empties as items are moved into a real container', async () => {
+    const repos = await freshRepos();
+    const { container } = await seedSpaceAndContainer(repos);
+    const item = await repos.items.create({
+      containerId: DROP_ZONE_CONTAINER_ID,
+      name: 'Mystery cable',
+    });
+
+    await repos.items.update(item.id, { containerId: container.id });
+
+    expect(await repos.items.countUnsorted()).toBe(0);
+    expect((await repos.items.listByContainer(container.id)).map((i) => i.name)).toContain(
+      'Mystery cable',
+    );
+  });
+
+  it('files an unnamed capture without demanding a name first', async () => {
+    const repos = await freshRepos();
+    const { container } = await seedSpaceAndContainer(repos);
+    const item = await repos.items.create({ containerId: DROP_ZONE_CONTAINER_ID });
+
+    // Moving must not re-validate a name the item was never given.
+    await expect(repos.items.update(item.id, { containerId: container.id })).resolves.toMatchObject(
+      { containerId: container.id },
+    );
+    expect(await repos.items.countUnsorted()).toBe(0);
+  });
+
+  it('still rejects an explicitly blank name on update', async () => {
+    const repos = await freshRepos();
+    const { container } = await seedSpaceAndContainer(repos);
+    const item = await repos.items.create({ containerId: container.id, name: 'Drill' });
+
+    await expect(repos.items.update(item.id, { name: '  ' })).rejects.toThrow(/name is required/);
+  });
+
+  it('survives deleting every user space', async () => {
+    const repos = await freshRepos();
+    const { space } = await seedSpaceAndContainer(repos);
+    await repos.items.create({ containerId: DROP_ZONE_CONTAINER_ID, name: 'Mystery cable' });
+
+    await repos.spaces.delete(space.id);
+
+    expect(await repos.items.countUnsorted()).toBe(1);
   });
 });
 

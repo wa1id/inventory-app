@@ -104,6 +104,36 @@ export const MIGRATIONS: Migration[] = [
       CREATE INDEX idx_items_search_text ON items(search_text);
     `,
   },
+  {
+    version: 3,
+    name: 'add_drop_zone',
+    up: `
+      -- The drop zone lets people photograph things before deciding where they
+      -- live (issue #26). Modelling it as a system-flagged space and container
+      -- rather than a nullable items.container_id is deliberate: SQLite cannot
+      -- drop NOT NULL in place, and rebuilding \`items\` under
+      -- \`PRAGMA foreign_keys = ON\` would cascade-delete every photo and tag.
+      -- ADD COLUMN is safe, and every existing INNER JOIN keeps resolving.
+      ALTER TABLE spaces ADD COLUMN kind TEXT NOT NULL DEFAULT 'normal';
+      ALTER TABLE containers ADD COLUMN kind TEXT NOT NULL DEFAULT 'normal';
+
+      INSERT INTO spaces (id, name, icon, color, created_at, updated_at, kind)
+      VALUES (
+        'drop-zone-space', 'Drop zone', '📥', '#0F9BB0',
+        CAST(strftime('%s','now') AS INTEGER) * 1000,
+        CAST(strftime('%s','now') AS INTEGER) * 1000,
+        'system'
+      );
+
+      INSERT INTO containers (id, space_id, name, visual_type, short_code, created_at, updated_at, kind)
+      VALUES (
+        'drop-zone', 'drop-zone-space', 'Drop zone', 'other', 'DROP-ZONE',
+        CAST(strftime('%s','now') AS INTEGER) * 1000,
+        CAST(strftime('%s','now') AS INTEGER) * 1000,
+        'system'
+      );
+    `,
+  },
 ];
 
 /** Schema version a freshly built app expects. */

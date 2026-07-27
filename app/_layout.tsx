@@ -62,6 +62,11 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+        <Stack.Screen name="drop-zone" options={{ title: 'Drop zone' }} />
+        <Stack.Screen
+          name="item/[id]/move"
+          options={{ title: 'Choose a container', presentation: 'modal' }}
+        />
         <Stack.Screen name="privacy" options={{ title: 'Privacy' }} />
         <Stack.Screen name="space/new" options={{ title: 'New space', presentation: 'modal' }} />
         <Stack.Screen name="space/[id]/index" options={{ title: 'Space' }} />
