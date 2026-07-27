@@ -80,7 +80,13 @@ const ITEM_CONTEXT_SELECT = `
 
 export interface ItemDraft {
   containerId: string;
-  name: string;
+  /**
+   * Omit when the item genuinely has no name yet — fast capture writes the row
+   * before recognition has returned, and a failed recognition leaves it that
+   * way. An explicitly blank string is still rejected: that means a caller
+   * skipped validation rather than deliberately deferring the name.
+   */
+  name?: string;
   category?: string | null;
   quantity?: number;
   estimatedValue?: number | null;
@@ -172,8 +178,8 @@ export function createItemsRepository(db: SqlDatabase) {
         throw new Error('Quantity must be a whole number of at least 1.');
       }
 
-      const name = draft.name.trim();
-      if (!name) throw new Error('Item name is required.');
+      const name = draft.name === undefined ? '' : draft.name.trim();
+      if (draft.name !== undefined && !name) throw new Error('Item name is required.');
 
       const category = draft.category?.trim() || null;
 

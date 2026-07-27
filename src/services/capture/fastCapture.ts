@@ -15,13 +15,6 @@ export interface FastCaptureDeps {
   recognize: (uri: string) => Promise<RecognitionResult>;
 }
 
-export interface FastCaptureNames {
-  /** Stands in while recognition is still running. */
-  pending: string;
-  /** Replaces the placeholder when recognition gives us nothing usable. */
-  fallback: string;
-}
-
 export type FastCaptureOutcome =
   | { status: 'recognized'; itemId: string; name: string }
   | { status: 'unrecognized'; itemId: string; reason: RecognitionFailureReason };
@@ -30,7 +23,6 @@ export interface FastCaptureInput {
   containerId: string;
   photoUri: string;
   deps: FastCaptureDeps;
-  names: FastCaptureNames;
 }
 
 /**
@@ -45,6 +37,11 @@ export interface FastCaptureInput {
  * real, photographed item that simply needs naming later, which is what issue
  * #26's capture-now-organize-later promise requires.
  *
+ * The row is created with no name rather than an invented one. A placeholder
+ * title would be indistinguishable from something the user wrote, and a screen
+ * of identical "Unnamed item" rows tells them nothing about which is which —
+ * an absent name is a fact the UI can present honestly and act on.
+ *
  * Rejects only if the photo or the row could not be written; recognition
  * problems always resolve to an `unrecognized` outcome.
  */
@@ -52,12 +49,12 @@ export async function captureFastItem({
   containerId,
   photoUri,
   deps,
-  names,
 }: FastCaptureInput): Promise<FastCaptureOutcome> {
   const stored = await deps.storePhoto(photoUri);
   const item = await deps.createItem({
     containerId,
-    name: names.pending,
+    // No name: recognition has not run yet, and inventing one would be a lie
+    // the user then has to clear before typing the real thing.
     photo: {
       uri: stored.uri,
       width: stored.width,
@@ -77,12 +74,24 @@ export async function captureFastItem({
   }
 
   if (result.status !== 'success') {
-    await deps.updateItem(item.id, { name: names.fallback });
+    // Nothing to write: the row already reflects reality — a photographed item
+    // that still needs a name.
     return { status: 'unrecognized', itemId: item.id, reason: result.reason };
   }
 
   const { suggestion } = result;
-  const name = suggestion.name?.trim() || names.fallback;
+  const name = suggestion.name?.trim();
+
+  if (!name) {
+    // Recognition succeeded on everything but the name; keep the rest.
+    await deps.updateItem(item.id, {
+      category: suggestion.category,
+      tags: suggestion.tags,
+      estimatedValue: suggestion.estimatedValue,
+      currency: suggestion.currency,
+    });
+    return { status: 'unrecognized', itemId: item.id, reason: 'unrecognized' };
+  }
 
   await deps.updateItem(item.id, {
     name,

@@ -96,6 +96,8 @@ export const strings = {
     nameLabel: 'Name',
     namePlaceholder: 'Cordless drill',
     nameRequired: 'Give the item a name.',
+    /** Shown in place of a title for items captured but not yet identified. */
+    unnamed: 'Needs a name',
     categoryLabel: 'Category',
     tagsLabel: 'Tags',
     tagsHint: 'Separate tags with commas.',
@@ -106,6 +108,7 @@ export const strings = {
     currencyLabel: 'Currency',
     notesLabel: 'Notes',
     save: 'Save item',
+    saveAndAdd: 'Save and add another',
     deleteTitle: 'Delete this item?',
     deleteBody: 'This removes the item and its photo from this device.',
   },
@@ -126,10 +129,6 @@ export const strings = {
       `✓ ${identified} identified · ${unnamed} to name`,
     /** Recognition gave us nothing; the photos are still safely saved. */
     savedUnnamed: (count: number) => `✓ ${count} saved · name ${count === 1 ? 'it' : 'them'} later`,
-    /** Placeholder an item carries while recognition is still running. */
-    pendingName: 'Identifying…',
-    /** Replaces the placeholder when recognition returns nothing usable. */
-    fallbackName: 'Unnamed item',
     failedSome: (count: number) =>
       `${count} photo${count === 1 ? '' : 's'} could not be saved. Nothing else was lost.`,
   },

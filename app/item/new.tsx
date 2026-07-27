@@ -100,7 +100,12 @@ export default function NewItemScreen() {
     if (photo) void runRecognition(photo);
   }, [photo, runRecognition]);
 
-  async function save() {
+  /**
+   * @param andAnother Return straight to the camera instead of the saved item.
+   *   Adding things off a shelf is a run, not a single errand, so the common
+   *   case should not cost a trip back through the container screen.
+   */
+  async function save(andAnother = false) {
     const { errors: nextErrors, parsed } = validateItemForm(values);
     setErrors(nextErrors);
     if (!parsed) return;
@@ -125,7 +130,10 @@ export default function NewItemScreen() {
         suggestionAccepted: suggestion.status === 'applied',
       });
       invalidate();
-      router.dismissTo(`/item/${item.id}`);
+      // `replace`, not `push`: the saved form must not sit in the back stack,
+      // so Back from the camera lands on the container either way.
+      if (andAnother) router.replace(`/capture?containerId=${containerId}`);
+      else router.dismissTo(`/item/${item.id}`);
     } catch (cause) {
       setSaving(false);
       Alert.alert(
@@ -176,16 +184,27 @@ export default function NewItemScreen() {
             }
           />
         }
-        onSubmit={save}
+        onSubmit={() => void save()}
         submitLabel={strings.items.save}
         saving={saving}
         footer={
-          <Button
-            label={strings.common.cancel}
-            variant="ghost"
-            fullWidth
-            onPress={() => router.back()}
-          />
+          <>
+            <Button
+              label={strings.items.saveAndAdd}
+              icon="📸"
+              variant="secondary"
+              fullWidth
+              disabled={saving}
+              onPress={() => void save(true)}
+              testID="item-save-and-add"
+            />
+            <Button
+              label={strings.common.cancel}
+              variant="ghost"
+              fullWidth
+              onPress={() => router.back()}
+            />
+          </>
         }
       />
     </Screen>

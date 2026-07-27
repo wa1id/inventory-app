@@ -17,7 +17,9 @@ function ItemCard({ item, onPress }: { item: ItemWithContext; onPress: () => voi
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${item.name}${item.quantity > 1 ? `, quantity ${item.quantity}` : ''}`}
+      accessibilityLabel={`${item.name || strings.items.unnamed}${
+        item.quantity > 1 ? `, quantity ${item.quantity}` : ''
+      }`}
       style={({ pressed }) => [
         styles.itemCard,
         { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.8 : 1 },
@@ -37,8 +39,15 @@ function ItemCard({ item, onPress }: { item: ItemWithContext; onPress: () => voi
         </View>
       )}
       <View style={styles.itemBody}>
-        <Text style={[styles.itemTitle, { color: colors.text }]} numberOfLines={2}>
-          {item.name}
+        <Text
+          style={[
+            styles.itemTitle,
+            { color: item.name ? colors.text : colors.textMuted },
+            !item.name && styles.itemTitleUnnamed,
+          ]}
+          numberOfLines={2}
+        >
+          {item.name || strings.items.unnamed}
         </Text>
         {item.category ? (
           <Text style={[styles.itemMeta, { color: colors.textMuted }]} numberOfLines={1}>
@@ -282,6 +291,10 @@ const styles = StyleSheet.create({
   itemBody: {
     flex: 1,
     gap: 2,
+  },
+  itemTitleUnnamed: {
+    fontStyle: 'italic',
+    fontWeight: '600',
   },
   itemTitle: {
     fontSize: 16,
