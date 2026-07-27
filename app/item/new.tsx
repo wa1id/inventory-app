@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
+import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
 import { useInventoryQuery } from '@/hooks/useInventoryQuery';
 import { strings } from '@/i18n/strings';
 import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
@@ -156,7 +157,9 @@ export default function NewItemScreen() {
   }
 
   const locationLabel = container
-    ? `${space ? `${space.name} > ` : ''}${container.name ?? container.shortCode}`
+    ? containerId === DROP_ZONE_CONTAINER_ID
+      ? strings.dropZone.title
+      : `${space ? `${space.name} > ` : ''}${container.name ?? container.shortCode}`
     : undefined;
 
   return (

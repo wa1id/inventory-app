@@ -1,5 +1,5 @@
 import { normalizeForCodeMatch, toLikePattern, tokenizeQuery } from '@/core/tokenize';
-import { splitTagNames } from '@/db/constants';
+import { DROP_ZONE_CONTAINER_ID, splitTagNames } from '@/db/constants';
 import type { ItemWithContext, SqlDatabase, SqlParams } from '@/db/types';
 
 /**
@@ -251,6 +251,9 @@ function toItemSearchResult(row: ItemSearchRow): ItemSearchResult {
 
 /** `Space > Container` path shown on every item result. */
 export function formatLocationPath(item: ItemWithContext): string {
+  // The drop zone is a single holding area, not a space containing a container
+  // that happens to share its name.
+  if (item.containerId === DROP_ZONE_CONTAINER_ID) return item.spaceName;
   return `${item.spaceName} > ${item.containerName ?? item.containerShortCode}`;
 }
 
