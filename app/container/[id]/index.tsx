@@ -92,7 +92,7 @@ export default function ContainerScreen() {
   const list = items.data ?? [];
 
   return (
-    <Screen edges={['left', 'right']}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Stack.Screen
         options={{
           title,
@@ -177,25 +177,33 @@ export default function ContainerScreen() {
             testID="items-empty"
           />
         }
-        ListFooterComponent={
-          list.length > 0 ? (
-            <View style={styles.footer}>
-              <Button
-                label={strings.items.empty.photoAction}
-                icon="📸"
-                fullWidth
-                onPress={() => router.push(`/capture?containerId=${id}`)}
-              />
-              <Button
-                label={strings.items.empty.manualAction}
-                variant="secondary"
-                fullWidth
-                onPress={() => router.push(`/item/new?containerId=${id}`)}
-              />
-            </View>
-          ) : null
-        }
       />
+
+      {/* Pinned, and inside the bottom safe area: as a list footer this sat
+          under the system navigation bar, so the main way into the capture
+          flow was partly unreachable. */}
+      {list.length > 0 ? (
+        <View
+          style={[
+            styles.actionBar,
+            { backgroundColor: colors.background, borderTopColor: colors.border },
+          ]}
+        >
+          <Button
+            label={strings.items.empty.photoAction}
+            icon="📸"
+            fullWidth
+            onPress={() => router.push(`/capture?containerId=${id}`)}
+            testID="items-capture"
+          />
+          <Button
+            label={strings.items.empty.manualAction}
+            variant="secondary"
+            fullWidth
+            onPress={() => router.push(`/item/new?containerId=${id}`)}
+          />
+        </View>
+      ) : null}
     </Screen>
   );
 }
@@ -291,9 +299,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-  footer: {
-    paddingTop: spacing.sm,
+  actionBar: {
+    padding: spacing.lg,
     gap: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   headerButton: {
     minHeight: MIN_TOUCH_TARGET,

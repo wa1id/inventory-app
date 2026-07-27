@@ -109,6 +109,30 @@ export const strings = {
     deleteTitle: 'Delete this item?',
     deleteBody: 'This removes the item and its photo from this device.',
   },
+  capture: {
+    modeLabel: 'Capture mode',
+    modeSingle: 'Single',
+    modeFast: 'Fast',
+    singleHint: 'Fill the frame with the item',
+    fastHint: 'Keep shooting — details fill in by themselves',
+    fastBadge: '⚡ Fast mode',
+    saving: 'Saving your photo…',
+    done: 'Done',
+    doneCount: (count: number) => `Done · ${count}`,
+    identified: (count: number) => `✓ ${count} item${count === 1 ? '' : 's'} identified`,
+    identifying: (count: number) => `Identifying ${count}…`,
+    /** Some came back named, some did not — report both rather than the total. */
+    identifiedPartly: (identified: number, unnamed: number) =>
+      `✓ ${identified} identified · ${unnamed} to name`,
+    /** Recognition gave us nothing; the photos are still safely saved. */
+    savedUnnamed: (count: number) => `✓ ${count} saved · name ${count === 1 ? 'it' : 'them'} later`,
+    /** Placeholder an item carries while recognition is still running. */
+    pendingName: 'Identifying…',
+    /** Replaces the placeholder when recognition returns nothing usable. */
+    fallbackName: 'Unnamed item',
+    failedSome: (count: number) =>
+      `${count} photo${count === 1 ? '' : 's'} could not be saved. Nothing else was lost.`,
+  },
   search: {
     placeholder: 'Search items, tags, or boxes',
     idle: {
