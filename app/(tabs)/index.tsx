@@ -10,6 +10,9 @@ import { EmptyState } from '@/ui/components/EmptyState';
 import { ErrorState, LoadingState, Screen } from '@/ui/components/Screen';
 import { onColor, radius, spacing, useTheme } from '@/ui/theme';
 
+/** Fills the empty half of a trailing odd row so tiles keep a uniform width. */
+const GRID_SPACER = Symbol('grid-spacer');
+
 /**
  * A space as a colour-filled tile.
  *
@@ -83,18 +86,26 @@ export default function SpacesScreen() {
   }
 
   const spaces = data ?? [];
+  // Tiles flex to fill their row, so an odd count would stretch the last one
+  // across the full width. A trailing spacer keeps it half-width like the rest.
+  const grid: (SpaceWithCounts | typeof GRID_SPACER)[] =
+    spaces.length % 2 === 1 ? [...spaces, GRID_SPACER] : spaces;
 
   return (
     <Screen edges={['left', 'right']}>
       <FlatList
-        data={spaces}
-        keyExtractor={(space) => space.id}
+        data={grid}
+        keyExtractor={(entry) => (entry === GRID_SPACER ? 'grid-spacer' : entry.id)}
         numColumns={2}
         columnWrapperStyle={spaces.length > 0 ? styles.column : undefined}
         contentContainerStyle={[styles.list, spaces.length === 0 && styles.listEmpty]}
-        renderItem={({ item }) => (
-          <SpaceCard space={item} onPress={() => router.push(`/space/${item.id}`)} />
-        )}
+        renderItem={({ item }) =>
+          item === GRID_SPACER ? (
+            <View style={styles.spacer} />
+          ) : (
+            <SpaceCard space={item} onPress={() => router.push(`/space/${item.id}`)} />
+          )
+        }
         ListEmptyComponent={
           <EmptyState
             icon="🏠"
@@ -140,6 +151,9 @@ const styles = StyleSheet.create({
   },
   column: {
     gap: spacing.md,
+  },
+  spacer: {
+    flex: 1,
   },
   card: {
     flex: 1,
