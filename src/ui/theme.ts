@@ -17,6 +17,45 @@ export const SPACE_COLORS = [
 
 export const SPACE_ICONS = ['🛋️', '🍳', '🛏️', '🚗', '🧰', '📚', '🧺', '🏠', '🪴', '🎒'] as const;
 
+/**
+ * One-tap starting points offered above the custom-name field.
+ *
+ * The reference app's fastest path to a space costs zero typing, which matters
+ * because most people set up several spaces back to back. Each preset carries
+ * its own icon and colour so the tile grid stays legible without asking the
+ * user to make two cosmetic decisions before they have any content.
+ */
+export const SPACE_PRESETS = [
+  { name: 'Garage', icon: '🚗', color: SPACE_COLORS[0] },
+  { name: 'Wardrobe', icon: '👕', color: SPACE_COLORS[3] },
+  { name: 'Loft', icon: '🏠', color: SPACE_COLORS[2] },
+  { name: 'Cellar', icon: '🚪', color: SPACE_COLORS[4] },
+] as const;
+
+/**
+ * Readable foreground for an arbitrary space colour.
+ *
+ * Space tiles fill with the user's colour, so the label contrast depends on
+ * that choice rather than the theme. Uses the WCAG relative-luminance formula
+ * so a light swatch (the yellow) flips to dark text instead of failing.
+ */
+export function onColor(hex: string): '#FFFFFF' | '#12161C' {
+  const value = hex.replace('#', '');
+  const full =
+    value.length === 3
+      ? value
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : value;
+  const channel = (offset: number) => {
+    const srgb = parseInt(full.slice(offset, offset + 2), 16) / 255;
+    return srgb <= 0.03928 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
+  };
+  const luminance = 0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4);
+  return luminance > 0.4 ? '#12161C' : '#FFFFFF';
+}
+
 export const CONTAINER_ICONS: Record<string, string> = {
   box: '📦',
   drawer: '🗄️',

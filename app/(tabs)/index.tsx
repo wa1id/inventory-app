@@ -8,10 +8,18 @@ import type { SpaceWithCounts } from '@/db/types';
 import { Button } from '@/ui/components/Button';
 import { EmptyState } from '@/ui/components/EmptyState';
 import { ErrorState, LoadingState, Screen } from '@/ui/components/Screen';
-import { MIN_TOUCH_TARGET, radius, spacing, useTheme } from '@/ui/theme';
+import { onColor, radius, spacing, useTheme } from '@/ui/theme';
 
+/**
+ * A space as a colour-filled tile.
+ *
+ * The dashboard is the screen people see most, and spaces are recognised by
+ * their colour and icon long before the label is read — so the tile leads with
+ * both, and the container count rides in a corner badge rather than competing
+ * with the name.
+ */
 function SpaceCard({ space, onPress }: { space: SpaceWithCounts; onPress: () => void }) {
-  const { colors } = useTheme();
+  const foreground = onColor(space.color);
 
   return (
     <Pressable
@@ -23,33 +31,27 @@ function SpaceCard({ space, onPress }: { space: SpaceWithCounts; onPress: () => 
       )}`}
       style={({ pressed }) => [
         styles.card,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          opacity: pressed ? 0.8 : 1,
-        },
+        { backgroundColor: space.color, opacity: pressed ? 0.85 : 1 },
       ]}
     >
-      <View style={[styles.swatch, { backgroundColor: space.color }]}>
-        <Text style={styles.swatchIcon} accessibilityElementsHidden importantForAccessibility="no">
-          {space.icon}
-        </Text>
+      <View style={styles.badgeRow}>
+        <View style={[styles.badge, { backgroundColor: `${foreground}26` }]}>
+          <Text style={[styles.badgeText, { color: foreground }]}>📦 {space.containerCount}</Text>
+        </View>
       </View>
+
+      <Text style={styles.cardIcon} accessibilityElementsHidden importantForAccessibility="no">
+        {space.icon}
+      </Text>
+
       <View style={styles.cardBody}>
-        <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
+        <Text style={[styles.cardTitle, { color: foreground }]} numberOfLines={2}>
           {space.name}
         </Text>
-        <Text style={[styles.cardMeta, { color: colors.textMuted }]}>
-          {strings.spaces.counts(space.containerCount, space.itemCount)}
+        <Text style={[styles.cardMeta, { color: foreground }]}>
+          {strings.spaces.itemCount(space.itemCount)}
         </Text>
       </View>
-      <Text
-        style={[styles.chevron, { color: colors.textMuted }]}
-        accessibilityElementsHidden
-        importantForAccessibility="no"
-      >
-        ›
-      </Text>
     </Pressable>
   );
 }
@@ -57,6 +59,7 @@ function SpaceCard({ space, onPress }: { space: SpaceWithCounts; onPress: () => 
 export default function SpacesScreen() {
   const repos = useRepositories();
   const router = useRouter();
+  const { colors } = useTheme();
 
   const { data, loading, error, reload } = useInventoryQuery(
     () => repos.spaces.listWithCounts(),
@@ -86,6 +89,8 @@ export default function SpacesScreen() {
       <FlatList
         data={spaces}
         keyExtractor={(space) => space.id}
+        numColumns={2}
+        columnWrapperStyle={spaces.length > 0 ? styles.column : undefined}
         contentContainerStyle={[styles.list, spaces.length === 0 && styles.listEmpty]}
         renderItem={({ item }) => (
           <SpaceCard space={item} onPress={() => router.push(`/space/${item.id}`)} />
@@ -100,20 +105,26 @@ export default function SpacesScreen() {
             testID="spaces-empty"
           />
         }
-        ListFooterComponent={
-          spaces.length > 0 ? (
-            <View style={styles.footer}>
-              <Button
-                label={strings.spaces.create}
-                icon="＋"
-                onPress={() => router.push('/space/new')}
-                fullWidth
-                variant="secondary"
-              />
-            </View>
-          ) : null
-        }
       />
+
+      {/* Pinned rather than a list footer: creating spaces stays one tap away
+          no matter how far the grid has been scrolled. */}
+      {spaces.length > 0 ? (
+        <View
+          style={[
+            styles.actionBar,
+            { backgroundColor: colors.background, borderTopColor: colors.border },
+          ]}
+        >
+          <Button
+            label={strings.spaces.create}
+            icon="＋"
+            onPress={() => router.push('/space/new')}
+            fullWidth
+            testID="spaces-create"
+          />
+        </View>
+      ) : null}
     </Screen>
   );
 }
@@ -127,41 +138,46 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
   },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  column: {
     gap: spacing.md,
+  },
+  card: {
+    flex: 1,
+    minHeight: 168,
     padding: spacing.md,
     borderRadius: radius.lg,
-    borderWidth: 1,
-    minHeight: MIN_TOUCH_TARGET + spacing.lg,
+    justifyContent: 'space-between',
   },
-  swatch: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+  badgeRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
   },
-  swatchIcon: {
-    fontSize: 24,
+  badge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  cardIcon: {
+    fontSize: 40,
+    textAlign: 'center',
   },
   cardBody: {
-    flex: 1,
     gap: 2,
   },
   cardTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
   },
   cardMeta: {
     fontSize: 14,
+    opacity: 0.85,
   },
-  chevron: {
-    fontSize: 28,
-    paddingHorizontal: spacing.xs,
-  },
-  footer: {
-    paddingTop: spacing.sm,
+  actionBar: {
+    padding: spacing.lg,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
 });

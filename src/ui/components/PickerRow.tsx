@@ -102,6 +102,69 @@ export function ColorRow({ label, colors: swatches, value, onChange }: ColorRowP
   );
 }
 
+interface TileRowProps<T> {
+  label: string;
+  options: readonly { value: T; glyph: string; label: string }[];
+  value: T;
+  onChange: (value: T) => void;
+}
+
+/**
+ * Large glyph tiles for choices that are recognised by shape, not by word.
+ *
+ * Container types read faster as pictures than as the text chips `ChoiceRow`
+ * renders, so the tile carries the glyph and only the selected option spells
+ * its name out underneath — the same trade the reference app makes.
+ */
+export function TileRow<T extends string>({ label, options, value, onChange }: TileRowProps<T>) {
+  const { colors } = useTheme();
+  const selectedOption = options.find((option) => option.value === value);
+
+  return (
+    <View style={styles.container} accessibilityRole="radiogroup">
+      <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.tileRow}
+      >
+        {options.map((option) => {
+          const selected = option.value === value;
+          return (
+            <Pressable
+              key={option.value}
+              onPress={() => onChange(option.value)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected }}
+              accessibilityLabel={option.label}
+              testID={`tile-${option.value}`}
+              style={[
+                styles.tile,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: selected ? colors.primary : colors.border,
+                  borderWidth: selected ? 2 : 1,
+                },
+              ]}
+            >
+              <Text
+                style={styles.tileGlyph}
+                accessibilityElementsHidden
+                importantForAccessibility="no"
+              >
+                {option.glyph}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+      {selectedOption ? (
+        <Text style={[styles.tileCaption, { color: colors.text }]}>{selectedOption.label}</Text>
+      ) : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     gap: spacing.sm,
@@ -128,6 +191,25 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 16,
+    fontWeight: '600',
+  },
+  tileRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  tile: {
+    width: 72,
+    height: 72,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tileGlyph: {
+    fontSize: 34,
+  },
+  tileCaption: {
+    fontSize: 14,
     fontWeight: '600',
   },
   swatch: {

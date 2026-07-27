@@ -8,14 +8,15 @@ import { strings } from '@/i18n/strings';
 import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
 import { logEvent } from '@/services/telemetry';
 import { Button } from '@/ui/components/Button';
-import { ChoiceRow } from '@/ui/components/PickerRow';
+import { TileRow } from '@/ui/components/PickerRow';
 import { Screen } from '@/ui/components/Screen';
 import { TextField } from '@/ui/components/TextField';
 import { CONTAINER_ICONS, spacing, useTheme } from '@/ui/theme';
 
 const TYPE_OPTIONS = CONTAINER_VISUAL_TYPES.map((value) => ({
   value,
-  label: `${CONTAINER_ICONS[value] ?? ''} ${value}`.trim(),
+  glyph: CONTAINER_ICONS[value] ?? '📦',
+  label: strings.containers.typeNames[value] ?? value,
 }));
 
 export default function NewContainerScreen() {
@@ -57,7 +58,7 @@ export default function NewContainerScreen() {
           </Text>
         ) : null}
 
-        <ChoiceRow
+        <TileRow
           label={strings.containers.typeLabel}
           options={TYPE_OPTIONS}
           value={visualType}
@@ -76,7 +77,13 @@ export default function NewContainerScreen() {
         />
 
         <View style={styles.actions}>
-          <Button label={strings.common.save} onPress={save} loading={saving} fullWidth />
+          <Button
+            label={strings.containers.createAction}
+            onPress={save}
+            loading={saving}
+            fullWidth
+            testID="container-create"
+          />
           <Button
             label={strings.common.cancel}
             onPress={() => router.back()}
