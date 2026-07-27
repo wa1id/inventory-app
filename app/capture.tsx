@@ -6,10 +6,15 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { strings } from '@/i18n/strings';
+import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
+import { recognizeItem } from '@/services/ai/recognition';
+import { captureFastItem } from '@/services/capture/fastCapture';
 import { hasRoomForPhoto, storeItemPhoto } from '@/services/capture/imageStore';
 import { logError, logEvent } from '@/services/telemetry';
 import { Button } from '@/ui/components/Button';
 import { MIN_TOUCH_TARGET, radius, spacing, useTheme } from '@/ui/theme';
+
+type CaptureMode = 'single' | 'fast';
 
 /**
  * Single-item capture (issue #6).
@@ -23,11 +28,27 @@ export default function CaptureScreen() {
   const router = useRouter();
   const { colors } = useTheme();
 
+  const repos = useRepositories();
+  const { invalidate } = useDatabase();
+
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [flash, setFlash] = useState<FlashMode>('off');
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [mode, setMode] = useState<CaptureMode>('single');
+  // Fast-mode tallies, kept apart on purpose. `captured` counts shutter presses
+  // that produced a row, `completed` how many have finished the pipeline, and
+  // `recognized` how many of those came back with a usable name — reporting
+  // completions as identifications would claim work the AI did not do.
+  const [captured, setCaptured] = useState(0);
+  const [completed, setCompleted] = useState(0);
+  const [recognized, setRecognized] = useState(0);
+  const [dropped, setDropped] = useState(0);
+  // Guards the camera hardware only. The rest of the pipeline deliberately
+  // runs unguarded so the next shot never waits on the previous one.
+  const shutterBusy = useRef(false);
 
   function continueManually() {
     router.replace(`/item/new?containerId=${containerId}`);
@@ -79,6 +100,84 @@ export default function CaptureScreen() {
       setError('The camera did not return a photo. Try again, or continue without one.');
     }
   }
+
+  /**
+   * Fast mode: one tap per item, no form in between.
+   *
+   * The await ends at the shutter, not at the saved item — everything after
+   * that runs in the background so the camera is ready for the next thing on
+   * the shelf immediately. Each photo becomes a real row before recognition is
+   * attempted, so leaving early or losing the app never loses the item.
+   */
+  async function takeFastPhoto() {
+    if (!cameraRef.current || shutterBusy.current) return;
+    if (!hasRoomForPhoto()) {
+      setError(
+        'There is not enough free space to save a photo. Free some space, or continue without one.',
+      );
+      return;
+    }
+
+    shutterBusy.current = true;
+    let uri: string | undefined;
+    try {
+      const photo = await cameraRef.current.takePictureAsync({ quality: 1, skipProcessing: false });
+      uri = photo?.uri;
+    } catch {
+      setError('The camera did not return a photo. Try again, or continue without one.');
+    } finally {
+      shutterBusy.current = false;
+    }
+
+    if (!uri) return;
+
+    setCaptured((count) => count + 1);
+    setError(null);
+
+    void captureFastItem({
+      containerId,
+      photoUri: uri,
+      names: { pending: strings.capture.pendingName, fallback: strings.capture.fallbackName },
+      deps: {
+        storePhoto: storeItemPhoto,
+        createItem: (draft) => repos.items.create(draft),
+        updateItem: (id, input) => repos.items.update(id, input),
+        recognize: (imageUri) => recognizeItem({ imageUri }),
+      },
+    })
+      .then((outcome) => {
+        setCompleted((count) => count + 1);
+        logEvent('photo_captured', { source: 'camera', mode: 'fast' });
+        if (outcome.status === 'recognized') {
+          setRecognized((count) => count + 1);
+        } else {
+          logEvent('recognition_unusable', { reason: outcome.reason });
+        }
+        // Keeps the container list behind the camera honest as rows land.
+        invalidate();
+      })
+      .catch(() => {
+        logError('fast_capture_failed', { source: 'camera' });
+        setCaptured((count) => Math.max(0, count - 1));
+        setDropped((count) => count + 1);
+      });
+  }
+
+  function finishFast() {
+    invalidate();
+    router.replace(`/container/${containerId}`);
+  }
+
+  const pending = captured - completed;
+  const unnamed = completed - recognized;
+  const fastStatus =
+    pending > 0
+      ? strings.capture.identifying(pending)
+      : unnamed === 0
+        ? strings.capture.identified(recognized)
+        : recognized === 0
+          ? strings.capture.savedUnnamed(unnamed)
+          : strings.capture.identifiedPartly(recognized, unnamed);
 
   async function pickFromLibrary() {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -198,44 +297,111 @@ export default function CaptureScreen() {
             </View>
           ) : null}
 
+          {mode === 'fast' && captured > 0 ? (
+            <View style={styles.statusPill} accessibilityLiveRegion="polite">
+              <Text style={styles.statusText}>{fastStatus}</Text>
+            </View>
+          ) : null}
+
+          {dropped > 0 ? (
+            <Text style={styles.dropped} accessibilityLiveRegion="polite">
+              {strings.capture.failedSome(dropped)}
+            </Text>
+          ) : null}
+
+          <View
+            style={styles.modeRow}
+            accessibilityRole="radiogroup"
+            accessibilityLabel={strings.capture.modeLabel}
+          >
+            {(['single', 'fast'] as const).map((option) => {
+              const selected = option === mode;
+              return (
+                <Pressable
+                  key={option}
+                  onPress={() => setMode(option)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={
+                    option === 'single' ? strings.capture.modeSingle : strings.capture.modeFast
+                  }
+                  testID={`capture-mode-${option}`}
+                  style={[styles.modeChip, selected && styles.modeChipSelected]}
+                >
+                  <Text style={[styles.modeText, selected && styles.modeTextSelected]}>
+                    {option === 'single' ? strings.capture.modeSingle : strings.capture.modeFast}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
           <View style={styles.shutterRow}>
-            <Pressable
-              onPress={pickFromLibrary}
-              accessibilityRole="button"
-              accessibilityLabel="Import from photo library"
-              style={styles.circleButton}
-              disabled={processing}
-            >
-              <Text style={styles.circleGlyph}>🖼️</Text>
-            </Pressable>
+            {mode === 'single' ? (
+              <Pressable
+                onPress={pickFromLibrary}
+                accessibilityRole="button"
+                accessibilityLabel="Import from photo library"
+                style={styles.circleButton}
+                disabled={processing}
+              >
+                <Text style={styles.circleGlyph}>🖼️</Text>
+              </Pressable>
+            ) : (
+              <View style={styles.circleButton} />
+            )}
 
             <Pressable
-              onPress={takePhoto}
+              onPress={mode === 'fast' ? takeFastPhoto : takePhoto}
               accessibilityRole="button"
               accessibilityLabel="Take photo"
-              accessibilityState={{ busy: processing, disabled: processing }}
-              disabled={processing}
+              accessibilityState={{
+                busy: mode === 'single' && processing,
+                disabled: mode === 'single' && processing,
+              }}
+              disabled={mode === 'single' && processing}
+              testID="capture-shutter"
               style={styles.shutter}
             >
-              {processing ? (
+              {mode === 'single' && processing ? (
                 <ActivityIndicator color="#111" />
               ) : (
                 <View style={styles.shutterInner} />
               )}
             </Pressable>
 
-            <Pressable
-              onPress={continueManually}
-              accessibilityRole="button"
-              accessibilityLabel={strings.permissions.continueManually}
-              style={styles.circleButton}
-            >
-              <Text style={styles.circleGlyph}>✍️</Text>
-            </Pressable>
+            {mode === 'fast' ? (
+              <Pressable
+                onPress={finishFast}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  captured > 0 ? strings.capture.doneCount(captured) : strings.capture.done
+                }
+                testID="capture-done"
+                style={[styles.doneButton, captured === 0 && styles.doneButtonIdle]}
+              >
+                <Text style={styles.doneText}>
+                  {captured > 0 ? strings.capture.doneCount(captured) : strings.capture.done}
+                </Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={continueManually}
+                accessibilityRole="button"
+                accessibilityLabel={strings.permissions.continueManually}
+                style={styles.circleButton}
+              >
+                <Text style={styles.circleGlyph}>✍️</Text>
+              </Pressable>
+            )}
           </View>
 
           <Text style={styles.hint}>
-            {processing ? 'Saving your photo…' : 'Fill the frame with the item'}
+            {mode === 'fast'
+              ? strings.capture.fastHint
+              : processing
+                ? strings.capture.saving
+                : strings.capture.singleHint}
           </Text>
         </View>
       </SafeAreaView>
@@ -298,6 +464,66 @@ const styles = StyleSheet.create({
     color: '#FFF',
     textAlign: 'center',
     fontSize: 14,
+  },
+  modeRow: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+    gap: spacing.xs,
+    padding: spacing.xs,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+  },
+  modeChip: {
+    minHeight: MIN_TOUCH_TARGET - spacing.md,
+    paddingHorizontal: spacing.lg,
+    justifyContent: 'center',
+    borderRadius: radius.pill,
+  },
+  modeChipSelected: {
+    backgroundColor: 'rgba(255,255,255,0.16)',
+  },
+  modeText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  modeTextSelected: {
+    color: '#FFF',
+    fontWeight: '700',
+  },
+  statusPill: {
+    alignSelf: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  statusText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  dropped: {
+    color: '#FFC9BC',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  doneButton: {
+    minHeight: MIN_TOUCH_TARGET,
+    minWidth: 96,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.pill,
+    backgroundColor: '#FFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  doneButtonIdle: {
+    backgroundColor: 'rgba(255,255,255,0.55)',
+  },
+  doneText: {
+    color: '#111',
+    fontSize: 16,
+    fontWeight: '700',
   },
   errorBanner: {
     backgroundColor: 'rgba(0,0,0,0.75)',
