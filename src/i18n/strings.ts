@@ -112,6 +112,24 @@ export const strings = {
     deleteTitle: 'Delete this item?',
     deleteBody: 'This removes the item and its photo from this device.',
   },
+  dropZone: {
+    title: 'Drop zone',
+    tagline: 'Snap now, sort later',
+    quickSnap: 'Quick Snap',
+    capture: 'Add items',
+    fileAction: 'Choose a container',
+    intro: 'These are waiting for a home. Tap one to file it.',
+    count: (count: number) => `${count} item${count === 1 ? '' : 's'} waiting`,
+    moveIntro: (name: string) => `Where does “${name}” belong?`,
+    empty: {
+      title: 'Nothing waiting',
+      body: 'Photograph things as you find them and they land here, ready to file whenever you like.',
+    },
+    noContainers: {
+      title: 'No containers yet',
+      body: 'Create a space and a container first, then you can file what you have captured.',
+    },
+  },
   capture: {
     modeLabel: 'Capture mode',
     modeSingle: 'Single',

@@ -59,7 +59,7 @@ export function createContainersRepository(db: SqlDatabase) {
                 (SELECT q.token FROM qr_bindings q WHERE q.container_id = c.id
                   ORDER BY q.created_at DESC LIMIT 1) AS qr_token
            FROM containers c
-          WHERE c.space_id = ?
+          WHERE c.space_id = ? AND c.kind = 'normal'
           ORDER BY c.created_at DESC`,
         [spaceId],
       );
@@ -210,6 +210,7 @@ export function createContainersRepository(db: SqlDatabase) {
                 (SELECT COUNT(*) FROM items i WHERE i.container_id = c.id) AS item_count
            FROM containers c
            JOIN spaces s ON s.id = c.space_id
+          WHERE c.kind = 'normal'
           ORDER BY s.name COLLATE NOCASE ASC, c.created_at DESC`,
       );
 

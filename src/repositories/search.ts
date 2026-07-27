@@ -141,7 +141,7 @@ export function createSearchRepository(db: SqlDatabase) {
                 (SELECT COUNT(*) FROM items i JOIN containers c ON c.id = i.container_id
                   WHERE c.space_id = s.id) AS item_count
            FROM spaces s
-          WHERE ${where.join(' AND ')}
+          WHERE s.kind = 'normal' AND ${where.join(' AND ')}
           ORDER BY s.name COLLATE NOCASE ASC
           LIMIT ${LOCATION_RESULT_LIMIT}`,
         params,
@@ -183,7 +183,7 @@ export function createSearchRepository(db: SqlDatabase) {
                 (SELECT COUNT(*) FROM items i WHERE i.container_id = c.id) AS item_count
            FROM containers c
            JOIN spaces s ON s.id = c.space_id
-          WHERE ${where.join(' AND ')}
+          WHERE c.kind = 'normal' AND ${where.join(' AND ')}
           ORDER BY s.name COLLATE NOCASE ASC, c.short_code ASC
           LIMIT ${LOCATION_RESULT_LIMIT}`,
         params,
