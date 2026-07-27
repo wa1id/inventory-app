@@ -30,7 +30,8 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_ENV": "production"
+        "EXPO_PUBLIC_ENV": "production",
+        "EXPO_PUBLIC_RECOGNITION_URL": "https://server-wy-studio.vercel.app/api/recognize"
       },
       "android": {
         "buildType": "app-bundle"
