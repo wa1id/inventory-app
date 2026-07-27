@@ -20,6 +20,8 @@ interface ItemContextRow extends ItemRow {
   tag_names: string | null;
   space_id: string;
   space_name: string;
+  space_icon: string;
+  space_color: string;
   container_name: string | null;
   container_short_code: string;
 }
@@ -46,6 +48,8 @@ function toItemWithContext(row: ItemContextRow): ItemWithContext {
     tags: splitTagNames(row.tag_names),
     spaceId: row.space_id,
     spaceName: row.space_name,
+    spaceIcon: row.space_icon,
+    spaceColor: row.space_color,
     containerName: row.container_name,
     containerShortCode: row.container_short_code,
   };
@@ -65,6 +69,8 @@ const ITEM_CONTEXT_SELECT = `
             JOIN tags t ON t.id = it.tag_id WHERE it.item_id = i.id) AS tag_names,
          c.space_id AS space_id,
          s.name AS space_name,
+         s.icon AS space_icon,
+         s.color AS space_color,
          c.name AS container_name,
          c.short_code AS container_short_code
     FROM items i

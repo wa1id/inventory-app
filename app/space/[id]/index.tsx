@@ -8,7 +8,7 @@ import { useRepositories } from '@/providers/DatabaseProvider';
 import { Button } from '@/ui/components/Button';
 import { EmptyState } from '@/ui/components/EmptyState';
 import { ErrorState, LoadingState, Screen } from '@/ui/components/Screen';
-import { CONTAINER_ICONS, MIN_TOUCH_TARGET, radius, spacing, useTheme } from '@/ui/theme';
+import { CONTAINER_ICONS, MIN_TOUCH_TARGET, onColor, radius, spacing, useTheme } from '@/ui/theme';
 
 function ContainerCard({
   container,
@@ -88,12 +88,18 @@ export default function SpaceScreen() {
   }
 
   const list = containers.data ?? [];
+  // The header carries the space's own colour so you always know which space
+  // you are inside without reading the title.
+  const headerTint = onColor(space.data.color);
 
   return (
-    <Screen edges={['left', 'right']}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Stack.Screen
         options={{
-          title: space.data.name,
+          title: `${space.data.icon} ${space.data.name}`,
+          headerStyle: { backgroundColor: space.data.color },
+          headerTintColor: headerTint,
+          headerTitleStyle: { color: headerTint },
           headerRight: () => (
             <Pressable
               onPress={() => router.push(`/space/${id}/edit`)}
@@ -102,7 +108,7 @@ export default function SpaceScreen() {
               hitSlop={spacing.sm}
               style={styles.headerButton}
             >
-              <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '600' }}>
+              <Text style={{ color: headerTint, fontSize: 16, fontWeight: '600' }}>
                 {strings.common.edit}
               </Text>
             </Pressable>
@@ -127,20 +133,26 @@ export default function SpaceScreen() {
             testID="containers-empty"
           />
         }
-        ListFooterComponent={
-          list.length > 0 ? (
-            <View style={styles.footer}>
-              <Button
-                label={strings.containers.create}
-                icon="＋"
-                variant="secondary"
-                fullWidth
-                onPress={() => router.push(`/container/new?spaceId=${id}`)}
-              />
-            </View>
-          ) : null
-        }
       />
+
+      {/* Pinned rather than a list footer: adding containers stays reachable
+          however far the list has been scrolled. */}
+      {list.length > 0 ? (
+        <View
+          style={[
+            styles.actionBar,
+            { backgroundColor: colors.background, borderTopColor: colors.border },
+          ]}
+        >
+          <Button
+            label={strings.containers.create}
+            icon="＋"
+            fullWidth
+            onPress={() => router.push(`/container/new?spaceId=${id}`)}
+            testID="containers-create"
+          />
+        </View>
+      ) : null}
     </Screen>
   );
 }
@@ -180,8 +192,9 @@ const styles = StyleSheet.create({
   qrBadge: {
     fontSize: 18,
   },
-  footer: {
-    paddingTop: spacing.sm,
+  actionBar: {
+    padding: spacing.lg,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   headerButton: {
     minHeight: MIN_TOUCH_TARGET,
