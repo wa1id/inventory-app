@@ -1,8 +1,6 @@
 import { captureFastItem, type FastCaptureDeps } from '@/services/capture/fastCapture';
 import type { RecognitionResult } from '@/services/ai/contract';
 
-const NAMES = { pending: 'Identifying…', fallback: 'Unnamed item' };
-
 function makeDeps(recognition: RecognitionResult | (() => Promise<RecognitionResult>)) {
   const calls = {
     created: [] as unknown[],
@@ -58,7 +56,6 @@ describe('captureFastItem', () => {
       containerId: 'c1',
       photoUri: 'file://a.jpg',
       deps,
-      names: NAMES,
     });
 
     expect(order).toEqual(['create', 'recognize']);
@@ -67,12 +64,11 @@ describe('captureFastItem', () => {
   it('stores the photo and attaches it to the created item', async () => {
     const { deps, calls } = makeDeps(SUCCESS);
 
-    await captureFastItem({ containerId: 'c1', photoUri: 'file://a.jpg', deps, names: NAMES });
+    await captureFastItem({ containerId: 'c1', photoUri: 'file://a.jpg', deps });
 
     expect(calls.stored).toEqual(['file://a.jpg']);
     expect(calls.created[0]).toMatchObject({
       containerId: 'c1',
-      name: NAMES.pending,
       photo: { uri: 'stored://file://a.jpg', width: 100, height: 200, byteSize: 4242 },
     });
   });
@@ -84,7 +80,6 @@ describe('captureFastItem', () => {
       containerId: 'c1',
       photoUri: 'file://a.jpg',
       deps,
-      names: NAMES,
     });
 
     expect(outcome).toEqual({ status: 'recognized', itemId: 'item-1', name: 'Cordless drill' });
@@ -102,18 +97,19 @@ describe('captureFastItem', () => {
     ]);
   });
 
-  it('keeps the photographed item and names it plainly when recognition fails', async () => {
+  it('leaves the item nameless rather than inventing a title when recognition fails', async () => {
     const { deps, calls } = makeDeps({ status: 'failed', reason: 'offline' });
 
     const outcome = await captureFastItem({
       containerId: 'c1',
       photoUri: 'file://a.jpg',
       deps,
-      names: NAMES,
     });
 
     expect(outcome).toEqual({ status: 'unrecognized', itemId: 'item-1', reason: 'offline' });
-    expect(calls.updated).toEqual([{ id: 'item-1', input: { name: NAMES.fallback } }]);
+    // No name was written, so nothing has to be cleared before typing one.
+    expect(calls.updated).toEqual([]);
+    expect(calls.created[0]).not.toHaveProperty('name');
   });
 
   it.each(['not_configured', 'timeout', 'rate_limited', 'low_confidence'] as const)(
@@ -125,7 +121,6 @@ describe('captureFastItem', () => {
         containerId: 'c1',
         photoUri: 'file://a.jpg',
         deps,
-        names: NAMES,
       });
 
       expect(outcome.status).toBe('unrecognized');
@@ -142,15 +137,14 @@ describe('captureFastItem', () => {
       containerId: 'c1',
       photoUri: 'file://a.jpg',
       deps,
-      names: NAMES,
     });
 
     expect(outcome.status).toBe('unrecognized');
-    expect(calls.updated).toEqual([{ id: 'item-1', input: { name: NAMES.fallback } }]);
+    expect(calls.updated).toEqual([]);
   });
 
-  it('falls back when the suggestion carries a blank name', async () => {
-    const { deps } = makeDeps({
+  it('keeps the other suggested fields when only the name comes back blank', async () => {
+    const { deps, calls } = makeDeps({
       status: 'success',
       contractVersion: 1,
       suggestion: { ...SUCCESS.suggestion, name: '   ' },
@@ -160,10 +154,15 @@ describe('captureFastItem', () => {
       containerId: 'c1',
       photoUri: 'file://a.jpg',
       deps,
-      names: NAMES,
     });
 
-    expect(outcome).toMatchObject({ status: 'recognized', name: NAMES.fallback });
+    expect(outcome).toMatchObject({ status: 'unrecognized', itemId: 'item-1' });
+    expect(calls.updated[0]?.input).toEqual({
+      category: 'Tools',
+      tags: ['dewalt', 'power tool'],
+      estimatedValue: 89.5,
+      currency: 'EUR',
+    });
   });
 
   it('propagates a storage failure so the camera can surface it', async () => {
@@ -173,7 +172,7 @@ describe('captureFastItem', () => {
     };
 
     await expect(
-      captureFastItem({ containerId: 'c1', photoUri: 'file://a.jpg', deps, names: NAMES }),
+      captureFastItem({ containerId: 'c1', photoUri: 'file://a.jpg', deps }),
     ).rejects.toThrow('No space left');
   });
 });

@@ -226,7 +226,7 @@ function ItemRow({
     <Pressable
       onPress={onOpenItem}
       accessibilityRole="button"
-      accessibilityLabel={`${item.name}, stored in ${formatLocationPath(item)}${
+      accessibilityLabel={`${item.name || strings.items.unnamed}, stored in ${formatLocationPath(item)}${
         item.matchKind === 'location' ? `. ${strings.search.locationMatch}` : ''
       }`}
       style={({ pressed }) => [
@@ -251,8 +251,11 @@ function ItemRow({
       )}
 
       <View style={styles.rowBody}>
-        <Text style={[styles.rowTitle, { color: colors.text }]} numberOfLines={1}>
-          {item.name}
+        <Text
+          style={[styles.rowTitle, { color: item.name ? colors.text : colors.textMuted }]}
+          numberOfLines={1}
+        >
+          {item.name || strings.items.unnamed}
         </Text>
 
         {/* Tapping the location opens the container without redoing the

@@ -77,12 +77,12 @@ export default function ItemScreen() {
     <Screen edges={['left', 'right', 'bottom']}>
       <Stack.Screen
         options={{
-          title: item.name,
+          title: item.name || strings.items.unnamed,
           headerRight: () => (
             <Pressable
               onPress={() => router.push(`/item/${id}/edit`)}
               accessibilityRole="button"
-              accessibilityLabel={`Edit ${item.name}`}
+              accessibilityLabel={`Edit ${item.name || strings.items.unnamed}`}
               hitSlop={spacing.sm}
               style={styles.headerButton}
             >
@@ -100,12 +100,15 @@ export default function ItemScreen() {
             source={{ uri: item.photoUri }}
             style={styles.photo}
             accessibilityIgnoresInvertColors
-            accessibilityLabel={`Photo of ${item.name}`}
+            accessibilityLabel={`Photo of ${item.name || strings.items.unnamed}`}
           />
         ) : null}
 
-        <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
-          {item.name}
+        <Text
+          style={[styles.title, { color: item.name ? colors.text : colors.textMuted }]}
+          accessibilityRole="header"
+        >
+          {item.name || strings.items.unnamed}
         </Text>
 
         {/* The whole point of the app: where is this thing? (issue #13) */}

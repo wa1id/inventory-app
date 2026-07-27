@@ -137,7 +137,6 @@ export default function CaptureScreen() {
     void captureFastItem({
       containerId,
       photoUri: uri,
-      names: { pending: strings.capture.pendingName, fallback: strings.capture.fallbackName },
       deps: {
         storePhoto: storeItemPhoto,
         createItem: (draft) => repos.items.create(draft),
