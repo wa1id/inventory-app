@@ -18,10 +18,26 @@ describe('onColor', () => {
     expect(onColor('#00FF00')).toBe('#12161C');
   });
 
-  it('returns a legible foreground for every space colour', () => {
+  it('clears WCAG AA for large text on every space colour', () => {
+    const lum = (hex: string) => {
+      const channel = (offset: number) => {
+        const srgb = parseInt(hex.replace('#', '').slice(offset, offset + 2), 16) / 255;
+        return srgb <= 0.03928 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
+      };
+      return 0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4);
+    };
+    const contrast = (a: string, b: string) =>
+      (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
+
     for (const color of SPACE_COLORS) {
-      expect(['#FFFFFF', '#12161C']).toContain(onColor(color));
+      expect(contrast(onColor(color), color)).toBeGreaterThanOrEqual(3);
     }
+  });
+
+  it('picks the higher-contrast foreground, not the intuitive one', () => {
+    // The default blue reads as a "white text" colour but measures 3.2:1
+    // against white and 5.6:1 against ink.
+    expect(onColor('#5B8DEF')).toBe('#12161C');
   });
 });
 
