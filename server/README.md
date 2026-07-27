@@ -31,7 +31,7 @@ Architecturally this is **Ports and Adapters**: `src/port.ts` is the port,
 everything under `src/adapters/` is an adapter. The rule that keeps it honest:
 **nothing outside `src/adapters/` may import a provider SDK.**
 
-The prompt and the output schema live in `src/prompt.ts`, deliberately *outside*
+The prompt and the output schema live in `src/prompt.ts`, deliberately _outside_
 the adapters. Two models pointed at the same photo must answer the same
 question, or comparing them measures prompt differences rather than model
 quality. An adapter's only jobs are transport and error classification.
@@ -72,7 +72,7 @@ directly:
 Nothing else changes: not the HTTP layer, not the contract, not the client.
 
 `mimoVision.ts` is the worked example. Xiaomi MiMo is not on the gateway, and
-although its API is OpenAI-shaped, only the *transport* is:
+although its API is OpenAI-shaped, only the _transport_ is:
 
 - **Tool calls are unusable.** The model writes `<tool_call>…</tool_call>` into
   the message content and returns `tool_calls: null`. Structured output has to
@@ -89,10 +89,10 @@ hand the rest of the service the same shape every other provider hands it.
 
 ## Choosing which model answers
 
-| Where | How |
-| --- | --- |
-| Per deployment | `RECOGNITION_ADAPTER` env var (default `mimo`) |
-| Per request | `"adapter": "<id>"` in the request body, for A/B runs |
+| Where          | How                                                   |
+| -------------- | ----------------------------------------------------- |
+| Per deployment | `RECOGNITION_ADAPTER` env var (default `mimo`)        |
+| Per request    | `"adapter": "<id>"` in the request body, for A/B runs |
 
 The gateway adapters authenticate via Vercel OIDC and need no key. `mimo` is
 called directly, so **any deployment serving it needs `MIMO_API_KEY` set** —

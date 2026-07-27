@@ -3,12 +3,7 @@ import { Output, generateText } from 'ai';
 import { z } from 'zod';
 
 import type { AdapterErrorKind, AdapterOutcome, RecognizeOptions, VisionAdapter } from '../port.js';
-import {
-  SYSTEM_PROMPT,
-  USER_PROMPT,
-  toRawSuggestion,
-  type Extraction,
-} from '../prompt.js';
+import { SYSTEM_PROMPT, USER_PROMPT, toRawSuggestion, type Extraction } from '../prompt.js';
 
 /** Xiaomi's OpenAI-compatible endpoint. */
 const BASE_URL = 'https://api.xiaomimimo.com/v1';

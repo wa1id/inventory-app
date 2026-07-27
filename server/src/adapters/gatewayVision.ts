@@ -65,8 +65,9 @@ function classify(error: unknown): { kind: AdapterErrorKind; message: string } {
     return { kind: 'timeout', message };
   }
 
-  const status = (error as { statusCode?: number; status?: number })?.statusCode
-    ?? (error as { status?: number })?.status;
+  const status =
+    (error as { statusCode?: number; status?: number })?.statusCode ??
+    (error as { status?: number })?.status;
 
   if (status === 429 || /rate.?limit|quota|too many requests/i.test(message)) {
     return { kind: 'rate_limited', message };

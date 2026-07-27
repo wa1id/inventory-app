@@ -47,10 +47,7 @@ test('rejects non-object bodies', () => {
 
 test('rejects a missing or non-base64 encoding', () => {
   assert.equal(parseRequest(body({ image: { data: validImage } })).ok, false);
-  assert.equal(
-    parseRequest(body({ image: { data: validImage, encoding: 'hex' } })).ok,
-    false,
-  );
+  assert.equal(parseRequest(body({ image: { data: validImage, encoding: 'hex' } })).ok, false);
 });
 
 test('rejects an empty image', () => {
