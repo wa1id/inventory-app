@@ -14,6 +14,7 @@
  */
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
+import { Buffer } from 'node:buffer';
 
 const PORT = Number(process.env.PORT ?? 8787);
 

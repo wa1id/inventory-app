@@ -1,7 +1,9 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
 # dependencies
-node_modules/
+# No trailing slash: a bare `node_modules/` matches only directories, which let
+# a `node_modules` symlink get committed once and break `npm ci` on checkout.
+node_modules
 
 # Expo
 .expo/
@@ -32,6 +34,9 @@ yarn-error.*
 
 # test output
 coverage/
+
+# local git worktrees
+.claude/worktrees/
 
 # local env files
 .env*.local
