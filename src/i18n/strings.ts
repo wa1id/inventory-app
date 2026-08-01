@@ -149,6 +149,18 @@ export const strings = {
     savedUnnamed: (count: number) => `✓ ${count} saved · name ${count === 1 ? 'it' : 'them'} later`,
     failedSome: (count: number) =>
       `${count} photo${count === 1 ? '' : 's'} could not be saved. Nothing else was lost.`,
+    review: {
+      summary: (count: number) => `${count} item${count === 1 ? '' : 's'} captured`,
+      pending: (count: number) => `Saving ${count} more…`,
+      toName: (count: number) =>
+        count === 1 ? '1 still needs a name' : `${count} still need a name`,
+      keepAll: (count: number) => (count === 1 ? 'Keep this item' : `Keep all ${count}`),
+      keepShooting: 'Keep shooting',
+      empty: {
+        title: 'Nothing was saved',
+        body: 'None of the photos from this session could be saved. Head back and try again.',
+      },
+    },
   },
   search: {
     placeholder: 'Search items, tags, or boxes',

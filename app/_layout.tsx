@@ -88,9 +88,10 @@ function RootNavigator() {
         <Stack.Screen name="item/[id]/index" options={{ title: 'Item' }} />
         <Stack.Screen name="item/[id]/edit" options={{ title: 'Edit item' }} />
         <Stack.Screen
-          name="capture"
+          name="capture/index"
           options={{ headerShown: false, presentation: 'fullScreenModal' }}
         />
+        <Stack.Screen name="capture/review" options={{ title: 'Review captures' }} />
         <Stack.Screen name="c/[token]" options={{ title: 'QR label' }} />
       </Stack>
     </>

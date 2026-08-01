@@ -25,9 +25,15 @@ type CaptureMode = 'single' | 'fast';
  * entry one tap away — a camera problem must never block adding an item.
  */
 export default function CaptureScreen() {
-  const { containerId, mode: initialMode } = useLocalSearchParams<{
+  const {
+    containerId,
+    mode: initialMode,
+    since,
+  } = useLocalSearchParams<{
     containerId: string;
     mode?: CaptureMode;
+    /** Carried through "keep shooting" so a resumed session reviews as one. */
+    since?: string;
   }>();
   const router = useRouter();
   const { colors } = useTheme();
@@ -56,6 +62,11 @@ export default function CaptureScreen() {
   // Guards the camera hardware only. The rest of the pipeline deliberately
   // runs unguarded so the next shot never waits on the previous one.
   const shutterBusy = useRef(false);
+  // Everything created from the first fast shutter press on belongs to this
+  // session; the review screen selects by creation time because rows keep
+  // landing after the camera has unmounted. Stamped in the handler, not during
+  // render, so the component stays pure.
+  const sessionStart = useRef<number | null>(since ? Number(since) : null);
 
   function continueManually() {
     router.replace(`/item/new?containerId=${containerId}`);
@@ -118,6 +129,8 @@ export default function CaptureScreen() {
    */
   async function takeFastPhoto() {
     if (!cameraRef.current || shutterBusy.current) return;
+    // Before the photo exists, so every row this press creates sorts after it.
+    sessionStart.current ??= Date.now();
     if (!hasRoomForPhoto()) {
       setError(
         'There is not enough free space to save a photo. Free some space, or continue without one.',
@@ -171,9 +184,19 @@ export default function CaptureScreen() {
 
   function finishFast() {
     invalidate();
-    router.replace(
-      containerId === DROP_ZONE_CONTAINER_ID ? '/drop-zone' : `/container/${containerId}`,
-    );
+    if (captured === 0) {
+      router.replace(
+        containerId === DROP_ZONE_CONTAINER_ID ? '/drop-zone' : `/container/${containerId}`,
+      );
+      return;
+    }
+    const params = new URLSearchParams({
+      containerId,
+      // captured > 0 guarantees a shutter press stamped the session start.
+      since: String(sessionStart.current ?? Date.now()),
+      expected: String(captured),
+    });
+    router.replace(`/capture/review?${params.toString()}`);
   }
 
   const pending = captured - completed;

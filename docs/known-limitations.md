@@ -74,7 +74,8 @@ Until that happens, treat iOS as built-but-unvalidated.
 Not defects — explicitly out of scope per the epic (#1), scheduled for the
 Post-MVP milestone:
 
-Multi-item and rapid capture, barcode lookup, semantic search, lending,
+Multi-item recognition in a single photo (rapid one-shot-per-item capture
+with batch review has since shipped), barcode lookup, semantic search, lending,
 moving mode, zones, nested containers, collaboration and sharing, analytics,
 CSV import/export, insurance reports, printable label sheets, subscriptions,
 accounts and cloud sync, and the web portal.
