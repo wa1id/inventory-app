@@ -51,6 +51,38 @@ Until that happens, treat iOS as built-but-unvalidated.
   The scanner path itself (`resolveScan`) is the same code the deep link uses
   and is covered by tests.
 
+## Backup and photo storage
+
+Shipped: an opt-in Cloudflare Worker over R2 (`worker/`) storing item photos and
+whole-database snapshots, keyed by a device-generated recovery code. What is
+worth knowing before relying on it:
+
+- **The recovery code is unrecoverable by design.** The service stores nothing
+  that could reconstruct one — that is what lets it hold no user records at all.
+  Someone who loses the code loses the backup. The UI says so before the code is
+  ever shown, but it remains the sharpest edge in the feature.
+- **Android and iOS behave differently on uninstall.** iOS keeps Keychain
+  entries, so reinstalling usually restores silently; Android wipes the
+  keystore, so the code must be typed back in. Both paths work; only one is
+  invisible. Verify the Android path on a device before calling this done.
+- **Backup is not sync.** Snapshots are whole-file and last-write-wins. Running
+  two devices on one recovery code will lose data.
+- **Backups run on foreground, not in the background.** No background task is
+  registered, so a phone that is never opened is never backed up. At most one
+  automatic backup runs every 15 minutes.
+- **Photo rehydration is batched, not lazy per row.** After a restore, missing
+  photos are pulled back ten at a time on each sync pass rather than on demand
+  when a row scrolls into view. A large library takes several passes to fill in,
+  and until then those items render without a photo.
+- **Snapshots are capped at 32 MB.** Well beyond a realistic personal inventory
+  without photo blobs, but a hard ceiling rather than a graceful degradation —
+  past it, backups fail with `too_large` and no partial strategy exists.
+- **Not yet exercised end to end on a device.** The service is deployed and
+  covered by tests against an in-memory R2, and the app's sync layer is covered
+  against real SQLite, but no phone has completed a capture → upload →
+  reinstall → restore cycle. That is the check that matters and it has not been
+  run.
+
 ## Functional gaps
 
 - **Photo suggestions are not configured.** `EXPO_PUBLIC_RECOGNITION_URL` is
@@ -78,4 +110,9 @@ Multi-item recognition in a single photo (rapid one-shot-per-item capture
 with batch review has since shipped), barcode lookup, semantic search, lending,
 moving mode, zones, nested containers, collaboration and sharing, analytics,
 CSV import/export, insurance reports, printable label sheets, subscriptions,
-accounts and cloud sync, and the web portal.
+and the web portal.
+
+Off-device backup has since shipped (see below) and is no longer a scope cut.
+It is deliberately **backup, not sync**: one device is the writer, and there is
+no conflict resolution. Two phones sharing a recovery code will overwrite each
+other's snapshots.

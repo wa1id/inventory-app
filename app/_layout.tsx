@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { DatabaseProvider, useDatabase } from '@/providers/DatabaseProvider';
 import { OnboardingProvider, useOnboarding } from '@/providers/OnboardingProvider';
+import { SyncProvider } from '@/providers/SyncProvider';
 import { ErrorState, LoadingState, Screen } from '@/ui/components/Screen';
 import { useTheme } from '@/ui/theme';
 
@@ -68,6 +69,7 @@ function RootNavigator() {
           options={{ title: 'Choose a container', presentation: 'modal' }}
         />
         <Stack.Screen name="privacy" options={{ title: 'Privacy' }} />
+        <Stack.Screen name="backup" options={{ title: 'Backup' }} />
         <Stack.Screen name="space/new" options={{ title: 'New space', presentation: 'modal' }} />
         <Stack.Screen name="space/[id]/index" options={{ title: 'Space' }} />
         <Stack.Screen
@@ -102,9 +104,17 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <DatabaseProvider>
-        <OnboardingProvider>
-          <RootNavigator />
-        </OnboardingProvider>
+        {/*
+         * Inside DatabaseProvider because it needs the repositories, but above
+         * the readiness gate: it handles a not-yet-ready database itself, and
+         * mounting it below the gate would restart every sync pass each time
+         * the gate re-rendered.
+         */}
+        <SyncProvider>
+          <OnboardingProvider>
+            <RootNavigator />
+          </OnboardingProvider>
+        </SyncProvider>
       </DatabaseProvider>
     </SafeAreaProvider>
   );

@@ -25,6 +25,29 @@ export interface AppConfig {
   recognitionKey: string | null;
   /** Wall-clock budget for one recognition request. */
   recognitionTimeoutMs: number;
+  /**
+   * Base URL of the photo and backup service, or null when not configured.
+   *
+   * Null is a supported build, not a broken one: the app stays entirely local,
+   * which is exactly what it was before this service existed.
+   */
+  syncEndpoint: string | null;
+  /**
+   * Shared key the sync service expects.
+   *
+   * Same honesty as `recognitionKey`: it ships inside the bundle and is
+   * extractable. It keeps the endpoint from being discovered and used as free
+   * storage. What actually protects an account is the recovery code, which is
+   * generated on the device and never travels in a build.
+   */
+  syncKey: string | null;
+  /**
+   * Wall-clock budget for one sync request.
+   *
+   * Longer than recognition's: a backup upload is megabytes rather than one
+   * photo, and it runs where the user is not waiting on it.
+   */
+  syncTimeoutMs: number;
   environment: 'development' | 'preview' | 'production';
 }
 
@@ -38,5 +61,8 @@ export const appConfig: AppConfig = {
   recognitionEndpoint: process.env.EXPO_PUBLIC_RECOGNITION_URL?.trim() || null,
   recognitionKey: process.env.EXPO_PUBLIC_RECOGNITION_KEY?.trim() || null,
   recognitionTimeoutMs: Number(process.env.EXPO_PUBLIC_RECOGNITION_TIMEOUT_MS ?? 15_000),
+  syncEndpoint: process.env.EXPO_PUBLIC_SYNC_URL?.trim().replace(/\/+$/, '') || null,
+  syncKey: process.env.EXPO_PUBLIC_SYNC_KEY?.trim() || null,
+  syncTimeoutMs: Number(process.env.EXPO_PUBLIC_SYNC_TIMEOUT_MS ?? 60_000),
   environment: readEnvironment(),
 };

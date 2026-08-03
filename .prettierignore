@@ -5,3 +5,5 @@ ios
 coverage
 dist
 package-lock.json
+worker/worker-configuration.d.ts
+worker/.wrangler

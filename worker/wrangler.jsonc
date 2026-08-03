@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "inventory-sync",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-01",
+  // Served from the account's existing workers.dev subdomain. Set per-Worker
+  // rather than account-wide: the other Workers on this account deliberately
+  // keep theirs off and serve from custom domains instead.
+  "workers_dev": true,
+  // Every version would otherwise get its own public hostname. For a storage
+  // endpoint that is extra attack surface with no upside — a superseded
+  // version that still answers is a way to reach data through code we have
+  // already decided to stop running.
+  "preview_urls": false,
+  "observability": {
+    "enabled": true,
+    // Request logs are sampled, and the code never logs a bearer token or an
+    // object key — an account id in a log line is enough to correlate abuse
+    // without handing anyone the credential that opens the account.
+    "head_sampling_rate": 1,
+  },
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "inventory-app",
+    },
+  ],
+}

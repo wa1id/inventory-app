@@ -31,7 +31,8 @@
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_ENV": "production",
-        "EXPO_PUBLIC_RECOGNITION_URL": "https://server-wy-studio.vercel.app/api/recognize"
+        "EXPO_PUBLIC_RECOGNITION_URL": "https://server-wy-studio.vercel.app/api/recognize",
+        "EXPO_PUBLIC_SYNC_URL": "https://inventory-sync.wyachou95.workers.dev"
       },
       "android": {
         "buildType": "app-bundle"

@@ -13,6 +13,19 @@ export interface SqlDatabase {
   getFirstAsync<T>(sql: string, params?: SqlParams): Promise<T | null>;
   withTransactionAsync(task: () => Promise<void>): Promise<void>;
   closeAsync(): Promise<void>;
+
+  /**
+   * Whole-database snapshot, for backup.
+   *
+   * Optional because it is a capability of the backend rather than something
+   * every backend owes the repositories — the Node adapter used in tests has no
+   * reason to implement it, and no repository may depend on it. Callers check
+   * for it and degrade to local-only when it is absent.
+   */
+  snapshotAsync?(): Promise<Uint8Array>;
+
+  /** Replaces this database's contents with a snapshot. See `snapshotAsync`. */
+  restoreAsync?(snapshot: Uint8Array): Promise<void>;
 }
 
 export type SqlValue = string | number | null;

@@ -134,6 +134,45 @@ export const MIGRATIONS: Migration[] = [
       );
     `,
   },
+  {
+    version: 4,
+    name: 'add_photo_sync_state',
+    up: `
+      -- When this photo's bytes were last confirmed stored remotely. NULL
+      -- means "not uploaded yet", which is also the correct state for every
+      -- photo that existed before this migration — they are backfilled by the
+      -- uploader, not here, because this migration cannot do network I/O.
+      ALTER TABLE item_photos ADD COLUMN remote_synced_at INTEGER;
+
+      -- Partial index: the uploader only ever asks for the unsynced ones, and
+      -- in a healthy inventory that set is empty. Indexing only the NULLs keeps
+      -- the index proportional to the backlog rather than to the library.
+      CREATE INDEX idx_item_photos_unsynced
+        ON item_photos(created_at)
+        WHERE remote_synced_at IS NULL;
+
+      -- Tombstones for remote cleanup.
+      --
+      -- Deleting an item cascades to its photo rows, which is exactly the
+      -- moment the id needed to delete the remote copy stops existing. Without
+      -- this table a deleted photo would be unreachable locally and retained
+      -- remotely forever — the user believing it gone while it is not.
+      CREATE TABLE sync_deletions (
+        photo_id   TEXT PRIMARY KEY NOT NULL,
+        deleted_at INTEGER NOT NULL
+      );
+
+      -- A trigger rather than repository code: the deletes that matter most
+      -- here are the cascaded ones, which no repository issues explicitly.
+      CREATE TRIGGER item_photos_tombstone
+      AFTER DELETE ON item_photos
+      WHEN OLD.remote_synced_at IS NOT NULL
+      BEGIN
+        INSERT OR REPLACE INTO sync_deletions (photo_id, deleted_at)
+        VALUES (OLD.id, CAST(strftime('%s','now') AS INTEGER) * 1000);
+      END;
+    `,
+  },
 ];
 
 /** Schema version a freshly built app expects. */

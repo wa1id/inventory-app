@@ -38,6 +38,33 @@ jobs:
       - name: Test
         run: npm run test:ci
 
+  worker:
+    name: Sync service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: worker/package-lock.json
+
+      - name: Install dependencies
+        working-directory: worker
+        run: npm ci
+
+      # Regenerates the binding types from wrangler.jsonc before checking them,
+      # so a binding added to the config without updating the code fails here
+      # rather than at deploy time.
+      - name: Typecheck
+        working-directory: worker
+        run: npm run typecheck
+
+      - name: Test
+        working-directory: worker
+        run: npm test
+
   android-build:
     name: Android development build
     runs-on: ubuntu-latest

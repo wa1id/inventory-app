@@ -7,6 +7,7 @@ import { LATEST_SCHEMA_VERSION } from '@/db/migrations';
 import { appVersion } from '@/services/appInfo';
 import { appConfig } from '@/services/config';
 import { useOnboarding } from '@/providers/OnboardingProvider';
+import { useSync, type SyncStatus } from '@/providers/SyncProvider';
 import { Screen } from '@/ui/components/Screen';
 import { MIN_TOUCH_TARGET, radius, spacing, useTheme } from '@/ui/theme';
 
@@ -29,10 +30,31 @@ function Row({ label, value, onPress }: { label: string; value?: string; onPress
   );
 }
 
+/**
+ * The settings row deliberately says "Off" rather than nothing when backup is
+ * disabled: an inventory that exists only on one phone is a fact worth seeing
+ * without opening a submenu.
+ */
+function backupSummary(status: SyncStatus): string {
+  switch (status.state) {
+    case 'unavailable':
+      return 'Not configured';
+    case 'off':
+      return 'Off';
+    case 'working':
+      return 'Backing up…';
+    case 'error':
+      return 'Needs attention';
+    default:
+      return status.lastBackupAt === null ? 'On, not yet run' : 'On';
+  }
+}
+
 export default function SettingsScreen() {
   const router = useRouter();
   const repos = useRepositories();
   const { replay } = useOnboarding();
+  const { status } = useSync();
   const { colors } = useTheme();
 
   const { data: counts } = useInventoryQuery(async () => {
@@ -54,6 +76,17 @@ export default function SettingsScreen() {
           <Row label="Spaces" value={String(counts?.spaces ?? 0)} />
           <Row label="Containers" value={String(counts?.containers ?? 0)} />
           <Row label="Items" value={String(counts?.items ?? 0)} />
+        </View>
+
+        <View
+          style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        >
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Backup</Text>
+          <Row
+            label="Off-device backup"
+            value={backupSummary(status)}
+            onPress={() => router.push('/backup')}
+          />
         </View>
 
         <View

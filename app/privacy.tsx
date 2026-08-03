@@ -30,13 +30,45 @@ export default function PrivacyScreen() {
   return (
     <Screen edges={['left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Section title="Your inventory stays on this device">
+        <Section title="Where your inventory lives">
           <Body>
             Spaces, containers, items, notes, and photos are stored in a database on this phone.
-            There is no account, and nothing is uploaded or backed up to a server. Uninstalling the
-            app deletes all of it.
+            That copy is the one the app reads from, and everything keeps working with no network at
+            all.
           </Body>
+          {appConfig.syncEndpoint ? (
+            <Body>
+              Backup is off unless you turn it on. If you do, a copy of that database and your
+              photos is uploaded so you can get them back after losing or replacing this phone. If
+              you leave it off, nothing is uploaded and uninstalling the app deletes everything.
+            </Body>
+          ) : (
+            <Body>
+              This build has no backup service configured, so nothing is uploaded anywhere.
+              Uninstalling the app deletes all of it.
+            </Body>
+          )}
         </Section>
+
+        {appConfig.syncEndpoint ? (
+          <Section title="If you turn on backup">
+            <Body>
+              There is no account, no email address, and no password. The app generates a recovery
+              code on this device and stores your backup under a name derived from it. That code is
+              the only way to reach the backup — including for us. It is not recoverable, and if you
+              lose it the backup cannot be opened by anyone, including you.
+            </Body>
+            <Body>
+              Anyone who has the code can read that inventory, so it is worth treating like a
+              password. Uploads travel over an encrypted connection. Your five most recent database
+              snapshots are kept, so a mistake you notice later can still be undone.
+            </Body>
+            <Body>
+              Turning backup on does not change what is on this phone. Deleting an item deletes the
+              stored copy of its photo too.
+            </Body>
+          </Section>
+        ) : null}
 
         <Section title="Camera and photos">
           <Body>
@@ -84,8 +116,9 @@ export default function PrivacyScreen() {
 
         <Section title="Working offline">
           <Body>
-            Everything except photo suggestions works with no network connection at all, including
-            adding items, scanning labels, and searching.
+            Everything except photo suggestions and backup works with no network connection at all,
+            including adding items, scanning labels, and searching. Backups wait for a connection
+            and catch up on their own; nothing you do is blocked while they wait.
           </Body>
         </Section>
       </ScrollView>

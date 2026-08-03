@@ -1,5 +1,7 @@
 import * as Crypto from 'expo-crypto';
 
+import { toHex } from './bytes';
+
 /**
  * All identifiers and tokens come from the platform CSPRNG.
  *
@@ -9,14 +11,6 @@ import * as Crypto from 'expo-crypto';
  */
 function randomBytes(count: number): Uint8Array {
   return Crypto.getRandomBytes(count);
-}
-
-function toHex(bytes: Uint8Array): string {
-  let out = '';
-  for (const byte of bytes) {
-    out += byte.toString(16).padStart(2, '0');
-  }
-  return out;
 }
 
 /**

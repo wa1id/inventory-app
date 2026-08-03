@@ -84,6 +84,41 @@ export async function storeItemPhoto(sourceUri: string): Promise<StoredImage> {
   }
 }
 
+/** Reads a stored photo's bytes, or null when the file is gone. */
+export async function readStoredPhoto(uri: string): Promise<Uint8Array | null> {
+  try {
+    const file = new File(uri);
+    if (!file.exists) return null;
+    return await file.bytes();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Writes a photo's bytes back into app storage under a known id.
+ *
+ * The restore counterpart to `storeItemPhoto`. The id rather than a random
+ * filename is what makes it idempotent: re-running a partial restore overwrites
+ * the same file instead of accumulating a copy per attempt.
+ *
+ * No re-encoding here — these bytes were already normalized before they were
+ * uploaded, and decoding them again would only lose quality.
+ */
+export function writeStoredPhoto(photoId: string, bytes: Uint8Array): StoredImage {
+  const destination = new File(photoDirectory(), `${photoId}.jpg`);
+  if (destination.exists) destination.delete();
+  destination.create();
+  destination.write(bytes);
+
+  return {
+    uri: destination.uri,
+    width: 0,
+    height: 0,
+    byteSize: destination.size ?? bytes.byteLength,
+  };
+}
+
 /**
  * Deletes photo files whose database rows are already gone.
  *

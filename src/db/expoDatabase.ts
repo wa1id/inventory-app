@@ -18,6 +18,45 @@ function wrap(db: SQLite.SQLiteDatabase): SqlDatabase {
     getFirstAsync: <T>(sql: string, params: SqlParams = []) => db.getFirstAsync<T>(sql, params),
     withTransactionAsync: (task) => db.withTransactionAsync(task),
     closeAsync: () => db.closeAsync(),
+
+    /**
+     * Snapshot for backup.
+     *
+     * The checkpoint first is what makes the result trustworthy: in WAL mode
+     * recent commits live in `inventory.db-wal` until something folds them
+     * back, and a snapshot taken without it can be missing the writes the user
+     * just made — a backup that silently lags reality is worse than none,
+     * because it is believed.
+     */
+    snapshotAsync: async () => {
+      await db.execAsync('PRAGMA wal_checkpoint(TRUNCATE)');
+      return db.serializeAsync();
+    },
+
+    /**
+     * Replaces every table with the snapshot's, in place.
+     *
+     * Uses SQLite's own online backup API rather than overwriting the file.
+     * Writing bytes over a live database means the open connection, its page
+     * cache, and the `-wal` and `-shm` sidecars all still describe the old
+     * database — the classic way to turn a restore into corruption. Going
+     * through `backupDatabaseAsync` keeps the connection valid throughout, so
+     * there is no window where the app holds a handle to something that no
+     * longer exists.
+     */
+    restoreAsync: async (snapshot) => {
+      const source = await SQLite.deserializeDatabaseAsync(snapshot);
+      try {
+        await SQLite.backupDatabaseAsync({
+          sourceDatabase: source,
+          sourceDatabaseName: 'main',
+          destDatabase: db,
+          destDatabaseName: 'main',
+        });
+      } finally {
+        await source.closeAsync();
+      }
+    },
   };
 }
 
