@@ -26,6 +26,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # `eslint .` walks into server/, and `import/no-unresolved` cannot see a
+      # dependency that was never installed. Without this the lint step fails on
+      # server/'s provider SDK imports and the job dies before typecheck or the
+      # tests ever run — which is how it sat red for three commits.
+      - name: Install server dependencies
+        working-directory: server
+        run: npm ci
+
       - name: Check formatting
         run: npm run format:check
 
