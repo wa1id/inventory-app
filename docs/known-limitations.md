@@ -70,6 +70,15 @@ worth knowing before relying on it:
 - **Backups run on foreground, not in the background.** No background task is
   registered, so a phone that is never opened is never backed up. At most one
   automatic backup runs every 15 minutes.
+- **Existing photos are not re-compressed.** Photos captured before the
+  long-edge fix keep their original size — a portrait shot at the old bound is
+  roughly 700 KB against roughly 200 KB now. Re-encoding them would mean
+  decoding an already-lossy image and compressing it again, so they are left
+  alone and only new captures benefit. A one-off backfill is possible but has
+  to be a deliberate quality trade, not a silent one.
+- **Thumbnails are not backfilled either.** Rows written before schema v5 have
+  a NULL `thumb_uri` and fall back to the full image in lists, so they stay as
+  expensive to draw as they were. Restoring from a backup regenerates them.
 - **Photo rehydration is batched, not lazy per row.** After a restore, missing
   photos are pulled back ten at a time on each sync pass rather than on demand
   when a row scrolls into view. A large library takes several passes to fill in,

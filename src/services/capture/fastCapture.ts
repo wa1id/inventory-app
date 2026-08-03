@@ -3,6 +3,7 @@ import type { RecognitionFailureReason, RecognitionResult } from '@/services/ai/
 
 export interface StoredPhoto {
   uri: string;
+  thumbUri: string;
   width: number;
   height: number;
   byteSize: number | null;
@@ -57,6 +58,7 @@ export async function captureFastItem({
     // the user then has to clear before typing the real thing.
     photo: {
       uri: stored.uri,
+      thumbUri: stored.thumbUri,
       width: stored.width,
       height: stored.height,
       // The store reports an unknown size as null; the draft omits it instead.

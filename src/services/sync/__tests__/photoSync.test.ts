@@ -17,10 +17,19 @@ const mockFiles = new Map<string, Uint8Array>();
 
 jest.mock('@/services/capture/imageStore', () => ({
   readStoredPhoto: async (uri: string) => mockFiles.get(uri) ?? null,
-  writeStoredPhoto: (photoId: string, bytes: Uint8Array) => {
-    const uri = `file:///documents/item-photos/${photoId}.jpg`;
+  writeStoredPhoto: async (photoId: string, bytes: Uint8Array) => {
+    const uri = `file:///documents/item-photos/${photoId}.webp`;
+    const thumbUri = `file:///documents/item-photos/${photoId}-thumb.webp`;
     mockFiles.set(uri, bytes);
-    return { uri, width: 0, height: 0, byteSize: bytes.byteLength };
+    // The real one re-derives the thumbnail from the downloaded bytes rather
+    // than downloading a second object.
+    mockFiles.set(thumbUri, bytes.subarray(0, 1));
+    return { uri, thumbUri, width: 0, height: 0, byteSize: bytes.byteLength };
+  },
+  deleteStoredPhotos: (uris: (string | null)[]) => {
+    for (const uri of uris) {
+      if (uri) mockFiles.delete(uri);
+    }
   },
 }));
 
@@ -78,14 +87,16 @@ async function seed(): Promise<{ db: SqlDatabase; repos: Repositories; itemId: s
 }
 
 async function addPhoto(db: SqlDatabase, itemId: string, photoId: string, synced = false) {
-  const uri = `file:///documents/item-photos/${photoId}.jpg`;
+  const uri = `file:///documents/item-photos/${photoId}.webp`;
+  const thumbUri = `file:///documents/item-photos/${photoId}-thumb.webp`;
   mockFiles.set(uri, new Uint8Array([1, 2, 3]));
+  mockFiles.set(thumbUri, new Uint8Array([1]));
   await db.runAsync(
-    `INSERT INTO item_photos (id, item_id, uri, byte_size, created_at, remote_synced_at)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [photoId, itemId, uri, 3, Date.now(), synced ? Date.now() : null],
+    `INSERT INTO item_photos (id, item_id, uri, thumb_uri, byte_size, created_at, remote_synced_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [photoId, itemId, uri, thumbUri, 3, Date.now(), synced ? Date.now() : null],
   );
-  return uri;
+  return { uri, thumbUri };
 }
 
 beforeEach(() => {
@@ -204,7 +215,7 @@ describe('deletion tombstones', () => {
 describe('rehydrateMissingPhotos', () => {
   it('pulls back files that a restore left behind, re-pointing the row', async () => {
     const { db, itemId } = await seed();
-    const originalUri = await addPhoto(db, itemId, 'photo-a', true);
+    const { uri: originalUri, thumbUri } = await addPhoto(db, itemId, 'photo-a', true);
     const client = fakeClient();
     client.remote.set('photo-a', new Uint8Array([7, 7, 7, 7]));
 
@@ -215,12 +226,16 @@ describe('rehydrateMissingPhotos', () => {
     const result = await rehydrateMissingPhotos(db, client);
 
     expect(result).toEqual({ restored: 1, interrupted: false });
-    const [row] = await db.getAllAsync<{ uri: string; byte_size: number }>(
-      'SELECT uri, byte_size FROM item_photos',
+    const [row] = await db.getAllAsync<{ uri: string; thumb_uri: string; byte_size: number }>(
+      'SELECT uri, thumb_uri, byte_size FROM item_photos',
     );
     expect(row?.byte_size).toBe(4);
     expect(mockFiles.get(row?.uri ?? '')).toEqual(new Uint8Array([7, 7, 7, 7]));
     expect(row?.uri).toBe(originalUri);
+    // The thumbnail is re-derived locally rather than fetched, so it comes back
+    // without a second round trip.
+    expect(row?.thumb_uri).toBe(thumbUri);
+    expect(mockFiles.has(thumbUri)).toBe(true);
   });
 
   it('leaves photos alone when the local file is present', async () => {

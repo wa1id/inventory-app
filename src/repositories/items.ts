@@ -17,6 +17,7 @@ interface ItemRow {
 
 interface ItemContextRow extends ItemRow {
   photo_uri: string | null;
+  photo_thumb_uri: string | null;
   tag_names: string | null;
   space_id: string;
   space_name: string;
@@ -45,6 +46,7 @@ function toItemWithContext(row: ItemContextRow): ItemWithContext {
   return {
     ...toItem(row),
     photoUri: row.photo_uri,
+    photoThumbUri: row.photo_thumb_uri,
     tags: splitTagNames(row.tag_names),
     spaceId: row.space_id,
     spaceName: row.space_name,
@@ -65,6 +67,8 @@ const ITEM_CONTEXT_SELECT = `
   SELECT i.*,
          (SELECT p.uri FROM item_photos p WHERE p.item_id = i.id
            ORDER BY p.created_at ASC LIMIT 1) AS photo_uri,
+         (SELECT p.thumb_uri FROM item_photos p WHERE p.item_id = i.id
+           ORDER BY p.created_at ASC LIMIT 1) AS photo_thumb_uri,
          (SELECT GROUP_CONCAT(t.name, char(31)) FROM item_tags it
             JOIN tags t ON t.id = it.tag_id WHERE it.item_id = i.id) AS tag_names,
          c.space_id AS space_id,
@@ -93,7 +97,13 @@ export interface ItemDraft {
   currency?: string | null;
   notes?: string | null;
   tags?: string[];
-  photo?: { uri: string; width?: number; height?: number; byteSize?: number } | null;
+  photo?: {
+    uri: string;
+    thumbUri?: string;
+    width?: number;
+    height?: number;
+    byteSize?: number;
+  } | null;
 }
 
 export type UpdateItemInput = Partial<Omit<ItemDraft, 'containerId'>> & {
@@ -237,12 +247,13 @@ export function createItemsRepository(db: SqlDatabase) {
 
         if (draft.photo) {
           await db.runAsync(
-            `INSERT INTO item_photos (id, item_id, uri, width, height, byte_size, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO item_photos (id, item_id, uri, thumb_uri, width, height, byte_size, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               newId(),
               item.id,
               draft.photo.uri,
+              draft.photo.thumbUri ?? null,
               draft.photo.width ?? null,
               draft.photo.height ?? null,
               draft.photo.byteSize ?? null,
@@ -320,12 +331,13 @@ export function createItemsRepository(db: SqlDatabase) {
           await db.runAsync('DELETE FROM item_photos WHERE item_id = ?', [id]);
           if (input.photo) {
             await db.runAsync(
-              `INSERT INTO item_photos (id, item_id, uri, width, height, byte_size, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?)`,
+              `INSERT INTO item_photos (id, item_id, uri, thumb_uri, width, height, byte_size, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
               [
                 newId(),
                 id,
                 input.photo.uri,
+                input.photo.thumbUri ?? null,
                 input.photo.width ?? null,
                 input.photo.height ?? null,
                 input.photo.byteSize ?? null,
@@ -344,6 +356,7 @@ export function createItemsRepository(db: SqlDatabase) {
         id: string;
         item_id: string;
         uri: string;
+        thumb_uri: string | null;
         width: number | null;
         height: number | null;
         byte_size: number | null;
@@ -354,6 +367,7 @@ export function createItemsRepository(db: SqlDatabase) {
         id: row.id,
         itemId: row.item_id,
         uri: row.uri,
+        thumbUri: row.thumb_uri,
         width: row.width,
         height: row.height,
         byteSize: row.byte_size,
@@ -367,11 +381,16 @@ export function createItemsRepository(db: SqlDatabase) {
       let orphanedPhotoUris: string[] = [];
 
       await db.withTransactionAsync(async () => {
-        const photos = await db.getAllAsync<{ uri: string }>(
-          'SELECT uri FROM item_photos WHERE item_id = ?',
+        const photos = await db.getAllAsync<{ uri: string; thumb_uri: string | null }>(
+          'SELECT uri, thumb_uri FROM item_photos WHERE item_id = ?',
           [id],
         );
-        orphanedPhotoUris = photos.map((photo) => photo.uri);
+        // Both files, or the thumbnail is left behind on every delete. Rows
+        // captured before thumbnails existed have none, and those nulls are
+        // dropped here rather than pushed onto every caller.
+        orphanedPhotoUris = photos
+          .flatMap((photo) => [photo.uri, photo.thumb_uri])
+          .filter((uri): uri is string => uri !== null);
 
         const result = await db.runAsync('DELETE FROM items WHERE id = ?', [id]);
         deleted = result.changes > 0;

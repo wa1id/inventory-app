@@ -1,5 +1,9 @@
 import type { SqlDatabase } from '@/db/types';
-import { readStoredPhoto, writeStoredPhoto } from '@/services/capture/imageStore';
+import {
+  deleteStoredPhotos,
+  readStoredPhoto,
+  writeStoredPhoto,
+} from '@/services/capture/imageStore';
 import { logEvent } from '@/services/telemetry';
 
 import type { SyncClient } from './client';
@@ -22,6 +26,7 @@ const BATCH_SIZE = 10;
 interface PendingPhoto {
   id: string;
   uri: string;
+  thumb_uri: string | null;
 }
 
 export interface PhotoSyncOutcome {
@@ -45,7 +50,7 @@ export async function uploadPendingPhotos(
   limit: number = BATCH_SIZE,
 ): Promise<{ uploaded: number; interrupted: boolean }> {
   const pending = await db.getAllAsync<PendingPhoto>(
-    `SELECT id, uri FROM item_photos
+    `SELECT id, uri, thumb_uri FROM item_photos
       WHERE remote_synced_at IS NULL
       ORDER BY created_at
       LIMIT ?`,
@@ -58,6 +63,9 @@ export async function uploadPendingPhotos(
     const bytes = await readStoredPhoto(photo.uri);
 
     if (!bytes) {
+      // The thumbnail is derived from bytes that no longer exist, so it goes
+      // with the row rather than lingering as an unreferenced file.
+      deleteStoredPhotos([photo.thumb_uri]);
       await db.runAsync('DELETE FROM item_photos WHERE id = ?', [photo.id]);
       continue;
     }
@@ -126,7 +134,7 @@ export async function rehydrateMissingPhotos(
   limit: number = BATCH_SIZE,
 ): Promise<{ restored: number; interrupted: boolean }> {
   const candidates = await db.getAllAsync<PendingPhoto>(
-    `SELECT id, uri FROM item_photos
+    `SELECT id, uri, thumb_uri FROM item_photos
       WHERE remote_synced_at IS NOT NULL
       ORDER BY created_at DESC
       LIMIT ?`,
@@ -146,9 +154,10 @@ export async function rehydrateMissingPhotos(
       return { restored, interrupted: true };
     }
 
-    const stored = writeStoredPhoto(photo.id, result.value);
-    await db.runAsync('UPDATE item_photos SET uri = ?, byte_size = ? WHERE id = ?', [
+    const stored = await writeStoredPhoto(photo.id, result.value);
+    await db.runAsync('UPDATE item_photos SET uri = ?, thumb_uri = ?, byte_size = ? WHERE id = ?', [
       stored.uri,
+      stored.thumbUri,
       stored.byteSize,
       photo.id,
     ]);

@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { MAX_IMAGE_DIMENSION } from '@/services/capture/imageStore';
+import { MAX_IMAGE_DIMENSION } from '@/services/capture/imageScaling';
 import { appConfig } from '@/services/config';
 import { Screen } from '@/ui/components/Screen';
 import { radius, spacing, useTheme } from '@/ui/theme';
@@ -76,7 +76,8 @@ export default function PrivacyScreen() {
             QR label. Photos you take in the app are saved to the app&apos;s own private storage —
             not to your camera roll. Importing a photo copies it; the original is left untouched.
             Each photo is resized to at most {MAX_IMAGE_DIMENSION} pixels on its long edge and
-            re-encoded as a JPEG before it is saved.
+            re-encoded as a WebP image before it is saved, alongside a small thumbnail used in
+            lists.
           </Body>
           <Body>
             Deleting an item, its container, or its space also deletes the photo file from this

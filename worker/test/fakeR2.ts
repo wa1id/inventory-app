@@ -52,7 +52,16 @@ export class FakeR2Bucket {
       size: stored.bytes.byteLength,
       httpEtag: `"${createHash('md5').update(stored.bytes).digest('hex')}"`,
       customMetadata: stored.customMetadata,
-      body: new Blob([stored.bytes as BlobPart]).stream(),
+      httpMetadata: stored.contentType ? { contentType: stored.contentType } : undefined,
+      // Built directly rather than via Blob: the Workers runtime types model
+      // Uint8Array as generic over its backing buffer, which does not satisfy
+      // BlobPart without a cast that hides real mismatches.
+      body: new ReadableStream({
+        start(controller) {
+          controller.enqueue(stored.bytes);
+          controller.close();
+        },
+      }),
       arrayBuffer: async () => stored.bytes.slice().buffer,
       json: async () => JSON.parse(new TextDecoder().decode(stored.bytes)),
       text: async () => new TextDecoder().decode(stored.bytes),

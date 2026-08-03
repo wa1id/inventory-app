@@ -11,7 +11,13 @@ function makeDeps(recognition: RecognitionResult | (() => Promise<RecognitionRes
   const deps: FastCaptureDeps = {
     storePhoto: async (uri) => {
       calls.stored.push(uri);
-      return { uri: `stored://${uri}`, width: 100, height: 200, byteSize: 4242 };
+      return {
+        uri: `stored://${uri}`,
+        thumbUri: `stored://${uri}-thumb`,
+        width: 100,
+        height: 200,
+        byteSize: 4242,
+      };
     },
     createItem: async (draft) => {
       calls.created.push(draft);

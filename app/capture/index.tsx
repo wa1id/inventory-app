@@ -92,6 +92,7 @@ export default function CaptureScreen() {
       const params = new URLSearchParams({
         containerId,
         photoUri: stored.uri,
+        photoThumbUri: stored.thumbUri,
         photoWidth: String(stored.width),
         photoHeight: String(stored.height),
       });

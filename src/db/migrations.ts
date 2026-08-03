@@ -173,6 +173,21 @@ export const MIGRATIONS: Migration[] = [
       END;
     `,
   },
+  {
+    version: 5,
+    name: 'add_photo_thumbnails',
+    up: `
+      -- Path to a small copy used by list rows, which are 56–64pt and were
+      -- decoding the full-size image to fill them.
+      --
+      -- Nullable because it cannot be backfilled here: generating one means
+      -- decoding and re-encoding an image, which a migration cannot do. Rows
+      -- written before this migration keep a NULL and fall back to the full
+      -- image, so nothing breaks — they are simply as expensive to draw as they
+      -- were before. New captures and restored photos populate it.
+      ALTER TABLE item_photos ADD COLUMN thumb_uri TEXT;
+    `,
+  },
 ];
 
 /** Schema version a freshly built app expects. */

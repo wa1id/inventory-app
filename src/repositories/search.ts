@@ -91,6 +91,8 @@ export function createSearchRepository(db: SqlDatabase) {
         `SELECT i.*,
                 (SELECT p.uri FROM item_photos p WHERE p.item_id = i.id
                   ORDER BY p.created_at ASC LIMIT 1) AS photo_uri,
+                (SELECT p.thumb_uri FROM item_photos p WHERE p.item_id = i.id
+                  ORDER BY p.created_at ASC LIMIT 1) AS photo_thumb_uri,
                 (SELECT GROUP_CONCAT(t.name, char(31)) FROM item_tags it
                    JOIN tags t ON t.id = it.tag_id WHERE it.item_id = i.id) AS tag_names,
                 c.space_id AS space_id,
@@ -215,6 +217,7 @@ interface ItemSearchRow {
   created_at: number;
   updated_at: number;
   photo_uri: string | null;
+  photo_thumb_uri: string | null;
   tag_names: string | null;
   space_id: string;
   space_name: string;
@@ -238,6 +241,7 @@ function toItemSearchResult(row: ItemSearchRow): ItemSearchResult {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     photoUri: row.photo_uri,
+    photoThumbUri: row.photo_thumb_uri,
     tags: splitTagNames(row.tag_names),
     spaceId: row.space_id,
     spaceName: row.space_name,

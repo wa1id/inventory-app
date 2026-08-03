@@ -14,6 +14,7 @@ function item(overrides: Partial<ItemWithContext>): ItemWithContext {
     createdAt: 0,
     updatedAt: 0,
     photoUri: null,
+    photoThumbUri: null,
     tags: [],
     spaceId: 'space-1',
     spaceName: 'Garage',

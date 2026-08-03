@@ -89,7 +89,9 @@ async function handlePhoto(
     if (!object) return json({ error: 'Not found.' }, 404);
     return new Response(object.body, {
       headers: {
-        'content-type': 'image/jpeg',
+        // Objects stored before photos moved to WebP carry no recorded type;
+        // JPEG is what those bytes actually are.
+        'content-type': object.httpMetadata?.contentType ?? 'image/jpeg',
         'content-length': String(object.size),
         etag: object.httpEtag,
         'cache-control': 'private, max-age=31536000, immutable',
@@ -108,7 +110,7 @@ async function handlePhoto(
     if (!quota.ok) return json({ error: quota.error }, 507);
 
     await env.BUCKET.put(key, body.bytes, {
-      httpMetadata: { contentType: 'image/jpeg' },
+      httpMetadata: { contentType: photoContentType(request) },
     });
     await applyUsageDelta(env, accountId, body.bytes.byteLength - replacing, replacing > 0 ? 0 : 1);
 
@@ -237,6 +239,22 @@ async function getBackup(env: Env, accountId: string, backupId: string): Promise
       'x-snapshot-captured-at': key.slice(backupPrefix(accountId).length).replace(/\.db$/, ''),
     },
   });
+}
+
+/**
+ * The image type the client says it is sending, restricted to an allowlist.
+ *
+ * Taken from the request rather than assumed, because the app's encoder has
+ * changed once already and will again. Restricted rather than echoed, because
+ * a caller-supplied content type is served straight back to whoever fetches
+ * the object — echoing it unchecked would let one be stored that a browser
+ * renders as something other than an image.
+ */
+const ALLOWED_PHOTO_TYPES = new Set(['image/jpeg', 'image/webp', 'image/png']);
+
+function photoContentType(request: Request): string {
+  const declared = request.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase();
+  return declared && ALLOWED_PHOTO_TYPES.has(declared) ? declared : 'image/jpeg';
 }
 
 type BodyResult = { ok: true; bytes: Uint8Array } | { ok: false; status: number; error: string };

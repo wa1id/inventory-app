@@ -85,6 +85,8 @@ export interface ItemPhoto {
   id: string;
   itemId: string;
   uri: string;
+  /** Small copy for list rows. Null on rows captured before thumbnails. */
+  thumbUri: string | null;
   width: number | null;
   height: number | null;
   byteSize: number | null;
@@ -122,6 +124,11 @@ export interface ContainerWithCounts extends Container {
 /** Item plus the derived data every list row needs. */
 export interface ItemWithContext extends Item {
   photoUri: string | null;
+  /**
+   * Thumbnail for list rows. Null for photos captured before thumbnails
+   * existed, so every consumer falls back to `photoUri`.
+   */
+  photoThumbUri: string | null;
   tags: string[];
   spaceId: string;
   spaceName: string;

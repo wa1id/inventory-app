@@ -36,13 +36,15 @@ function toPositiveInt(value: string | undefined): number | undefined {
  * at any point, and a failure never blocks saving (issues #7, #13).
  */
 export default function NewItemScreen() {
-  const { containerId, photoUri, photoWidth, photoHeight, photoBytes } = useLocalSearchParams<{
-    containerId: string;
-    photoUri?: string;
-    photoWidth?: string;
-    photoHeight?: string;
-    photoBytes?: string;
-  }>();
+  const { containerId, photoUri, photoThumbUri, photoWidth, photoHeight, photoBytes } =
+    useLocalSearchParams<{
+      containerId: string;
+      photoUri?: string;
+      photoThumbUri?: string;
+      photoWidth?: string;
+      photoHeight?: string;
+      photoBytes?: string;
+    }>();
   const repos = useRepositories();
   const { invalidate } = useDatabase();
   const router = useRouter();
@@ -119,6 +121,7 @@ export default function NewItemScreen() {
         photo: photo
           ? {
               uri: photo,
+              thumbUri: photoThumbUri,
               width: toPositiveInt(photoWidth),
               height: toPositiveInt(photoHeight),
               byteSize: toPositiveInt(photoBytes),

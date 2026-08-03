@@ -158,14 +158,19 @@ export function createSpacesRepository(db: SqlDatabase) {
       let orphanedPhotoUris: string[] = [];
 
       await db.withTransactionAsync(async () => {
-        const photos = await db.getAllAsync<{ uri: string }>(
+        const photos = await db.getAllAsync<{ uri: string; thumb_uri: string | null }>(
           `SELECT p.uri FROM item_photos p
              JOIN items i ON i.id = p.item_id
              JOIN containers c ON c.id = i.container_id
             WHERE c.space_id = ?`,
           [id],
         );
-        orphanedPhotoUris = photos.map((photo) => photo.uri);
+        // Both files, or the thumbnail is left behind on every delete. Rows
+        // captured before thumbnails existed have none, and those nulls are
+        // dropped here rather than pushed onto every caller.
+        orphanedPhotoUris = photos
+          .flatMap((photo) => [photo.uri, photo.thumb_uri])
+          .filter((uri): uri is string => uri !== null);
 
         // ON DELETE CASCADE removes containers, items, photos, tags links, and
         // QR bindings; foreign_keys is enabled when the database is opened.

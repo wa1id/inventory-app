@@ -118,7 +118,7 @@ export default function FastReviewScreen() {
             >
               {item.photoUri ? (
                 <Image
-                  source={{ uri: item.photoUri }}
+                  source={{ uri: item.photoThumbUri ?? item.photoUri }}
                   style={styles.thumb}
                   accessibilityIgnoresInvertColors
                 />
