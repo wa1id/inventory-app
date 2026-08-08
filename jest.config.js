@@ -3,6 +3,16 @@ const aliases = {
 };
 
 /**
+ * Agent worktrees live under `.claude/worktrees/`, each a full checkout of
+ * another branch. Left visible, the `ui` project's `<rootDir>/**` glob collects
+ * their test files and runs them against *this* tree's source through the `@/`
+ * alias — so an unrelated branch's stale expectations fail a run of this one.
+ * Ignoring the path for both test discovery and Haste also silences the
+ * duplicate-package warnings those checkouts produce.
+ */
+const worktrees = '<rootDir>/.claude/';
+
+/**
  * Two suites with different needs:
  *
  * - `logic` runs in plain Node so persistence tests can drive real SQL through
@@ -16,6 +26,8 @@ module.exports = {
       displayName: 'logic',
       testEnvironment: 'node',
       testMatch: ['<rootDir>/src/**/__tests__/**/*.test.ts'],
+      testPathIgnorePatterns: ['/node_modules/', worktrees],
+      modulePathIgnorePatterns: [worktrees],
       transform: {
         '^.+\\.[jt]sx?$': ['babel-jest', { presets: ['babel-preset-expo'] }],
       },
@@ -32,6 +44,8 @@ module.exports = {
       displayName: 'ui',
       preset: 'jest-expo',
       testMatch: ['<rootDir>/**/__tests__/**/*.test.tsx'],
+      testPathIgnorePatterns: ['/node_modules/', worktrees],
+      modulePathIgnorePatterns: [worktrees],
       moduleNameMapper: aliases,
       transformIgnorePatterns: [
         'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|react-native-qrcode-svg)',
