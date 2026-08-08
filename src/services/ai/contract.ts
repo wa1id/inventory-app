@@ -12,8 +12,6 @@ export interface RecognitionSuggestion {
   name: string | null;
   category: string | null;
   tags: string[];
-  estimatedValue: number | null;
-  currency: string | null;
   /** 0–1. Below `MIN_CONFIDENCE` the result is treated as unusable. */
   confidence: number;
 }
@@ -48,12 +46,6 @@ function cleanText(value: unknown): string | null {
 function cleanNumber(value: unknown): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return null;
   return value;
-}
-
-function cleanCurrency(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const code = value.trim().toUpperCase();
-  return /^[A-Z]{3}$/.test(code) ? code : null;
 }
 
 /**
@@ -118,8 +110,6 @@ export function parseRecognitionResponse(body: unknown): RecognitionResult {
       name,
       category: cleanText(raw.category),
       tags,
-      estimatedValue: cleanNumber(raw.estimatedValue),
-      currency: cleanCurrency(raw.currency),
       confidence,
     },
   };

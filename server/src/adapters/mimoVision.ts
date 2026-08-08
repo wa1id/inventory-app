@@ -3,7 +3,7 @@ import { Output, generateText } from 'ai';
 import { z } from 'zod';
 
 import type { AdapterErrorKind, AdapterOutcome, RecognizeOptions, VisionAdapter } from '../port.js';
-import { SYSTEM_PROMPT, USER_PROMPT, toRawSuggestion, type Extraction } from '../prompt.js';
+import { SYSTEM_PROMPT, toRawSuggestion, userPrompt, type Extraction } from '../prompt.js';
 
 /** Xiaomi's OpenAI-compatible endpoint. */
 const BASE_URL = 'https://api.xiaomimimo.com/v1';
@@ -34,22 +34,20 @@ const wireExtraction = z.object({
   name: z.string().nullish(),
   category: z.string().nullish(),
   tags: z.array(z.string()).optional(),
-  estimatedValue: z.number().nullish(),
-  currency: z.string().nullish(),
   confidence: z.number().optional(),
 });
 
 /** Fills the fields MiMo omits, without inventing anything the model did not say. */
-export function toExtraction(wire: z.infer<typeof wireExtraction>): Extraction {
+export function toExtraction(wire: z.infer<typeof wireExtraction>, nameHint?: string): Extraction {
   return {
     // An omitted `identified` means the model answered with a name instead of
     // the flag; treat a usable name as the identification it clearly intended.
-    identified: wire.identified ?? Boolean(wire.name?.trim()),
+    // On a hinted turn the name is the user's, and MiMo tends to drop it from
+    // the answer, so the hint stands in for the name it did not echo.
+    identified: wire.identified ?? Boolean((nameHint ?? wire.name)?.trim()),
     name: wire.name ?? null,
     category: wire.category ?? null,
     tags: wire.tags ?? [],
-    estimatedValue: wire.estimatedValue ?? null,
-    currency: wire.currency ?? null,
     // Certainty is never invented on the model's behalf (see `port.ts`). An
     // omitted confidence scores zero, which the contract then filters out as
     // low confidence — a weak suggestion the user must undo is worse than none.
@@ -91,7 +89,7 @@ export function createMimoVisionAdapter(config: {
     id: config.id,
     label: config.label,
 
-    async recognize({ image, signal }: RecognizeOptions): Promise<AdapterOutcome> {
+    async recognize({ image, signal, nameHint }: RecognizeOptions): Promise<AdapterOutcome> {
       // Checked here rather than thrown at construction: `GET /api/adapters`
       // builds every registered adapter, and a deployment without a MiMo key
       // should still be able to list what it can serve.
@@ -115,19 +113,21 @@ export function createMimoVisionAdapter(config: {
               role: 'user',
               content: [
                 { type: 'file', mediaType: image.mediaType, data: image.bytes },
-                { type: 'text', text: USER_PROMPT },
+                { type: 'text', text: userPrompt(nameHint) },
               ],
             },
           ],
         });
 
-        const extraction = toExtraction(output);
+        const extraction = toExtraction(output, nameHint);
 
-        if (!extraction.identified || !extraction.name?.trim()) {
+        // A hinted answer carries the user's name, so MiMo omitting `name` —
+        // which it does — is not a failure to identify anything.
+        if (!extraction.identified || !(nameHint ?? extraction.name)?.trim()) {
           return { status: 'unrecognized' };
         }
 
-        return { status: 'ok', suggestion: toRawSuggestion(extraction) };
+        return { status: 'ok', suggestion: toRawSuggestion(extraction, nameHint) };
       } catch (error) {
         return { status: 'error', ...classify(error) };
       }

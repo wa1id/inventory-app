@@ -8,8 +8,6 @@ interface ItemRow {
   name: string;
   category: string | null;
   quantity: number;
-  estimated_value: number | null;
-  currency: string | null;
   notes: string | null;
   created_at: number;
   updated_at: number;
@@ -34,8 +32,6 @@ function toItem(row: ItemRow): Item {
     name: row.name,
     category: row.category,
     quantity: row.quantity,
-    estimatedValue: row.estimated_value,
-    currency: row.currency,
     notes: row.notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -93,8 +89,6 @@ export interface ItemDraft {
   name?: string;
   category?: string | null;
   quantity?: number;
-  estimatedValue?: number | null;
-  currency?: string | null;
   notes?: string | null;
   tags?: string[];
   photo?: {
@@ -217,8 +211,6 @@ export function createItemsRepository(db: SqlDatabase) {
         name,
         category,
         quantity,
-        estimatedValue: draft.estimatedValue ?? null,
-        currency: draft.currency ?? null,
         notes: draft.notes?.trim() || null,
         createdAt: now,
         updatedAt: now,
@@ -227,17 +219,15 @@ export function createItemsRepository(db: SqlDatabase) {
       await db.withTransactionAsync(async () => {
         await db.runAsync(
           `INSERT INTO items
-             (id, container_id, name, category, quantity, estimated_value, currency,
-              notes, created_at, updated_at, search_text)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             (id, container_id, name, category, quantity, notes, created_at,
+              updated_at, search_text)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             item.id,
             item.containerId,
             item.name,
             item.category,
             item.quantity,
-            item.estimatedValue,
-            item.currency,
             item.notes,
             item.createdAt,
             item.updatedAt,
@@ -295,9 +285,6 @@ export function createItemsRepository(db: SqlDatabase) {
         name,
         category,
         quantity,
-        estimatedValue:
-          input.estimatedValue === undefined ? existing.estimated_value : input.estimatedValue,
-        currency: input.currency === undefined ? existing.currency : input.currency,
         notes: input.notes === undefined ? existing.notes : input.notes?.trim() || null,
         updatedAt: Date.now(),
       };
@@ -306,16 +293,13 @@ export function createItemsRepository(db: SqlDatabase) {
         await db.runAsync(
           `UPDATE items
               SET container_id = ?, name = ?, category = ?, quantity = ?,
-                  estimated_value = ?, currency = ?, notes = ?, updated_at = ?,
-                  search_text = ?
+                  notes = ?, updated_at = ?, search_text = ?
             WHERE id = ?`,
           [
             next.containerId,
             next.name,
             next.category,
             next.quantity,
-            next.estimatedValue,
-            next.currency,
             next.notes,
             next.updatedAt,
             searchTextFor(next.name, next.category),

@@ -22,6 +22,12 @@ export interface RecognizeOptions {
   timeoutMs?: number;
   /** Reads the image as base64; injected so tests need no filesystem. */
   readImage?: (uri: string) => Promise<string>;
+  /**
+   * A name the user typed over our suggestion. Sending it asks the backend to
+   * re-derive the supporting fields for the item they say it is, instead of
+   * repeating the identification they just rejected.
+   */
+  nameHint?: string;
 }
 
 async function defaultReadImage(uri: string): Promise<string> {
@@ -60,11 +66,16 @@ export async function recognizeItem({
   fetchImpl,
   timeoutMs = appConfig.recognitionTimeoutMs,
   readImage = defaultReadImage,
+  nameHint,
 }: RecognizeOptions): Promise<RecognitionResult> {
   if (!endpoint) {
     logEvent('recognition_skipped', { outcome: 'not_configured' });
     return { status: 'failed', reason: 'not_configured' };
   }
+
+  const hint = nameHint?.trim() || undefined;
+  /** Whether the user corrected us — never the correction itself (issue #8). */
+  const hinted = hint !== undefined;
 
   const doFetch = fetchImpl ?? globalThis.fetch;
   const controller = new AbortController();
@@ -84,6 +95,9 @@ export async function recognizeItem({
       body: JSON.stringify({
         contractVersion: RECOGNITION_CONTRACT_VERSION,
         image: { data: base64, encoding: 'base64', mediaType: 'image/jpeg' },
+        // Omitted entirely when absent, so an unhinted request stays
+        // byte-identical to what every deployed backend already accepts.
+        ...(hint ? { nameHint: hint } : {}),
       }),
       signal: controller.signal,
     });
@@ -95,6 +109,7 @@ export async function recognizeItem({
         statusCode: response.status,
         latencyMs: Date.now() - startedAt,
         contractVersion: RECOGNITION_CONTRACT_VERSION,
+        hinted,
       });
       return { status: 'failed', reason };
     }
@@ -107,6 +122,7 @@ export async function recognizeItem({
         outcome: 'malformed_response',
         latencyMs: Date.now() - startedAt,
         contractVersion: RECOGNITION_CONTRACT_VERSION,
+        hinted,
       });
       return { status: 'failed', reason: 'malformed_response' };
     }
@@ -118,6 +134,7 @@ export async function recognizeItem({
       latencyMs: Date.now() - startedAt,
       contractVersion: RECOGNITION_CONTRACT_VERSION,
       confidence: result.status === 'success' ? result.suggestion.confidence : null,
+      hinted,
     });
 
     return result;
@@ -127,6 +144,7 @@ export async function recognizeItem({
       outcome: reason,
       latencyMs: Date.now() - startedAt,
       contractVersion: RECOGNITION_CONTRACT_VERSION,
+      hinted,
     });
     return { status: 'failed', reason };
   } finally {

@@ -65,6 +65,7 @@ export async function POST(request: Request): Promise<Response> {
     const outcome = await adapter.recognize({
       image: { bytes: parsed.bytes, mediaType: parsed.mediaType },
       signal: controller.signal,
+      nameHint: parsed.nameHint,
     });
 
     const log = {
@@ -74,6 +75,9 @@ export async function POST(request: Request): Promise<Response> {
       latencyMs: Date.now() - startedAt,
       imageBytes: parsed.bytes.byteLength,
       confidence: outcome.status === 'ok' ? outcome.suggestion.confidence : null,
+      // Whether the user corrected us, never what they corrected us to: the
+      // hint is item content and stays out of the logs like everything else.
+      hinted: parsed.nameHint !== undefined,
     };
     console.log(JSON.stringify(log));
 

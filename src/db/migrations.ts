@@ -188,6 +188,27 @@ export const MIGRATIONS: Migration[] = [
       ALTER TABLE item_photos ADD COLUMN thumb_uri TEXT;
     `,
   },
+  {
+    version: 6,
+    name: 'drop_item_value_estimate',
+    up: `
+      -- The value estimate is gone from the product, so it goes from the
+      -- schema too rather than lingering as a column nothing reads. Dropping
+      -- it is deliberate data loss, and the only honest option: keeping the
+      -- numbers in a table with no way to see or edit them is worse than not
+      -- having them.
+      --
+      -- \`currency\` goes with it. It never denominated anything else — it
+      -- existed to say what \`estimated_value\` was counted in.
+      --
+      -- Safe as a plain DROP COLUMN: neither column is indexed, referenced by
+      -- a trigger, or part of search_text. Rows restored from a backup taken
+      -- before this migration are brought forward through here like any other
+      -- older snapshot.
+      ALTER TABLE items DROP COLUMN estimated_value;
+      ALTER TABLE items DROP COLUMN currency;
+    `,
+  },
 ];
 
 /** Schema version a freshly built app expects. */

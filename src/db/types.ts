@@ -73,8 +73,6 @@ export interface Item {
   name: string;
   category: string | null;
   quantity: number;
-  estimatedValue: number | null;
-  currency: string | null;
   notes: string | null;
   createdAt: number;
   updatedAt: number;

@@ -49,6 +49,7 @@ const ALLOWED_KEYS = new Set([
   'attempt',
   'hasPhoto',
   'suggestionAccepted',
+  'hinted',
 ]);
 
 /** Drops any key that is not explicitly allowed and any non-primitive value. */

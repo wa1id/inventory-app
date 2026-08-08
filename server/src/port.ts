@@ -25,8 +25,6 @@ export interface RawSuggestion {
   name: string | null;
   category: string | null;
   tags: string[];
-  estimatedValue: number | null;
-  currency: string | null;
   /** 0–1. Adapters must not fabricate certainty they do not have. */
   confidence: number;
 }
@@ -48,6 +46,12 @@ export interface RecognizeOptions {
   image: VisionImage;
   /** Aborts the provider call when the request budget is exhausted. */
   signal: AbortSignal;
+  /**
+   * A name the user typed over ours, when they are asking for the rest of the
+   * suggestion to be re-derived for the item they say it is. Adapters pass it
+   * to `userPrompt` and `toRawSuggestion`; they never interpret it themselves.
+   */
+  nameHint?: string;
 }
 
 export interface VisionAdapter {

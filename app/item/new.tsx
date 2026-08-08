@@ -12,13 +12,18 @@ import { logEvent } from '@/services/telemetry';
 import {
   EMPTY_ITEM_FORM,
   ItemForm,
+  applySuggestion,
   validateItemForm,
   type ItemFormErrors,
   type ItemFormValues,
 } from '@/ui/components/ItemForm';
 import { Button } from '@/ui/components/Button';
 import { Screen } from '@/ui/components/Screen';
-import { SuggestionBanner, type SuggestionState } from '@/ui/components/SuggestionBanner';
+import {
+  SuggestionBanner,
+  staleSuggestionName,
+  type SuggestionState,
+} from '@/ui/components/SuggestionBanner';
 
 /** Route params arrive as strings; anything unusable becomes undefined. */
 function toPositiveInt(value: string | undefined): number | undefined {
@@ -70,28 +75,40 @@ export default function NewItemScreen() {
    * Sets only terminal states. `running` is established by the initial state
    * (photo present) or by the retry handler, so the kick-off effect never
    * writes state synchronously.
+   *
+   * @param nameHint The name the user typed over ours; asks the backend to
+   *   describe *that* item instead of repeating its own identification.
+   * @param overwrite Replace the supporting fields rather than filling the
+   *   blanks. Only for an explicit "update the other details": those fields
+   *   were derived from an identification the user has since rejected, so
+   *   keeping them would file the item under the wrong category and tags.
+   *   A hint alone never implies this — a retry can be name-anchored without
+   *   being allowed to discard what the user typed.
    */
-  const runRecognition = useCallback(async (uri: string) => {
-    const result = await recognizeItem({ imageUri: uri });
+  const runRecognition = useCallback(async (uri: string, nameHint?: string, overwrite = false) => {
+    const result = await recognizeItem({ imageUri: uri, nameHint });
 
     if (result.status === 'failed') {
       setSuggestion({ status: 'failed', reason: result.reason });
       return;
     }
 
-    // Only fill fields the user has not already typed into: a suggestion
-    // must never overwrite their work.
-    setValues((current) => ({
-      ...current,
-      name: current.name || (result.suggestion.name ?? ''),
-      category: current.category || (result.suggestion.category ?? ''),
-      tags: current.tags || result.suggestion.tags.join(', '),
-      estimatedValue:
-        current.estimatedValue ||
-        (result.suggestion.estimatedValue !== null ? String(result.suggestion.estimatedValue) : ''),
-      currency: current.currency || (result.suggestion.currency ?? ''),
-    }));
-    setSuggestion({ status: 'applied', confidence: result.suggestion.confidence });
+    setValues((current) => applySuggestion(current, result.suggestion, { overwrite }));
+
+    // Record which name the details now describe, so a further edit to the
+    // title is recognised as making them stale again.
+    setSuggestion(
+      overwrite && nameHint
+        ? // The hint, not the echoed name: this is the title now in the field,
+          // so a backend that ignored the hint cannot leave the banner asking
+          // to refresh a name it just refreshed.
+          { status: 'refreshed', forName: nameHint }
+        : {
+            status: 'applied',
+            confidence: result.suggestion.confidence,
+            forName: result.suggestion.name ?? '',
+          },
+    );
   }, []);
 
   useEffect(() => {
@@ -102,6 +119,15 @@ export default function NewItemScreen() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (photo) void runRecognition(photo);
   }, [photo, runRecognition]);
+
+  const typedName = values.name.trim();
+  /** Set once the title no longer matches what the other fields describe. */
+  const staleName = staleSuggestionName(suggestion, typedName);
+
+  function refreshFromName(uri: string, hint: string) {
+    setSuggestion({ status: 'refreshing' });
+    void runRecognition(uri, hint, true);
+  }
 
   /**
    * @param andAnother Return straight to the camera instead of the saved item.
@@ -131,7 +157,8 @@ export default function NewItemScreen() {
 
       logEvent('item_created', {
         hasPhoto: Boolean(photo),
-        suggestionAccepted: suggestion.status === 'applied',
+        suggestionAccepted: suggestion.status === 'applied' || suggestion.status === 'refreshed',
+        hinted: suggestion.status === 'refreshed',
       });
       invalidate();
       // `replace`, not `push`: the saved form must not sit in the back stack,
@@ -179,15 +206,19 @@ export default function NewItemScreen() {
         locationLabel={locationLabel}
         suggestionBanner={
           <SuggestionBanner
-            state={suggestion}
+            state={staleName ? { status: 'stale', forName: staleName } : suggestion}
             onRetry={
               photo
                 ? () => {
                     setSuggestion({ status: 'running' });
-                    void runRecognition(photo);
+                    // A name typed before the retry anchors it: there is no
+                    // reason to ask the photo alone when the user has already
+                    // said what the thing is.
+                    void runRecognition(photo, typedName || undefined);
                   }
                 : undefined
             }
+            onRefresh={photo && staleName ? () => refreshFromName(photo, staleName) : undefined}
           />
         }
         onSubmit={() => void save()}

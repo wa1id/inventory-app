@@ -13,10 +13,6 @@ export const extractionSchema = z.object({
   name: z.string().nullable(),
   category: z.string().nullable(),
   tags: z.array(z.string()),
-  /** Second-hand replacement value, not retail. */
-  estimatedValue: z.number().nullable(),
-  /** ISO 4217, uppercase. */
-  currency: z.string().nullable(),
   confidence: z.number(),
 });
 
@@ -35,9 +31,6 @@ export const SYSTEM_PROMPT = [
   '- category: one broad grouping, e.g. "Power Tools", "Kitchenware", "Clothing".',
   '- tags: up to 5 lowercase keywords someone might later search for. No duplicates',
   '  of the name or category.',
-  '- estimatedValue: approximate SECOND-HAND replacement value as a number, or null',
-  '  when you cannot reasonably tell. Never guess wildly.',
-  '- currency: ISO 4217 code for that value, or null when estimatedValue is null.',
   '- confidence: 0 to 1, your honest certainty about `name`.',
   '',
   'Set identified=false when the photo is too dark, too blurry, too close, empty,',
@@ -47,15 +40,52 @@ export const SYSTEM_PROMPT = [
 
 export const USER_PROMPT = 'Identify the item in this photo.';
 
-/** Trims and clamps model output before it reaches the wire contract. */
-export function toRawSuggestion(extraction: Extraction) {
+/**
+ * The turn given to the model, optionally anchored to a name the user supplied.
+ *
+ * A hint arrives when the user rejected our suggested name and typed their own.
+ * The rest of the suggestion was derived from a wrong identification, so asking
+ * again with the photo alone would just reproduce it — the corrected name has
+ * to steer the second pass.
+ *
+ * The hint is user-authored text entering a prompt, so it is normalized to a
+ * single short line by `parseRequest` before it gets here, and every field of
+ * the answer is still schema-checked and clamped by `toRawSuggestion`. The
+ * worst a crafted name can do is describe a different household object.
+ */
+export function userPrompt(nameHint?: string): string {
+  if (!nameHint) return USER_PROMPT;
+
+  return [
+    `The user looked at your previous answer and corrected the item's name to: "${nameHint}".`,
+    '',
+    'That name is authoritative. They are holding the object; you only have a photo of it.',
+    'Describe THAT item: derive its category and tags, using the photo as supporting',
+    'evidence for condition, size, brand, and included accessories.',
+    '',
+    'Overrides for this turn:',
+    '- name: return the corrected name exactly as given.',
+    '- identified: true unless the name is meaningless. An unclear photo is no longer a reason',
+    '  to answer false — the name already tells you what the object is.',
+    '- confidence: your certainty in the supporting fields, since the name is not your guess.',
+  ].join('\n');
+}
+
+/**
+ * Trims and clamps model output before it reaches the wire contract.
+ *
+ * `nameHint` wins over whatever the model echoed back: the user's own wording
+ * is what they will see in the field, and a model that "helpfully" reformats it
+ * would look like the app overwriting their correction.
+ */
+export function toRawSuggestion(extraction: Extraction, nameHint?: string) {
   const clean = (value: string | null): string | null => {
     const trimmed = value?.trim();
     return trimmed ? trimmed.slice(0, 80) : null;
   };
 
   return {
-    name: clean(extraction.name),
+    name: clean(nameHint ?? extraction.name),
     category: clean(extraction.category),
     tags: Array.from(
       new Set(
@@ -64,13 +94,6 @@ export function toRawSuggestion(extraction: Extraction) {
           .filter((tag) => tag.length > 0 && tag.length <= 40),
       ),
     ).slice(0, 8),
-    estimatedValue:
-      extraction.estimatedValue !== null && Number.isFinite(extraction.estimatedValue)
-        ? Math.max(0, extraction.estimatedValue)
-        : null,
-    currency: /^[A-Za-z]{3}$/.test(extraction.currency ?? '')
-      ? extraction.currency!.toUpperCase()
-      : null,
     // A provider that returns a nonsense confidence gets clamped, not trusted.
     confidence: Math.min(1, Math.max(0, extraction.confidence)),
   };

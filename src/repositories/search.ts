@@ -211,8 +211,6 @@ interface ItemSearchRow {
   name: string;
   category: string | null;
   quantity: number;
-  estimated_value: number | null;
-  currency: string | null;
   notes: string | null;
   created_at: number;
   updated_at: number;
@@ -235,8 +233,6 @@ function toItemSearchResult(row: ItemSearchRow): ItemSearchResult {
     name: row.name,
     category: row.category,
     quantity: row.quantity,
-    estimatedValue: row.estimated_value,
-    currency: row.currency,
     notes: row.notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

@@ -17,11 +17,35 @@ export interface RecognizeRequestBody {
   image: { data: string; encoding: 'base64'; mediaType?: string };
   /** Optional adapter override, for A/B runs. Validated against the registry. */
   adapter?: string;
+  /**
+   * The name the user corrected ours to, asking for the remaining fields to be
+   * re-derived for that item. Additive within v1: a client that never sends it
+   * behaves exactly as before, and a deployment that predates it ignores the
+   * field and answers from the photo alone.
+   */
+  nameHint?: string;
 }
 
 export type ParsedRequest =
-  | { ok: true; bytes: Uint8Array; mediaType: string; adapter?: string }
+  | { ok: true; bytes: Uint8Array; mediaType: string; adapter?: string; nameHint?: string }
   | { ok: false; status: number; error: string };
+
+/** Longest accepted hint; matches the client's own name-field clamp. */
+const MAX_HINT_LENGTH = 80;
+
+/**
+ * Reduces a hint to one short, single-line phrase.
+ *
+ * Collapsing whitespace is what keeps user text from restructuring the prompt
+ * it gets embedded in — a name cannot introduce its own instruction lines.
+ * Anything empty after that is simply absent, not an error: a blank name means
+ * "no correction to anchor to", which is the unhinted request.
+ */
+function cleanHint(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const collapsed = value.replace(/\s+/g, ' ').trim().slice(0, MAX_HINT_LENGTH);
+  return collapsed.length > 0 ? collapsed : undefined;
+}
 
 /**
  * Validates an untrusted request body.
@@ -83,6 +107,7 @@ export function parseRequest(body: unknown): ParsedRequest {
     bytes,
     mediaType,
     adapter: typeof payload.adapter === 'string' ? payload.adapter : undefined,
+    nameHint: cleanHint(payload.nameHint),
   };
 }
 
@@ -94,8 +119,6 @@ export function suggestionResponse(suggestion: RawSuggestion) {
       name: suggestion.name,
       category: suggestion.category,
       tags: suggestion.tags,
-      estimatedValue: suggestion.estimatedValue,
-      currency: suggestion.currency,
       confidence: suggestion.confidence,
     },
   };

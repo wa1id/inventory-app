@@ -1,7 +1,7 @@
 import { Output, generateText } from 'ai';
 
 import type { AdapterErrorKind, AdapterOutcome, RecognizeOptions, VisionAdapter } from '../port.js';
-import { SYSTEM_PROMPT, USER_PROMPT, extractionSchema, toRawSuggestion } from '../prompt.js';
+import { SYSTEM_PROMPT, extractionSchema, toRawSuggestion, userPrompt } from '../prompt.js';
 
 /**
  * Adapter over the Vercel AI Gateway.
@@ -22,7 +22,7 @@ export function createGatewayVisionAdapter(config: {
     id: config.id,
     label: config.label,
 
-    async recognize({ image, signal }: RecognizeOptions): Promise<AdapterOutcome> {
+    async recognize({ image, signal, nameHint }: RecognizeOptions): Promise<AdapterOutcome> {
       try {
         const { output } = await generateText({
           model: config.model,
@@ -34,17 +34,20 @@ export function createGatewayVisionAdapter(config: {
               role: 'user',
               content: [
                 { type: 'file', mediaType: image.mediaType, data: image.bytes },
-                { type: 'text', text: USER_PROMPT },
+                { type: 'text', text: userPrompt(nameHint) },
               ],
             },
           ],
         });
 
-        if (!output.identified || !output.name?.trim()) {
+        // With a hint the name is the user's, so a model that omits it has
+        // still answered usefully; only an explicit `identified: false` means
+        // it could not work with the name it was given.
+        if (!output.identified || !(nameHint ?? output.name)?.trim()) {
           return { status: 'unrecognized' };
         }
 
-        return { status: 'ok', suggestion: toRawSuggestion(output) };
+        return { status: 'ok', suggestion: toRawSuggestion(output, nameHint) };
       } catch (error) {
         return { status: 'error', ...classify(error) };
       }

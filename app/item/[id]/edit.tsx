@@ -44,8 +44,6 @@ export default function EditItemScreen() {
       category: item.category ?? '',
       tags: item.tags.join(', '),
       quantity: String(item.quantity),
-      estimatedValue: item.estimatedValue !== null ? String(item.estimatedValue) : '',
-      currency: item.currency ?? '',
       notes: item.notes ?? '',
     });
   }

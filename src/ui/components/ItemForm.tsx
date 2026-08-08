@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { strings } from '@/i18n/strings';
+import type { RecognitionSuggestion } from '@/services/ai/contract';
 import { Button } from '@/ui/components/Button';
 import { TextField } from '@/ui/components/TextField';
 import { radius, spacing, useTheme } from '@/ui/theme';
@@ -11,15 +12,12 @@ export interface ItemFormValues {
   category: string;
   tags: string;
   quantity: string;
-  estimatedValue: string;
-  currency: string;
   notes: string;
 }
 
 export interface ItemFormErrors {
   name?: string;
   quantity?: string;
-  estimatedValue?: string;
 }
 
 export const EMPTY_ITEM_FORM: ItemFormValues = {
@@ -27,8 +25,6 @@ export const EMPTY_ITEM_FORM: ItemFormValues = {
   category: '',
   tags: '',
   quantity: '1',
-  estimatedValue: '',
-  currency: '',
   notes: '',
 };
 
@@ -38,8 +34,6 @@ export interface ParsedItemForm {
   category: string | null;
   tags: string[];
   quantity: number;
-  estimatedValue: number | null;
-  currency: string | null;
   notes: string | null;
 }
 
@@ -63,17 +57,6 @@ export function validateItemForm(values: ItemFormValues): {
     errors.quantity = strings.items.quantityInvalid;
   }
 
-  let estimatedValue: number | null = null;
-  const rawValue = values.estimatedValue.trim().replace(',', '.');
-  if (rawValue.length > 0) {
-    const parsedValue = Number(rawValue);
-    if (!Number.isFinite(parsedValue) || parsedValue < 0) {
-      errors.estimatedValue = strings.items.valueInvalid;
-    } else {
-      estimatedValue = parsedValue;
-    }
-  }
-
   if (Object.keys(errors).length > 0) return { errors, parsed: null };
 
   return {
@@ -86,10 +69,43 @@ export function validateItemForm(values: ItemFormValues): {
         .map((tag) => tag.trim())
         .filter(Boolean),
       quantity,
-      estimatedValue,
-      currency: values.currency.trim().toUpperCase() || null,
       notes: values.notes.trim() || null,
     },
+  };
+}
+
+/**
+ * Folds a photo suggestion into the form.
+ *
+ * Two modes, because "the AI answered" and "the user rejected the answer and
+ * asked again" call for opposite defaults:
+ *
+ * - `overwrite: false` — the first pass. Fills only blanks, so a suggestion
+ *   landing while the user types cannot take a field back off them (issue #13).
+ * - `overwrite: true` — an explicit refresh after the user corrected the name.
+ *   The supporting fields were derived from an identification they rejected, so
+ *   leaving them would file the item under the wrong category and tags.
+ *
+ * The name is never taken from the suggestion once the field holds anything:
+ * on a refresh it is the correction that prompted the request in the first
+ * place. Quantity and notes are the user's alone and are never touched.
+ */
+export function applySuggestion(
+  current: ItemFormValues,
+  suggestion: RecognitionSuggestion,
+  { overwrite = false }: { overwrite?: boolean } = {},
+): ItemFormValues {
+  const tags = suggestion.tags.join(', ');
+
+  return {
+    ...current,
+    name: current.name || (suggestion.name ?? ''),
+    ...(overwrite
+      ? { category: suggestion.category ?? '', tags }
+      : {
+          category: current.category || (suggestion.category ?? ''),
+          tags: current.tags || tags,
+        }),
   };
 }
 
@@ -182,29 +198,6 @@ export function ItemForm({
             hint={strings.items.tagsHint}
           />
 
-          <View style={styles.row}>
-            <View style={styles.rowGrow}>
-              <TextField
-                label={strings.items.valueLabel}
-                placeholder="0.00"
-                value={values.estimatedValue}
-                onChangeText={(value) => set('estimatedValue', value)}
-                error={errors.estimatedValue}
-                keyboardType="decimal-pad"
-              />
-            </View>
-            <View style={styles.rowCurrency}>
-              <TextField
-                label={strings.items.currencyLabel}
-                placeholder="EUR"
-                value={values.currency}
-                onChangeText={(value) => set('currency', value)}
-                autoCapitalize="characters"
-                maxLength={3}
-              />
-            </View>
-          </View>
-
           <TextField
             label={strings.items.notesLabel}
             value={values.notes}
@@ -218,7 +211,7 @@ export function ItemForm({
           label="More details"
           variant="ghost"
           onPress={() => setShowAdvanced(true)}
-          accessibilityHint="Shows tags, value, and notes"
+          accessibilityHint="Shows tags and notes"
         />
       )}
 
@@ -255,16 +248,6 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 14,
     fontWeight: '600',
-  },
-  row: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  rowGrow: {
-    flex: 2,
-  },
-  rowCurrency: {
-    flex: 1,
   },
   actions: {
     gap: spacing.sm,

@@ -89,8 +89,6 @@ export async function captureFastItem({
     await deps.updateItem(item.id, {
       category: suggestion.category,
       tags: suggestion.tags,
-      estimatedValue: suggestion.estimatedValue,
-      currency: suggestion.currency,
     });
     return { status: 'unrecognized', itemId: item.id, reason: 'unrecognized' };
   }
@@ -99,8 +97,6 @@ export async function captureFastItem({
     name,
     category: suggestion.category,
     tags: suggestion.tags,
-    estimatedValue: suggestion.estimatedValue,
-    currency: suggestion.currency,
   });
 
   return { status: 'recognized', itemId: item.id, name };

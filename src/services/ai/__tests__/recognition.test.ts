@@ -12,8 +12,6 @@ const VALID_BODY = {
     name: 'Cordless Drill',
     category: 'Power Tools',
     tags: ['dewalt', '18v'],
-    estimatedValue: 129.99,
-    currency: 'eur',
     confidence: 0.92,
   },
 };
@@ -35,7 +33,6 @@ describe('parseRecognitionResponse', () => {
     expect(result.status).toBe('success');
     if (result.status !== 'success') return;
     expect(result.suggestion.name).toBe('Cordless Drill');
-    expect(result.suggestion.currency).toBe('EUR');
     expect(result.suggestion.tags).toEqual(['dewalt', '18v']);
   });
 
@@ -101,8 +98,6 @@ describe('parseRecognitionResponse', () => {
         name: 'Drill',
         category: 42,
         tags: ['ok', 17, null, '  ', 'fine'],
-        estimatedValue: -5,
-        currency: 'euros',
         confidence: 0.8,
       },
     });
@@ -111,8 +106,6 @@ describe('parseRecognitionResponse', () => {
     if (result.status !== 'success') return;
     expect(result.suggestion.category).toBeNull();
     expect(result.suggestion.tags).toEqual(['ok', 'fine']);
-    expect(result.suggestion.estimatedValue).toBeNull();
-    expect(result.suggestion.currency).toBeNull();
   });
 
   it('caps the number of tags', () => {
@@ -197,6 +190,46 @@ describe('recognizeItem', () => {
         }) as unknown as Response,
     );
     expect(result).toEqual({ status: 'failed', reason: 'malformed_response' });
+  });
+
+  it('omits nameHint entirely when the user has not corrected the name', async () => {
+    const fetchImpl = jest.fn(async () => jsonResponse(VALID_BODY));
+    await callWith(fetchImpl as unknown as typeof fetch);
+
+    const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    // Absent, not null or "": an unhinted request has to stay byte-identical
+    // to what already-deployed backends accept.
+    expect(JSON.parse(init.body as string)).not.toHaveProperty('nameHint');
+  });
+
+  it('sends the corrected name so the backend re-derives for that item', async () => {
+    const fetchImpl = jest.fn(async () => jsonResponse(VALID_BODY));
+
+    await recognizeItem({
+      imageUri: 'file:///photo.jpg',
+      endpoint,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      readImage,
+      nameHint: '  Angle grinder  ',
+    });
+
+    const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(init.body as string).nameHint).toBe('Angle grinder');
+  });
+
+  it('treats a blank hint as no hint', async () => {
+    const fetchImpl = jest.fn(async () => jsonResponse(VALID_BODY));
+
+    await recognizeItem({
+      imageUri: 'file:///photo.jpg',
+      endpoint,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      readImage,
+      nameHint: '   ',
+    });
+
+    const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).not.toHaveProperty('nameHint');
   });
 
   it('reports not_configured when no endpoint is set, without calling fetch', async () => {

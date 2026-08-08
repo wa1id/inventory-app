@@ -68,11 +68,6 @@ export default function ItemScreen() {
     );
   }
 
-  const value =
-    item.estimatedValue !== null
-      ? `${item.estimatedValue.toFixed(2)}${item.currency ? ` ${item.currency}` : ''}`
-      : null;
-
   return (
     <Screen edges={['left', 'right', 'bottom']}>
       <Stack.Screen
@@ -140,7 +135,6 @@ export default function ItemScreen() {
         >
           <DetailRow label="Quantity" value={String(item.quantity)} />
           {item.category ? <DetailRow label="Category" value={item.category} /> : null}
-          {value ? <DetailRow label="Estimated value" value={value} /> : null}
           {item.tags.length > 0 ? <DetailRow label="Tags" value={item.tags.join(', ')} /> : null}
           {item.notes ? <DetailRow label="Notes" value={item.notes} /> : null}
         </View>

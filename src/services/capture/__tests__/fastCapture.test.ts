@@ -39,8 +39,6 @@ const SUCCESS: RecognitionResult = {
     name: 'Cordless drill',
     category: 'Tools',
     tags: ['dewalt', 'power tool'],
-    estimatedValue: 89.5,
-    currency: 'EUR',
     confidence: 0.9,
   },
 };
@@ -96,8 +94,6 @@ describe('captureFastItem', () => {
           name: 'Cordless drill',
           category: 'Tools',
           tags: ['dewalt', 'power tool'],
-          estimatedValue: 89.5,
-          currency: 'EUR',
         },
       },
     ]);
@@ -166,8 +162,6 @@ describe('captureFastItem', () => {
     expect(calls.updated[0]?.input).toEqual({
       category: 'Tools',
       tags: ['dewalt', 'power tool'],
-      estimatedValue: 89.5,
-      currency: 'EUR',
     });
   });
 

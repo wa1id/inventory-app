@@ -57,6 +57,37 @@ describe('migrations', () => {
     expect(row?.search_text).toBe('legacy drill');
   });
 
+  it('leaves no value-estimate columns behind on an upgraded database', async () => {
+    const db = openNodeDatabase();
+
+    // An install that predates the removal: created on migration 1, where
+    // items still carried the two columns.
+    const [first] = MIGRATIONS;
+    await migrate(db, first ? [first] : []);
+
+    const repos = createRepositories(db);
+    const { container } = await seedSpaceAndContainer(repos);
+    await db.runAsync(
+      `INSERT INTO items (id, container_id, name, quantity, estimated_value, currency,
+                          created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      ['priced-item', container.id, 'Drill', 1, 129.99, 'EUR', Date.now(), Date.now()],
+    );
+
+    await migrate(db);
+
+    const columns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(items)');
+    const names = columns.map((column) => column.name);
+    expect(names).not.toContain('estimated_value');
+    expect(names).not.toContain('currency');
+
+    // The row itself survives the drop — only the two fields go.
+    const row = await db.getFirstAsync<{ name: string }>('SELECT name FROM items WHERE id = ?', [
+      'priced-item',
+    ]);
+    expect(row?.name).toBe('Drill');
+  });
+
   it('declares versions matching their position', () => {
     MIGRATIONS.forEach((migration, index) => {
       expect(migration.version).toBe(index + 1);
@@ -268,8 +299,6 @@ describe('items', () => {
       name: 'Cordless Drill',
       category: 'Tools',
       quantity: 2,
-      estimatedValue: 129.99,
-      currency: 'EUR',
       notes: 'Charger in side pocket',
       tags: ['power tool', 'DeWalt', 'power tool'],
       photo: { uri: 'file:///photos/drill.jpg', width: 1024, height: 768, byteSize: 210_000 },

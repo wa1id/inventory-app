@@ -112,11 +112,12 @@ surprises invisible.
 // request
 { "contractVersion": 1,
   "image": { "data": "<base64>", "encoding": "base64", "mediaType": "image/jpeg" },
-  "adapter": "claude-haiku" }        // optional
+  "adapter": "claude-haiku",         // optional
+  "nameHint": "Angle grinder" }      // optional
 
 // 200 — a suggestion
 { "contractVersion": 1, "suggestion": { "name": "Cordless Drill", "category": "Power Tools",
-  "tags": ["dewalt","18v"], "estimatedValue": 129.99, "currency": "EUR", "confidence": 0.92 } }
+  "tags": ["dewalt","18v"], "confidence": 0.92 } }
 
 // 200 — looked, could not tell
 { "contractVersion": 1, "status": "unrecognized" }
@@ -125,6 +126,30 @@ surprises invisible.
 ```
 
 Every failure is one the client already downgrades to manual entry.
+
+The suggestion carried `estimatedValue` and `currency` until the app dropped
+value estimates entirely. Both are gone from the schema, the prompt, and the
+response — still additive-compatible in both directions, since an older client
+reads the missing fields as absent and an older service's extra ones are
+ignored.
+
+### `nameHint` — answering again after the user corrects us
+
+A wrong name is not a wrong name in isolation: category, tags, and value were
+all derived from it, so correcting the title alone leaves an item filed under
+the previous guess. When the user does that and asks for the rest to be
+updated, the app sends their title as `nameHint`. The model is then told the
+name is authoritative and asked to derive the supporting fields for _that_
+item, using the photo as evidence about condition, size, and brand. The hint
+overrides whatever `name` the model echoes back, so its wording cannot undo the
+user's correction.
+
+Additive within v1, in both directions: a client that never sends it is
+byte-identical to before, and a deployment predating it ignores the field and
+answers from the photo alone — a worse answer, never a broken one. The hint is
+user-authored text that ends up in a prompt, so `parseRequest` collapses it to
+one line and clamps it to 80 characters; every field of the answer is still
+schema-checked and normalized as usual.
 
 `GET /api/adapters` — ids, labels, and which is default. Useful for confirming
 a redeploy actually changed the model. Exposes no secrets.

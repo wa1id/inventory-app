@@ -8,8 +8,6 @@ function item(overrides: Partial<ItemWithContext>): ItemWithContext {
     name: '',
     category: null,
     quantity: 1,
-    estimatedValue: null,
-    currency: null,
     notes: null,
     createdAt: 0,
     updatedAt: 0,
