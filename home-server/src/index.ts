@@ -9,6 +9,7 @@ import { openNodeDatabase } from '../../src/db/nodeDatabase.ts';
 
 import { createApp } from './app.ts';
 import { DEFAULT_PORT } from './contract.ts';
+import { openControlStore } from './control.ts';
 
 function dataDir(): string {
   return process.env.INVENTORY_DATA_DIR ?? './data';
@@ -33,12 +34,21 @@ function listenPort(): number {
 export async function start(): Promise<void> {
   configureRandomBytes((count) => randomFillSync(new Uint8Array(count)));
 
-  const dbPath = join(dataDir(), 'inventory.db');
+  const dir = dataDir();
+  const dbPath = join(dir, 'inventory.db');
   const db = openNodeDatabase(dbPath);
   const version = await migrate(db);
 
+  const control = await openControlStore(join(dir, 'control.db'));
+  if (control.bootstrapSecretToPrint) {
+    // Printed once. Never written to disk, never uploaded to R2.
+    console.log('Household bootstrap secret (save this; it cannot be recovered):');
+    console.log(control.bootstrapSecretToPrint);
+  }
+
+  const publicOrigin = process.env.INVENTORY_PUBLIC_ORIGIN ?? 'https://inventory.wystudio.be';
   const port = listenPort();
-  const app = createApp();
+  const app = createApp({ control, publicOrigin });
 
   serve({ fetch: app.fetch, port, hostname: '0.0.0.0' }, (info) => {
     console.log(`inventory-api listening on ${info.address}:${info.port} (schema v${version})`);

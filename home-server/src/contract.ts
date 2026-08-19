@@ -9,3 +9,12 @@ export const CONTRACT_VERSION = 1;
 
 /** Host port cloudflared already expects; 8080 is taken on this box. */
 export const DEFAULT_PORT = 8788;
+
+/** K18: one household, this name. */
+export const HOUSEHOLD_NAME = 'Home';
+
+/** 16 CSPRNG bytes, same size as the old recovery code. */
+export const BOOTSTRAP_SECRET_BYTES = 16;
+
+/** Raw device bearer token length. Hex-encoded on the wire. */
+export const DEVICE_TOKEN_BYTES = 32;
