@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { DatabaseProvider, useDatabase } from '@/providers/DatabaseProvider';
+import { HouseholdProvider } from '@/providers/HouseholdProvider';
 import { OnboardingProvider, useOnboarding } from '@/providers/OnboardingProvider';
 import { SyncProvider } from '@/providers/SyncProvider';
 import { ErrorState, LoadingState, Screen } from '@/ui/components/Screen';
@@ -70,6 +71,7 @@ function RootNavigator() {
         />
         <Stack.Screen name="privacy" options={{ title: 'Privacy' }} />
         <Stack.Screen name="backup" options={{ title: 'Backup' }} />
+        <Stack.Screen name="household" options={{ title: 'Home server' }} />
         <Stack.Screen name="space/new" options={{ title: 'New space', presentation: 'modal' }} />
         <Stack.Screen name="space/[id]/index" options={{ title: 'Space' }} />
         <Stack.Screen
@@ -104,17 +106,19 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <DatabaseProvider>
-        {/*
-         * Inside DatabaseProvider because it needs the repositories, but above
-         * the readiness gate: it handles a not-yet-ready database itself, and
-         * mounting it below the gate would restart every sync pass each time
-         * the gate re-rendered.
-         */}
-        <SyncProvider>
-          <OnboardingProvider>
-            <RootNavigator />
-          </OnboardingProvider>
-        </SyncProvider>
+        <HouseholdProvider>
+          {/*
+           * Inside DatabaseProvider because it needs the repositories, but above
+           * the readiness gate: it handles a not-yet-ready database itself, and
+           * mounting it below the gate would restart every sync pass each time
+           * the gate re-rendered.
+           */}
+          <SyncProvider>
+            <OnboardingProvider>
+              <RootNavigator />
+            </OnboardingProvider>
+          </SyncProvider>
+        </HouseholdProvider>
       </DatabaseProvider>
     </SafeAreaProvider>
   );

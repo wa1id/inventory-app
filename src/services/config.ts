@@ -48,6 +48,11 @@ export interface AppConfig {
    * photo, and it runs where the user is not waiting on it.
    */
   syncTimeoutMs: number;
+  /**
+   * Household API origin. Phones only use the Cloudflare hostname.
+   * Override in tests; production default is inventory.wystudio.be.
+   */
+  householdOrigin: string;
   environment: 'development' | 'preview' | 'production';
 }
 
@@ -64,5 +69,8 @@ export const appConfig: AppConfig = {
   syncEndpoint: process.env.EXPO_PUBLIC_SYNC_URL?.trim().replace(/\/+$/, '') || null,
   syncKey: process.env.EXPO_PUBLIC_SYNC_KEY?.trim() || null,
   syncTimeoutMs: Number(process.env.EXPO_PUBLIC_SYNC_TIMEOUT_MS ?? 60_000),
+  householdOrigin:
+    process.env.EXPO_PUBLIC_HOUSEHOLD_ORIGIN?.trim().replace(/\/+$/, '') ||
+    'https://inventory.wystudio.be',
   environment: readEnvironment(),
 };

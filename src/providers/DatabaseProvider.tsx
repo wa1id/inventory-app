@@ -6,6 +6,7 @@ import { configureRandomBytes } from '@/core/id';
 import { openExpoDatabase } from '@/db/expoDatabase';
 import { initializeRepositories } from '@/db/repositories';
 import type { Repositories } from '@/db/repositories';
+import { useHousehold } from '@/providers/HouseholdProvider';
 import { logEvent } from '@/services/telemetry';
 
 // Installed at module load so capture/imageStore can call `newId` without
@@ -91,8 +92,10 @@ export function useDatabase(): DatabaseContextValue {
  */
 export function useRepositories(): Repositories {
   const { state } = useDatabase();
+  const household = useHousehold();
   if (state.status !== 'ready') {
     throw new Error('Repositories are not available until the database is ready');
   }
+  if (household.session && household.repos) return household.repos;
   return state.repos;
 }

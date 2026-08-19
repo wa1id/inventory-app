@@ -6,8 +6,10 @@ import { useRepositories } from '@/providers/DatabaseProvider';
 import { LATEST_SCHEMA_VERSION } from '@/db/migrations';
 import { appVersion } from '@/services/appInfo';
 import { appConfig } from '@/services/config';
+import { useHousehold } from '@/providers/HouseholdProvider';
 import { useOnboarding } from '@/providers/OnboardingProvider';
 import { useSync, type SyncStatus } from '@/providers/SyncProvider';
+import { strings } from '@/i18n/strings';
 import { Screen } from '@/ui/components/Screen';
 import { MIN_TOUCH_TARGET, radius, spacing, useTheme } from '@/ui/theme';
 
@@ -55,6 +57,7 @@ export default function SettingsScreen() {
   const repos = useRepositories();
   const { replay } = useOnboarding();
   const { status } = useSync();
+  const household = useHousehold();
   const { colors } = useTheme();
 
   const { data: counts } = useInventoryQuery(async () => {
@@ -76,6 +79,17 @@ export default function SettingsScreen() {
           <Row label="Spaces" value={String(counts?.spaces ?? 0)} />
           <Row label="Containers" value={String(counts?.containers ?? 0)} />
           <Row label="Items" value={String(counts?.items ?? 0)} />
+        </View>
+
+        <View
+          style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        >
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Household</Text>
+          <Row
+            label={strings.household.settingsLabel}
+            value={household.session ? strings.household.connected : strings.household.disconnected}
+            onPress={() => router.push('/household')}
+          />
         </View>
 
         <View
