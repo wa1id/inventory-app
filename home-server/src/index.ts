@@ -12,6 +12,7 @@ import { createApp } from './app.ts';
 import { DEFAULT_PORT } from './contract.ts';
 import { openControlStore } from './control.ts';
 import { createRevisionHub } from './hub.ts';
+import { photoStoreFromEnv } from './photos.ts';
 
 function dataDir(): string {
   return process.env.INVENTORY_DATA_DIR ?? './data';
@@ -49,12 +50,19 @@ export async function start(): Promise<void> {
   }
 
   const publicOrigin = process.env.INVENTORY_PUBLIC_ORIGIN ?? 'https://inventory.wystudio.be';
+  const photos = photoStoreFromEnv();
+  if (!photos) {
+    console.log(
+      'R2 credentials not set; item photos will return 503 until R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY are provided.',
+    );
+  }
   const port = listenPort();
   const app = createApp({
     control,
     publicOrigin,
     repos: createRepositories(db),
     hub: createRevisionHub(),
+    photos,
   });
 
   serve({ fetch: app.fetch, port, hostname: '0.0.0.0' }, (info) => {

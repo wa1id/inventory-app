@@ -6,6 +6,7 @@ import { LATEST_SCHEMA_VERSION } from '../../src/db/migrations.ts';
 import { CONTRACT_VERSION, HOUSEHOLD_NAME } from './contract.ts';
 import type { ControlStore, Device } from './control.ts';
 import type { RevisionHub } from './hub.ts';
+import { preparePhoto, type PhotoStore } from './photos.ts';
 
 type Variables = { device: Device };
 
@@ -13,6 +14,7 @@ interface InventoryDeps {
   repos: Repositories;
   control: ControlStore;
   hub: RevisionHub;
+  photos: PhotoStore | null;
 }
 
 export function registerInventory(
@@ -20,7 +22,7 @@ export function registerInventory(
   deps: InventoryDeps,
   requireDevice: MiddlewareHandler<{ Variables: Variables }>,
 ): void {
-  const { repos, hub } = deps;
+  const { repos, hub, photos } = deps;
 
   const write = async <T>(work: () => Promise<T>): Promise<T> => {
     const result = await work();
@@ -169,11 +171,34 @@ export function registerInventory(
   });
 
   app.post('/v1/items', requireDevice, async (c) => {
-    const body = await readJson(c);
-    if (!body) return c.json({ error: 'invalid_json' }, 400);
+    const contentType = c.req.header('content-type') ?? '';
+    let body: Record<string, unknown>;
+    let photoBytes: Uint8Array | null = null;
+
+    if (contentType.includes('multipart/form-data')) {
+      const parsed = await c.req.parseBody();
+      body = Object.fromEntries(
+        Object.entries(parsed).filter(([, value]) => typeof value === 'string'),
+      );
+      const file = parsed.photo;
+      if (file instanceof File) {
+        photoBytes = new Uint8Array(await file.arrayBuffer());
+      }
+    } else {
+      const json = await readJson(c);
+      if (!json) return c.json({ error: 'invalid_json' }, 400);
+      body = json;
+    }
+
     const containerId = asString(body.containerId);
     if (!containerId) return c.json({ error: 'invalid_body' }, 400);
+
+    if (photoBytes && !photos) {
+      return c.json({ error: 'photos_not_configured' }, 503);
+    }
+
     try {
+      const prepared = photoBytes && photos ? await preparePhoto(photoBytes, photos) : null;
       const item = await write(() =>
         repos.items.create({
           containerId,
@@ -183,6 +208,21 @@ export function registerInventory(
           notes: asString(body.notes),
           tags: Array.isArray(body.tags)
             ? body.tags.filter((tag): tag is string => typeof tag === 'string')
+            : typeof body.tags === 'string'
+              ? body.tags
+                  .split(',')
+                  .map((tag) => tag.trim())
+                  .filter(Boolean)
+              : undefined,
+          photo: prepared
+            ? {
+                id: prepared.id,
+                uri: prepared.uri,
+                thumbUri: prepared.thumbUri,
+                width: prepared.width,
+                height: prepared.height,
+                byteSize: prepared.byteSize,
+              }
             : undefined,
         }),
       );
@@ -190,6 +230,14 @@ export function registerInventory(
     } catch (error) {
       return c.json({ error: messageOf(error) }, 400);
     }
+  });
+
+  app.get('/v1/photos/:id', requireDevice, async (c) => {
+    if (!photos) return c.json({ error: 'photos_not_configured' }, 503);
+    const kind = c.req.query('thumb') === '1' ? 'thumb' : 'full';
+    const object = await photos.get(c.req.param('id'), kind);
+    if (!object) return c.json({ error: 'not_found' }, 404);
+    return c.body(Buffer.from(object.bytes), 200, { 'content-type': object.contentType });
   });
 
   app.get('/v1/items/:id', requireDevice, async (c) => {
