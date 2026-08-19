@@ -1,6 +1,7 @@
 import type { Hono, MiddlewareHandler } from 'hono';
 import { streamSSE } from 'hono/streaming';
 
+import { ConflictError } from '../../src/core/conflict.ts';
 import type { Repositories } from '../../src/db/repositories.ts';
 import { LATEST_SCHEMA_VERSION } from '../../src/db/migrations.ts';
 import { CONTRACT_VERSION, HOUSEHOLD_NAME } from './contract.ts';
@@ -226,7 +227,8 @@ export function registerInventory(
             : undefined,
         }),
       );
-      return c.json(item, 201);
+      const full = await repos.items.getById(item.id);
+      return c.json(full ?? item, 201);
     } catch (error) {
       return c.json({ error: messageOf(error) }, 400);
     }
@@ -249,20 +251,28 @@ export function registerInventory(
   app.patch('/v1/items/:id', requireDevice, async (c) => {
     const body = await readJson(c);
     if (!body) return c.json({ error: 'invalid_json' }, 400);
-    const updated = await write(() =>
-      repos.items.update(c.req.param('id'), {
-        containerId: asString(body.containerId) ?? undefined,
-        name: 'name' in body ? (asString(body.name) ?? undefined) : undefined,
-        category: 'category' in body ? asString(body.category) : undefined,
-        quantity: asNumber(body.quantity) ?? undefined,
-        notes: 'notes' in body ? asString(body.notes) : undefined,
-        tags: Array.isArray(body.tags)
-          ? body.tags.filter((tag): tag is string => typeof tag === 'string')
-          : undefined,
-      }),
-    );
-    if (!updated) return c.json({ error: 'not_found' }, 404);
-    return c.json(updated);
+    try {
+      const updated = await write(() =>
+        repos.items.update(c.req.param('id'), {
+          containerId: asString(body.containerId) ?? undefined,
+          name: 'name' in body ? (asString(body.name) ?? undefined) : undefined,
+          category: 'category' in body ? asString(body.category) : undefined,
+          quantity: asNumber(body.quantity) ?? undefined,
+          notes: 'notes' in body ? asString(body.notes) : undefined,
+          tags: Array.isArray(body.tags)
+            ? body.tags.filter((tag): tag is string => typeof tag === 'string')
+            : undefined,
+          expectedUpdatedAt: asNumber(body.updatedAt) ?? undefined,
+        }),
+      );
+      if (!updated) return c.json({ error: 'not_found' }, 404);
+      return c.json(updated);
+    } catch (error) {
+      if (error instanceof ConflictError) {
+        return c.json({ error: 'conflict', updatedAt: error.updatedAt }, 409);
+      }
+      return c.json({ error: messageOf(error) }, 400);
+    }
   });
 
   app.delete('/v1/items/:id', requireDevice, async (c) => {
@@ -331,7 +341,12 @@ function asString(value: unknown): string | null {
 }
 
 function asNumber(value: unknown): number | null {
-  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
 }
 
 function messageOf(error: unknown): string {

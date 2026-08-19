@@ -1,3 +1,4 @@
+import { ConflictError } from '@/core/conflict';
 import { newId } from '@/core/id';
 import { DROP_ZONE_CONTAINER_ID, splitTagNames } from '@/db/constants';
 import type { Item, ItemPhoto, ItemWithContext, SqlDatabase } from '@/db/types';
@@ -108,6 +109,11 @@ export interface ItemDraft {
 
 export type UpdateItemInput = Partial<Omit<ItemDraft, 'containerId'>> & {
   containerId?: string;
+  /**
+   * Optimistic lock. When set, the row must still have this `updatedAt` or
+   * the write throws `ConflictError` and changes nothing.
+   */
+  expectedUpdatedAt?: number;
 };
 
 function normalizeTag(tag: string): string {
@@ -295,23 +301,39 @@ export function createItemsRepository(db: SqlDatabase) {
         updatedAt: Date.now(),
       };
 
+      let vanished = false;
       await db.withTransactionAsync(async () => {
-        await db.runAsync(
-          `UPDATE items
+        const params: (string | number | null)[] = [
+          next.containerId,
+          next.name,
+          next.category,
+          next.quantity,
+          next.notes,
+          next.updatedAt,
+          searchTextFor(next.name, next.category),
+          id,
+        ];
+        let sql = `UPDATE items
               SET container_id = ?, name = ?, category = ?, quantity = ?,
                   notes = ?, updated_at = ?, search_text = ?
-            WHERE id = ?`,
-          [
-            next.containerId,
-            next.name,
-            next.category,
-            next.quantity,
-            next.notes,
-            next.updatedAt,
-            searchTextFor(next.name, next.category),
-            id,
-          ],
-        );
+            WHERE id = ?`;
+        if (input.expectedUpdatedAt !== undefined) {
+          sql += ' AND updated_at = ?';
+          params.push(input.expectedUpdatedAt);
+        }
+
+        const result = await db.runAsync(sql, params);
+        if (result.changes === 0) {
+          const current = await db.getFirstAsync<{ updated_at: number }>(
+            'SELECT updated_at FROM items WHERE id = ?',
+            [id],
+          );
+          if (input.expectedUpdatedAt !== undefined && current) {
+            throw new ConflictError(current.updated_at);
+          }
+          vanished = true;
+          return;
+        }
 
         if (input.tags !== undefined) {
           await replaceTags(id, input.tags);
@@ -338,6 +360,7 @@ export function createItemsRepository(db: SqlDatabase) {
         }
       });
 
+      if (vanished) return null;
       return next;
     },
 

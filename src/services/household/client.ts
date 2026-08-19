@@ -1,3 +1,4 @@
+import { ConflictError } from '@/core/conflict';
 import { appConfig } from '@/services/config';
 
 export class HouseholdHttpError extends Error {
@@ -9,6 +10,8 @@ export class HouseholdHttpError extends Error {
     this.name = 'HouseholdHttpError';
   }
 }
+
+export { ConflictError };
 
 export interface HouseholdSession {
   origin: string;
@@ -58,6 +61,7 @@ export async function householdRequest(options: {
   method?: string;
   token?: string;
   json?: unknown;
+  form?: FormData;
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
 }): Promise<Record<string, unknown>> {
@@ -71,6 +75,13 @@ export async function householdRequest(options: {
     } catch {
       throw new HouseholdHttpError(response.status, 'invalid_json');
     }
+  }
+  if (response.status === 409) {
+    const updatedAt =
+      parsed && typeof parsed === 'object' && parsed !== null && 'updatedAt' in parsed
+        ? Number((parsed as { updatedAt: unknown }).updatedAt)
+        : null;
+    throw new ConflictError(Number.isFinite(updatedAt) ? updatedAt : null);
   }
   if (!response.ok) {
     const code =
@@ -89,6 +100,7 @@ export async function householdFetch(options: {
   method?: string;
   token?: string;
   json?: unknown;
+  form?: FormData;
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
 }): Promise<Response> {
@@ -100,13 +112,16 @@ export async function householdFetch(options: {
       method: options.method ?? 'GET',
       headers: {
         Accept: 'application/json',
-        ...(options.json !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...(options.json !== undefined && !options.form
+          ? { 'Content-Type': 'application/json' }
+          : {}),
         ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
       },
-      body: options.json !== undefined ? JSON.stringify(options.json) : undefined,
+      body: options.form ?? (options.json !== undefined ? JSON.stringify(options.json) : undefined),
       signal: controller.signal,
     });
   } catch (error) {
+    if (error instanceof HouseholdHttpError || error instanceof ConflictError) throw error;
     if (error instanceof Error && error.name === 'AbortError') {
       throw new HouseholdHttpError(0, 'timeout');
     }

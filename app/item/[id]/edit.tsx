@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useInventoryQuery } from '@/hooks/useInventoryQuery';
 import { strings } from '@/i18n/strings';
 import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
+import { ConflictError, HouseholdHttpError } from '@/services/household/client';
 import { logEvent } from '@/services/telemetry';
 import { Button } from '@/ui/components/Button';
 import { ErrorState, LoadingState, Screen } from '@/ui/components/Screen';
@@ -53,9 +54,10 @@ export default function EditItemScreen() {
     setErrors(nextErrors);
     if (!parsed) return;
 
+    if (!item) return;
     setSaving(true);
     try {
-      await repos.items.update(id, parsed);
+      await repos.items.update(id, { ...parsed, expectedUpdatedAt: item.updatedAt });
       logEvent('item_updated');
       invalidate();
       router.back();
@@ -63,9 +65,14 @@ export default function EditItemScreen() {
       setSaving(false);
       Alert.alert(
         'Could not save',
-        cause instanceof Error
-          ? cause.message
-          : 'The item could not be saved. Your changes are still here.',
+        cause instanceof ConflictError
+          ? strings.household.conflict
+          : cause instanceof HouseholdHttpError &&
+              (cause.code === 'offline' || cause.code === 'timeout')
+            ? strings.household.offline
+            : cause instanceof Error
+              ? cause.message
+              : 'The item could not be saved. Your changes are still here.',
       );
     }
   }

@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useInventoryQuery } from '@/hooks/useInventoryQuery';
 import { strings } from '@/i18n/strings';
 import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
+import { ConflictError, HouseholdHttpError } from '@/services/household/client';
 import { logEvent } from '@/services/telemetry';
 import { EmptyState } from '@/ui/components/EmptyState';
 import { ErrorState, LoadingState, Screen } from '@/ui/components/Screen';
@@ -33,7 +34,10 @@ export default function MoveItemScreen() {
     if (saving) return;
     setSaving(true);
     try {
-      await repos.items.update(id, { containerId });
+      await repos.items.update(id, {
+        containerId,
+        expectedUpdatedAt: item.data?.updatedAt,
+      });
       logEvent('item_moved');
       invalidate();
       router.replace(`/container/${containerId}`);
@@ -41,7 +45,14 @@ export default function MoveItemScreen() {
       setSaving(false);
       Alert.alert(
         'Could not move',
-        cause instanceof Error ? cause.message : 'The item could not be moved.',
+        cause instanceof ConflictError
+          ? strings.household.conflict
+          : cause instanceof HouseholdHttpError &&
+              (cause.code === 'offline' || cause.code === 'timeout')
+            ? strings.household.offline
+            : cause instanceof Error
+              ? cause.message
+              : 'The item could not be moved.',
       );
     }
   }

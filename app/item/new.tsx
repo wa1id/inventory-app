@@ -6,6 +6,7 @@ import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
 import { useInventoryQuery } from '@/hooks/useInventoryQuery';
 import { strings } from '@/i18n/strings';
 import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
+import { ConflictError, HouseholdHttpError } from '@/services/household/client';
 import { recognizeItem } from '@/services/ai/recognition';
 import { deleteStoredPhotos } from '@/services/capture/imageStore';
 import { logEvent } from '@/services/telemetry';
@@ -169,9 +170,14 @@ export default function NewItemScreen() {
       setSaving(false);
       Alert.alert(
         'Could not save',
-        cause instanceof Error
-          ? cause.message
-          : 'The item could not be saved. Your details are still here.',
+        cause instanceof ConflictError
+          ? strings.household.conflict
+          : cause instanceof HouseholdHttpError &&
+              (cause.code === 'offline' || cause.code === 'timeout')
+            ? strings.household.offline
+            : cause instanceof Error
+              ? cause.message
+              : 'The item could not be saved. Your details are still here.',
       );
     }
   }
