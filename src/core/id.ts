@@ -1,16 +1,35 @@
-import * as Crypto from 'expo-crypto';
-
 import { toHex } from './bytes';
 
 /**
- * All identifiers and tokens come from the platform CSPRNG.
+ * Cryptographically secure bytes used for entity IDs and QR tokens.
+ *
+ * `newId` / `newQrToken` used to import `expo-crypto` directly. The home
+ * server will run the same functions under Node, so the RNG is injected at
+ * process start instead of baked into this module.
+ */
+export type RandomBytes = (count: number) => Uint8Array;
+
+let randomBytesImpl: RandomBytes | undefined;
+
+/** Pass `null` to clear the source (tests). Production always installs one. */
+export function configureRandomBytes(next: RandomBytes | null): void {
+  randomBytesImpl = next ?? undefined;
+}
+
+/**
+ * All identifiers and tokens come from the injected CSPRNG.
  *
  * There is deliberately no `Math.random` fallback: QR tokens are the only thing
  * standing between a printed label and someone else's inventory, so failing
  * loudly is better than silently degrading to predictable output.
  */
 function randomBytes(count: number): Uint8Array {
-  return Crypto.getRandomBytes(count);
+  if (!randomBytesImpl) {
+    throw new Error(
+      'Random bytes source is not configured. Call configureRandomBytes() at process start.',
+    );
+  }
+  return randomBytesImpl(count);
 }
 
 /**

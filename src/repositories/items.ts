@@ -14,6 +14,7 @@ interface ItemRow {
 }
 
 interface ItemContextRow extends ItemRow {
+  photo_id: string | null;
   photo_uri: string | null;
   photo_thumb_uri: string | null;
   tag_names: string | null;
@@ -41,6 +42,7 @@ function toItem(row: ItemRow): Item {
 function toItemWithContext(row: ItemContextRow): ItemWithContext {
   return {
     ...toItem(row),
+    photoId: row.photo_id,
     photoUri: row.photo_uri,
     photoThumbUri: row.photo_thumb_uri,
     tags: splitTagNames(row.tag_names),
@@ -61,6 +63,8 @@ function toItemWithContext(row: ItemContextRow): ItemWithContext {
  */
 const ITEM_CONTEXT_SELECT = `
   SELECT i.*,
+         (SELECT p.id FROM item_photos p WHERE p.item_id = i.id
+           ORDER BY p.created_at ASC LIMIT 1) AS photo_id,
          (SELECT p.uri FROM item_photos p WHERE p.item_id = i.id
            ORDER BY p.created_at ASC LIMIT 1) AS photo_uri,
          (SELECT p.thumb_uri FROM item_photos p WHERE p.item_id = i.id

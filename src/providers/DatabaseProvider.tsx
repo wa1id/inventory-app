@@ -1,10 +1,16 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import * as Crypto from 'expo-crypto';
 
+import { configureRandomBytes } from '@/core/id';
 import { openExpoDatabase } from '@/db/expoDatabase';
 import { initializeRepositories } from '@/db/repositories';
 import type { Repositories } from '@/db/repositories';
 import { logEvent } from '@/services/telemetry';
+
+// Installed at module load so capture/imageStore can call `newId` without
+// going through this provider. The home server injects `node:crypto` instead.
+configureRandomBytes((count) => Crypto.getRandomBytes(count));
 
 type DatabaseState =
   | { status: 'loading' }

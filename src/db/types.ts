@@ -121,6 +121,12 @@ export interface ContainerWithCounts extends Container {
 
 /** Item plus the derived data every list row needs. */
 export interface ItemWithContext extends Item {
+  /**
+   * Primary photo row id. The home server stores bytes as `photos/<id>.webp`;
+   * the phone still uses `photoUri` for the local file. Null when the item
+   * has no photo.
+   */
+  photoId: string | null;
   photoUri: string | null;
   /**
    * Thumbnail for list rows. Null for photos captured before thumbnails
