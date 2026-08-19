@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
 import type { SqlDatabase, SqlParams } from './types';
@@ -11,6 +12,9 @@ import type { SqlDatabase, SqlParams } from './types';
  * suite) use this adapter so repositories stay on one SQL dialect. `:memory:`
  * remains valid for tests; a filesystem path is what the household process
  * opens.
+ *
+ * Snapshots use `VACUUM INTO` rather than `serialize()`, which Node 22 (CI
+ * and the Docker image) does not ship.
  */
 function sqlLiteral(value: string): string {
   return `'${value.replaceAll("'", "''")}'`;
@@ -31,13 +35,23 @@ function unlinkIfPresent(path: string): void {
   }
 }
 
+function scratchFile(kind: string): string {
+  return join(
+    tmpdir(),
+    `inventory-${kind}-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}.db`,
+  );
+}
+
 export function openNodeDatabase(path = ':memory:'): SqlDatabase {
   const fileBacked = path !== ':memory:';
   if (fileBacked) {
     mkdirSync(dirname(path), { recursive: true });
   }
 
-  const handle = { db: new DatabaseSync(path) };
+  const handle: { db: DatabaseSync; scratch: string | null } = {
+    db: new DatabaseSync(path),
+    scratch: null,
+  };
   applyPragmas(handle.db, fileBacked);
 
   let depth = 0;
@@ -82,21 +96,22 @@ export function openNodeDatabase(path = ':memory:'): SqlDatabase {
 
     async closeAsync() {
       handle.db.close();
+      if (handle.scratch) {
+        unlinkIfPresent(handle.scratch);
+        unlinkIfPresent(`${handle.scratch}-wal`);
+        unlinkIfPresent(`${handle.scratch}-shm`);
+        handle.scratch = null;
+      }
     },
 
     /**
      * Consistent snapshot of the live database.
      *
-     * File-backed connections run `VACUUM INTO` so WAL pages are folded into
-     * the copy rather than relying on a checkpoint that another writer could
-     * race. In-memory databases serialize in-process.
+     * `VACUUM INTO` folds WAL pages into a new file. Works for both a path
+     * and `:memory:`, and does not need `DatabaseSync.serialize` (Node 22).
      */
     snapshotAsync: async () => {
-      if (!fileBacked) {
-        return handle.db.serialize();
-      }
-      const snapshotPath = `${path}.snapshot`;
-      unlinkIfPresent(snapshotPath);
+      const snapshotPath = scratchFile('snap');
       handle.db.exec(`VACUUM INTO ${sqlLiteral(snapshotPath)}`);
       try {
         return readFileSync(snapshotPath);
@@ -108,16 +123,20 @@ export function openNodeDatabase(path = ':memory:'): SqlDatabase {
     restoreAsync: async (snapshot) => {
       handle.db.close();
       depth = 0;
+
+      const target = fileBacked ? path : scratchFile('restore');
+      writeFileSync(target, snapshot);
+      unlinkIfPresent(`${target}-wal`);
+      unlinkIfPresent(`${target}-shm`);
       if (!fileBacked) {
-        handle.db = new DatabaseSync(':memory:');
-        handle.db.deserialize(snapshot);
-        applyPragmas(handle.db, false);
-        return;
+        if (handle.scratch) {
+          unlinkIfPresent(handle.scratch);
+          unlinkIfPresent(`${handle.scratch}-wal`);
+          unlinkIfPresent(`${handle.scratch}-shm`);
+        }
+        handle.scratch = target;
       }
-      writeFileSync(path, snapshot);
-      unlinkIfPresent(`${path}-wal`);
-      unlinkIfPresent(`${path}-shm`);
-      handle.db = new DatabaseSync(path);
+      handle.db = new DatabaseSync(target);
       applyPragmas(handle.db, true);
     },
   };
