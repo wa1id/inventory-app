@@ -30,7 +30,15 @@ export function r2ObjectKey(id: string, kind: PhotoKind): string {
 }
 
 export async function preparePhoto(input: Uint8Array, store: PhotoStore): Promise<PreparedPhoto> {
-  const id = newId();
+  return preparePhotoWithId(newId(), input, store);
+}
+
+/** Import path: keep the phone's photo id so item_photos rows still match. */
+export async function preparePhotoWithId(
+  id: string,
+  input: Uint8Array,
+  store: PhotoStore,
+): Promise<PreparedPhoto> {
   const image = sharp(input).rotate();
   const full = await image
     .clone()

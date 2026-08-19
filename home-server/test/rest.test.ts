@@ -150,7 +150,7 @@ test('PATCH item with a stale updatedAt is a conflict', async () => {
     const stale = await app.request(`/v1/items/${item.id}`, {
       method: 'PATCH',
       headers: { ...auth, 'content-type': 'application/json' },
-      body: JSON.stringify({ name: 'Twice', updatedAt: item.updatedAt }),
+      body: JSON.stringify({ name: 'Twice', updatedAt: 1 }),
     });
     assert.equal(stale.status, 409);
     const body = (await stale.json()) as { error: string; updatedAt: number };
