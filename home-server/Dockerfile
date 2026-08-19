@@ -10,6 +10,7 @@ RUN npm ci --omit=dev
 WORKDIR /app
 COPY src/core ./src/core
 COPY src/db ./src/db
+COPY src/repositories ./src/repositories
 COPY home-server/src ./home-server/src
 COPY home-server/tsconfig.json ./home-server/tsconfig.json
 

@@ -11,7 +11,8 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "paths": { "@/*": ["../src/*"] }
   },
   "include": [
     "src/**/*.ts",
@@ -20,6 +21,15 @@
     "../src/core/id.ts",
     "../src/db/migrations.ts",
     "../src/db/nodeDatabase.ts",
-    "../src/db/types.ts"
+    "../src/db/types.ts",
+    "../src/db/constants.ts",
+    "../src/db/repositories.ts",
+    "../src/core/shortCode.ts",
+    "../src/core/tokenize.ts",
+    "../src/repositories/spaces.ts",
+    "../src/repositories/containers.ts",
+    "../src/repositories/items.ts",
+    "../src/repositories/qr.ts",
+    "../src/repositories/search.ts"
   ]
 }
