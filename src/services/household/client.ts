@@ -101,6 +101,7 @@ export async function householdFetch(options: {
   token?: string;
   json?: unknown;
   form?: FormData;
+  bytes?: Uint8Array;
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
 }): Promise<Response> {
@@ -108,16 +109,22 @@ export async function householdFetch(options: {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 20_000);
   try {
+    const copy = options.bytes ? new Uint8Array(options.bytes.byteLength) : undefined;
+    if (copy && options.bytes) copy.set(options.bytes);
     return await doFetch(`${options.origin}${options.path}`, {
       method: options.method ?? 'GET',
       headers: {
         Accept: 'application/json',
-        ...(options.json !== undefined && !options.form
+        ...(options.json !== undefined && !options.form && !options.bytes
           ? { 'Content-Type': 'application/json' }
           : {}),
+        ...(options.bytes ? { 'Content-Type': 'application/octet-stream' } : {}),
         ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
       },
-      body: options.form ?? (options.json !== undefined ? JSON.stringify(options.json) : undefined),
+      body:
+        options.form ??
+        copy ??
+        (options.json !== undefined ? JSON.stringify(options.json) : undefined),
       signal: controller.signal,
     });
   } catch (error) {

@@ -4,10 +4,12 @@ import { streamSSE } from 'hono/streaming';
 import { ConflictError } from '../../src/core/conflict.ts';
 import type { Repositories } from '../../src/db/repositories.ts';
 import { LATEST_SCHEMA_VERSION } from '../../src/db/migrations.ts';
+import type { HouseholdDump } from '../../src/services/household/dump.ts';
 import { CONTRACT_VERSION, HOUSEHOLD_NAME } from './contract.ts';
 import type { ControlStore, Device } from './control.ts';
 import type { RevisionHub } from './hub.ts';
-import { preparePhoto, type PhotoStore } from './photos.ts';
+import { applyHouseholdDump } from './importer.ts';
+import { preparePhoto, preparePhotoWithId, type PhotoStore } from './photos.ts';
 
 type Variables = { device: Device };
 
@@ -322,6 +324,40 @@ export function registerInventory(
     if (!unbound) return c.json({ error: 'not_found' }, 404);
     return c.body(null, 204);
   });
+
+  app.post('/v1/import', requireDevice, async (c) => {
+    const body = await readJson(c);
+    if (!body) return c.json({ error: 'invalid_json' }, 400);
+    try {
+      const dump = asDump(body);
+      await write(() => applyHouseholdDump(repos.db, dump));
+      return c.json({
+        ok: true,
+        spaces: dump.spaces.length,
+        containers: dump.containers.length,
+        items: dump.items.length,
+        photos: dump.photos.length,
+      });
+    } catch (error) {
+      return c.json({ error: messageOf(error) }, 400);
+    }
+  });
+
+  app.put('/v1/photos/:id', requireDevice, async (c) => {
+    if (!photos) return c.json({ error: 'photos_not_configured' }, 503);
+    const id = c.req.param('id');
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+      return c.json({ error: 'invalid_id' }, 400);
+    }
+    const bytes = new Uint8Array(await c.req.arrayBuffer());
+    if (bytes.byteLength === 0) return c.json({ error: 'empty_upload' }, 400);
+    try {
+      const prepared = await preparePhotoWithId(id, bytes, photos);
+      return c.json(prepared, 201);
+    } catch (error) {
+      return c.json({ error: messageOf(error) }, 400);
+    }
+  });
 }
 
 async function readJson(c: {
@@ -351,4 +387,20 @@ function asNumber(value: unknown): number | null {
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : 'invalid_body';
+}
+
+function asDump(body: Record<string, unknown>): HouseholdDump {
+  return {
+    spaces: asArray(body.spaces),
+    containers: asArray(body.containers),
+    items: asArray(body.items),
+    tags: asArray(body.tags),
+    itemTags: asArray(body.itemTags),
+    qrBindings: asArray(body.qrBindings),
+    photos: asArray(body.photos),
+  };
+}
+
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
 }

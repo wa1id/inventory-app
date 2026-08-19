@@ -6,6 +6,7 @@ import { useDatabase } from '@/providers/DatabaseProvider';
 import { useHousehold } from '@/providers/HouseholdProvider';
 import { strings } from '@/i18n/strings';
 import { HouseholdHttpError } from '@/services/household/client';
+import { importLocalInventory } from '@/services/household/importHousehold';
 import { Button } from '@/ui/components/Button';
 import { Screen } from '@/ui/components/Screen';
 import { TextField } from '@/ui/components/TextField';
@@ -14,7 +15,7 @@ import { radius, spacing, useTheme } from '@/ui/theme';
 export default function HouseholdScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-  const { invalidate } = useDatabase();
+  const { state, invalidate } = useDatabase();
   const household = useHousehold();
   const [secret, setSecret] = useState('');
   const [deviceName, setDeviceName] = useState('This phone');
@@ -33,6 +34,44 @@ export default function HouseholdScreen() {
         cause instanceof HouseholdHttpError && cause.code === 'unauthorized'
           ? 'That secret was not accepted.'
           : strings.household.error,
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function confirmImport() {
+    Alert.alert(strings.household.importTitle, strings.household.importBody, [
+      { text: strings.common.cancel, style: 'cancel' },
+      {
+        text: strings.household.importLabel,
+        onPress: () => void runImport(),
+      },
+    ]);
+  }
+
+  async function runImport() {
+    if (!household.session || state.status !== 'ready') return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await importLocalInventory({
+        session: household.session,
+        db: state.repos.db,
+      });
+      invalidate();
+      Alert.alert(
+        strings.household.connected,
+        strings.household.importDone(result.items, result.photosUploaded),
+      );
+    } catch (cause) {
+      setError(
+        cause instanceof HouseholdHttpError &&
+          (cause.code === 'offline' || cause.code === 'timeout')
+          ? strings.household.offline
+          : cause instanceof Error
+            ? cause.message
+            : strings.household.error,
       );
     } finally {
       setBusy(false);
@@ -76,10 +115,18 @@ export default function HouseholdScreen() {
             <Text style={[styles.hint, { color: colors.textMuted }]}>
               {household.session.origin}
             </Text>
+            {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
+            <Button
+              label={busy ? strings.household.importing : strings.household.importLabel}
+              onPress={confirmImport}
+              disabled={busy || state.status !== 'ready'}
+              loading={busy}
+            />
             <Button
               label={strings.household.disconnect}
               variant="danger"
               onPress={confirmDisconnect}
+              disabled={busy}
             />
           </View>
         ) : (

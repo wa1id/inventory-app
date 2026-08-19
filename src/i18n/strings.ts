@@ -216,6 +216,13 @@ export const strings = {
     offline: 'The home server could not be reached. Try again when you are online.',
     conflict:
       'Someone else changed this item. Open it again to see the latest version, then retry.',
+    importLabel: 'Import this phone’s inventory',
+    importing: 'Importing…',
+    importTitle: 'Copy this phone onto the home server?',
+    importBody:
+      'Spaces, containers, items, and photos on this phone become the household inventory. Photos go to the existing cloud bucket, not the home server disk.',
+    importDone: (items: number, photos: number) =>
+      `Imported ${items} item${items === 1 ? '' : 's'} and ${photos} photo${photos === 1 ? '' : 's'}.`,
   },
   common: {
     cancel: 'Cancel',
