@@ -369,6 +369,19 @@ describe('items', () => {
     expect(stored?.tags).toEqual(['new']);
   });
 
+  it('rejects an update when expectedUpdatedAt does not match', async () => {
+    const repos = await freshRepos();
+    const { container } = await seedSpaceAndContainer(repos);
+    const item = await repos.items.create({ containerId: container.id, name: 'Drill' });
+    await repos.items.update(item.id, { name: 'Once' });
+
+    await expect(
+      repos.items.update(item.id, { name: 'Twice', expectedUpdatedAt: 1 }),
+    ).rejects.toMatchObject({ name: 'ConflictError', status: 409 });
+
+    expect((await repos.items.getById(item.id))?.name).toBe('Once');
+  });
+
   it('removes photo and tag rows when an item is deleted', async () => {
     const repos = await freshRepos();
     const { container } = await seedSpaceAndContainer(repos);

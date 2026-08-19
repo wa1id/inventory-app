@@ -7,6 +7,7 @@ import { openExpoDatabase } from '@/db/expoDatabase';
 import { initializeRepositories } from '@/db/repositories';
 import type { Repositories } from '@/db/repositories';
 import { useHousehold } from '@/providers/HouseholdProvider';
+import { withLocalShadow } from '@/services/household/shadow';
 import { logEvent } from '@/services/telemetry';
 
 // Installed at module load so capture/imageStore can call `newId` without
@@ -96,6 +97,8 @@ export function useRepositories(): Repositories {
   if (state.status !== 'ready') {
     throw new Error('Repositories are not available until the database is ready');
   }
-  if (household.session && household.repos) return household.repos;
+  if (household.session && household.repos) {
+    return withLocalShadow(household.repos, state.repos);
+  }
   return state.repos;
 }

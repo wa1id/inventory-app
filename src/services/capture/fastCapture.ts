@@ -11,7 +11,7 @@ export interface StoredPhoto {
 
 export interface FastCaptureDeps {
   storePhoto: (uri: string) => Promise<StoredPhoto>;
-  createItem: (draft: ItemDraft) => Promise<{ id: string }>;
+  createItem: (draft: ItemDraft) => Promise<{ id: string; updatedAt?: number }>;
   updateItem: (id: string, input: UpdateItemInput) => Promise<unknown>;
   recognize: (uri: string) => Promise<RecognitionResult>;
 }
@@ -89,6 +89,7 @@ export async function captureFastItem({
     await deps.updateItem(item.id, {
       category: suggestion.category,
       tags: suggestion.tags,
+      expectedUpdatedAt: item.updatedAt,
     });
     return { status: 'unrecognized', itemId: item.id, reason: 'unrecognized' };
   }
@@ -97,6 +98,7 @@ export async function captureFastItem({
     name,
     category: suggestion.category,
     tags: suggestion.tags,
+    expectedUpdatedAt: item.updatedAt,
   });
 
   return { status: 'recognized', itemId: item.id, name };

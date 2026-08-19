@@ -213,6 +213,9 @@ export const strings = {
     disconnect: 'Stop using the home server',
     body: 'Pairing makes this phone read and write the household inventory on the home server. Your local copy stays on the phone until you import it.',
     error: 'Could not pair. Check the secret and that the server is reachable.',
+    offline: 'The home server could not be reached. Try again when you are online.',
+    conflict:
+      'Someone else changed this item. Open it again to see the latest version, then retry.',
   },
   common: {
     cancel: 'Cancel',

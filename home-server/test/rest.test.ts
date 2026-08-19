@@ -114,3 +114,55 @@ test('spaces, containers, items, search, and PATCH round-trip', async () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('PATCH item with a stale updatedAt is a conflict', async () => {
+  const { dir, control, app, auth } = await setup();
+  try {
+    const space = (await (
+      await app.request('/v1/spaces', {
+        method: 'POST',
+        headers: { ...auth, 'content-type': 'application/json' },
+        body: JSON.stringify({ name: 'Garage', icon: '🚗', color: '#5B8DEF' }),
+      })
+    ).json()) as { id: string };
+    const container = (await (
+      await app.request('/v1/containers', {
+        method: 'POST',
+        headers: { ...auth, 'content-type': 'application/json' },
+        body: JSON.stringify({ spaceId: space.id, visualType: 'box' }),
+      })
+    ).json()) as { id: string };
+    const created = await app.request('/v1/items', {
+      method: 'POST',
+      headers: { ...auth, 'content-type': 'application/json' },
+      body: JSON.stringify({ containerId: container.id, name: 'Drill' }),
+    });
+    const item = (await created.json()) as { id: string; updatedAt: number };
+
+    const first = await app.request(`/v1/items/${item.id}`, {
+      method: 'PATCH',
+      headers: { ...auth, 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'Once', updatedAt: item.updatedAt }),
+    });
+    assert.equal(first.status, 200);
+    const once = (await first.json()) as { updatedAt: number };
+
+    const stale = await app.request(`/v1/items/${item.id}`, {
+      method: 'PATCH',
+      headers: { ...auth, 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'Twice', updatedAt: item.updatedAt }),
+    });
+    assert.equal(stale.status, 409);
+    const body = (await stale.json()) as { error: string; updatedAt: number };
+    assert.equal(body.error, 'conflict');
+    assert.equal(body.updatedAt, once.updatedAt);
+
+    const stored = (await (
+      await app.request(`/v1/items/${item.id}`, { headers: auth })
+    ).json()) as { name: string };
+    assert.equal(stored.name, 'Once');
+  } finally {
+    await control.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
