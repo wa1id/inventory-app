@@ -13,6 +13,8 @@ services:
     image: inventory-api
     container_name: inventory-api
     restart: unless-stopped
+    # Volume is root-owned on first create; node user cannot write SQLite there.
+    user: '0:0'
     ports:
       # Loopback only: phones use https://inventory.wystudio.be, not the LAN IP.
       - '127.0.0.1:8788:8788'
