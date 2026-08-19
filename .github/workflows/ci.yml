@@ -34,6 +34,11 @@ jobs:
         working-directory: server
         run: npm ci
 
+      # Same reason as server/: root eslint walks into home-server/.
+      - name: Install home-server dependencies
+        working-directory: home-server
+        run: npm ci
+
       - name: Check formatting
         run: npm run format:check
 
@@ -45,6 +50,30 @@ jobs:
 
       - name: Test
         run: npm run test:ci
+
+  home-server:
+    name: Home server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: home-server/package-lock.json
+
+      - name: Install dependencies
+        working-directory: home-server
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: home-server
+        run: npm run typecheck
+
+      - name: Test
+        working-directory: home-server
+        run: npm test
 
   worker:
     name: Sync service

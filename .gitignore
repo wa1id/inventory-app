@@ -41,6 +41,9 @@ coverage/
 # local env files
 .env*.local
 
+# local household DB when running home-server outside Compose
+home-server/data/
+
 # typescript
 *.tsbuildinfo
 

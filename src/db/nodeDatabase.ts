@@ -93,7 +93,13 @@ export function openNodeDatabase(path = ':memory:'): SqlDatabase {
      */
     snapshotAsync: async () => {
       if (!fileBacked) {
-        return handle.db.serialize();
+        // `serialize` landed after Node 22's type definitions. File-backed
+        // snapshots use VACUUM INTO below, which is what the home server runs.
+        const serialize = (handle.db as { serialize?: () => Uint8Array }).serialize;
+        if (!serialize) {
+          throw new Error('In-memory snapshot requires DatabaseSync.serialize');
+        }
+        return serialize.call(handle.db);
       }
       const snapshotPath = `${path}.snapshot`;
       unlinkIfPresent(snapshotPath);
@@ -110,7 +116,11 @@ export function openNodeDatabase(path = ':memory:'): SqlDatabase {
       depth = 0;
       if (!fileBacked) {
         handle.db = new DatabaseSync(':memory:');
-        handle.db.deserialize(snapshot);
+        const deserialize = (handle.db as { deserialize?: (data: Uint8Array) => void }).deserialize;
+        if (!deserialize) {
+          throw new Error('In-memory restore requires DatabaseSync.deserialize');
+        }
+        deserialize.call(handle.db, snapshot);
         applyPragmas(handle.db, false);
         return;
       }

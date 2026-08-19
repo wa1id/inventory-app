@@ -1,0 +1,27 @@
+# Household inventory API. Deploy on the same box that already runs
+# cloudflared. Do not add cloudflared to this file.
+#
+# After this process is healthy, add a public hostname on tunnel
+# "WY Studio Server": inventory.wystudio.be → http://127.0.0.1:8788
+name: inventory
+
+services:
+  inventory-api:
+    build:
+      context: .
+      dockerfile: home-server/Dockerfile
+    image: inventory-api
+    container_name: inventory-api
+    restart: unless-stopped
+    ports:
+      # Loopback only: phones use https://inventory.wystudio.be, not the LAN IP.
+      - '127.0.0.1:8788:8788'
+    environment:
+      INVENTORY_PUBLIC_ORIGIN: https://inventory.wystudio.be
+      INVENTORY_DATA_DIR: /data
+      PORT: '8788'
+    volumes:
+      - inventory-data:/data
+
+volumes:
+  inventory-data:
