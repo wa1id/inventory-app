@@ -22,10 +22,8 @@ services:
       INVENTORY_PUBLIC_ORIGIN: https://inventory.wystudio.be
       INVENTORY_DATA_DIR: /data
       PORT: '8788'
-      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
-      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
-      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
-      R2_BUCKET: inventory-app
+      HOUSEHOLD_PHOTO_ORIGIN: https://inventory-sync.wyachou95.workers.dev
+      HOUSEHOLD_PHOTO_SECRET: ${HOUSEHOLD_PHOTO_SECRET:-}
     volumes:
       - inventory-data:/data
 

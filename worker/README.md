@@ -43,20 +43,27 @@ discover, and nothing more.
 
 ## Endpoints
 
-All routes are v1 and require `Authorization: Bearer <recovery code>`, except
-health.
+Personal backup routes require `Authorization: Bearer <recovery code>`. Health
+is open. Household photo routes use a separate Worker secret (below).
 
-| Method   | Path                 | Notes                                              |
-| -------- | -------------------- | -------------------------------------------------- |
-| `GET`    | `/v1/health`         | Unauthenticated liveness and contract version      |
-| `PUT`    | `/v1/photos/:id`     | Body is JPEG bytes; `:id` must be the app's UUID   |
-| `GET`    | `/v1/photos/:id`     | Streams the JPEG back                              |
-| `DELETE` | `/v1/photos/:id`     | Idempotent; 204 whether or not it existed          |
-| `PUT`    | `/v1/backups`        | Body is a SQLite snapshot; requires schema version |
-| `GET`    | `/v1/backups`        | Newest-first list of snapshots                     |
-| `GET`    | `/v1/backups/latest` | Streams the newest snapshot                        |
-| `GET`    | `/v1/backups/:id`    | Streams one snapshot                               |
-| `GET`    | `/v1/usage`          | Bytes and object count against the account limit   |
+| Method   | Path                       | Notes                                              |
+| -------- | -------------------------- | -------------------------------------------------- |
+| `GET`    | `/v1/health`               | Unauthenticated liveness and contract version      |
+| `PUT`    | `/v1/photos/:id`           | Body is JPEG bytes; `:id` must be the app's UUID   |
+| `GET`    | `/v1/photos/:id`           | Streams the JPEG back                              |
+| `DELETE` | `/v1/photos/:id`           | Idempotent; 204 whether or not it existed          |
+| `PUT`    | `/v1/backups`              | Body is a SQLite snapshot; requires schema version |
+| `GET`    | `/v1/backups`              | Newest-first list of snapshots                     |
+| `GET`    | `/v1/backups/latest`       | Streams the newest snapshot                        |
+| `GET`    | `/v1/backups/:id`          | Streams one snapshot                               |
+| `GET`    | `/v1/usage`                | Bytes and object count against the account limit   |
+| `PUT`    | `/v1/household/photos/:id` | Home server only; `?kind=full\|thumb`              |
+| `GET`    | `/v1/household/photos/:id` | Home server only; streams WebP from R2             |
+| `DELETE` | `/v1/household/photos/:id` | Home server only; idempotent 204                   |
+
+Household photo routes are a second caller, not a second account. The home server authenticates with `Authorization: Bearer <HOUSEHOLD_PHOTO_SECRET>` (a Worker secret, not an R2 S3 token — this Worker already has the bucket via the `BUCKET` binding). Objects live at `household/primary/photos/<id>.webp` and `…/<id>-thumb.webp`. Phones never call these routes; they talk to `https://inventory.wystudio.be`. A personal recovery code cannot name that prefix.
+
+`npx wrangler secret put HOUSEHOLD_PHOTO_SECRET` on this Worker, and the same value as `HOUSEHOLD_PHOTO_SECRET` on the home-server compose service.
 
 Snapshot uploads accept two headers: `x-snapshot-schema-version` (required, the
 database's `user_version`, so an older app refuses a newer schema rather than
@@ -102,6 +109,7 @@ secret store.
 ## Deploying
 
 ```bash
-npx wrangler secret put SYNC_SHARED_SECRET   # must match EXPO_PUBLIC_SYNC_KEY
+npx wrangler secret put SYNC_SHARED_SECRET     # must match EXPO_PUBLIC_SYNC_KEY
+npx wrangler secret put HOUSEHOLD_PHOTO_SECRET # same value as the home-server env
 npx wrangler deploy
 ```

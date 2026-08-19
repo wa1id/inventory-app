@@ -54,6 +54,38 @@ export async function authenticate(request: Request, env: Env): Promise<AuthResu
   return { ok: true, account: { id: await deriveAccountId(secret) } };
 }
 
+export type HouseholdAuthResult = { ok: true } | { ok: false; status: number; error: string };
+
+/**
+ * Gate for the home server's household photo routes.
+ *
+ * Distinct from `authenticate`: those routes write under a fixed prefix, not
+ * one derived from a recovery code, so a personal backup credential must not
+ * be able to name them. The shared value is a Worker secret, not an R2 token.
+ */
+export function authenticateHousehold(request: Request, env: Env): HouseholdAuthResult {
+  const expected = env.HOUSEHOLD_PHOTO_SECRET?.trim();
+  if (!expected) {
+    return { ok: false, status: 503, error: 'Storage is temporarily unavailable.' };
+  }
+
+  const header = request.headers.get('authorization');
+  if (!header) {
+    return { ok: false, status: 401, error: 'Missing credentials.' };
+  }
+
+  const match = /^Bearer\s+(.+)$/i.exec(header.trim());
+  if (!match) {
+    return { ok: false, status: 401, error: 'Malformed authorization header.' };
+  }
+
+  if (!constantTimeEquals(match[1] as string, expected)) {
+    return { ok: false, status: 401, error: 'Invalid credentials.' };
+  }
+
+  return { ok: true };
+}
+
 /**
  * Account id = first 128 bits of SHA-256 over the secret.
  *

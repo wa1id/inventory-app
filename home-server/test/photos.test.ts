@@ -12,7 +12,12 @@ import { openNodeDatabase } from '../../src/db/nodeDatabase.ts';
 import { createApp } from '../src/app.ts';
 import { openControlStore } from '../src/control.ts';
 import { createRevisionHub } from '../src/hub.ts';
-import { createMemoryPhotoStore, preparePhoto } from '../src/photos.ts';
+import {
+  createMemoryPhotoStore,
+  createWorkerPhotoStore,
+  photoStoreFromEnv,
+  preparePhoto,
+} from '../src/photos.ts';
 
 configureRandomBytes((count) => randomFillSync(new Uint8Array(count)));
 
@@ -20,6 +25,52 @@ const PIXEL = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
   'base64',
 );
+
+test('photoStoreFromEnv needs HOUSEHOLD_PHOTO_SECRET, not R2 S3 keys', () => {
+  assert.equal(photoStoreFromEnv({}), null);
+  assert.equal(
+    photoStoreFromEnv({ R2_ACCESS_KEY_ID: 'akid', R2_SECRET_ACCESS_KEY: 'secret' }),
+    null,
+  );
+  assert.ok(photoStoreFromEnv({ HOUSEHOLD_PHOTO_SECRET: 'box-secret' }));
+});
+
+test('worker photo store PUT/GET round-trips through inventory-sync', async () => {
+  const objects = new Map<string, { bytes: Uint8Array; type: string }>();
+  const store = createWorkerPhotoStore({
+    origin: 'https://sync.example',
+    secret: 'box-secret',
+    fetch: async (input, init) => {
+      const url = new URL(String(input));
+      const authorization = new Headers(init?.headers).get('authorization');
+      assert.equal(authorization, 'Bearer box-secret');
+      const body = init?.body;
+      if (init?.method === 'PUT') {
+        const bytes =
+          body instanceof Uint8Array
+            ? body
+            : Buffer.isBuffer(body)
+              ? new Uint8Array(body)
+              : new Uint8Array();
+        objects.set(url.pathname + url.search, {
+          bytes,
+          type: new Headers(init.headers).get('content-type') ?? 'application/octet-stream',
+        });
+        return new Response(null, { status: 201 });
+      }
+      const stored = objects.get(url.pathname + url.search);
+      if (!stored) return new Response(JSON.stringify({ error: 'Not found.' }), { status: 404 });
+      return new Response(Buffer.from(stored.bytes), { headers: { 'content-type': stored.type } });
+    },
+  });
+
+  const payload = new Uint8Array([1, 2, 3, 4]);
+  await store.put('11111111-2222-4333-8444-555555555555', 'full', payload, 'image/webp');
+  const got = await store.get('11111111-2222-4333-8444-555555555555', 'full');
+  assert.deepEqual(got?.bytes, payload);
+  assert.equal(got?.contentType, 'image/webp');
+  assert.equal(await store.get('11111111-2222-4333-8444-555555555555', 'thumb'), null);
+});
 
 test('preparePhoto writes webp full and thumb into the store', async () => {
   const store = createMemoryPhotoStore();

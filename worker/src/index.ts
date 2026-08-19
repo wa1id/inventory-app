@@ -1,4 +1,4 @@
-import { authenticate } from './auth.ts';
+import { authenticate, authenticateHousehold } from './auth.ts';
 import {
   MAX_ACCOUNT_BYTES,
   MAX_BACKUP_BYTES,
@@ -6,6 +6,7 @@ import {
   SYNC_CONTRACT_VERSION,
   backupKey,
   backupPrefix,
+  householdPhotoKey,
   isValidBackupId,
   isValidPhotoId,
   photoKey,
@@ -39,6 +40,12 @@ async function route(request: Request, env: Env): Promise<Response> {
 
   if (path === '/v1/health') {
     return json({ ok: true, contractVersion: SYNC_CONTRACT_VERSION });
+  }
+
+  const householdMatch = /^\/v1\/household\/photos\/([^/]+)$/.exec(path);
+  if (householdMatch) {
+    const photoId = decodeURIComponent(householdMatch[1] as string);
+    return handleHouseholdPhoto(request, env, url, photoId);
   }
 
   const auth = await authenticate(request, env);
@@ -123,6 +130,53 @@ async function handlePhoto(
     if (replacing > 0) await applyUsageDelta(env, accountId, -replacing, -1);
     // 204 whether or not it existed: deleting an already-deleted photo is the
     // caller getting what it wanted, and the app retries cleanup best-effort.
+    return new Response(null, { status: 204 });
+  }
+
+  return json({ error: 'Method not allowed.' }, 405);
+}
+
+async function handleHouseholdPhoto(
+  request: Request,
+  env: Env,
+  url: URL,
+  photoId: string,
+): Promise<Response> {
+  const auth = authenticateHousehold(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  if (!isValidPhotoId(photoId)) return json({ error: 'Invalid photo id.' }, 400);
+
+  const kindParam = url.searchParams.get('kind') ?? 'full';
+  if (kindParam !== 'full' && kindParam !== 'thumb') {
+    return json({ error: 'Invalid photo kind.' }, 400);
+  }
+  const key = householdPhotoKey(photoId, kindParam);
+
+  if (request.method === 'GET') {
+    const object = await env.BUCKET.get(key);
+    if (!object) return json({ error: 'Not found.' }, 404);
+    return new Response(object.body, {
+      headers: {
+        'content-type': object.httpMetadata?.contentType ?? 'image/webp',
+        'content-length': String(object.size),
+        etag: object.httpEtag,
+        'cache-control': 'private, max-age=31536000, immutable',
+      },
+    });
+  }
+
+  if (request.method === 'PUT') {
+    const body = await readBody(request, MAX_PHOTO_BYTES);
+    if (!body.ok) return json({ error: body.error }, body.status);
+
+    await env.BUCKET.put(key, body.bytes, {
+      httpMetadata: { contentType: photoContentType(request, 'image/webp') },
+    });
+    return json({ id: photoId, size: body.bytes.byteLength }, 201);
+  }
+
+  if (request.method === 'DELETE') {
+    await env.BUCKET.delete(key);
     return new Response(null, { status: 204 });
   }
 
@@ -252,9 +306,9 @@ async function getBackup(env: Env, accountId: string, backupId: string): Promise
  */
 const ALLOWED_PHOTO_TYPES = new Set(['image/jpeg', 'image/webp', 'image/png']);
 
-function photoContentType(request: Request): string {
+function photoContentType(request: Request, fallback = 'image/jpeg'): string {
   const declared = request.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase();
-  return declared && ALLOWED_PHOTO_TYPES.has(declared) ? declared : 'image/jpeg';
+  return declared && ALLOWED_PHOTO_TYPES.has(declared) ? declared : fallback;
 }
 
 type BodyResult = { ok: true; bytes: Uint8Array } | { ok: false; status: number; error: string };
