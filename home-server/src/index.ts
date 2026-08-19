@@ -6,10 +6,12 @@ import { serve } from '@hono/node-server';
 import { configureRandomBytes } from '../../src/core/id.ts';
 import { migrate } from '../../src/db/migrations.ts';
 import { openNodeDatabase } from '../../src/db/nodeDatabase.ts';
+import { createRepositories } from '../../src/db/repositories.ts';
 
 import { createApp } from './app.ts';
 import { DEFAULT_PORT } from './contract.ts';
 import { openControlStore } from './control.ts';
+import { createRevisionHub } from './hub.ts';
 
 function dataDir(): string {
   return process.env.INVENTORY_DATA_DIR ?? './data';
@@ -48,7 +50,12 @@ export async function start(): Promise<void> {
 
   const publicOrigin = process.env.INVENTORY_PUBLIC_ORIGIN ?? 'https://inventory.wystudio.be';
   const port = listenPort();
-  const app = createApp({ control, publicOrigin });
+  const app = createApp({
+    control,
+    publicOrigin,
+    repos: createRepositories(db),
+    hub: createRevisionHub(),
+  });
 
   serve({ fetch: app.fetch, port, hostname: '0.0.0.0' }, (info) => {
     console.log(`inventory-api listening on ${info.address}:${info.port} (schema v${version})`);
