@@ -309,6 +309,7 @@ describe('items', () => {
     expect(stored?.name).toBe('Cordless Drill');
     expect(stored?.quantity).toBe(2);
     expect(stored?.photoUri).toBe('file:///photos/drill.jpg');
+    expect(stored?.photoId).toEqual(expect.stringMatching(/^[0-9a-f-]{36}$/));
     // Duplicate tag names collapse to one link.
     expect(stored?.tags.sort()).toEqual(['DeWalt', 'power tool']);
     expect(stored?.spaceName).toBe('Garage');

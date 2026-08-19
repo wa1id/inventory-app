@@ -170,6 +170,7 @@ describe('runBackup', () => {
   it('degrades cleanly on a backend that cannot snapshot itself', async () => {
     const db = openNodeDatabase();
     await migrate(db);
+    delete db.snapshotAsync;
 
     await expect(runBackup(db, fakeClient())).resolves.toEqual({
       status: 'failed',

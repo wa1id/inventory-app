@@ -16,8 +16,8 @@ const worktrees = '<rootDir>/.claude/';
  * Two suites with different needs:
  *
  * - `logic` runs in plain Node so persistence tests can drive real SQL through
- *   `node:sqlite`. `expo-crypto` is mapped to a Node-CSPRNG stub so ID and QR
- *   token generation runs its actual code path.
+ *   `node:sqlite`. IDs use an injected Node CSPRNG (`setupLogic.ts`).
+ *   `expo-crypto` is still mapped for account hashing and backup tests.
  * - `ui` uses the jest-expo preset for React Native component rendering.
  */
 module.exports = {
@@ -35,6 +35,7 @@ module.exports = {
       // because this project runs in plain Node rather than the RN preset.
       transformIgnorePatterns: ['node_modules/(?!(expo|expo-.*|@expo|@expo/.*)/)'],
       globals: { __DEV__: false },
+      setupFilesAfterEnv: ['<rootDir>/src/testing/setupLogic.ts'],
       moduleNameMapper: {
         ...aliases,
         '^expo-crypto$': '<rootDir>/src/testing/expoCryptoStub.ts',

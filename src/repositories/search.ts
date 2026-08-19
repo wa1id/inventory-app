@@ -89,6 +89,8 @@ export function createSearchRepository(db: SqlDatabase) {
 
       const itemRows = await db.getAllAsync<ItemSearchRow>(
         `SELECT i.*,
+                (SELECT p.id FROM item_photos p WHERE p.item_id = i.id
+                  ORDER BY p.created_at ASC LIMIT 1) AS photo_id,
                 (SELECT p.uri FROM item_photos p WHERE p.item_id = i.id
                   ORDER BY p.created_at ASC LIMIT 1) AS photo_uri,
                 (SELECT p.thumb_uri FROM item_photos p WHERE p.item_id = i.id
@@ -214,6 +216,7 @@ interface ItemSearchRow {
   notes: string | null;
   created_at: number;
   updated_at: number;
+  photo_id: string | null;
   photo_uri: string | null;
   photo_thumb_uri: string | null;
   tag_names: string | null;
@@ -236,6 +239,7 @@ function toItemSearchResult(row: ItemSearchRow): ItemSearchResult {
     notes: row.notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    photoId: row.photo_id,
     photoUri: row.photo_uri,
     photoThumbUri: row.photo_thumb_uri,
     tags: splitTagNames(row.tag_names),

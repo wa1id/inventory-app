@@ -11,6 +11,7 @@ function item(overrides: Partial<ItemWithContext>): ItemWithContext {
     notes: null,
     createdAt: 0,
     updatedAt: 0,
+    photoId: null,
     photoUri: null,
     photoThumbUri: null,
     tags: [],
