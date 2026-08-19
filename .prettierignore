@@ -7,3 +7,4 @@ dist
 package-lock.json
 worker/worker-configuration.d.ts
 worker/.wrangler
+server/.vercel
