@@ -197,6 +197,23 @@ export const strings = {
     libraryDeniedBody:
       'Photo access is off. You can turn it on in Settings, or add the item without a photo.',
   },
+  household: {
+    title: 'Home server',
+    settingsLabel: 'Home server',
+    disconnected: 'This phone',
+    connected: 'Connected',
+    connectedAs: (name: string) => `Paired as ${name}`,
+    originHint: 'Uses https://inventory.wystudio.be',
+    secretLabel: 'Bootstrap secret',
+    secretPlaceholder: 'MMWKY-M2H78-…',
+    secretHint: 'Printed once in the server logs when the household was created.',
+    deviceNameLabel: 'Name for this phone',
+    pair: 'Pair this phone',
+    pairing: 'Pairing…',
+    disconnect: 'Stop using the home server',
+    body: 'Pairing makes this phone read and write the household inventory on the home server. Your local copy stays on the phone until you import it.',
+    error: 'Could not pair. Check the secret and that the server is reachable.',
+  },
   common: {
     cancel: 'Cancel',
     delete: 'Delete',
