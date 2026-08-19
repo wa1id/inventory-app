@@ -7,12 +7,14 @@ import { CONTRACT_VERSION, HOUSEHOLD_NAME } from './contract.ts';
 import type { ControlStore, Device } from './control.ts';
 import type { RevisionHub } from './hub.ts';
 import { registerInventory } from './inventory.ts';
+import type { PhotoStore } from './photos.ts';
 
 export interface AppDeps {
   control: ControlStore;
   publicOrigin: string;
   repos?: Repositories;
   hub?: RevisionHub;
+  photos?: PhotoStore | null;
 }
 
 type Variables = { device: Device };
@@ -103,7 +105,12 @@ export function createApp(deps: AppDeps): Hono<{ Variables: Variables }> {
   if (deps.repos && deps.hub) {
     registerInventory(
       app,
-      { repos: deps.repos, control: deps.control, hub: deps.hub },
+      {
+        repos: deps.repos,
+        control: deps.control,
+        hub: deps.hub,
+        photos: deps.photos ?? null,
+      },
       requireDevice,
     );
   }

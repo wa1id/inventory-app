@@ -96,6 +96,8 @@ export interface ItemDraft {
   notes?: string | null;
   tags?: string[];
   photo?: {
+    /** When omitted, the repository assigns an id. The home server passes the R2 object id. */
+    id?: string;
     uri: string;
     thumbUri?: string;
     width?: number;
@@ -244,7 +246,7 @@ export function createItemsRepository(db: SqlDatabase) {
             `INSERT INTO item_photos (id, item_id, uri, thumb_uri, width, height, byte_size, created_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-              newId(),
+              draft.photo.id ?? newId(),
               item.id,
               draft.photo.uri,
               draft.photo.thumbUri ?? null,
