@@ -92,6 +92,21 @@ export function photoKey(accountId: string, photoId: string): string {
   return `photos/${accountId}/${photoId}.jpg`;
 }
 
+/**
+ * Household photos (the home-server, not a recovery-code account).
+ *
+ * Kept out of `photos/<accountId>/` so a personal backup can never collide
+ * with the shared inventory, and so this prefix is unreachable via the
+ * recovery-code routes — those hash the bearer token into an account id
+ * and cannot name `household/`.
+ */
+export type HouseholdPhotoKind = 'full' | 'thumb';
+
+export function householdPhotoKey(id: string, kind: HouseholdPhotoKind): string {
+  const suffix = kind === 'thumb' ? '-thumb.webp' : '.webp';
+  return `household/primary/photos/${id}${suffix}`;
+}
+
 export function backupKey(accountId: string, backupId: string): string {
   return `backups/${accountId}/${backupId}.db`;
 }

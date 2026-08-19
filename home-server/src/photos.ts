@@ -1,7 +1,8 @@
-import { AwsClient } from 'aws4fetch';
 import sharp from 'sharp';
 
 import { newId } from '../../src/core/id.ts';
+
+import { DEFAULT_PHOTO_WORKER_ORIGIN } from './contract.ts';
 
 /** Match the app: long edge 1400, thumbs 320. See src/services/capture/imageScaling.ts. */
 const MAX_EDGE = 1400;
@@ -73,38 +74,44 @@ export function createMemoryPhotoStore(): PhotoStore {
   };
 }
 
-export function createR2PhotoStore(env: {
-  accountId: string;
-  accessKeyId: string;
-  secretAccessKey: string;
-  bucket?: string;
+/**
+ * Talks to inventory-sync, which already has the R2 bucket as a binding.
+ *
+ * The home server never holds R2 S3 keys. The Worker secret is only proof
+ * that this process is the household box.
+ */
+export function createWorkerPhotoStore(env: {
+  origin: string;
+  secret: string;
+  fetch?: typeof fetch;
 }): PhotoStore {
-  const bucket = env.bucket ?? 'inventory-app';
-  const endpoint = `https://${env.accountId}.r2.cloudflarestorage.com`;
-  const client = new AwsClient({
-    accessKeyId: env.accessKeyId,
-    secretAccessKey: env.secretAccessKey,
-    service: 's3',
-    region: 'auto',
-  });
+  const origin = env.origin.replace(/\/+$/, '');
+  const fetchImpl = env.fetch ?? fetch;
+
+  function objectUrl(id: string, kind: PhotoKind): string {
+    return `${origin}/v1/household/photos/${encodeURIComponent(id)}?kind=${kind}`;
+  }
 
   return {
     async put(id, kind, bytes, contentType) {
-      const key = r2ObjectKey(id, kind);
-      const response = await client.fetch(`${endpoint}/${bucket}/${key}`, {
+      const response = await fetchImpl(objectUrl(id, kind), {
         method: 'PUT',
-        headers: { 'content-type': contentType },
+        headers: {
+          authorization: `Bearer ${env.secret}`,
+          'content-type': contentType,
+        },
         body: Buffer.from(bytes),
       });
       if (!response.ok) {
-        throw new Error(`R2 put failed (${response.status})`);
+        throw new Error(`Photo store put failed (${response.status})`);
       }
     },
     async get(id, kind) {
-      const key = r2ObjectKey(id, kind);
-      const response = await client.fetch(`${endpoint}/${bucket}/${key}`);
+      const response = await fetchImpl(objectUrl(id, kind), {
+        headers: { authorization: `Bearer ${env.secret}` },
+      });
       if (response.status === 404) return null;
-      if (!response.ok) throw new Error(`R2 get failed (${response.status})`);
+      if (!response.ok) throw new Error(`Photo store get failed (${response.status})`);
       const bytes = new Uint8Array(await response.arrayBuffer());
       const contentType = response.headers.get('content-type') ?? 'image/webp';
       return { bytes, contentType };
@@ -113,14 +120,10 @@ export function createR2PhotoStore(env: {
 }
 
 export function photoStoreFromEnv(env: NodeJS.ProcessEnv = process.env): PhotoStore | null {
-  const accountId = env.R2_ACCOUNT_ID;
-  const accessKeyId = env.R2_ACCESS_KEY_ID;
-  const secretAccessKey = env.R2_SECRET_ACCESS_KEY;
-  if (!accountId || !accessKeyId || !secretAccessKey) return null;
-  return createR2PhotoStore({
-    accountId,
-    accessKeyId,
-    secretAccessKey,
-    bucket: env.R2_BUCKET,
+  const secret = env.HOUSEHOLD_PHOTO_SECRET?.trim();
+  if (!secret) return null;
+  return createWorkerPhotoStore({
+    origin: env.HOUSEHOLD_PHOTO_ORIGIN?.trim() || DEFAULT_PHOTO_WORKER_ORIGIN,
+    secret,
   });
 }

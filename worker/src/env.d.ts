@@ -15,4 +15,12 @@ interface Env {
    * deployment sets it.
    */
   SYNC_SHARED_SECRET?: string;
+  /**
+   * Bearer token the home server presents on `/v1/household/photos/*`.
+   *
+   * This is not an R2 S3 token — the Worker already has the bucket via
+   * `BUCKET`. The secret only proves the caller is the household box.
+   * Unset locally so `wrangler dev` can skip the gate; production sets it.
+   */
+  HOUSEHOLD_PHOTO_SECRET?: string;
 }

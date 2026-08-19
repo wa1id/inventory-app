@@ -53,7 +53,7 @@ export async function start(): Promise<void> {
   const photos = photoStoreFromEnv();
   if (!photos) {
     console.log(
-      'R2 credentials not set; item photos will return 503 until R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY are provided.',
+      'HOUSEHOLD_PHOTO_SECRET not set; item photos will return 503 until the home server can call inventory-sync.',
     );
   }
   const port = listenPort();
