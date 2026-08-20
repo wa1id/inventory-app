@@ -39,7 +39,7 @@ const LOCATION_RESULT_LIMIT = 30;
  */
 function sqlCompact(expr: string): string {
   let sql = expr;
-  for (const ch of ['-', ' ', '_', '/', '.', "'"]) {
+  for (const ch of ['-', '_', '/', '.', "'"]) {
     sql = `REPLACE(${sql}, '${ch.replaceAll("'", "''")}', '')`;
   }
   return sql;

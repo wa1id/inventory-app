@@ -53,6 +53,15 @@ describe('search', () => {
     expect((await repos.search.search('usb-c')).items.map((item) => item.name)).toEqual([
       'USB-C to USB-A cable',
     ]);
+
+    await repos.items.create({
+      containerId: toolBox.id,
+      name: 'Microusb cable',
+      category: 'Cables',
+    });
+    expect((await repos.search.search('usbc')).items.map((item) => item.name)).toEqual([
+      'USB-C to USB-A cable',
+    ]);
   });
 
   it('matches an item by name, case-insensitively', async () => {
