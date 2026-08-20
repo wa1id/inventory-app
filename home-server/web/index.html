@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Home · where is it</title>
+    <style>
+      :root {
+        --bench: #1c211c;
+        --bench-2: #262c26;
+        --paper: #f3ecdc;
+        --paper-2: #e7dcc6;
+        --ink: #1a1611;
+        --mute: #6a6258;
+        --tape: #e2c15a;
+        --tape-ink: #241c08;
+        --mark: #c24a22;
+        --line: #cfc3ab;
+        --sans: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+        --mono: "IBM Plex Mono", "ui-monospace", "SFMono-Regular", Menlo, monospace;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; min-height: 100%; }
+      body {
+        font-family: var(--sans);
+        background:
+          radial-gradient(1200px 500px at 10% -10%, #323a30 0%, transparent 50%),
+          var(--bench);
+        color: var(--paper);
+      }
+      button, input { font: inherit; }
+      a { color: inherit; }
+      .wrap { max-width: 42rem; margin: 0 auto; padding: 1.5rem 1.1rem 4rem; }
+      header.top {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+      }
+      .mark {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--tape);
+      }
+      .out {
+        background: none;
+        border: 0;
+        color: var(--paper-2);
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 0.2em;
+        padding: 0;
+      }
+      .tape {
+        background: var(--tape);
+        color: var(--tape-ink);
+        padding: 0.85rem 0.9rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+        transform: rotate(-0.4deg);
+      }
+      .tape input {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: var(--tape-ink);
+        outline: none;
+        font-size: 1.35rem;
+        font-weight: 600;
+      }
+      .tape input::placeholder { color: rgba(36, 28, 8, 0.45); }
+      .hint {
+        margin: 0.85rem 0 1.2rem;
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #b7b09f;
+      }
+      .list { display: flex; flex-direction: column; gap: 0.65rem; }
+      .row {
+        display: grid;
+        grid-template-columns: 4.5rem 1fr;
+        gap: 0.85rem;
+        background: var(--paper);
+        color: var(--ink);
+        text-decoration: none;
+        padding: 0.55rem;
+        border: 0;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        box-shadow: 3px 4px 0 rgba(0, 0, 0, 0.28);
+      }
+      .row:focus-visible { outline: 2px solid var(--tape); outline-offset: 3px; }
+      .thumb {
+        width: 4.5rem;
+        height: 4.5rem;
+        object-fit: cover;
+        background: var(--paper-2);
+        display: block;
+      }
+      .thumb.empty {
+        display: grid;
+        place-items: center;
+        color: var(--mute);
+        font-family: var(--mono);
+        font-size: 0.7rem;
+      }
+      .meta { min-width: 0; padding: 0.15rem 0.35rem 0.15rem 0; }
+      .name {
+        font-size: 1.05rem;
+        font-weight: 650;
+        line-height: 1.25;
+        margin: 0 0 0.35rem;
+      }
+      .name.unnamed { color: var(--mute); font-weight: 500; }
+      .where {
+        display: inline-block;
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        border: 1px solid var(--ink);
+        padding: 0.18rem 0.4rem;
+        background: #fff8ea;
+      }
+      .via {
+        margin-top: 0.35rem;
+        font-size: 0.75rem;
+        color: var(--mark);
+      }
+      .gate {
+        margin-top: 12vh;
+        background: var(--paper);
+        color: var(--ink);
+        padding: 1.4rem 1.2rem 1.3rem;
+        box-shadow: 6px 8px 0 rgba(0, 0, 0, 0.3);
+      }
+      .gate h1 {
+        font-size: 1.6rem;
+        margin: 0 0 0.35rem;
+        letter-spacing: -0.03em;
+      }
+      .gate p { margin: 0 0 1rem; color: var(--mute); }
+      .gate input {
+        width: 100%;
+        border: 0;
+        border-bottom: 2px solid var(--ink);
+        background: transparent;
+        padding: 0.55rem 0;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+      }
+      .gate button, .back {
+        background: var(--ink);
+        color: var(--paper);
+        border: 0;
+        padding: 0.7rem 1rem;
+        cursor: pointer;
+      }
+      .err { color: var(--mark); font-size: 0.9rem; min-height: 1.2em; }
+      .detail { background: var(--paper); color: var(--ink); padding: 0.7rem; box-shadow: 4px 6px 0 rgba(0, 0, 0, 0.28); }
+      .hero {
+        width: 100%;
+        max-height: 22rem;
+        object-fit: contain;
+        background: #1a1611;
+        display: block;
+      }
+      .hero-empty {
+        height: 8rem;
+        display: grid;
+        place-items: center;
+        background: var(--paper-2);
+        color: var(--mute);
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .detail h2 { margin: 0.9rem 0 0.4rem; font-size: 1.6rem; letter-spacing: -0.03em; }
+      .notes { white-space: pre-wrap; color: #3d372f; }
+      .tags { margin-top: 0.8rem; color: var(--mute); font-size: 0.85rem; }
+      .back { margin-bottom: 0.8rem; }
+      .empty { color: #c8c0ae; padding: 1.5rem 0; }
+      .hidden { display: none; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <section id="gate" class="gate hidden">
+        <div class="mark">Household inventory</div>
+        <h1>Look something up</h1>
+        <p>This is the desk view. Adding still happens on the phone.</p>
+        <form id="login">
+          <input id="password" type="password" name="password" autocomplete="current-password" placeholder="Password" />
+          <div class="err" id="login-error"></div>
+          <button type="submit">Open</button>
+        </form>
+      </section>
+
+      <section id="app" class="hidden">
+        <header class="top">
+          <div class="mark">Home</div>
+          <button class="out" id="logout" type="button">Lock</button>
+        </header>
+
+        <div id="search-view">
+          <form id="search-form" class="tape" action="javascript:void(0)">
+            <input id="q" type="search" placeholder="Drill, loft, BOX-4F2A…" autocomplete="off" autofocus />
+          </form>
+          <p class="hint" id="status">Type what you remember</p>
+          <div class="list" id="results"></div>
+        </div>
+
+        <div id="item-view" class="hidden">
+          <button class="back" id="back" type="button">Back to search</button>
+          <article class="detail" id="item"></article>
+        </div>
+      </section>
+    </div>
+    <script>
+      const gate = document.getElementById("gate");
+      const app = document.getElementById("app");
+      const loginForm = document.getElementById("login");
+      const password = document.getElementById("password");
+      const loginError = document.getElementById("login-error");
+      const q = document.getElementById("q");
+      const results = document.getElementById("results");
+      const status = document.getElementById("status");
+      const searchView = document.getElementById("search-view");
+      const itemView = document.getElementById("item-view");
+      const itemEl = document.getElementById("item");
+
+      const esc = (value) =>
+        String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;");
+
+      const loc = (item) =>
+        [item.spaceName, item.containerName || item.containerShortCode].filter(Boolean).join(" / ");
+
+      const photoUrl = (item, thumb) =>
+        item.photoId ? `/v1/photos/${encodeURIComponent(item.photoId)}${thumb ? "?thumb=1" : ""}` : "";
+
+      const titleOf = (item) => (item.name && item.name.trim() ? item.name : "Unnamed");
+
+      function row(item) {
+        const named = item.name && item.name.trim();
+        const src = photoUrl(item, true);
+        const thumb = src
+          ? `<img class="thumb" alt="" src="${esc(src)}" />`
+          : `<div class="thumb empty">no photo</div>`;
+        const via =
+          item.matchKind === "location" ? `<div class="via">Matched the place, not the name</div>` : "";
+        return `<button class="row" type="button" data-id="${esc(item.id)}">
+          ${thumb}
+          <div class="meta">
+            <p class="name${named ? "" : " unnamed"}">${esc(titleOf(item))}</p>
+            <span class="where">${esc(loc(item) || "Unknown place")}</span>
+            ${via}
+          </div>
+        </button>`;
+      }
+
+      async function api(path, init = {}) {
+        const response = await fetch(path, { credentials: "same-origin", ...init });
+        if (response.status === 401) throw Object.assign(new Error("unauthorized"), { status: 401 });
+        if (!response.ok) throw new Error("request failed");
+        if (response.status === 204) return {};
+        return response.json();
+      }
+
+      function showLoggedOut() {
+        app.classList.add("hidden");
+        gate.classList.remove("hidden");
+        password.focus();
+      }
+
+      function showLoggedIn() {
+        gate.classList.add("hidden");
+        app.classList.remove("hidden");
+        q.focus();
+      }
+
+      async function runSearch(query) {
+        status.textContent = query.trim() ? "Looking…" : "Recently added";
+        try {
+          const body = query.trim()
+            ? await api(`/v1/search?q=${encodeURIComponent(query.trim())}`)
+            : await api("/v1/items?recent=1");
+          const items = body.items || [];
+          results.innerHTML = items.length
+            ? items.map(row).join("")
+            : `<p class="empty">${query.trim() ? "Nothing under that name." : "The household inventory is empty."}</p>`;
+          status.textContent = query.trim()
+            ? items.length
+              ? `${items.length} match${items.length === 1 ? "" : "es"}`
+              : "No matches"
+            : "Recently added";
+        } catch (error) {
+          if (error.status === 401) {
+            showLoggedOut();
+            return;
+          }
+          status.textContent = "Could not reach the household list";
+        }
+      }
+
+      async function openItem(id) {
+        searchView.classList.add("hidden");
+        itemView.classList.remove("hidden");
+        itemEl.innerHTML = `<p class="empty">Opening…</p>`;
+        try {
+          const item = await api(`/v1/items/${encodeURIComponent(id)}`);
+          const src = photoUrl(item, false);
+          const hero = src
+            ? `<img class="hero" alt="" src="${esc(src)}" />`
+            : `<div class="hero-empty">No photo</div>`;
+          const notes = item.notes ? `<p class="notes">${esc(item.notes)}</p>` : "";
+          const tags = Array.isArray(item.tags) && item.tags.length
+            ? `<p class="tags">${esc(item.tags.join(" · "))}</p>`
+            : "";
+          const qty = item.quantity && item.quantity !== 1 ? ` · qty ${esc(item.quantity)}` : "";
+          itemEl.innerHTML = `${hero}
+            <h2>${esc(titleOf(item))}</h2>
+            <span class="where">${esc(loc(item) || "Unknown place")}${qty}</span>
+            ${notes}${tags}`;
+          history.replaceState(null, "", `#item/${id}`);
+        } catch (error) {
+          if (error.status === 401) showLoggedOut();
+          else itemEl.innerHTML = `<p class="empty">That item could not be opened.</p>`;
+        }
+      }
+
+      function showSearch() {
+        itemView.classList.add("hidden");
+        searchView.classList.remove("hidden");
+        history.replaceState(null, "", "#");
+        q.focus();
+      }
+
+      let timer = 0;
+      q.addEventListener("input", () => {
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => runSearch(q.value), 180);
+      });
+      document.getElementById("search-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        runSearch(q.value);
+      });
+      results.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-id]");
+        if (button) openItem(button.getAttribute("data-id"));
+      });
+      document.getElementById("back").addEventListener("click", showSearch);
+      document.getElementById("logout").addEventListener("click", async () => {
+        await fetch("/v1/web/logout", { method: "POST", credentials: "same-origin" });
+        showLoggedOut();
+      });
+      loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        loginError.textContent = "";
+        try {
+          const response = await fetch("/v1/web/login", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ password: password.value }),
+          });
+          if (!response.ok) {
+            loginError.textContent = "That password was not accepted.";
+            return;
+          }
+          password.value = "";
+          showLoggedIn();
+          runSearch("");
+        } catch {
+          loginError.textContent = "Could not reach the household server.";
+        }
+      });
+
+      (async () => {
+        try {
+          const me = await fetch("/v1/web/me", { credentials: "same-origin" });
+          if (!me.ok) {
+            showLoggedOut();
+            return;
+          }
+          showLoggedIn();
+          const hash = location.hash;
+          if (hash.startsWith("#item/")) {
+            openItem(hash.slice(6));
+            runSearch("");
+          } else {
+            runSearch("");
+          }
+        } catch {
+          showLoggedOut();
+        }
+      })();
+    </script>
+  </body>
+</html>

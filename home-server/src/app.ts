@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { getCookie } from 'hono/cookie';
 import { createMiddleware } from 'hono/factory';
 
 import type { Repositories } from '../../src/db/repositories.ts';
@@ -8,6 +9,7 @@ import type { ControlStore, Device } from './control.ts';
 import type { RevisionHub } from './hub.ts';
 import { registerInventory } from './inventory.ts';
 import type { PhotoStore } from './photos.ts';
+import { registerWebLookup, WEB_COOKIE, type WebSessions } from './web.ts';
 
 export interface AppDeps {
   control: ControlStore;
@@ -15,20 +17,29 @@ export interface AppDeps {
   repos?: Repositories;
   hub?: RevisionHub;
   photos?: PhotoStore | null;
+  /** When set, GET / is the household lookup page. */
+  webPassword?: string | null;
 }
 
-type Variables = { device: Device };
+type Variables = { device?: Device };
 
 /**
  * HTTP surface for the household API.
  *
  * Health is unauthenticated and must stay `{ ok, contractVersion }` — no
  * household name, no schema revision, nothing that would help a scanner.
- * Pairing is the other unauthenticated route; everything else needs a device
- * bearer token.
+ * Pairing is the other unauthenticated route. Inventory reads/writes need a
+ * device bearer token or a web-session cookie from the lookup page.
  */
 export function createApp(deps: AppDeps): Hono<{ Variables: Variables }> {
   const app = new Hono<{ Variables: Variables }>();
+  let webSessions: WebSessions | undefined;
+  if (deps.webPassword) {
+    webSessions = registerWebLookup(app, {
+      password: deps.webPassword,
+      publicOrigin: deps.publicOrigin,
+    });
+  }
 
   app.get('/v1/health', (c) =>
     c.json({
@@ -67,6 +78,14 @@ export function createApp(deps: AppDeps): Hono<{ Variables: Variables }> {
   });
 
   const requireDevice = createMiddleware<{ Variables: Variables }>(async (c, next) => {
+    if (webSessions) {
+      const webToken = getCookie(c, WEB_COOKIE);
+      if (webToken && webSessions.has(webToken)) {
+        await next();
+        return;
+      }
+    }
+
     const header = c.req.header('Authorization') ?? '';
     const match = /^Bearer\s+(\S+)$/i.exec(header);
     if (!match?.[1]) return c.json({ error: 'unauthorized' }, 401);
@@ -82,8 +101,8 @@ export function createApp(deps: AppDeps): Hono<{ Variables: Variables }> {
   app.get('/v1/session', requireDevice, (c) => {
     const device = c.get('device');
     return c.json({
-      deviceId: device.id,
-      deviceName: device.name,
+      deviceId: device?.id ?? null,
+      deviceName: device?.name ?? 'Browser',
       householdName: HOUSEHOLD_NAME,
       origin: deps.publicOrigin,
       contractVersion: CONTRACT_VERSION,

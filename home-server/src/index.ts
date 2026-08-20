@@ -57,6 +57,12 @@ export async function start(): Promise<void> {
       'HOUSEHOLD_PHOTO_SECRET not set; item photos will return 503 until the home server can call inventory-sync.',
     );
   }
+  const webPassword = process.env.HOUSEHOLD_WEB_PASSWORD?.trim() || null;
+  if (webPassword) {
+    console.log('Household lookup page enabled at /');
+  } else {
+    console.log('HOUSEHOLD_WEB_PASSWORD not set; lookup page disabled.');
+  }
   const port = listenPort();
   const app = createApp({
     control,
@@ -64,6 +70,7 @@ export async function start(): Promise<void> {
     repos: createRepositories(db),
     hub: createRevisionHub(),
     photos,
+    webPassword,
   });
 
   serve({ fetch: app.fetch, port, hostname: '0.0.0.0' }, (info) => {

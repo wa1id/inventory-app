@@ -183,6 +183,16 @@ export function createItemsRepository(db: SqlDatabase) {
       return rows.map(toItemWithContext);
     },
 
+    /** Newest items first — the household webpage empty-search view. */
+    async listRecent(limit = 40): Promise<ItemWithContext[]> {
+      const cap = Math.max(1, Math.min(Math.floor(limit), 100));
+      const rows = await db.getAllAsync<ItemContextRow>(
+        `${ITEM_CONTEXT_SELECT} ORDER BY i.created_at DESC LIMIT ?`,
+        [cap],
+      );
+      return rows.map(toItemWithContext);
+    },
+
     /** Cheap enough for the dashboard badge to read on every focus. */
     async countUnsorted(): Promise<number> {
       const row = await db.getFirstAsync<{ count: number }>(

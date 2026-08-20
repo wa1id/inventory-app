@@ -24,6 +24,7 @@ services:
       PORT: '8788'
       HOUSEHOLD_PHOTO_ORIGIN: https://inventory-sync.wyachou95.workers.dev
       HOUSEHOLD_PHOTO_SECRET: ${HOUSEHOLD_PHOTO_SECRET:-}
+      HOUSEHOLD_WEB_PASSWORD: ${HOUSEHOLD_WEB_PASSWORD:-}
     volumes:
       - inventory-data:/data
 

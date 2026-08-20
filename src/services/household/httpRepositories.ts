@@ -212,6 +212,12 @@ export function createHttpRepositories(
           ((body.items as ItemWithContext[]) ?? []) as ItemWithContext[],
         ) as never;
       },
+      async listRecent(limit = 40) {
+        const body = await call(`/v1/items?recent=1&limit=${encodeURIComponent(String(limit))}`);
+        return hydrateItems(
+          ((body.items as ItemWithContext[]) ?? []) as ItemWithContext[],
+        ) as never;
+      },
       async countUnsorted() {
         const items = await this.listUnsorted();
         return items.length;
