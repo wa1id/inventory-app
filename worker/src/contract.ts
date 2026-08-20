@@ -107,6 +107,31 @@ export function householdPhotoKey(id: string, kind: HouseholdPhotoKind): string 
   return `household/primary/photos/${id}${suffix}`;
 }
 
+/**
+ * Nightly household SQLite copies. Photo bytes stay under `photos/` and must
+ * never be written here. Snapshot ids are UTC instants with colons folded so
+ * they are safe as a single R2 key segment.
+ */
+export const HOUSEHOLD_DB_PREFIX = 'household/primary/db/';
+export const HOUSEHOLD_DB_FILES = ['inventory.db', 'control.db'] as const;
+export type HouseholdDbFile = (typeof HOUSEHOLD_DB_FILES)[number];
+
+export function householdDbKey(snapshotId: string, file: HouseholdDbFile): string {
+  return `${HOUSEHOLD_DB_PREFIX}${snapshotId}/${file}`;
+}
+
+export function householdDbSnapshotPrefix(snapshotId: string): string {
+  return `${HOUSEHOLD_DB_PREFIX}${snapshotId}/`;
+}
+
+export function isValidSnapshotId(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z$/.test(value);
+}
+
+export function isHouseholdDbFile(value: string): value is HouseholdDbFile {
+  return (HOUSEHOLD_DB_FILES as readonly string[]).includes(value);
+}
+
 export function backupKey(accountId: string, backupId: string): string {
   return `backups/${accountId}/${backupId}.db`;
 }

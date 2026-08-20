@@ -16,7 +16,8 @@ interface Env {
    */
   SYNC_SHARED_SECRET?: string;
   /**
-   * Bearer token the home server presents on `/v1/household/photos/*`.
+   * Bearer token the home server presents on `/v1/household/photos/*` and
+   * `/v1/household/db/*`.
    *
    * This is not an R2 S3 token — the Worker already has the bucket via
    * `BUCKET`. The secret only proves the caller is the household box.

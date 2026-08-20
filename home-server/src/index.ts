@@ -9,6 +9,7 @@ import { openNodeDatabase } from '../../src/db/nodeDatabase.ts';
 import { createRepositories } from '../../src/db/repositories.ts';
 
 import { createApp } from './app.ts';
+import { dbStoreFromEnv, startNightlyBackup } from './backup.ts';
 import { DEFAULT_PORT } from './contract.ts';
 import { openControlStore } from './control.ts';
 import { createRevisionHub } from './hub.ts';
@@ -67,6 +68,15 @@ export async function start(): Promise<void> {
 
   serve({ fetch: app.fetch, port, hostname: '0.0.0.0' }, (info) => {
     console.log(`inventory-api listening on ${info.address}:${info.port} (schema v${version})`);
+  });
+
+  startNightlyBackup({
+    snapshotInventory: async () => {
+      if (!db.snapshotAsync) throw new Error('inventory snapshot unavailable');
+      return db.snapshotAsync();
+    },
+    snapshotControl: () => control.snapshot(),
+    store: dbStoreFromEnv(),
   });
 }
 

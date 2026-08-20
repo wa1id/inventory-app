@@ -1,14 +1,19 @@
 import { authenticate, authenticateHousehold } from './auth.ts';
 import {
+  HOUSEHOLD_DB_PREFIX,
   MAX_ACCOUNT_BYTES,
   MAX_BACKUP_BYTES,
   MAX_PHOTO_BYTES,
   SYNC_CONTRACT_VERSION,
   backupKey,
   backupPrefix,
+  householdDbKey,
+  householdDbSnapshotPrefix,
   householdPhotoKey,
+  isHouseholdDbFile,
   isValidBackupId,
   isValidPhotoId,
+  isValidSnapshotId,
   photoKey,
 } from './contract.ts';
 import type { BackupListResponse, BackupSummary, UsageResponse } from './contract.ts';
@@ -46,6 +51,20 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (householdMatch) {
     const photoId = decodeURIComponent(householdMatch[1] as string);
     return handleHouseholdPhoto(request, env, url, photoId);
+  }
+
+  if (path === '/v1/household/db') {
+    return handleHouseholdDbIndex(request, env);
+  }
+
+  const householdDbMatch = /^\/v1\/household\/db\/([^/]+)(?:\/([^/]+))?$/.exec(path);
+  if (householdDbMatch) {
+    return handleHouseholdDb(
+      request,
+      env,
+      decodeURIComponent(householdDbMatch[1] as string),
+      householdDbMatch[2] ? decodeURIComponent(householdDbMatch[2]) : undefined,
+    );
   }
 
   const auth = await authenticate(request, env);
@@ -181,6 +200,100 @@ async function handleHouseholdPhoto(
   }
 
   return json({ error: 'Method not allowed.' }, 405);
+}
+
+async function handleHouseholdDbIndex(request: Request, env: Env): Promise<Response> {
+  const auth = authenticateHousehold(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  if (request.method !== 'GET') return json({ error: 'Method not allowed.' }, 405);
+  return json({ snapshots: await listHouseholdSnapshots(env) });
+}
+
+async function handleHouseholdDb(
+  request: Request,
+  env: Env,
+  snapshotId: string,
+  fileName: string | undefined,
+): Promise<Response> {
+  const auth = authenticateHousehold(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  if (!isValidSnapshotId(snapshotId)) return json({ error: 'Invalid snapshot id.' }, 400);
+
+  if (!fileName) {
+    if (request.method === 'DELETE') return deleteHouseholdSnapshot(env, snapshotId);
+    if (request.method === 'GET') {
+      const found = (await listHouseholdSnapshots(env)).find((row) => row.id === snapshotId);
+      if (!found) return json({ error: 'Not found.' }, 404);
+      return json(found);
+    }
+    return json({ error: 'Method not allowed.' }, 405);
+  }
+
+  if (!isHouseholdDbFile(fileName)) return json({ error: 'Invalid database file.' }, 400);
+  const key = householdDbKey(snapshotId, fileName);
+
+  if (request.method === 'GET') {
+    const object = await env.BUCKET.get(key);
+    if (!object) return json({ error: 'Not found.' }, 404);
+    return new Response(object.body, {
+      headers: {
+        'content-type': 'application/vnd.sqlite3',
+        'content-length': String(object.size),
+        etag: object.httpEtag,
+      },
+    });
+  }
+
+  if (request.method === 'PUT') {
+    const body = await readBody(request, MAX_BACKUP_BYTES);
+    if (!body.ok) return json({ error: body.error }, body.status);
+    await env.BUCKET.put(key, body.bytes, {
+      httpMetadata: { contentType: 'application/vnd.sqlite3' },
+    });
+    return json({ id: snapshotId, file: fileName, size: body.bytes.byteLength }, 201);
+  }
+
+  return json({ error: 'Method not allowed.' }, 405);
+}
+
+async function deleteHouseholdSnapshot(env: Env, snapshotId: string): Promise<Response> {
+  const prefix = householdDbSnapshotPrefix(snapshotId);
+  const keys: string[] = [];
+  let cursor: string | undefined;
+  do {
+    const page = await env.BUCKET.list({ prefix, cursor });
+    for (const object of page.objects) keys.push(object.key);
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+  if (keys.length > 0) await env.BUCKET.delete(keys);
+  return new Response(null, { status: 204 });
+}
+
+async function listHouseholdSnapshots(
+  env: Env,
+): Promise<{ id: string; files: string[]; bytes: number }[]> {
+  const grouped = new Map<string, { files: string[]; bytes: number }>();
+  let cursor: string | undefined;
+  do {
+    const page = await env.BUCKET.list({ prefix: HOUSEHOLD_DB_PREFIX, cursor });
+    for (const object of page.objects) {
+      const rest = object.key.slice(HOUSEHOLD_DB_PREFIX.length);
+      const slash = rest.indexOf('/');
+      if (slash <= 0) continue;
+      const id = rest.slice(0, slash);
+      const file = rest.slice(slash + 1);
+      if (!isValidSnapshotId(id) || !isHouseholdDbFile(file)) continue;
+      const current = grouped.get(id) ?? { files: [], bytes: 0 };
+      current.files.push(file);
+      current.bytes += object.size;
+      grouped.set(id, current);
+    }
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+
+  return [...grouped.entries()]
+    .map(([id, info]) => ({ id, files: info.files.sort(), bytes: info.bytes }))
+    .sort((a, b) => (a.id < b.id ? 1 : a.id > b.id ? -1 : 0));
 }
 
 async function putBackup(request: Request, env: Env, accountId: string): Promise<Response> {

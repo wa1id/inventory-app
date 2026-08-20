@@ -21,3 +21,10 @@ export const BOOTSTRAP_SECRET_BYTES = 16;
 
 /** Raw device bearer token length. Hex-encoded on the wire. */
 export const DEVICE_TOKEN_BYTES = 32;
+
+/** Nightly household SQLite copies. Never photo bytes, never BOOTSTRAP.txt. */
+export const HOUSEHOLD_DB_FILES = ['inventory.db', 'control.db'] as const;
+export type HouseholdDbFile = (typeof HOUSEHOLD_DB_FILES)[number];
+export const HOUSEHOLD_DB_RETENTION = 7;
+export const BACKUP_TZ = 'Europe/Brussels';
+export const BACKUP_HOUR = 3;
