@@ -12,6 +12,7 @@ COPY src/core ./src/core
 COPY src/db ./src/db
 COPY src/repositories ./src/repositories
 COPY home-server/src ./home-server/src
+COPY home-server/web ./home-server/web
 COPY home-server/tsconfig.json ./home-server/tsconfig.json
 
 RUN mkdir -p /data && chown node:node /data

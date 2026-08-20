@@ -17,7 +17,7 @@ import {
   type PreparedPhoto,
 } from './photos.ts';
 
-type Variables = { device: Device };
+type Variables = { device?: Device };
 
 interface InventoryDeps {
   repos: Repositories;
@@ -174,6 +174,10 @@ export function registerInventory(
     const containerId = c.req.query('containerId');
     if (containerId === 'drop-zone' || c.req.query('unsorted') === '1') {
       return c.json({ items: await repos.items.listUnsorted() });
+    }
+    if (c.req.query('recent') === '1') {
+      const limit = asNumber(c.req.query('limit')) ?? 40;
+      return c.json({ items: await repos.items.listRecent(limit) });
     }
     if (!containerId) return c.json({ error: 'containerId_required' }, 400);
     return c.json({ items: await repos.items.listByContainer(containerId) });
