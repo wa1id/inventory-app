@@ -1,5 +1,6 @@
 import { ConflictError } from '@/core/conflict';
 import { appConfig } from '@/services/config';
+import { logError } from '@/services/telemetry';
 
 export class HouseholdHttpError extends Error {
   constructor(
@@ -62,6 +63,7 @@ export async function householdRequest(options: {
   token?: string;
   json?: unknown;
   form?: FormData;
+  bytes?: Uint8Array;
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
 }): Promise<Record<string, unknown>> {
@@ -132,6 +134,9 @@ export async function householdFetch(options: {
     if (error instanceof Error && error.name === 'AbortError') {
       throw new HouseholdHttpError(0, 'timeout');
     }
+    logError('household_fetch_failed', {
+      errorClass: error instanceof Error ? error.name : 'unknown',
+    });
     throw new HouseholdHttpError(0, 'offline');
   } finally {
     clearTimeout(timer);
