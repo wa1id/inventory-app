@@ -1,3 +1,4 @@
+import { newId } from '@/core/id';
 import type { Repositories } from '@/db/repositories';
 import type { ContainerVisualType, ItemWithContext, SqlDatabase } from '@/db/types';
 import type { CreateContainerInput, UpdateContainerInput } from '@/repositories/containers';
@@ -28,7 +29,7 @@ export function createHttpRepositories(
 ): Repositories {
   const call = (
     path: string,
-    init: { method?: string; json?: unknown; form?: FormData } = {},
+    init: { method?: string; json?: unknown } = {},
   ): Promise<Record<string, unknown>> =>
     householdRequest({
       origin: session.origin,
@@ -40,7 +41,7 @@ export function createHttpRepositories(
 
   async function callIgnoring404(
     path: string,
-    init: { method?: string; json?: unknown; form?: FormData } = {},
+    init: { method?: string; json?: unknown } = {},
   ): Promise<Record<string, unknown> | null> {
     try {
       return await call(path, init);
@@ -48,6 +49,39 @@ export function createHttpRepositories(
       if (error instanceof HouseholdHttpError && error.status === 404) return null;
       throw error;
     }
+  }
+
+  /**
+   * Photo bytes go as raw octets — the same path import already used on device.
+   * React Native cannot build a `File`/`Blob` from an ArrayBuffer view, and its
+   * FormData `{ uri, name, type }` descriptor still fails under `fetch`.
+   */
+  async function uploadHouseholdPhoto(
+    uri: string,
+    read: (uri: string) => Promise<Uint8Array | null>,
+  ) {
+    const bytes = await read(uri);
+    if (!bytes) throw new HouseholdHttpError(0, 'photo_missing');
+    const uploaded = await householdRequest({
+      origin: session.origin,
+      token: session.token,
+      path: `/v1/photos/${encodeURIComponent(newId())}`,
+      method: 'PUT',
+      bytes,
+      fetchImpl,
+      timeoutMs: 60_000,
+    });
+    if (typeof uploaded.id !== 'string' || typeof uploaded.uri !== 'string') {
+      throw new HouseholdHttpError(500, 'invalid_response');
+    }
+    return {
+      id: uploaded.id,
+      uri: uploaded.uri,
+      thumbUri: typeof uploaded.thumbUri === 'string' ? uploaded.thumbUri : undefined,
+      width: typeof uploaded.width === 'number' ? uploaded.width : undefined,
+      height: typeof uploaded.height === 'number' ? uploaded.height : undefined,
+      byteSize: typeof uploaded.byteSize === 'number' ? uploaded.byteSize : undefined,
+    };
   }
 
   async function hydrateItem(item: ItemWithContext): Promise<ItemWithContext> {
@@ -188,23 +222,22 @@ export function createHttpRepositories(
         return (await hydrateItem(body as unknown as ItemWithContext)) as never;
       },
       async create(draft: ItemDraft) {
-        const created = draft.photo?.uri
-          ? await call('/v1/items', {
-              method: 'POST',
-              form: await itemForm(draft, readPhoto ?? readStoredPhoto),
-            })
-          : await call('/v1/items', {
-              method: 'POST',
-              json: {
-                containerId: draft.containerId,
-                name: draft.name,
-                category: draft.category,
-                quantity: draft.quantity,
-                notes: draft.notes,
-                tags: draft.tags,
-              },
-            });
-        const photoId = typeof created.photoId === 'string' ? created.photoId : null;
+        const photo = draft.photo?.uri
+          ? await uploadHouseholdPhoto(draft.photo.uri, readPhoto ?? readStoredPhoto)
+          : null;
+        const created = await call('/v1/items', {
+          method: 'POST',
+          json: {
+            containerId: draft.containerId,
+            name: draft.name,
+            category: draft.category,
+            quantity: draft.quantity,
+            notes: draft.notes,
+            tags: draft.tags,
+            ...(photo ? { photo } : {}),
+          },
+        });
+        const photoId = typeof created.photoId === 'string' ? created.photoId : (photo?.id ?? null);
         if (photoId && draft.photo?.uri) {
           await rememberHouseholdPhoto(photoId, draft.photo.uri, draft.photo.thumbUri);
         }
@@ -312,27 +345,6 @@ export function createHttpRepositories(
       },
     },
   };
-}
-
-async function itemForm(
-  draft: ItemDraft,
-  readPhoto: (uri: string) => Promise<Uint8Array | null>,
-): Promise<FormData> {
-  const form = new FormData();
-  form.append('containerId', draft.containerId);
-  if (draft.name !== undefined) form.append('name', draft.name);
-  if (draft.category != null) form.append('category', draft.category);
-  if (draft.quantity !== undefined) form.append('quantity', String(draft.quantity));
-  if (draft.notes != null) form.append('notes', draft.notes);
-  if (draft.tags?.length) form.append('tags', draft.tags.join(','));
-  if (draft.photo?.uri) {
-    const bytes = await readPhoto(draft.photo.uri);
-    if (!bytes) throw new HouseholdHttpError(0, 'photo_missing');
-    const copy = new Uint8Array(bytes.byteLength);
-    copy.set(bytes);
-    form.append('photo', new File([copy], 'photo.webp', { type: 'image/webp' }));
-  }
-  return form;
 }
 
 async function readStoredPhoto(uri: string): Promise<Uint8Array | null> {

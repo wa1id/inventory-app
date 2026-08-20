@@ -9,7 +9,13 @@ import { CONTRACT_VERSION, HOUSEHOLD_NAME } from './contract.ts';
 import type { ControlStore, Device } from './control.ts';
 import type { RevisionHub } from './hub.ts';
 import { applyHouseholdDump } from './importer.ts';
-import { preparePhoto, preparePhotoWithId, type PhotoStore } from './photos.ts';
+import {
+  preparePhoto,
+  preparePhotoWithId,
+  r2ObjectKey,
+  type PhotoStore,
+  type PreparedPhoto,
+} from './photos.ts';
 
 type Variables = { device: Device };
 
@@ -196,12 +202,22 @@ export function registerInventory(
     const containerId = asString(body.containerId);
     if (!containerId) return c.json({ error: 'invalid_body' }, 400);
 
-    if (photoBytes && !photos) {
+    const photoRef = 'photo' in body && body.photo != null ? asPhotoRef(body.photo) : null;
+    if ('photo' in body && body.photo != null && !photoRef) {
+      return c.json({ error: 'invalid_photo' }, 400);
+    }
+
+    if ((photoBytes || photoRef) && !photos) {
       return c.json({ error: 'photos_not_configured' }, 503);
     }
 
     try {
-      const prepared = photoBytes && photos ? await preparePhoto(photoBytes, photos) : null;
+      let prepared: PreparedPhoto | null =
+        photoBytes && photos ? await preparePhoto(photoBytes, photos) : null;
+      if (!prepared && photoRef && photos) {
+        prepared = await resolveUploadedPhoto(photoRef, photos);
+        if (!prepared) return c.json({ error: 'photo_missing' }, 400);
+      }
       const item = await write(() =>
         repos.items.create({
           containerId,
@@ -346,7 +362,7 @@ export function registerInventory(
   app.put('/v1/photos/:id', requireDevice, async (c) => {
     if (!photos) return c.json({ error: 'photos_not_configured' }, 503);
     const id = c.req.param('id');
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    if (!isPhotoId(id)) {
       return c.json({ error: 'invalid_id' }, 400);
     }
     const bytes = new Uint8Array(await c.req.arrayBuffer());
@@ -374,6 +390,52 @@ async function readJson(c: {
 
 function asString(value: unknown): string | null {
   return typeof value === 'string' ? value : null;
+}
+
+const PHOTO_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isPhotoId(value: string): boolean {
+  return PHOTO_ID_RE.test(value);
+}
+
+interface PhotoRef {
+  id: string;
+  uri: string | null;
+  thumbUri: string | null;
+  width: number | null;
+  height: number | null;
+  byteSize: number | null;
+}
+
+function asPhotoRef(value: unknown): PhotoRef | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const photo = value as Record<string, unknown>;
+  const id = asString(photo.id);
+  if (!id || !isPhotoId(id)) return null;
+  return {
+    id,
+    uri: asString(photo.uri),
+    thumbUri: asString(photo.thumbUri),
+    width: asNumber(photo.width),
+    height: asNumber(photo.height),
+    byteSize: asNumber(photo.byteSize),
+  };
+}
+
+async function resolveUploadedPhoto(
+  ref: PhotoRef,
+  photos: PhotoStore,
+): Promise<PreparedPhoto | null> {
+  const stored = await photos.get(ref.id, 'full');
+  if (!stored) return null;
+  return {
+    id: ref.id,
+    uri: ref.uri ?? `r2:${r2ObjectKey(ref.id, 'full')}`,
+    thumbUri: ref.thumbUri ?? `r2:${r2ObjectKey(ref.id, 'thumb')}`,
+    width: ref.width ?? 0,
+    height: ref.height ?? 0,
+    byteSize: ref.byteSize ?? stored.bytes.byteLength,
+  };
 }
 
 function asNumber(value: unknown): number | null {

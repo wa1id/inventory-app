@@ -145,3 +145,87 @@ test('POST /v1/items with a photo stores bytes off-disk and GET streams them', a
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('PUT photo then POST /v1/items JSON attaches the uploaded id', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'inventory-photo-json-'));
+  const control = await openControlStore(join(dir, 'control.db'));
+  const repos = await initializeRepositories(openNodeDatabase(join(dir, 'inventory.db')));
+  const photos = createMemoryPhotoStore();
+  const app = createApp({
+    control,
+    publicOrigin: 'https://inventory.wystudio.be',
+    repos,
+    hub: createRevisionHub(),
+    photos,
+  });
+  try {
+    const pair = await app.request('/v1/pair', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        bootstrapSecret: control.bootstrapSecretToPrint,
+        deviceName: 'Cam',
+      }),
+    });
+    const { token } = (await pair.json()) as { token: string };
+    const auth = { Authorization: `Bearer ${token}` };
+
+    const space = (await (
+      await app.request('/v1/spaces', {
+        method: 'POST',
+        headers: { ...auth, 'content-type': 'application/json' },
+        body: JSON.stringify({ name: 'Garage', icon: '🚗', color: '#5B8DEF' }),
+      })
+    ).json()) as { id: string };
+    const container = (await (
+      await app.request('/v1/containers', {
+        method: 'POST',
+        headers: { ...auth, 'content-type': 'application/json' },
+        body: JSON.stringify({ spaceId: space.id, visualType: 'box' }),
+      })
+    ).json()) as { id: string };
+
+    const photoId = '11111111-2222-4333-8444-555555555555';
+    const uploaded = await app.request(`/v1/photos/${photoId}`, {
+      method: 'PUT',
+      headers: { ...auth, 'content-type': 'application/octet-stream' },
+      body: PIXEL,
+    });
+    assert.equal(uploaded.status, 201);
+    const prepared = (await uploaded.json()) as {
+      id: string;
+      uri: string;
+      thumbUri: string;
+      width: number;
+      height: number;
+      byteSize: number;
+    };
+
+    const created = await app.request('/v1/items', {
+      method: 'POST',
+      headers: { ...auth, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        containerId: container.id,
+        name: 'Cable',
+        photo: prepared,
+      }),
+    });
+    assert.equal(created.status, 201);
+    const item = (await created.json()) as { id: string; photoId: string };
+    assert.equal(item.photoId, photoId);
+
+    const missing = await app.request('/v1/items', {
+      method: 'POST',
+      headers: { ...auth, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        containerId: container.id,
+        name: 'Ghost',
+        photo: { id: '99999999-2222-4333-8444-555555555555' },
+      }),
+    });
+    assert.equal(missing.status, 400);
+  } finally {
+    await control.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
