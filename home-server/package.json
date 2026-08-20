@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "node --import tsx src/index.ts",
     "start": "node --import tsx src/index.ts",
+    "backup:r2": "node --import tsx src/backup-cli.ts",
+    "restore:r2": "node --import tsx src/restore-r2.ts",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test test/*.test.ts"
   },

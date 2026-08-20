@@ -64,6 +64,8 @@ export interface ControlStore {
   findDeviceByToken(token: string): Promise<Device | null>;
   touch(deviceId: string): Promise<void>;
   revoke(deviceId: string): Promise<boolean>;
+  /** Consistent SQLite snapshot via VACUUM INTO. Never includes BOOTSTRAP.txt. */
+  snapshot(): Promise<Uint8Array>;
   close(): Promise<void>;
 }
 
@@ -143,6 +145,13 @@ export async function openControlStore(dbPath: string): Promise<ControlStore> {
     async revoke(deviceId) {
       const result = await db.runAsync('DELETE FROM devices WHERE id = ?', [deviceId]);
       return result.changes > 0;
+    },
+
+    async snapshot() {
+      if (!db.snapshotAsync) {
+        throw new Error('Control store cannot snapshot on this backend.');
+      }
+      return db.snapshotAsync();
     },
 
     async close() {
