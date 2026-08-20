@@ -1,4 +1,4 @@
-import { normalizeForCodeMatch, toLikePattern, tokenizeQuery } from '@/core/tokenize';
+import { compactAlphanumeric, toLikePattern, tokenizeQuery } from '@/core/tokenize';
 import { DROP_ZONE_CONTAINER_ID, splitTagNames } from '@/db/constants';
 import type { ItemWithContext, SqlDatabase, SqlParams } from '@/db/types';
 
@@ -34,16 +34,33 @@ const ITEM_RESULT_LIMIT = 200;
 const LOCATION_RESULT_LIMIT = 30;
 
 /**
+ * ASCII separators people leave out when typing (`usbc` for `USB-C`).
+ * Nested REPLACE keeps this portable across expo-sqlite and node:sqlite.
+ */
+function sqlCompact(expr: string): string {
+  let sql = expr;
+  for (const ch of ['-', ' ', '_', '/', '.', "'"]) {
+    sql = `REPLACE(${sql}, '${ch.replaceAll("'", "''")}', '')`;
+  }
+  return sql;
+}
+
+/**
  * Conditions that make a term match the item's *own* fields (name, category,
  * tags) as opposed to its location.
  */
 function itemFieldCondition(): string {
   return `(
     i.search_text LIKE ? ESCAPE '\\'
+    OR ${sqlCompact('i.search_text')} LIKE ? ESCAPE '\\'
     OR EXISTS (
       SELECT 1 FROM item_tags it
         JOIN tags t ON t.id = it.tag_id
-       WHERE it.item_id = i.id AND t.normalized_name LIKE ? ESCAPE '\\'
+       WHERE it.item_id = i.id
+         AND (
+           t.normalized_name LIKE ? ESCAPE '\\'
+           OR ${sqlCompact('t.normalized_name')} LIKE ? ESCAPE '\\'
+         )
     )
   )`;
 }
@@ -51,8 +68,10 @@ function itemFieldCondition(): string {
 function locationFieldCondition(): string {
   return `(
     LOWER(s.name) LIKE ? ESCAPE '\\'
+    OR ${sqlCompact('LOWER(s.name)')} LIKE ? ESCAPE '\\'
     OR LOWER(COALESCE(c.name, '')) LIKE ? ESCAPE '\\'
-    OR REPLACE(LOWER(c.short_code), '-', '') LIKE ? ESCAPE '\\'
+    OR ${sqlCompact("LOWER(COALESCE(c.name, ''))")} LIKE ? ESCAPE '\\'
+    OR ${sqlCompact('LOWER(c.short_code)')} LIKE ? ESCAPE '\\'
   )`;
 }
 
@@ -77,11 +96,21 @@ export function createSearchRepository(db: SqlDatabase) {
 
       for (const term of terms) {
         const like = toLikePattern(term);
-        const codeLike = toLikePattern(normalizeForCodeMatch(term));
+        const compactLike = toLikePattern(compactAlphanumeric(term) || term);
 
         itemWhere.push(`(${itemFieldCondition()} OR ${locationFieldCondition()})`);
-        itemParams.push(like, like, like, like, codeLike);
-        directParams.push(like, like);
+        itemParams.push(
+          like,
+          compactLike,
+          like,
+          compactLike,
+          like,
+          compactLike,
+          like,
+          compactLike,
+          compactLike,
+        );
+        directParams.push(like, compactLike, like, compactLike);
       }
 
       // `direct_match` is 1 only when every term matched the item's own fields.
@@ -130,8 +159,12 @@ export function createSearchRepository(db: SqlDatabase) {
       const params: SqlParams = [];
 
       for (const term of terms) {
-        where.push(`LOWER(s.name) LIKE ? ESCAPE '\\'`);
-        params.push(toLikePattern(term));
+        const like = toLikePattern(term);
+        const compactLike = toLikePattern(compactAlphanumeric(term) || term);
+        where.push(
+          `(LOWER(s.name) LIKE ? ESCAPE '\\' OR ${sqlCompact('LOWER(s.name)')} LIKE ? ESCAPE '\\')`,
+        );
+        params.push(like, compactLike);
       }
 
       const rows = await db.getAllAsync<{
@@ -168,11 +201,14 @@ export function createSearchRepository(db: SqlDatabase) {
       const params: SqlParams = [];
 
       for (const term of terms) {
+        const like = toLikePattern(term);
+        const compactLike = toLikePattern(compactAlphanumeric(term) || term);
         where.push(
           `(LOWER(COALESCE(c.name, '')) LIKE ? ESCAPE '\\'
-            OR REPLACE(LOWER(c.short_code), '-', '') LIKE ? ESCAPE '\\')`,
+            OR ${sqlCompact("LOWER(COALESCE(c.name, ''))")} LIKE ? ESCAPE '\\'
+            OR ${sqlCompact('LOWER(c.short_code)')} LIKE ? ESCAPE '\\')`,
         );
-        params.push(toLikePattern(term), toLikePattern(normalizeForCodeMatch(term)));
+        params.push(like, compactLike, compactLike);
       }
 
       const rows = await db.getAllAsync<{

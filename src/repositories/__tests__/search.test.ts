@@ -39,6 +39,22 @@ describe('search', () => {
     expect(results).toEqual({ terms: [], locations: [], items: [] });
   });
 
+  it('matches USB-C when the query omits the hyphen', async () => {
+    const { repos, toolBox } = await seedInventory();
+    await repos.items.create({
+      containerId: toolBox.id,
+      name: 'USB-C to USB-A cable',
+      category: 'Cables',
+    });
+
+    expect((await repos.search.search('usbc')).items.map((item) => item.name)).toEqual([
+      'USB-C to USB-A cable',
+    ]);
+    expect((await repos.search.search('usb-c')).items.map((item) => item.name)).toEqual([
+      'USB-C to USB-A cable',
+    ]);
+  });
+
   it('matches an item by name, case-insensitively', async () => {
     const { repos } = await seedInventory();
     const results = await repos.search.search('DRILL');

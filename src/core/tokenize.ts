@@ -43,5 +43,19 @@ export function toLikePattern(term: string): string {
 
 /** Normalizes text the way container short codes are compared. */
 export function normalizeForCodeMatch(value: string): string {
-  return value.toLowerCase().replace(/[\s-]+/g, '');
+  return compactAlphanumeric(value);
+}
+
+/**
+ * Strips punctuation so a typed `usbc` still hits a stored `USB-C`.
+ *
+ * Short-code matching already did this for dashes; item names need the same
+ * folding for hyphens, spaces, slashes, and similar separators.
+ */
+export function compactAlphanumeric(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(COMBINING_MARKS, '')
+    .replace(/[^\p{Letter}\p{Number}]+/gu, '');
 }

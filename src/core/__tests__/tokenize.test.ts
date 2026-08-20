@@ -1,4 +1,9 @@
-import { normalizeForCodeMatch, toLikePattern, tokenizeQuery } from '@/core/tokenize';
+import {
+  compactAlphanumeric,
+  normalizeForCodeMatch,
+  toLikePattern,
+  tokenizeQuery,
+} from '@/core/tokenize';
 import { generateShortCode, normalizeShortCode } from '@/core/shortCode';
 
 describe('tokenizeQuery', () => {
@@ -64,5 +69,14 @@ describe('short codes', () => {
   it('compares codes ignoring case and dashes', () => {
     expect(normalizeShortCode('box-7k2m')).toBe('BOX7K2M');
     expect(normalizeForCodeMatch('BOX-7K2M')).toBe('box7k2m');
+  });
+});
+
+describe('compactAlphanumeric', () => {
+  it('folds USB-C style punctuation so typed usbc still matches', () => {
+    expect(compactAlphanumeric('USB-C')).toBe('usbc');
+    expect(compactAlphanumeric('usb c')).toBe('usbc');
+    expect(compactAlphanumeric('usb/c')).toBe('usbc');
+    expect(compactAlphanumeric('usbc')).toBe('usbc');
   });
 });
