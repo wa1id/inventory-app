@@ -13,6 +13,7 @@ import { captureFastItem } from '@/services/capture/fastCapture';
 import { hasRoomForPhoto, storeItemPhoto } from '@/services/capture/imageStore';
 import { logError, logEvent } from '@/services/telemetry';
 import { Button } from '@/ui/components/Button';
+import { TapToFocusLayer } from '@/ui/components/TapToFocusLayer';
 import { MIN_TOUCH_TARGET, radius, spacing, useTheme } from '@/ui/theme';
 
 type CaptureMode = 'single' | 'fast';
@@ -295,7 +296,19 @@ export default function CaptureScreen() {
 
   return (
     <View style={styles.container}>
-      <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" flash={flash} />
+      <CameraView
+        ref={cameraRef}
+        style={StyleSheet.absoluteFill}
+        facing="back"
+        flash={flash}
+        // Continuous AF. 'on' would lock after a single shot (issue #44).
+        autofocus="off"
+      />
+      <TapToFocusLayer
+        onFocus={(point) => {
+          void cameraRef.current?.focusAsync(point);
+        }}
+      />
 
       {/* Corner guides, as the reference has: they tell you how much of the
           frame the item should fill, which is what makes a photo recognisable
@@ -307,8 +320,8 @@ export default function CaptureScreen() {
         <View style={[styles.corner, styles.cornerBottomRight]} />
       </View>
 
-      <SafeAreaView style={styles.overlay}>
-        <View style={styles.topBar}>
+      <SafeAreaView style={styles.overlay} pointerEvents="box-none">
+        <View style={styles.topBar} pointerEvents="auto">
           <Pressable
             onPress={() => router.back()}
             accessibilityRole="button"
@@ -329,7 +342,7 @@ export default function CaptureScreen() {
           </Pressable>
         </View>
 
-        <View style={styles.bottomBar}>
+        <View style={styles.bottomBar} pointerEvents="auto">
           {error ? (
             <View style={styles.errorBanner} accessibilityLiveRegion="assertive">
               <Text style={styles.errorText}>{error}</Text>

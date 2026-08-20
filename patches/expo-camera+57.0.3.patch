@@ -1,0 +1,399 @@
+diff --git a/node_modules/expo-camera/android/src/main/java/expo/modules/camera/CameraViewModule.kt b/node_modules/expo-camera/android/src/main/java/expo/modules/camera/CameraViewModule.kt
+index 21382f8..7909da2 100644
+--- a/node_modules/expo-camera/android/src/main/java/expo/modules/camera/CameraViewModule.kt
++++ b/node_modules/expo-camera/android/src/main/java/expo/modules/camera/CameraViewModule.kt
+@@ -474,6 +474,10 @@ class CameraViewModule : Module() {
+       AsyncFunction("pausePreview") { view: ExpoCameraView ->
+         view.pausePreview()
+       }
++
++      AsyncFunction("focus") { view: ExpoCameraView, x: Double, y: Double ->
++        view.focusAt(x.toFloat(), y.toFloat())
++      }.runOnQueue(Queues.MAIN)
+     }
+   }
+ 
+diff --git a/node_modules/expo-camera/android/src/main/java/expo/modules/camera/ExpoCameraView.kt b/node_modules/expo-camera/android/src/main/java/expo/modules/camera/ExpoCameraView.kt
+index 999a22c..e051c60 100644
+--- a/node_modules/expo-camera/android/src/main/java/expo/modules/camera/ExpoCameraView.kt
++++ b/node_modules/expo-camera/android/src/main/java/expo/modules/camera/ExpoCameraView.kt
+@@ -13,6 +13,8 @@ import android.media.MediaActionSound
+ import android.os.Bundle
+ import android.util.Log
+ import android.util.Size
++import android.view.GestureDetector
++import android.view.MotionEvent
+ import android.view.OrientationEventListener
+ import android.view.Surface
+ import android.view.View
+@@ -25,7 +27,6 @@ import androidx.camera.core.Camera
+ import androidx.camera.core.CameraInfo
+ import androidx.camera.core.CameraSelector
+ import androidx.camera.core.CameraState
+-import androidx.camera.core.DisplayOrientedMeteringPointFactory
+ import androidx.camera.core.FocusMeteringAction
+ import androidx.camera.core.ImageAnalysis
+ import androidx.camera.core.ImageCapture
+@@ -136,6 +137,17 @@ class ExpoCameraView(
+   private var previewView = PreviewView(context).apply {
+     elevation = 0f
+   }
++  private val tapToFocusDetector = GestureDetector(
++    context,
++    object : GestureDetector.SimpleOnGestureListener() {
++      override fun onDown(e: MotionEvent): Boolean = true
++
++      override fun onSingleTapUp(e: MotionEvent): Boolean {
++        focusAt(e.x, e.y)
++        return true
++      }
++    }
++  )
+   private val scope = CoroutineScope(
+     Dispatchers.Main + SupervisorJob() + CoroutineExceptionHandler { _, throwable ->
+       Log.e(CameraViewModule.TAG, "Unhandled exception in camera coroutine", throwable)
+@@ -502,6 +514,7 @@ class ExpoCameraView(
+     }
+ 
+     val imageCaptureBuilder = ImageCapture.Builder()
++      .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
+       .setResolutionSelector(resolutionSelector)
+       .setFlashMode(currentFlashMode.mapToLens())
+ 
+@@ -537,6 +550,13 @@ class ExpoCameraView(
+     }
+     // Set the previous zoom level after recreating the camera
+     setCameraZoom(zoom)
++    previewView.post {
++      if (autoFocus == FocusMode.ON) {
++        startFocusMetering()
++      } else {
++        focusAt(previewView.width / 2f, previewView.height / 2f)
++      }
++    }
+     this.cameraProvider = cameraProvider
+   }
+ 
+@@ -628,21 +648,36 @@ class ExpoCameraView(
+     }.build()
+   }
+ 
++  /**
++   * Metering points are in preview-view pixels. The previous (1, 1) values were a
++   * single pixel in the corner, which is why one-shot AF never landed on the subject.
++   */
++  fun focusAt(x: Float, y: Float) {
++    val cam = camera ?: return
++    if (previewView.width <= 0 || previewView.height <= 0) {
++      return
++    }
++    val point = previewView.meteringPointFactory.createPoint(x, y)
++    val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF)
++      .addPoint(point, FocusMeteringAction.FLAG_AE)
++      .build()
++    cam.cameraControl.startFocusAndMetering(action)
++  }
++
+   private fun startFocusMetering() {
+-    camera?.let {
+-      val meteringPointFactory = DisplayOrientedMeteringPointFactory(
+-        previewView.display,
+-        it.cameraInfo,
+-        previewView.width.toFloat(),
+-        previewView.height.toFloat()
+-      )
+-      val action = FocusMeteringAction.Builder(
+-        meteringPointFactory.createPoint(1f, 1f),
+-        FocusMeteringAction.FLAG_AF
+-      )
+-        .build()
+-      it.cameraControl.startFocusAndMetering(action)
++    val cam = camera ?: return
++    if (previewView.width <= 0 || previewView.height <= 0) {
++      return
+     }
++    val point = previewView.meteringPointFactory.createPoint(
++      previewView.width / 2f,
++      previewView.height / 2f
++    )
++    val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF)
++      .addPoint(point, FocusMeteringAction.FLAG_AE)
++      .disableAutoCancel()
++      .build()
++    cam.cameraControl.startFocusAndMetering(action)
+   }
+ 
+   private fun setCameraZoom(value: Float) {
+@@ -848,6 +883,13 @@ class ExpoCameraView(
+         LayoutParams.MATCH_PARENT
+       )
+     )
++    previewView.setOnTouchListener { view, event ->
++      tapToFocusDetector.onTouchEvent(event)
++      if (event.action == MotionEvent.ACTION_UP) {
++        view.performClick()
++      }
++      true
++    }
+   }
+ 
+   fun onPictureSaved(response: Bundle) {
+diff --git a/node_modules/expo-camera/build/Camera.types.d.ts b/node_modules/expo-camera/build/Camera.types.d.ts
+index 0ee50ec..576d88d 100644
+--- a/node_modules/expo-camera/build/Camera.types.d.ts
++++ b/node_modules/expo-camera/build/Camera.types.d.ts
+@@ -471,6 +471,7 @@ export interface CameraViewRef {
+     readonly launchModernScanner: () => Promise<void>;
+     readonly resumePreview: () => Promise<void>;
+     readonly pausePreview: () => Promise<void>;
++    readonly focus?: (x: number, y: number) => Promise<void>;
+ }
+ /**
+  * @hidden
+diff --git a/node_modules/expo-camera/build/CameraView.d.ts b/node_modules/expo-camera/build/CameraView.d.ts
+index da858fa..0625d22 100644
+--- a/node_modules/expo-camera/build/CameraView.d.ts
++++ b/node_modules/expo-camera/build/CameraView.d.ts
+@@ -48,6 +48,13 @@ export default class CameraView extends Component<CameraViewProps> {
+      * Pauses the camera preview. It is not recommended to use `takePictureAsync` when preview is paused.
+      */
+     pausePreview(): Promise<void>;
++    /**
++     * Focus and meter at a point in the preview, in view coordinates.
++     */
++    focusAsync(point: {
++        x: number;
++        y: number;
++    }): Promise<void>;
+     static ConversionTables: {
+         [prop: string]: unknown;
+         type: Record<keyof import("./Camera.types").CameraType, import("./Camera.types").CameraNativeProps["facing"]>;
+diff --git a/node_modules/expo-camera/build/CameraView.js b/node_modules/expo-camera/build/CameraView.js
+index 78f8198..3d57d60 100644
+--- a/node_modules/expo-camera/build/CameraView.js
++++ b/node_modules/expo-camera/build/CameraView.js
+@@ -107,6 +107,12 @@ export default class CameraView extends Component {
+     async pausePreview() {
+         return this._cameraRef.current?.pausePreview();
+     }
++    /**
++     * Focus and meter at a point in the preview, in view coordinates.
++     */
++    async focusAsync(point) {
++        await this._cameraRef.current?.focus?.(point.x, point.y);
++    }
+     // Values under keys from this object will be transformed to native options
+     static ConversionTables = ConversionTables;
+     static defaultProps = {
+diff --git a/node_modules/expo-camera/build/ExpoCamera.web.js b/node_modules/expo-camera/build/ExpoCamera.web.js
+index 6935421..21b63fc 100644
+--- a/node_modules/expo-camera/build/ExpoCamera.web.js
++++ b/node_modules/expo-camera/build/ExpoCamera.web.js
+@@ -76,6 +76,7 @@ const ExponentCamera = ({ facing, poster, ref, ...props }) => {
+             console.warn('getAvailableLenses is not supported on web.');
+             return [];
+         },
++        async focus() { },
+     }), [native.mediaTrackSettings, props.onPictureSaved]);
+     const style = useMemo(() => {
+         const isFrontFacingCamera = native.type === CameraManager.Type.front;
+diff --git a/node_modules/expo-camera/ios/CameraViewModule.swift b/node_modules/expo-camera/ios/CameraViewModule.swift
+index cccd73f..3f896a6 100644
+--- a/node_modules/expo-camera/ios/CameraViewModule.swift
++++ b/node_modules/expo-camera/ios/CameraViewModule.swift
+@@ -250,6 +250,10 @@ public final class CameraViewModule: Module, ScannerResultHandler {
+         view.pausePreview()
+       }
+ 
++      AsyncFunction("focus") { (view, x: Double, y: Double) in
++        view.focus(atLayerPoint: CGPoint(x: x, y: y))
++      }
++
+       AsyncFunction("getAvailablePictureSizes") {
+         return PictureSize.allCases.map { $0.rawValue }
+       }
+diff --git a/node_modules/expo-camera/ios/Common/DeviceDiscovery.swift b/node_modules/expo-camera/ios/Common/DeviceDiscovery.swift
+index 89fdca0..1a25dc6 100644
+--- a/node_modules/expo-camera/ios/Common/DeviceDiscovery.swift
++++ b/node_modules/expo-camera/ios/Common/DeviceDiscovery.swift
+@@ -107,9 +107,18 @@ class DeviceDiscovery {
+   }
+ 
+   var defaultBackCamera: AVCaptureDevice? {
+-    if let standardBack = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
+-      if self.backCameraLenses.contains(standardBack) {
+-        return standardBack
++    // Virtual multi-cam devices auto-switch to ultra-wide for close subjects,
++    // matching Camera.app macro. Wide-angle is last so older phones still work.
++    let preferredTypes: [AVCaptureDevice.DeviceType] = [
++      .builtInTripleCamera,
++      .builtInDualWideCamera,
++      .builtInDualCamera,
++      .builtInWideAngleCamera
++    ]
++    for type in preferredTypes {
++      if let device = AVCaptureDevice.default(type, for: .video, position: .back),
++        self.backCameraLenses.contains(device) {
++        return device
+       }
+     }
+ 
+diff --git a/node_modules/expo-camera/ios/Current/CameraPhotoCapture.swift b/node_modules/expo-camera/ios/Current/CameraPhotoCapture.swift
+index fc9a9bb..0923ef9 100644
+--- a/node_modules/expo-camera/ios/Current/CameraPhotoCapture.swift
++++ b/node_modules/expo-camera/ios/Current/CameraPhotoCapture.swift
+@@ -102,7 +102,7 @@ class CameraPhotoCapture: NSObject, AVCapturePhotoCaptureDelegate {
+         photoSettings.isHighResolutionPhotoEnabled = true
+       }
+ 
+-      photoSettings.photoQualityPrioritization = .balanced
++      photoSettings.photoQualityPrioritization = .quality
+ 
+       photoOutput.capturePhoto(with: photoSettings, delegate: self)
+     }
+diff --git a/node_modules/expo-camera/ios/Current/CameraSessionManager.swift b/node_modules/expo-camera/ios/Current/CameraSessionManager.swift
+index 403e033..fbc82f3 100644
+--- a/node_modules/expo-camera/ios/Current/CameraSessionManager.swift
++++ b/node_modules/expo-camera/ios/Current/CameraSessionManager.swift
+@@ -204,6 +204,38 @@ class CameraSessionManager: NSObject, DeviceDiscoveryDelegate {
+       if device.isFocusModeSupported(delegate.autoFocus), device.focusMode != delegate.autoFocus {
+         device.focusMode = delegate.autoFocus
+       }
++      if device.isSmoothAutoFocusSupported {
++        device.isSmoothAutoFocusEnabled = true
++      }
++    } catch {
++      log.info("\(#function): \(error.localizedDescription)")
++    }
++  }
++
++  func focus(at devicePoint: CGPoint) {
++    guard let device = captureDeviceInput?.device else {
++      return
++    }
++
++    do {
++      try device.lockForConfiguration()
++      defer { device.unlockForConfiguration() }
++      if device.isFocusPointOfInterestSupported {
++        device.focusPointOfInterest = devicePoint
++        if device.isFocusModeSupported(.continuousAutoFocus) {
++          device.focusMode = .continuousAutoFocus
++        } else if device.isFocusModeSupported(.autoFocus) {
++          device.focusMode = .autoFocus
++        }
++      }
++      if device.isExposurePointOfInterestSupported {
++        device.exposurePointOfInterest = devicePoint
++        if device.isExposureModeSupported(.continuousAutoExposure) {
++          device.exposureMode = .continuousAutoExposure
++        } else if device.isExposureModeSupported(.autoExpose) {
++          device.exposureMode = .autoExpose
++        }
++      }
+     } catch {
+       log.info("\(#function): \(error.localizedDescription)")
+     }
+@@ -217,8 +249,11 @@ class CameraSessionManager: NSObject, DeviceDiscoveryDelegate {
+     do {
+       try device.lockForConfiguration()
+       defer { device.unlockForConfiguration() }
+-      let minZoom = 1.0
+-      device.videoZoomFactor = minZoom * pow(device.activeFormat.videoMaxZoomFactor / minZoom, delegate.zoom)
++      // Dual/triple cameras treat 1.0 as ultra-wide. The first switch-over is 1x wide,
++      // which is where Camera.app starts and where automatic macro switching happens.
++      let minZoom = device.virtualDeviceSwitchOverVideoZoomFactors.first.map { CGFloat(truncating: $0) } ?? 1.0
++      let maxZoom = max(minZoom, device.activeFormat.videoMaxZoomFactor)
++      device.videoZoomFactor = minZoom * pow(maxZoom / minZoom, delegate.zoom)
+     } catch {
+       log.info("\(#function): \(error.localizedDescription)")
+     }
+@@ -352,6 +387,7 @@ class CameraSessionManager: NSObject, DeviceDiscoveryDelegate {
+         session.addInput(deviceInput)
+         captureDeviceInput = deviceInput
+         updateZoom()
++        setFocusMode()
+       }
+     } catch {
+       delegate.onMountError(["message": "Camera could not be started - \(error.localizedDescription)"])
+@@ -372,10 +408,8 @@ class CameraSessionManager: NSObject, DeviceDiscoveryDelegate {
+     guard #available(iOS 17.0, *), photoOutput.isResponsiveCaptureSupported else {
+       return
+     }
+-    photoOutput.isResponsiveCaptureEnabled = true
+-    if photoOutput.isFastCapturePrioritizationSupported {
+-      photoOutput.isFastCapturePrioritizationEnabled = true
+-    }
++    // Zero-shutter-lag can fire before autofocus settles; item photos need the lock.
++    photoOutput.isResponsiveCaptureEnabled = false
+     photoOutput.isAutoDeferredPhotoDeliveryEnabled = false
+   }
+ 
+diff --git a/node_modules/expo-camera/ios/Current/CameraView.swift b/node_modules/expo-camera/ios/Current/CameraView.swift
+index 7bf1b37..62a2856 100644
+--- a/node_modules/expo-camera/ios/Current/CameraView.swift
++++ b/node_modules/expo-camera/ios/Current/CameraView.swift
+@@ -188,6 +188,21 @@ public class CameraView: ExpoView, EXAppLifecycleListener, EXCameraInterface, Ca
+     previewLayer.session = sessionManager.session
+     previewLayer.videoGravity = .resizeAspectFill
+     previewLayer.needsDisplayOnBoundsChange = true
++    isUserInteractionEnabled = true
++    let tap = UITapGestureRecognizer(target: self, action: #selector(handleFocusTap(_:)))
++    tap.cancelsTouchesInView = false
++    addGestureRecognizer(tap)
++  }
++
++  @objc private func handleFocusTap(_ gesture: UITapGestureRecognizer) {
++    focus(atLayerPoint: gesture.location(in: self))
++  }
++
++  func focus(atLayerPoint point: CGPoint) {
++    let devicePoint = previewLayer.captureDevicePointConverted(fromLayerPoint: point)
++    sessionQueue.async { [weak self] in
++      self?.sessionManager.focus(at: devicePoint)
++    }
+   }
+ 
+   func startSessionIfNeeded() {
+diff --git a/node_modules/expo-camera/src/Camera.types.ts b/node_modules/expo-camera/src/Camera.types.ts
+index 7cf0a07..82ef85c 100644
+--- a/node_modules/expo-camera/src/Camera.types.ts
++++ b/node_modules/expo-camera/src/Camera.types.ts
+@@ -505,6 +505,7 @@ export interface CameraViewRef {
+   readonly launchModernScanner: () => Promise<void>;
+   readonly resumePreview: () => Promise<void>;
+   readonly pausePreview: () => Promise<void>;
++  readonly focus?: (x: number, y: number) => Promise<void>;
+ }
+ 
+ /**
+diff --git a/node_modules/expo-camera/src/CameraView.tsx b/node_modules/expo-camera/src/CameraView.tsx
+index b2cc359..ab6bb93 100644
+--- a/node_modules/expo-camera/src/CameraView.tsx
++++ b/node_modules/expo-camera/src/CameraView.tsx
+@@ -153,6 +153,13 @@ export default class CameraView extends Component<CameraViewProps> {
+     return this._cameraRef.current?.pausePreview();
+   }
+ 
++  /**
++   * Focus and meter at a point in the preview, in view coordinates.
++   */
++  async focusAsync(point: { x: number; y: number }): Promise<void> {
++    await this._cameraRef.current?.focus?.(point.x, point.y);
++  }
++
+   // Values under keys from this object will be transformed to native options
+   static ConversionTables = ConversionTables;
+ 
+diff --git a/node_modules/expo-camera/src/ExpoCamera.web.tsx b/node_modules/expo-camera/src/ExpoCamera.web.tsx
+index 7548f8a..aec3c44 100644
+--- a/node_modules/expo-camera/src/ExpoCamera.web.tsx
++++ b/node_modules/expo-camera/src/ExpoCamera.web.tsx
+@@ -118,6 +118,7 @@ const ExponentCamera = ({
+         console.warn('getAvailableLenses is not supported on web.');
+         return [];
+       },
++      async focus() {},
+     }),
+     [native.mediaTrackSettings, props.onPictureSaved]
+   );
