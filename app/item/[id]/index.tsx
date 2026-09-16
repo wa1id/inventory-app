@@ -7,6 +7,7 @@ import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
 import { deleteStoredPhotos } from '@/services/capture/imageStore';
 import { logEvent } from '@/services/telemetry';
 import { Button } from '@/ui/components/Button';
+import { SavedQuantityStepper } from '@/ui/components/SavedQuantityStepper';
 import { ErrorState, LoadingState, Screen } from '@/ui/components/Screen';
 import { MIN_TOUCH_TARGET, radius, spacing, useTheme } from '@/ui/theme';
 
@@ -131,13 +132,20 @@ export default function ItemScreen() {
         </Pressable>
 
         <View
-          style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          style={[styles.qtyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
-          <DetailRow label="Quantity" value={String(item.quantity)} />
-          {item.category ? <DetailRow label="Category" value={item.category} /> : null}
-          {item.tags.length > 0 ? <DetailRow label="Tags" value={item.tags.join(', ')} /> : null}
-          {item.notes ? <DetailRow label="Notes" value={item.notes} /> : null}
+          <SavedQuantityStepper item={item} showLabel />
         </View>
+
+        {item.category || item.tags.length > 0 || item.notes ? (
+          <View
+            style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          >
+            {item.category ? <DetailRow label="Category" value={item.category} /> : null}
+            {item.tags.length > 0 ? <DetailRow label="Tags" value={item.tags.join(', ')} /> : null}
+            {item.notes ? <DetailRow label="Notes" value={item.notes} /> : null}
+          </View>
+        ) : null}
 
         <Button
           label="Delete item"
@@ -193,6 +201,11 @@ const styles = StyleSheet.create({
   },
   chevron: {
     fontSize: 24,
+  },
+  qtyCard: {
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    padding: spacing.md,
   },
   card: {
     borderRadius: radius.lg,

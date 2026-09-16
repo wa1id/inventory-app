@@ -35,7 +35,7 @@ async function setup(webPassword: string | null = PASSWORD) {
     visualType: 'box',
     name: 'Tools',
   });
-  await repos.items.create({ containerId: container.id, name: 'Cordless drill' });
+  const item = await repos.items.create({ containerId: container.id, name: 'Cordless drill' });
   const app = createApp({
     control,
     publicOrigin: 'https://inventory.wystudio.be',
@@ -43,7 +43,17 @@ async function setup(webPassword: string | null = PASSWORD) {
     hub: createRevisionHub(),
     webPassword,
   });
-  return { dir, control, app };
+  return { dir, control, app, repos, space, container, item };
+}
+
+async function login(app: ReturnType<typeof createApp>): Promise<string> {
+  const response = await app.request('/v1/web/login', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ password: PASSWORD }),
+  });
+  assert.equal(response.status, 200);
+  return cookieFrom(response);
 }
 
 test('lookup page is absent until a web password is configured', async () => {
@@ -51,6 +61,8 @@ test('lookup page is absent until a web password is configured', async () => {
   try {
     assert.equal((await app.request('/')).status, 404);
     assert.equal((await app.request('/v1/web/login', { method: 'POST' })).status, 404);
+    assert.equal((await app.request('/app.js')).status, 404);
+    assert.equal((await app.request('/item/anything')).status, 404);
   } finally {
     await control.close();
     rmSync(dir, { recursive: true, force: true });
@@ -62,7 +74,18 @@ test('password login unlocks search and rejects a wrong password', async () => {
   try {
     const page = await app.request('/');
     assert.equal(page.status, 200);
-    assert.match(await page.text(), /Look something up/);
+    const html = await page.text();
+    assert.match(html, /Look something up/);
+    assert.match(html, /Adding still happens on the phone/);
+    assert.match(html, /id="space-view"/);
+    assert.match(html, /id="container-view"/);
+    assert.match(html, /id="edit-form"/);
+    assert.match(html, /novalidate/);
+    assert.match(html, /id="edit-quantity"/);
+    assert.match(html, /min="0"/);
+    assert.match(html, /id="edit-qty-dec"/);
+    assert.match(html, /id="edit-qty-inc"/);
+    assert.match(html, /id="move-panel"/);
 
     const denied = await app.request('/v1/web/login', {
       method: 'POST',
@@ -72,24 +95,110 @@ test('password login unlocks search and rejects a wrong password', async () => {
     assert.equal(denied.status, 401);
     assert.equal((await app.request('/v1/search?q=drill')).status, 401);
 
-    const login = await app.request('/v1/web/login', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ password: PASSWORD }),
-    });
-    assert.equal(login.status, 200);
-    const cookie = cookieFrom(login);
+    const cookie = await login(app);
 
     const me = await app.request('/v1/web/me', { headers: { cookie } });
     assert.equal(me.status, 200);
 
     const found = await app.request('/v1/search?q=drill', { headers: { cookie } });
     assert.equal(found.status, 200);
-    const body = (await found.json()) as { items: { name: string }[] };
+    const body = (await found.json()) as { items: { name: string }[]; locations: unknown[] };
     assert.equal(body.items[0]?.name, 'Cordless drill');
+    assert.ok(Array.isArray(body.locations));
 
     const recent = await app.request('/v1/items?recent=1', { headers: { cookie } });
     assert.equal(recent.status, 200);
+  } finally {
+    await control.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('desk page assets and browse routes are served with the lookup page', async () => {
+  const { dir, control, app } = await setup();
+  try {
+    const css = await app.request('/app.css');
+    assert.equal(css.status, 200);
+    assert.match(css.headers.get('content-type') ?? '', /text\/css/);
+    assert.match(await css.text(), /--tape/);
+
+    const js = await app.request('/app.js');
+    assert.equal(js.status, 200);
+    assert.match(js.headers.get('content-type') ?? '', /javascript/);
+    const jsText = await js.text();
+    assert.match(jsText, /parseRoute/);
+    assert.match(jsText, /stepSavedQuantity/);
+    assert.match(jsText, /data-qty-item/);
+
+    for (const path of ['/item/anything', '/space/anything', '/container/anything']) {
+      const page = await app.request(path);
+      assert.equal(page.status, 200, path);
+      assert.match(await page.text(), /Look something up/);
+    }
+  } finally {
+    await control.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('web session can browse and patch items', async () => {
+  const { dir, control, app, repos, space, item } = await setup();
+  try {
+    const cookie = await login(app);
+    const headers = { cookie, 'content-type': 'application/json' };
+
+    const spaces = await app.request('/v1/spaces', { headers: { cookie } });
+    assert.equal(spaces.status, 200);
+    const spaceList = (await spaces.json()) as { spaces: { name: string }[] };
+    assert.equal(spaceList.spaces[0]?.name, 'Garage');
+
+    const containers = await app.request('/v1/containers', { headers: { cookie } });
+    assert.equal(containers.status, 200);
+    const containerList = (await containers.json()) as { containers: { name: string | null }[] };
+    assert.equal(containerList.containers[0]?.name, 'Tools');
+
+    const placeSearch = await app.request('/v1/search?q=Garage', { headers: { cookie } });
+    assert.equal(placeSearch.status, 200);
+    const hits = (await placeSearch.json()) as { locations: { kind: string; title: string }[] };
+    assert.ok(hits.locations.some((row) => row.kind === 'space' && row.title === 'Garage'));
+
+    const current = await repos.items.getById(item.id);
+    assert.ok(current);
+
+    const renamed = await app.request(`/v1/items/${item.id}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ name: 'Impact drill', updatedAt: current.updatedAt }),
+    });
+    assert.equal(renamed.status, 200);
+    const afterName = (await renamed.json()) as { name: string; updatedAt: number };
+    assert.equal(afterName.name, 'Impact drill');
+
+    const emptied = await app.request(`/v1/items/${item.id}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ quantity: 0, updatedAt: afterName.updatedAt }),
+    });
+    assert.equal(emptied.status, 200);
+    const afterQty = (await emptied.json()) as { quantity: number; updatedAt: number };
+    assert.equal(afterQty.quantity, 0);
+
+    const shelf = await repos.containers.create({
+      spaceId: space.id,
+      visualType: 'shelf',
+      name: 'Wall shelf',
+    });
+    const moved = await app.request(`/v1/items/${item.id}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({
+        containerId: shelf.id,
+        updatedAt: afterQty.updatedAt,
+      }),
+    });
+    assert.equal(moved.status, 200);
+    const afterMove = (await moved.json()) as { containerId: string };
+    assert.equal(afterMove.containerId, shelf.id);
   } finally {
     await control.close();
     rmSync(dir, { recursive: true, force: true });

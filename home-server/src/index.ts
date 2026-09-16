@@ -32,8 +32,8 @@ function listenPort(): number {
 /**
  * Opens the household database, migrates it, then serves HTTP.
  *
- * The RNG is installed before any repository code can run. Schema v6 must be
- * applied before we accept traffic so a fresh volume is never left empty.
+ * The RNG is installed before any repository code can run. The current schema
+ * must be applied before we accept traffic so a fresh volume is never left empty.
  */
 export async function start(): Promise<void> {
   configureRandomBytes((count) => randomFillSync(new Uint8Array(count)));

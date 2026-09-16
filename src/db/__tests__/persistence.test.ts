@@ -88,6 +88,48 @@ describe('migrations', () => {
     expect(row?.name).toBe('Drill');
   });
 
+  it('keeps photos and tags when quantity 0 becomes allowed', async () => {
+    const db = openNodeDatabase();
+    await migrate(
+      db,
+      MIGRATIONS.filter((migration) => migration.version <= 6),
+    );
+
+    const repos = createRepositories(db);
+    const { container } = await seedSpaceAndContainer(repos);
+    const item = await repos.items.create({
+      containerId: container.id,
+      name: 'Nails',
+      quantity: 1,
+      tags: ['hardware'],
+      photo: { uri: 'file:///photos/nails.jpg', width: 100, height: 80, byteSize: 12 },
+    });
+
+    // Application code now accepts 0; the old CHECK still refuses it.
+    await expect(repos.items.update(item.id, { quantity: 0 })).rejects.toThrow();
+
+    const version = await migrate(db);
+    expect(version).toBe(LATEST_SCHEMA_VERSION);
+
+    const fk = await db.getFirstAsync<{ foreign_keys: number }>('PRAGMA foreign_keys');
+    expect(fk?.foreign_keys).toBe(1);
+
+    const schema = await db.getFirstAsync<{ sql: string }>(
+      `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'items'`,
+    );
+    expect(schema?.sql).toMatch(/CHECK \(quantity >= 0\)/);
+
+    const emptied = await repos.items.update(item.id, { quantity: 0 });
+    expect(emptied?.quantity).toBe(0);
+
+    const stored = await repos.items.getById(item.id);
+    expect(stored?.photoUri).toBe('file:///photos/nails.jpg');
+    expect(stored?.tags).toEqual(['hardware']);
+    expect(stored?.containerId).toBe(container.id);
+
+    await expect(db.getAllAsync('PRAGMA foreign_key_check')).resolves.toEqual([]);
+  });
+
   it('declares versions matching their position', () => {
     MIGRATIONS.forEach((migration, index) => {
       expect(migration.version).toBe(index + 1);
@@ -315,13 +357,31 @@ describe('items', () => {
     expect(stored?.spaceName).toBe('Garage');
   });
 
-  it('rejects a non-positive quantity', async () => {
+  it('accepts quantity 0 so an item can stay filed with none currently there', async () => {
+    const repos = await freshRepos();
+    const { container } = await seedSpaceAndContainer(repos);
+
+    const item = await repos.items.create({
+      containerId: container.id,
+      name: 'Nails',
+      quantity: 0,
+    });
+    expect(item.quantity).toBe(0);
+    expect((await repos.items.getById(item.id))?.quantity).toBe(0);
+
+    const updated = await repos.items.update(item.id, { quantity: 1 });
+    expect(updated?.quantity).toBe(1);
+    const emptied = await repos.items.update(item.id, { quantity: 0 });
+    expect(emptied?.quantity).toBe(0);
+  });
+
+  it('rejects a negative quantity', async () => {
     const repos = await freshRepos();
     const { container } = await seedSpaceAndContainer(repos);
 
     await expect(
-      repos.items.create({ containerId: container.id, name: 'Nails', quantity: 0 }),
-    ).rejects.toThrow(/at least 1/);
+      repos.items.create({ containerId: container.id, name: 'Nails', quantity: -1 }),
+    ).rejects.toThrow(/0 or more/);
   });
 
   it('rejects an empty name', async () => {

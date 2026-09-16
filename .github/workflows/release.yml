@@ -37,4 +37,9 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: eas build --platform ${{ matrix.platform }} --profile ${{ inputs.profile }} --non-interactive --no-wait
+        run: |
+          if [ "${{ matrix.platform }}" = "ios" ] && [ "${{ inputs.profile }}" = "production" ]; then
+            eas build --platform ios --profile production --non-interactive --no-wait --auto-submit
+          else
+            eas build --platform ${{ matrix.platform }} --profile ${{ inputs.profile }} --non-interactive --no-wait
+          fi

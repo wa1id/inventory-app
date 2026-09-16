@@ -90,7 +90,7 @@ export async function applyHouseholdDump(db: SqlDatabase, dump: HouseholdDump): 
           containerId,
           name,
           category,
-          Number.isInteger(item.quantity) && item.quantity >= 1 ? item.quantity : 1,
+          Number.isInteger(item.quantity) && item.quantity >= 0 ? item.quantity : 1,
           item.notes ?? null,
           Number(item.createdAt) || 0,
           Number(item.updatedAt) || 0,

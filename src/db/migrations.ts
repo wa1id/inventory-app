@@ -12,6 +12,13 @@ export interface Migration {
   version: number;
   name: string;
   up: string;
+  /**
+   * Table rebuilds that drop a table other tables reference. SQLite ignores
+   * `PRAGMA foreign_keys` from inside a transaction, so the runner turns
+   * foreign keys off around this migration and restores them after it commits.
+   * Leaving them on would cascade-delete child rows of the rebuilt table.
+   */
+  rebuild?: boolean;
 }
 
 export const MIGRATIONS: Migration[] = [
@@ -209,6 +216,49 @@ export const MIGRATIONS: Migration[] = [
       ALTER TABLE items DROP COLUMN currency;
     `,
   },
+  {
+    version: 7,
+    name: 'allow_zero_quantity',
+    rebuild: true,
+    up: `
+      -- Quantity 0 means the item is still filed in this container, just not
+      -- currently there — taken out temporarily, to be put back later. The
+      -- original CHECK (quantity > 0) made that unsayable: the only way to
+      -- record "none here" was to delete the row and lose the location.
+      --
+      -- SQLite cannot rewrite a CHECK in place. Rebuilding \`items\` while
+      -- foreign_keys is ON would cascade-delete every photo and tag, so this
+      -- migration is flagged \`rebuild\` and the runner turns foreign keys off
+      -- for it. Child rows stay put; their REFERENCES items(id) still resolve
+      -- after the rename.
+      CREATE TABLE items_new (
+        id           TEXT PRIMARY KEY NOT NULL,
+        container_id TEXT NOT NULL REFERENCES containers(id) ON DELETE CASCADE,
+        name         TEXT NOT NULL,
+        category     TEXT,
+        quantity     INTEGER NOT NULL DEFAULT 1 CHECK (quantity >= 0),
+        notes        TEXT,
+        created_at   INTEGER NOT NULL,
+        updated_at   INTEGER NOT NULL,
+        search_text  TEXT NOT NULL DEFAULT ''
+      );
+
+      INSERT INTO items_new (
+        id, container_id, name, category, quantity, notes,
+        created_at, updated_at, search_text
+      )
+      SELECT id, container_id, name, category, quantity, notes,
+             created_at, updated_at, search_text
+        FROM items;
+
+      DROP TABLE items;
+      ALTER TABLE items_new RENAME TO items;
+
+      CREATE INDEX idx_items_container ON items(container_id);
+      CREATE INDEX idx_items_name ON items(name COLLATE NOCASE);
+      CREATE INDEX idx_items_search_text ON items(search_text);
+    `,
+  },
 ];
 
 /** Schema version a freshly built app expects. */
@@ -217,6 +267,11 @@ export const LATEST_SCHEMA_VERSION = MIGRATIONS.length;
 async function readUserVersion(db: SqlDatabase): Promise<number> {
   const row = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
   return row?.user_version ?? 0;
+}
+
+async function foreignKeysOn(db: SqlDatabase): Promise<boolean> {
+  const row = await db.getFirstAsync<{ foreign_keys: number }>('PRAGMA foreign_keys');
+  return (row?.foreign_keys ?? 0) !== 0;
 }
 
 /**
@@ -235,12 +290,23 @@ export async function migrate(
   for (const migration of migrations) {
     if (migration.version <= current) continue;
 
-    await db.withTransactionAsync(async () => {
-      await db.execAsync(migration.up);
-      // PRAGMA does not accept bound parameters; version is a trusted integer
-      // from the migration table above, never user input.
-      await db.execAsync(`PRAGMA user_version = ${migration.version}`);
-    });
+    const restoreForeignKeys = migration.rebuild ? await foreignKeysOn(db) : false;
+    if (migration.rebuild) {
+      await db.execAsync('PRAGMA foreign_keys = OFF');
+    }
+
+    try {
+      await db.withTransactionAsync(async () => {
+        await db.execAsync(migration.up);
+        // PRAGMA does not accept bound parameters; version is a trusted integer
+        // from the migration table above, never user input.
+        await db.execAsync(`PRAGMA user_version = ${migration.version}`);
+      });
+    } finally {
+      if (restoreForeignKeys) {
+        await db.execAsync('PRAGMA foreign_keys = ON');
+      }
+    }
   }
 
   return readUserVersion(db);

@@ -30,6 +30,7 @@ test('import upserts phone rows by id and keeps them after a second run', async 
   const item = await source.items.create({
     containerId: container.id,
     name: 'Drill',
+    quantity: 0,
     tags: ['power'],
   });
 
@@ -42,6 +43,7 @@ test('import upserts phone rows by id and keeps them after a second run', async 
   const copied = await target.items.getById(item.id);
   assert.equal(copied?.name, 'Drill');
   assert.equal(copied?.containerId, container.id);
+  assert.equal(copied?.quantity, 0);
   assert.deepEqual(copied?.tags, ['power']);
 });
 

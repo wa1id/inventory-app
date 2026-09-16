@@ -46,7 +46,7 @@ test('status requires a token and reports schema plus revision', async () => {
     const response = await app.request('/v1/status', { headers: auth });
     assert.equal(response.status, 200);
     const body = (await response.json()) as Record<string, unknown>;
-    assert.equal(body.schemaVersion, 6);
+    assert.equal(body.schemaVersion, 7);
     assert.equal(body.revision, hub.revision);
     assert.equal(body.householdName, 'Home');
   } finally {
@@ -95,6 +95,15 @@ test('spaces, containers, items, search, and PATCH round-trip', async () => {
     assert.equal(patched.status, 200);
     const updated = (await patched.json()) as { quantity: number };
     assert.equal(updated.quantity, 2);
+
+    const emptied = await app.request(`/v1/items/${item.id}`, {
+      method: 'PATCH',
+      headers: { ...auth, 'content-type': 'application/json' },
+      body: JSON.stringify({ quantity: 0 }),
+    });
+    assert.equal(emptied.status, 200);
+    const zeroed = (await emptied.json()) as { quantity: number };
+    assert.equal(zeroed.quantity, 0);
 
     const search = await app.request('/v1/search?q=drill', { headers: auth });
     const results = (await search.json()) as { items: { id: string }[] };

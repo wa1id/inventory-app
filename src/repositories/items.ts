@@ -27,6 +27,13 @@ interface ItemContextRow extends ItemRow {
   container_short_code: string;
 }
 
+function requireQuantity(quantity: number): number {
+  if (!Number.isInteger(quantity) || quantity < 0) {
+    throw new Error('Quantity must be a whole number of 0 or more.');
+  }
+  return quantity;
+}
+
 function toItem(row: ItemRow): Item {
   return {
     id: row.id,
@@ -217,10 +224,7 @@ export function createItemsRepository(db: SqlDatabase) {
      */
     async create(draft: ItemDraft): Promise<Item> {
       const now = Date.now();
-      const quantity = draft.quantity ?? 1;
-      if (!Number.isInteger(quantity) || quantity < 1) {
-        throw new Error('Quantity must be a whole number of at least 1.');
-      }
+      const quantity = requireQuantity(draft.quantity ?? 1);
 
       const name = draft.name === undefined ? '' : draft.name.trim();
       if (draft.name !== undefined && !name) throw new Error('Item name is required.');
@@ -286,10 +290,7 @@ export function createItemsRepository(db: SqlDatabase) {
       const existing = await db.getFirstAsync<ItemRow>('SELECT * FROM items WHERE id = ?', [id]);
       if (!existing) return null;
 
-      const quantity = input.quantity ?? existing.quantity;
-      if (!Number.isInteger(quantity) || quantity < 1) {
-        throw new Error('Quantity must be a whole number of at least 1.');
-      }
+      const quantity = requireQuantity(input.quantity ?? existing.quantity);
 
       const name = input.name === undefined ? existing.name : input.name.trim();
       // Same rule as create: only an *explicitly* blank name is an error. An

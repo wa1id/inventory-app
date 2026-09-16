@@ -7,16 +7,16 @@ import { test } from 'node:test';
 import { LATEST_SCHEMA_VERSION, migrate } from '../../src/db/migrations.ts';
 import { openNodeDatabase } from '../../src/db/nodeDatabase.ts';
 
-test('migrates a new file database to schema v6', async () => {
+test('migrates a new file database to the latest schema', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'inventory-home-'));
   try {
     const db = openNodeDatabase(join(dir, 'inventory.db'));
     const version = await migrate(db);
     assert.equal(version, LATEST_SCHEMA_VERSION);
-    assert.equal(LATEST_SCHEMA_VERSION, 6);
+    assert.equal(LATEST_SCHEMA_VERSION, 7);
 
     const row = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
-    assert.equal(row?.user_version, 6);
+    assert.equal(row?.user_version, 7);
 
     await db.closeAsync();
   } finally {
@@ -33,7 +33,7 @@ test('a second migrate on the same file is a no-op', async () => {
     await first.closeAsync();
 
     const second = openNodeDatabase(path);
-    assert.equal(await migrate(second), 6);
+    assert.equal(await migrate(second), LATEST_SCHEMA_VERSION);
     await second.closeAsync();
   } finally {
     rmSync(dir, { recursive: true, force: true });

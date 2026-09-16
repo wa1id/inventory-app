@@ -7,6 +7,7 @@ import { strings } from '@/i18n/strings';
 import { useRepositories } from '@/providers/DatabaseProvider';
 import { Button } from '@/ui/components/Button';
 import { EmptyState } from '@/ui/components/EmptyState';
+import { SavedQuantityStepper } from '@/ui/components/SavedQuantityStepper';
 import { ErrorState, LoadingState, Screen } from '@/ui/components/Screen';
 import { CONTAINER_ICONS, MIN_TOUCH_TARGET, radius, spacing, useTheme } from '@/ui/theme';
 
@@ -14,53 +15,48 @@ function ItemCard({ item, onPress }: { item: ItemWithContext; onPress: () => voi
   const { colors } = useTheme();
 
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${item.name || strings.items.unnamed}${
-        item.quantity > 1 ? `, quantity ${item.quantity}` : ''
-      }`}
-      style={({ pressed }) => [
-        styles.itemCard,
-        { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.8 : 1 },
-      ]}
+    <View
+      style={[styles.itemCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
     >
-      {item.photoUri ? (
-        <Image
-          source={{ uri: item.photoThumbUri ?? item.photoUri }}
-          style={styles.thumb}
-          accessibilityIgnoresInvertColors
-        />
-      ) : (
-        <View
-          style={[styles.thumb, styles.thumbPlaceholder, { backgroundColor: colors.surfaceAlt }]}
-        >
-          <Text style={styles.thumbGlyph}>🧾</Text>
-        </View>
-      )}
-      <View style={styles.itemBody}>
-        <Text
-          style={[
-            styles.itemTitle,
-            { color: item.name ? colors.text : colors.textMuted },
-            !item.name && styles.itemTitleUnnamed,
-          ]}
-          numberOfLines={2}
-        >
-          {item.name || strings.items.unnamed}
-        </Text>
-        {item.category ? (
-          <Text style={[styles.itemMeta, { color: colors.textMuted }]} numberOfLines={1}>
-            {item.category}
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={item.name || strings.items.unnamed}
+        style={({ pressed }) => [styles.itemMain, { opacity: pressed ? 0.8 : 1 }]}
+      >
+        {item.photoUri ? (
+          <Image
+            source={{ uri: item.photoThumbUri ?? item.photoUri }}
+            style={styles.thumb}
+            accessibilityIgnoresInvertColors
+          />
+        ) : (
+          <View
+            style={[styles.thumb, styles.thumbPlaceholder, { backgroundColor: colors.surfaceAlt }]}
+          >
+            <Text style={styles.thumbGlyph}>🧾</Text>
+          </View>
+        )}
+        <View style={styles.itemBody}>
+          <Text
+            style={[
+              styles.itemTitle,
+              { color: item.name ? colors.text : colors.textMuted },
+              !item.name && styles.itemTitleUnnamed,
+            ]}
+            numberOfLines={2}
+          >
+            {item.name || strings.items.unnamed}
           </Text>
-        ) : null}
-      </View>
-      {item.quantity > 1 ? (
-        <View style={[styles.qtyBadge, { backgroundColor: colors.surfaceAlt }]}>
-          <Text style={[styles.qtyText, { color: colors.text }]}>×{item.quantity}</Text>
+          {item.category ? (
+            <Text style={[styles.itemMeta, { color: colors.textMuted }]} numberOfLines={1}>
+              {item.category}
+            </Text>
+          ) : null}
         </View>
-      ) : null}
-    </Pressable>
+      </Pressable>
+      <SavedQuantityStepper key={item.id} item={item} compact />
+    </View>
   );
 }
 
@@ -125,6 +121,7 @@ export default function ContainerScreen() {
         data={list}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
           <View
             style={[styles.header, { backgroundColor: colors.surface, borderColor: colors.border }]}
@@ -270,11 +267,18 @@ const styles = StyleSheet.create({
   itemCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.sm,
     padding: spacing.sm,
     borderRadius: radius.lg,
     borderWidth: 1,
     minHeight: MIN_TOUCH_TARGET + spacing.md,
+  },
+  itemMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    minHeight: MIN_TOUCH_TARGET,
   },
   thumb: {
     width: 56,
@@ -290,6 +294,7 @@ const styles = StyleSheet.create({
   },
   itemBody: {
     flex: 1,
+    minWidth: 0,
     gap: 2,
   },
   itemTitleUnnamed: {
@@ -302,15 +307,6 @@ const styles = StyleSheet.create({
   },
   itemMeta: {
     fontSize: 14,
-  },
-  qtyBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-  },
-  qtyText: {
-    fontSize: 14,
-    fontWeight: '700',
   },
   actionBar: {
     padding: spacing.lg,

@@ -21,9 +21,19 @@ describe('validateItemForm', () => {
     expect(parsed).toBeNull();
   });
 
-  it.each(['0', '-1', '1.5', 'abc', ''])('rejects quantity %p', (quantity) => {
+  it.each(['-1', '1.5', 'abc', ''])('rejects quantity %p', (quantity) => {
     const { errors } = validateItemForm({ ...EMPTY_ITEM_FORM, name: 'Drill', quantity });
     expect(errors.quantity).toBeDefined();
+  });
+
+  it('accepts quantity 0 so an item can stay filed with none currently there', () => {
+    const { errors, parsed } = validateItemForm({
+      ...EMPTY_ITEM_FORM,
+      name: 'Drill',
+      quantity: '0',
+    });
+    expect(errors).toEqual({});
+    expect(parsed?.quantity).toBe(0);
   });
 
   it('splits and trims tags, dropping empties', () => {
@@ -39,7 +49,7 @@ describe('validateItemForm', () => {
     const { errors } = validateItemForm({
       ...EMPTY_ITEM_FORM,
       name: '',
-      quantity: '0',
+      quantity: '-1',
     });
 
     expect(Object.keys(errors).sort()).toEqual(['name', 'quantity']);

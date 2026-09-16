@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { parseQuantityInput } from '@/core/quantity';
 import { strings } from '@/i18n/strings';
 import type { RecognitionSuggestion } from '@/services/ai/contract';
 import { Button } from '@/ui/components/Button';
+import { QuantityStepper } from '@/ui/components/QuantityStepper';
 import { TextField } from '@/ui/components/TextField';
 import { radius, spacing, useTheme } from '@/ui/theme';
 
@@ -52,12 +54,14 @@ export function validateItemForm(values: ItemFormValues): {
   const name = values.name.trim();
   if (!name) errors.name = strings.items.nameRequired;
 
-  const quantity = Number(values.quantity.trim());
-  if (!Number.isInteger(quantity) || quantity < 1) {
+  const quantity = parseQuantityInput(values.quantity);
+  if (quantity === null) {
     errors.quantity = strings.items.quantityInvalid;
   }
 
-  if (Object.keys(errors).length > 0) return { errors, parsed: null };
+  if (Object.keys(errors).length > 0 || quantity === null) {
+    return { errors, parsed: null };
+  }
 
   return {
     errors,
@@ -180,12 +184,11 @@ export function ItemForm({
         onChangeText={(value) => set('category', value)}
       />
 
-      <TextField
+      <QuantityStepper
         label={strings.items.quantityLabel}
-        value={values.quantity}
-        onChangeText={(value) => set('quantity', value)}
+        value={parseQuantityInput(values.quantity) ?? 0}
+        onChange={(next) => set('quantity', String(next))}
         error={errors.quantity}
-        keyboardType="number-pad"
       />
 
       {showAdvanced ? (

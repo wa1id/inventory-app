@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { Hono } from 'hono';
+import type { Context, Hono } from 'hono';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 
 import type { Device } from './control.ts';
@@ -57,9 +57,12 @@ export function createWebSessions(): WebSessions {
   };
 }
 
-function pageHtml(): string {
-  const path = join(dirname(fileURLToPath(import.meta.url)), '../web/index.html');
-  return readFileSync(path, 'utf8');
+function webDir(): string {
+  return join(dirname(fileURLToPath(import.meta.url)), '../web');
+}
+
+function readWeb(name: string): string {
+  return readFileSync(join(webDir(), name), 'utf8');
 }
 
 export function registerWebLookup(
@@ -71,13 +74,35 @@ export function registerWebLookup(
   },
 ): WebSessions {
   const sessions = options.sessions ?? createWebSessions();
-  const html = pageHtml();
+  const html = readWeb('index.html');
+  const css = readWeb('app.css');
+  const js = readWeb('app.js');
   const secure = options.publicOrigin.startsWith('https:');
 
-  app.get('/', (c) => {
+  const sendPage = (c: Context) => {
     c.header('cache-control', 'no-store');
     return c.html(html);
-  });
+  };
+
+  app.get('/', sendPage);
+  app.get('/item/:id', sendPage);
+  app.get('/space/:id', sendPage);
+  app.get('/container/:id', sendPage);
+
+  app.get(
+    '/app.css',
+    () =>
+      new Response(css, {
+        headers: { 'content-type': 'text/css; charset=utf-8', 'cache-control': 'no-store' },
+      }),
+  );
+  app.get(
+    '/app.js',
+    () =>
+      new Response(js, {
+        headers: { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-store' },
+      }),
+  );
 
   app.get('/v1/web/me', (c) => {
     const token = getCookie(c, WEB_COOKIE);
