@@ -138,6 +138,10 @@ test('POST /v1/items with a photo stores bytes off-disk and GET streams them', a
     const photo = await app.request(`/v1/photos/${stored.photoId}`, { headers: auth });
     assert.equal(photo.status, 200);
     assert.equal(photo.headers.get('content-type'), 'image/webp');
+    // Same id, same bytes: browsers keep it, shared caches must not.
+    const cacheControl = photo.headers.get('cache-control') ?? '';
+    assert.match(cacheControl, /private/);
+    assert.match(cacheControl, /immutable/);
     const bytes = new Uint8Array(await photo.arrayBuffer());
     assert.ok(bytes.byteLength > 0);
   } finally {

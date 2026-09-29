@@ -1,5 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -65,6 +65,16 @@ function readWeb(name: string): string {
   return readFileSync(join(webDir(), name), 'utf8');
 }
 
+/** Self-hosted type for the page; nothing is fetched from a font CDN. */
+function readFonts(): Map<string, Buffer> {
+  const dir = join(webDir(), 'fonts');
+  return new Map(
+    readdirSync(dir)
+      .filter((name) => name.endsWith('.woff2'))
+      .map((name) => [name, readFileSync(join(dir, name))]),
+  );
+}
+
 export function registerWebLookup(
   app: Hono<{ Variables: { device?: Device } }>,
   options: {
@@ -77,6 +87,7 @@ export function registerWebLookup(
   const html = readWeb('index.html');
   const css = readWeb('app.css');
   const js = readWeb('app.js');
+  const fonts = readFonts();
   const secure = options.publicOrigin.startsWith('https:');
 
   const sendPage = (c: Context) => {
@@ -103,6 +114,18 @@ export function registerWebLookup(
         headers: { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-store' },
       }),
   );
+
+  // File names change whenever the font does, so browsers may keep them.
+  app.get('/fonts/:name', (c) => {
+    const bytes = fonts.get(c.req.param('name'));
+    if (!bytes) return c.json({ error: 'not_found' }, 404);
+    return new Response(new Uint8Array(bytes), {
+      headers: {
+        'content-type': 'font/woff2',
+        'cache-control': 'public, max-age=31536000, immutable',
+      },
+    });
+  });
 
   app.get('/v1/web/me', (c) => {
     const token = getCookie(c, WEB_COOKIE);

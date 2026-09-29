@@ -261,7 +261,12 @@ export function registerInventory(
     const kind = c.req.query('thumb') === '1' ? 'thumb' : 'full';
     const object = await photos.get(c.req.param('id'), kind);
     if (!object) return c.json({ error: 'not_found' }, 404);
-    return c.body(Buffer.from(object.bytes), 200, { 'content-type': object.contentType });
+    // A photo id always names the same bytes, so a browser never needs to ask twice.
+    // Private: these sit behind a session and must not land in a shared cache.
+    return c.body(Buffer.from(object.bytes), 200, {
+      'content-type': object.contentType,
+      'cache-control': 'private, max-age=31536000, immutable',
+    });
   });
 
   app.get('/v1/items/:id', requireDevice, async (c) => {

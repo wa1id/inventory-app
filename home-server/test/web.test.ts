@@ -17,6 +17,7 @@ import { passwordMatches, WEB_COOKIE } from '../src/web.ts';
 configureRandomBytes((count) => randomFillSync(new Uint8Array(count)));
 
 const PASSWORD = 'test-web-password';
+const FONT = 'atkinson-hyperlegible-next-latin-wght-normal.woff2';
 
 function cookieFrom(response: Response): string {
   const raw = response.headers.get('set-cookie') ?? '';
@@ -63,6 +64,7 @@ test('lookup page is absent until a web password is configured', async () => {
     assert.equal((await app.request('/v1/web/login', { method: 'POST' })).status, 404);
     assert.equal((await app.request('/app.js')).status, 404);
     assert.equal((await app.request('/item/anything')).status, 404);
+    assert.equal((await app.request(`/fonts/${FONT}`)).status, 404);
   } finally {
     await control.close();
     rmSync(dir, { recursive: true, force: true });
@@ -77,15 +79,13 @@ test('password login unlocks search and rejects a wrong password', async () => {
     const html = await page.text();
     assert.match(html, /Look something up/);
     assert.match(html, /Adding still happens on the phone/);
-    assert.match(html, /id="space-view"/);
-    assert.match(html, /id="container-view"/);
-    assert.match(html, /id="edit-form"/);
-    assert.match(html, /novalidate/);
-    assert.match(html, /id="edit-quantity"/);
-    assert.match(html, /min="0"/);
-    assert.match(html, /id="edit-qty-dec"/);
-    assert.match(html, /id="edit-qty-inc"/);
-    assert.match(html, /id="move-panel"/);
+    assert.match(html, /autocomplete="current-password"/);
+    // House map, list and item panel, plus the move picker.
+    assert.match(html, /id="rail"/);
+    assert.match(html, /id="main"/);
+    assert.match(html, /id="panel"/);
+    assert.match(html, /<dialog[^>]+id="move-dialog"/);
+    assert.match(html, /id="q"[^>]*type="search"|type="search"[^>]*id="q"/);
 
     const denied = await app.request('/v1/web/login', {
       method: 'POST',
@@ -126,8 +126,8 @@ test('desk page assets and browse routes are served with the lookup page', async
     assert.equal(js.status, 200);
     assert.match(js.headers.get('content-type') ?? '', /javascript/);
     const jsText = await js.text();
-    assert.match(jsText, /parseRoute/);
-    assert.match(jsText, /stepSavedQuantity/);
+    assert.match(jsText, /parseUrl/);
+    assert.match(jsText, /flushQty/);
     assert.match(jsText, /data-qty-item/);
 
     for (const path of ['/item/anything', '/space/anything', '/container/anything']) {
@@ -135,6 +135,15 @@ test('desk page assets and browse routes are served with the lookup page', async
       assert.equal(page.status, 200, path);
       assert.match(await page.text(), /Look something up/);
     }
+
+    // Fonts are public and immutable: no session needed, cached for good.
+    const font = await app.request(`/fonts/${FONT}`);
+    assert.equal(font.status, 200);
+    assert.equal(font.headers.get('content-type'), 'font/woff2');
+    assert.match(font.headers.get('cache-control') ?? '', /immutable/);
+    assert.ok((await font.arrayBuffer()).byteLength > 10_000);
+    assert.equal((await app.request('/fonts/nope.woff2')).status, 404);
+    assert.equal((await app.request('/fonts/OFL.txt')).status, 404);
   } finally {
     await control.close();
     rmSync(dir, { recursive: true, force: true });
