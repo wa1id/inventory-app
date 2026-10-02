@@ -8,7 +8,8 @@ import { useRepositories } from '@/providers/DatabaseProvider';
 import type { SpaceWithCounts } from '@/db/types';
 import { Button } from '@/ui/components/Button';
 import { EmptyState } from '@/ui/components/EmptyState';
-import { ErrorState, LoadingState, Screen } from '@/ui/components/Screen';
+import { IconButton } from '@/ui/components/IconButton';
+import { ErrorState, LoadingState, Screen, TabRootHeader } from '@/ui/components/Screen';
 import { onColor, radius, spacing, useTheme } from '@/ui/theme';
 
 /** Fills the empty half of a trailing odd row so tiles keep a uniform width. */
@@ -95,6 +96,18 @@ export default function SpacesScreen() {
 
   return (
     <Screen edges={['left', 'right']}>
+      {/* Settings lived in the old tab header; it stays one tap from Home (issue #2). */}
+      <TabRootHeader
+        title={strings.tabs.home}
+        actions={
+          <IconButton
+            icon="settings"
+            accessibilityLabel={strings.common.settings}
+            onPress={() => router.push('/settings')}
+            testID="home-settings"
+          />
+        }
+      />
       <FlatList
         data={grid}
         keyExtractor={(entry) => (entry === GRID_SPACER ? 'grid-spacer' : entry.id)}

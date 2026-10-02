@@ -1,67 +1,39 @@
-import { Tabs, useRouter } from 'expo-router';
-import { Pressable, Text, type ColorValue } from 'react-native';
+import { Tabs } from 'expo-router/js-tabs';
 
 import { strings } from '@/i18n/strings';
-import { MIN_TOUCH_TARGET, spacing, useTheme } from '@/ui/theme';
+import { DropZoneProvider } from '@/providers/DropZoneProvider';
+import { LegacyTabRoot } from '@/ui/components/Screen';
+import { TabBar } from '@/ui/components/TabBar';
+import { useTheme } from '@/ui/theme';
 
-/** Emoji tab glyphs keep the MVP free of an icon-font dependency. */
-function TabIcon({ glyph, color }: { glyph: string; color: ColorValue }) {
-  return <Text style={{ fontSize: 20, color }}>{glyph}</Text>;
-}
-
+/**
+ * Home · Spaces · [Add] · Scan · Drop zone, on a custom bar (`TabBar`).
+ *
+ * Tab roots draw their own titles, so there is no tab header. Settings is
+ * not a tab (issue #2): it is one button on Home. The drop zone's list is read
+ * once here and shared by the tab badge, Home and the Drop zone screen.
+ */
 export default function TabsLayout() {
   const { colors } = useTheme();
-  const router = useRouter();
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
-        headerStyle: { backgroundColor: colors.surface },
-        headerTintColor: colors.text,
-        sceneStyle: { backgroundColor: colors.background },
-        // Settings sits outside the primary tabs (issue #2).
-        headerRight: () => (
-          <Pressable
-            onPress={() => router.push('/settings')}
-            accessibilityRole="button"
-            accessibilityLabel={strings.common.settings}
-            hitSlop={spacing.sm}
-            style={{
-              minWidth: MIN_TOUCH_TARGET,
-              minHeight: MIN_TOUCH_TARGET,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ fontSize: 20 }}>⚙️</Text>
-          </Pressable>
-        ),
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: strings.tabs.spaces,
-          tabBarIcon: ({ color }) => <TabIcon glyph="🏠" color={color} />,
+    <DropZoneProvider>
+      <Tabs
+        tabBar={(props) => <TabBar {...props} />}
+        screenLayout={({ children }) => <LegacyTabRoot>{children}</LegacyTabRoot>}
+        screenOptions={{
+          headerShown: false,
+          sceneStyle: { backgroundColor: colors.plaster },
+          lazy: true,
         }}
-      />
-      <Tabs.Screen
-        name="search"
-        options={{
-          title: strings.tabs.search,
-          tabBarIcon: ({ color }) => <TabIcon glyph="🔎" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="scan"
-        options={{
-          title: strings.tabs.scan,
-          tabBarIcon: ({ color }) => <TabIcon glyph="📷" color={color} />,
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen name="index" options={{ title: strings.tabs.home }} />
+        <Tabs.Screen name="spaces" options={{ title: strings.tabs.spaces }} />
+        <Tabs.Screen name="scan" options={{ title: strings.tabs.scan }} />
+        <Tabs.Screen name="drop-zone" options={{ title: strings.tabs.dropZone }} />
+        {/* Hidden until Home's own search replaces it (S1). */}
+        <Tabs.Screen name="search" options={{ href: null }} />
+      </Tabs>
+    </DropZoneProvider>
   );
 }

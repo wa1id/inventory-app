@@ -14,6 +14,50 @@ export class HouseholdHttpError extends Error {
 
 export { ConflictError };
 
+/**
+ * What the last household request said about the connection: the home server
+ * answered, could not be reached, or no longer accepts this phone's token.
+ */
+export type Reachability = 'ok' | 'offline' | 'unauthorized';
+
+const reachabilityListeners = new Set<(reachability: Reachability) => void>();
+
+/**
+ * Every household request, read or write, reports through here, so the
+ * connection banner and the removed-phone layer follow real traffic instead
+ * of polling, and no screen has to report its own failures.
+ */
+export function onHouseholdReachability(
+  listener: (reachability: Reachability) => void,
+): () => void {
+  reachabilityListeners.add(listener);
+  return () => {
+    reachabilityListeners.delete(listener);
+  };
+}
+
+function reportReachability(reachability: Reachability): void {
+  reachabilityListeners.forEach((listener) => {
+    try {
+      listener(reachability);
+    } catch {
+      // A listener must never fail the request it is told about.
+    }
+  });
+}
+
+/**
+ * Cloudflare answers 502 and 520–530 itself when the home box behind the
+ * tunnel is down, so those mean "not reachable" rather than a server bug. A
+ * 401 only means "removed" on a request that carried a token: pairing has
+ * none, and a refused household code is not a revoked phone.
+ */
+function reachabilityOf(status: number, hadToken: boolean): Reachability {
+  if (status === 502 || (status >= 520 && status <= 530)) return 'offline';
+  if (status === 401 && hadToken) return 'unauthorized';
+  return 'ok';
+}
+
 export interface HouseholdSession {
   origin: string;
   token: string;
@@ -113,7 +157,7 @@ export async function householdFetch(options: {
   try {
     const copy = options.bytes ? new Uint8Array(options.bytes.byteLength) : undefined;
     if (copy && options.bytes) copy.set(options.bytes);
-    return await doFetch(`${options.origin}${options.path}`, {
+    const response = await doFetch(`${options.origin}${options.path}`, {
       method: options.method ?? 'GET',
       headers: {
         Accept: 'application/json',
@@ -129,8 +173,11 @@ export async function householdFetch(options: {
         (options.json !== undefined ? JSON.stringify(options.json) : undefined),
       signal: controller.signal,
     });
+    reportReachability(reachabilityOf(response.status, Boolean(options.token)));
+    return response;
   } catch (error) {
     if (error instanceof HouseholdHttpError || error instanceof ConflictError) throw error;
+    reportReachability('offline');
     if (error instanceof Error && error.name === 'AbortError') {
       throw new HouseholdHttpError(0, 'timeout');
     }

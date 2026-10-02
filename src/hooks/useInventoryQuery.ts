@@ -1,20 +1,32 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useIsFocused } from 'expo-router';
 
 import { useDatabase } from '@/providers/DatabaseProvider';
 
 export interface QueryResult<T> {
+  /** The latest result for this key, kept while a refresh runs or fails. */
   data: T | null;
   loading: boolean;
+  /**
+   * @deprecated The raw message, for screens that have not moved to `cause`.
+   * Never render it: it can carry codes and internals (B8).
+   */
   error: string | null;
+  /** What the latest read threw; describe it with `ErrorState` / `describeError`. */
+  cause: unknown;
+  /** The latest read failed but earlier data is still on screen. */
+  refreshFailed: boolean;
   reload: () => void;
 }
 
 interface Settled<T> {
   /** Identifies the request this result belongs to. */
   token: number;
+  /** The query key it was read for, so a failure keeps only this key's data. */
+  key: string;
   data: T | null;
   error: string | null;
+  cause: unknown;
 }
 
 /**
@@ -33,13 +45,34 @@ interface Settled<T> {
  * the newest request token has not settled yet. That keeps every state update
  * inside an async callback, so no render cascade is triggered from the effect
  * body.
+ *
+ * Two refinements for a phone that reads over the network when paired:
+ * - A failed refresh keeps what was already on screen for the same key, so a
+ *   blip never turns a list into an error page ("lists keep their last data").
+ * - Writes only refetch the screen in front. A screen in the background
+ *   notices the new `revision` when it is focused again, so one quantity tap
+ *   no longer re-reads every mounted screen over HTTP.
  */
 export function useInventoryQuery<T>(run: () => Promise<T>, key: string): QueryResult<T> {
   const { revision } = useDatabase();
+  const isFocused = useIsFocused();
   const [localRevision, setLocalRevision] = useState(0);
-  const [settled, setSettled] = useState<Settled<T>>({ token: -1, data: null, error: null });
+  const [seenRevision, setSeenRevision] = useState(revision);
+  const [settled, setSettled] = useState<Settled<T>>({
+    token: -1,
+    key,
+    data: null,
+    error: null,
+    cause: null,
+  });
 
-  const requestToken = hashToken(key, revision, localRevision);
+  // Derived state, as in `useSavedQuantity`: the revision this screen has
+  // caught up with follows the global one only while the screen is focused.
+  if (isFocused && seenRevision !== revision) {
+    setSeenRevision(revision);
+  }
+
+  const requestToken = hashToken(key, seenRevision, localRevision);
 
   // The latest `run` closure, kept in a ref so redefining it on every render
   // does not by itself retrigger the query. Assigned in an effect rather than
@@ -57,21 +90,24 @@ export function useInventoryQuery<T>(run: () => Promise<T>, key: string): QueryR
       .current()
       .then((result) => {
         if (cancelled) return;
-        setSettled({ token: requestToken, data: result, error: null });
+        setSettled({ token: requestToken, key, data: result, error: null, cause: null });
       })
       .catch((cause: unknown) => {
         if (cancelled) return;
-        setSettled({
+        setSettled((previous) => ({
           token: requestToken,
-          data: null,
+          key,
+          data: previous.key === key ? previous.data : null,
           error: cause instanceof Error ? cause.message : 'Could not read your inventory.',
-        });
+          cause,
+        }));
       });
 
     return () => {
       cancelled = true;
     };
-  }, [requestToken]);
+    // `key` is already folded into `requestToken`; listing it changes nothing.
+  }, [requestToken, key]);
 
   // Re-read on focus so returning from a child screen shows fresh totals.
   useFocusEffect(
@@ -82,10 +118,15 @@ export function useInventoryQuery<T>(run: () => Promise<T>, key: string): QueryR
 
   const reload = useCallback(() => setLocalRevision((value) => value + 1), []);
 
+  const current = settled.token === requestToken;
+  const failed = current && settled.error !== null;
+
   return {
     data: settled.data,
-    error: settled.token === requestToken ? settled.error : null,
-    loading: settled.token !== requestToken,
+    error: current ? settled.error : null,
+    cause: failed ? settled.cause : null,
+    refreshFailed: failed && settled.data !== null,
+    loading: !current,
     reload,
   };
 }

@@ -90,15 +90,21 @@ export function useDatabase(): DatabaseContextValue {
 /**
  * Repositories for screens rendered below the readiness gate in the root
  * layout, which is the only place they are mounted.
+ *
+ * Memoised, so the object only changes when the database or the household
+ * session does; built fresh on every render, it made every hook that lists it
+ * as a dependency re-run on every render.
  */
 export function useRepositories(): Repositories {
   const { state } = useDatabase();
   const household = useHousehold();
-  if (state.status !== 'ready') {
+  const remote = household.session ? household.repos : null;
+  const repos = useMemo(() => {
+    if (state.status !== 'ready') return null;
+    return remote ? withLocalShadow(remote, state.repos) : state.repos;
+  }, [remote, state]);
+  if (!repos) {
     throw new Error('Repositories are not available until the database is ready');
   }
-  if (household.session && household.repos) {
-    return withLocalShadow(household.repos, state.repos);
-  }
-  return state.repos;
+  return repos;
 }

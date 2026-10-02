@@ -1,4 +1,5 @@
 import { newId } from '@/core/id';
+import { DROP_ZONE_SPACE_ID } from '@/db/constants';
 import type { SqlDatabase, Space, SpaceWithCounts } from '@/db/types';
 
 interface SpaceRow {
@@ -33,6 +34,16 @@ export interface CreateSpaceInput {
 }
 
 export type UpdateSpaceInput = Partial<CreateSpaceInput>;
+
+/**
+ * The drop zone's space is a real row so joins and counts keep working, but
+ * nobody can rename or delete it: the UI never offers it (B4), and the
+ * repository refuses as well, which also protects the home server, since it
+ * runs this code.
+ */
+function assertNotDropZone(id: string): void {
+  if (id === DROP_ZONE_SPACE_ID) throw new Error('system_record');
+}
 
 /** What a user is about to lose by deleting a space, for the confirm dialog. */
 export interface SpaceDeletionImpact {
@@ -97,6 +108,7 @@ export function createSpacesRepository(db: SqlDatabase) {
 
     /** Renaming or restyling never touches `id` or `created_at`. */
     async update(id: string, input: UpdateSpaceInput): Promise<Space | null> {
+      assertNotDropZone(id);
       const existing = await this.getById(id);
       if (!existing) return null;
 
@@ -154,12 +166,13 @@ export function createSpacesRepository(db: SqlDatabase) {
      * can never leave a dangling database reference.
      */
     async delete(id: string): Promise<{ deleted: boolean; orphanedPhotoUris: string[] }> {
+      assertNotDropZone(id);
       let deleted = false;
       let orphanedPhotoUris: string[] = [];
 
       await db.withTransactionAsync(async () => {
         const photos = await db.getAllAsync<{ uri: string; thumb_uri: string | null }>(
-          `SELECT p.uri FROM item_photos p
+          `SELECT p.uri, p.thumb_uri FROM item_photos p
              JOIN items i ON i.id = p.item_id
              JOIN containers c ON c.id = i.container_id
             WHERE c.space_id = ?`,

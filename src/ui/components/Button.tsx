@@ -1,82 +1,141 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
-import { MIN_TOUCH_TARGET, radius, spacing, useTheme } from '@/ui/theme';
+import { useDelayedFlag } from '@/hooks/useDelayedFlag';
+import { isIconName, type IconName } from '@/ui/icons/glyphs';
+import { delay } from '@/ui/motion';
+import { AppText, toneColor, type TextTone } from '@/ui/components/AppText';
+import { Icon } from '@/ui/components/Icon';
+import { PressedOverlay, rippleFor, useFocusRing } from '@/ui/components/PressFeedback';
+import { MIN_TOUCH_TARGET, radius, space, useTheme } from '@/ui/theme';
 
-type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'quiet' | 'destructive';
 
-interface ButtonProps {
+/** @deprecated Pre-redesign names: `ghost` is `quiet`, `danger` is `destructive`. */
+type LegacyButtonVariant = 'ghost' | 'danger';
+
+export interface ButtonProps {
   label: string;
   onPress: () => void;
-  variant?: Variant;
+  variant?: ButtonVariant | LegacyButtonVariant;
+  size?: 'md' | 'sm';
+  /**
+   * Leading glyph, decorative. Legacy call sites still pass an emoji string;
+   * anything that is not a glyph name renders nothing until cleanup.
+   */
+  icon?: IconName | (string & {});
+  fullWidth?: boolean;
   disabled?: boolean;
   loading?: boolean;
-  /** Emoji or short glyph rendered before the label; decorative only. */
-  icon?: string;
-  fullWidth?: boolean;
+  /** Defaults to `label`; pass the item-specific form ("Move “Cordless drill”…"). */
+  accessibilityLabel?: string;
   accessibilityHint?: string;
   testID?: string;
+  /** Layout only, e.g. `flex` inside a bottom bar. */
+  style?: StyleProp<ViewStyle>;
 }
 
+function resolveVariant(variant: ButtonVariant | LegacyButtonVariant): ButtonVariant {
+  if (variant === 'ghost') return 'quiet';
+  if (variant === 'danger') return 'destructive';
+  return variant;
+}
+
+const TONE: Record<ButtonVariant, TextTone> = {
+  primary: 'onInk',
+  secondary: 'ink',
+  quiet: 'ink',
+  destructive: 'signal',
+};
+
+/**
+ * The app's one button.
+ *
+ * Primary is solid ink, the only filled control on a screen. There is no
+ * filled red button: destructive actions are quiet signal-coloured text at the
+ * end of a screen and always lead to a confirm (the old white-on-coral danger
+ * button measured 2.55:1). Labels wrap to two lines at large text and the
+ * button grows rather than clipping (issue #8).
+ */
 export function Button({
   label,
   onPress,
   variant = 'primary',
-  disabled = false,
-  loading = false,
+  size = 'md',
   icon,
   fullWidth = false,
+  disabled = false,
+  loading = false,
+  accessibilityLabel,
   accessibilityHint,
   testID,
+  style,
 }: ButtonProps) {
   const { colors } = useTheme();
-  const isDisabled = disabled || loading;
-
-  const background = {
-    primary: colors.primary,
-    secondary: colors.surfaceAlt,
-    danger: colors.danger,
-    ghost: 'transparent',
-  }[variant];
-
-  const foreground = {
-    primary: colors.primaryText,
-    secondary: colors.text,
-    danger: '#FFFFFF',
-    ghost: colors.primary,
-  }[variant];
+  const focus = useFocusRing();
+  const kind = resolveVariant(variant);
+  const tone = TONE[kind];
+  const foreground = toneColor(colors, tone);
+  // The label stays put while busy, so there is no width jump and screen
+  // readers still hear the action; a spinner joins it only if the wait is real.
+  const showSpinner = useDelayedFlag(loading, delay.spinner);
+  const small = size === 'sm';
+  const iconSize = small ? 18 : 20;
+  const glyph = isIconName(icon) ? icon : null;
+  const primary = kind === 'primary';
 
   return (
     <Pressable
       testID={testID}
       onPress={onPress}
-      disabled={isDisabled}
+      onFocus={focus.onFocus}
+      onBlur={focus.onBlur}
+      disabled={disabled || loading}
+      hitSlop={small ? 4 : undefined}
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint}
-      accessibilityState={{ disabled: isDisabled, busy: loading }}
+      accessibilityState={{ disabled, busy: loading }}
+      android_ripple={primary ? undefined : rippleFor(colors)}
       style={({ pressed }) => [
         styles.base,
-        {
-          backgroundColor: background,
-          borderColor: variant === 'ghost' ? 'transparent' : background,
-          opacity: isDisabled ? 0.5 : pressed ? 0.85 : 1,
-          alignSelf: fullWidth ? 'stretch' : 'flex-start',
-        },
+        small ? styles.small : styles.medium,
+        kind === 'secondary'
+          ? { backgroundColor: colors.sheet, borderColor: colors.control, borderWidth: 1 }
+          : null,
+        primary ? { backgroundColor: pressed ? colors.inkPressed : colors.ink } : null,
+        { alignSelf: fullWidth ? 'stretch' : 'flex-start', opacity: disabled ? 0.45 : 1 },
+        focus.ringStyle,
+        style,
       ]}
     >
-      {loading ? (
-        <ActivityIndicator color={foreground} />
-      ) : (
-        <View style={styles.content}>
-          {icon ? (
-            <Text style={styles.icon} accessibilityElementsHidden importantForAccessibility="no">
-              {icon}
-            </Text>
-          ) : null}
-          <Text style={[styles.label, { color: foreground }]} numberOfLines={2}>
-            {label}
-          </Text>
-        </View>
+      {({ pressed }) => (
+        <>
+          {primary ? null : <PressedOverlay pressed={pressed} radius={radius.control} />}
+          <View style={styles.content}>
+            {showSpinner ? (
+              <ActivityIndicator size="small" color={foreground} />
+            ) : glyph ? (
+              <Icon name={glyph} size={iconSize} color={foreground} />
+            ) : null}
+            <AppText
+              variant={small ? 'label' : 'button'}
+              tone={tone}
+              numberOfLines={2}
+              center
+              style={styles.label}
+            >
+              {label}
+            </AppText>
+          </View>
+        </>
       )}
     </Pressable>
   );
@@ -84,25 +143,29 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: MIN_TOUCH_TARGET,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
+    borderRadius: radius.control,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
+  },
+  medium: {
+    minHeight: MIN_TOUCH_TARGET,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.sm + 2,
+  },
+  small: {
+    minHeight: 40,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
   },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-  },
-  icon: {
-    fontSize: 16,
+    justifyContent: 'center',
+    gap: space.sm,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
+    flexShrink: 1,
   },
 });

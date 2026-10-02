@@ -1,30 +1,51 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import * as Haptics from 'expo-haptics';
 
 import { ConflictError } from '@/core/conflict';
 import { clampQuantity } from '@/core/quantity';
 import { strings } from '@/i18n/strings';
 import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
-import { HouseholdHttpError } from '@/services/household/client';
 import { logEvent } from '@/services/telemetry';
+import { describeError } from '@/ui/errors';
+import { haptics } from '@/ui/haptics';
 
 const MAX_CONFLICT_RETRIES = 3;
+
+/** Why a quantity did not save: the network, the item vanished, or anything else. */
+export type QuantityErrorKind = 'offline' | 'gone' | 'other';
+
+const MESSAGES: Record<QuantityErrorKind, string> = {
+  offline: strings.quantity.notSavedOffline,
+  gone: strings.quantity.gone,
+  other: strings.quantity.notSaved,
+};
 
 /**
  * Live quantity for one item: the number on screen moves immediately, and
  * writes are coalesced so tapping plus five times becomes one PATCH of the
  * final count rather than five stacked conflicts.
+ *
+ * `onError` lets a compact stepper, which has no room for a sentence under it,
+ * report a failure elsewhere (a toast naming the item) so it is never silent.
  */
-export function useSavedQuantity(item: { id: string; quantity: number; updatedAt: number }): {
+export function useSavedQuantity(
+  item: { id: string; quantity: number; updatedAt: number },
+  options?: { onError?: (kind: QuantityErrorKind) => void },
+): {
   quantity: number;
   setQuantity: (next: number) => void;
   error: string | null;
+  errorKind: QuantityErrorKind | null;
 } {
   const repos = useRepositories();
   const { invalidate } = useDatabase();
   const [boundId, setBoundId] = useState(item.id);
   const [quantity, setQuantityState] = useState(item.quantity);
-  const [error, setError] = useState<string | null>(null);
+  const [errorKind, setErrorKind] = useState<QuantityErrorKind | null>(null);
+
+  const onErrorRef = useRef(options?.onError);
+  useEffect(() => {
+    onErrorRef.current = options?.onError;
+  });
 
   const confirmedRef = useRef({ quantity: item.quantity, updatedAt: item.updatedAt });
   const pendingRef = useRef<number | null>(null);
@@ -34,7 +55,7 @@ export function useSavedQuantity(item: { id: string; quantity: number; updatedAt
   if (item.id !== boundId) {
     setBoundId(item.id);
     setQuantityState(item.quantity);
-    setError(null);
+    setErrorKind(null);
   }
 
   useEffect(() => {
@@ -51,6 +72,11 @@ export function useSavedQuantity(item: { id: string; quantity: number; updatedAt
     setQuantityState(item.quantity);
   }, [item.quantity, item.updatedAt]);
 
+  const fail = useCallback((kind: QuantityErrorKind) => {
+    setErrorKind(kind);
+    onErrorRef.current?.(kind);
+  }, []);
+
   const flush = useCallback(async () => {
     if (inFlightRef.current) return;
     inFlightRef.current = true;
@@ -65,7 +91,7 @@ export function useSavedQuantity(item: { id: string; quantity: number; updatedAt
           if (!updated) {
             pendingRef.current = null;
             setQuantityState(confirmedRef.current.quantity);
-            setError(strings.items.quantitySaveFailed);
+            fail('gone');
             break;
           }
           confirmedRef.current = {
@@ -83,7 +109,7 @@ export function useSavedQuantity(item: { id: string; quantity: number; updatedAt
               const fresh = await repos.items.getById(item.id);
               if (!fresh) {
                 pendingRef.current = null;
-                setError(strings.items.quantitySaveFailed);
+                fail('gone');
                 break;
               }
               confirmedRef.current = { quantity: fresh.quantity, updatedAt: fresh.updatedAt };
@@ -91,22 +117,18 @@ export function useSavedQuantity(item: { id: string; quantity: number; updatedAt
             } catch {
               pendingRef.current = null;
               setQuantityState(confirmedRef.current.quantity);
-              setError(strings.items.quantitySaveFailed);
+              fail('other');
               break;
             }
           }
           pendingRef.current = null;
           retriesRef.current = 0;
           setQuantityState(confirmedRef.current.quantity);
-          setError(
-            cause instanceof HouseholdHttpError &&
-              (cause.code === 'offline' || cause.code === 'timeout')
-              ? strings.household.offline
-              : strings.items.quantitySaveFailed,
-          );
-          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(
-            () => undefined,
-          );
+          // Read like every other failure, so a home box that is down behind
+          // Cloudflare (502, 520–530) also says "check the connection".
+          const { kind } = describeError(cause, 'quantity', 'item');
+          fail(kind === 'offline' ? 'offline' : kind === 'gone' ? 'gone' : 'other');
+          haptics.error();
           break;
         }
       }
@@ -114,18 +136,18 @@ export function useSavedQuantity(item: { id: string; quantity: number; updatedAt
     } finally {
       inFlightRef.current = false;
     }
-  }, [invalidate, item.id, repos]);
+  }, [fail, invalidate, item.id, repos]);
 
   const setQuantity = useCallback(
     (next: number) => {
       const clamped = clampQuantity(next);
       setQuantityState(clamped);
-      setError(null);
+      setErrorKind(null);
       pendingRef.current = clamped;
       void flush();
     },
     [flush],
   );
 
-  return { quantity, setQuantity, error };
+  return { quantity, setQuantity, error: errorKind ? MESSAGES[errorKind] : null, errorKind };
 }

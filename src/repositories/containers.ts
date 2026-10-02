@@ -1,5 +1,6 @@
 import { newId } from '@/core/id';
 import { generateShortCode } from '@/core/shortCode';
+import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
 import type { Container, ContainerVisualType, ContainerWithCounts, SqlDatabase } from '@/db/types';
 
 interface ContainerRow {
@@ -45,6 +46,16 @@ export interface ContainerDeletionImpact {
   itemCount: number;
   photoCount: number;
   hasQrBinding: boolean;
+}
+
+/**
+ * The drop zone is a real container row so joins and counts keep working,
+ * but it is not a container anyone can rename, move or delete: the UI never
+ * offers it (B4), and the repository refuses as well, which also protects the
+ * home server, since it runs this code.
+ */
+function assertNotDropZone(id: string): void {
+  if (id === DROP_ZONE_CONTAINER_ID) throw new Error('system_record');
 }
 
 /** Bounded retry budget for the (very unlikely) short-code collision. */
@@ -140,6 +151,7 @@ export function createContainersRepository(db: SqlDatabase) {
     },
 
     async update(id: string, input: UpdateContainerInput): Promise<Container | null> {
+      assertNotDropZone(id);
       const existing = await this.getById(id);
       if (!existing) return null;
 
@@ -184,12 +196,13 @@ export function createContainersRepository(db: SqlDatabase) {
     },
 
     async delete(id: string): Promise<{ deleted: boolean; orphanedPhotoUris: string[] }> {
+      assertNotDropZone(id);
       let deleted = false;
       let orphanedPhotoUris: string[] = [];
 
       await db.withTransactionAsync(async () => {
         const photos = await db.getAllAsync<{ uri: string; thumb_uri: string | null }>(
-          `SELECT p.uri FROM item_photos p
+          `SELECT p.uri, p.thumb_uri FROM item_photos p
              JOIN items i ON i.id = p.item_id
             WHERE i.container_id = ?`,
           [id],

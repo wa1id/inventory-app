@@ -1,13 +1,16 @@
-import { useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRef, useState, type RefObject } from 'react';
+import { Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { parseQuantityInput } from '@/core/quantity';
 import { strings } from '@/i18n/strings';
 import type { RecognitionSuggestion } from '@/services/ai/contract';
+import { useKnownCategories } from '@/ui/categoryMemory';
+import { AppText } from '@/ui/components/AppText';
 import { Button } from '@/ui/components/Button';
+import { Chip } from '@/ui/components/pickers/Chip';
 import { QuantityStepper } from '@/ui/components/QuantityStepper';
 import { TextField } from '@/ui/components/TextField';
-import { radius, spacing, useTheme } from '@/ui/theme';
+import { radius, space, spacing, useTheme } from '@/ui/theme';
 
 export interface ItemFormValues {
   name: string;
@@ -113,6 +116,119 @@ export function applySuggestion(
   };
 }
 
+/** Up to six suggestions under the Category field. */
+const MAX_CATEGORY_CHIPS = 6;
+
+/** Known categories that start with what is typed (case-insensitive), excluding an exact match. */
+export function matchCategories(categories: readonly string[], typed: string): string[] {
+  const prefix = typed.trim().toLowerCase();
+  const seen = new Set<string>();
+  const matches: string[] = [];
+  for (const category of categories) {
+    const key = category.trim().toLowerCase();
+    if (!key || key === prefix || seen.has(key) || !key.startsWith(prefix)) continue;
+    seen.add(key);
+    matches.push(category.trim());
+    if (matches.length === MAX_CATEGORY_CHIPS) break;
+  }
+  return matches;
+}
+
+export interface ItemDetailsFieldsProps {
+  values: ItemFormValues;
+  onChange: (values: ItemFormValues) => void;
+  errors?: ItemFormErrors;
+  /** Lets the field before these (the name) chain into Category with the return key. */
+  refs?: {
+    category?: RefObject<TextInput | null>;
+    tags?: RefObject<TextInput | null>;
+    notes?: RefObject<TextInput | null>;
+  };
+  /**
+   * Categories offered as chips while Category is focused, most recent first.
+   * Defaults to what `categoryMemory` has seen; the field never fetches (a
+   * fetch would download photos just to read category names).
+   */
+  categories?: readonly string[];
+}
+
+/**
+ * Category, Tags and Notes: the details under "More details" in the Add sheet
+ * and the Edit details form.
+ *
+ * Return moves Category → Tags → Notes with the keyboard up; in Notes it
+ * starts a new line. Category chips only fill the field on an explicit tap,
+ * then move on to Tags, so a suggestion never lands while someone is typing.
+ */
+export function ItemDetailsFields({ values, onChange, refs, categories }: ItemDetailsFieldsProps) {
+  const known = useKnownCategories();
+  const categoryLocal = useRef<TextInput>(null);
+  const tagsLocal = useRef<TextInput>(null);
+  const notesLocal = useRef<TextInput>(null);
+  const categoryRef = refs?.category ?? categoryLocal;
+  const tagsRef = refs?.tags ?? tagsLocal;
+  const notesRef = refs?.notes ?? notesLocal;
+  const [categoryFocused, setCategoryFocused] = useState(false);
+  const chips = categoryFocused ? matchCategories(categories ?? known, values.category) : [];
+
+  function set<K extends keyof ItemFormValues>(key: K, value: ItemFormValues[K]) {
+    onChange({ ...values, [key]: value });
+  }
+
+  return (
+    <View style={styles.details}>
+      <View style={styles.category}>
+        <TextField
+          label={strings.forms.categoryLabel}
+          placeholder={strings.forms.categoryPlaceholder}
+          value={values.category}
+          onChangeText={(value) => set('category', value)}
+          onFocus={() => setCategoryFocused(true)}
+          onBlur={() => setCategoryFocused(false)}
+          inputRef={categoryRef}
+          nextRef={tagsRef}
+          testID="item-category"
+        />
+        {chips.length > 0 ? (
+          <View style={styles.chips}>
+            {chips.map((category, index) => (
+              <Chip
+                key={category}
+                label={category}
+                onPress={() => {
+                  set('category', category);
+                  tagsRef.current?.focus();
+                }}
+                testID={`item-category-chip-${index}`}
+              />
+            ))}
+          </View>
+        ) : null}
+      </View>
+
+      <TextField
+        label={strings.forms.tagsLabel}
+        placeholder={strings.forms.tagsPlaceholder}
+        value={values.tags}
+        onChangeText={(value) => set('tags', value)}
+        hint={strings.forms.tagsHint}
+        inputRef={tagsRef}
+        nextRef={notesRef}
+        testID="item-tags"
+      />
+
+      <TextField
+        label={strings.forms.notesLabel}
+        value={values.notes}
+        onChangeText={(value) => set('notes', value)}
+        multiline
+        inputRef={notesRef}
+        testID="item-notes"
+      />
+    </View>
+  );
+}
+
 interface ItemFormProps {
   values: ItemFormValues;
   onChange: (values: ItemFormValues) => void;
@@ -184,12 +300,14 @@ export function ItemForm({
         onChangeText={(value) => set('category', value)}
       />
 
-      <QuantityStepper
-        label={strings.items.quantityLabel}
-        value={parseQuantityInput(values.quantity) ?? 0}
-        onChange={(next) => set('quantity', String(next))}
-        error={errors.quantity}
-      />
+      <View style={styles.quantity}>
+        <AppText variant="label">{strings.items.quantityLabel}</AppText>
+        <QuantityStepper
+          value={parseQuantityInput(values.quantity) ?? 0}
+          onChange={(next) => set('quantity', String(next))}
+          error={errors.quantity}
+        />
+      </View>
 
       {showAdvanced ? (
         <>
@@ -255,5 +373,19 @@ const styles = StyleSheet.create({
   actions: {
     gap: spacing.sm,
     marginTop: spacing.md,
+  },
+  quantity: {
+    gap: 6,
+  },
+  details: {
+    gap: space.lg,
+  },
+  category: {
+    gap: space.sm,
+  },
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.sm,
   },
 });

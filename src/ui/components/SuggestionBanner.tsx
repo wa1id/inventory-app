@@ -1,8 +1,6 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-
+import { strings } from '@/i18n/strings';
 import { FAILURE_MESSAGES, type RecognitionFailureReason } from '@/services/ai/contract';
-import { Button } from '@/ui/components/Button';
-import { radius, spacing, useTheme } from '@/ui/theme';
+import { Banner } from '@/ui/components/Banner';
 
 export type SuggestionState =
   /**
@@ -54,44 +52,34 @@ export function SuggestionBanner({
   /** Re-derives the supporting fields from the name now in the form. */
   onRefresh?: () => void;
 }) {
-  const { colors } = useTheme();
-
   if (state.status === 'idle') return null;
 
   if (state.status === 'running' || state.status === 'refreshing') {
     return (
-      <View
-        style={[styles.banner, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
-        accessibilityLiveRegion="polite"
-      >
-        <ActivityIndicator color={colors.primary} />
-        <Text style={[styles.text, { color: colors.text }]}>
-          {state.status === 'refreshing'
-            ? 'Working out the details for your title…'
-            : 'Looking at your photo… you can start typing now.'}
-        </Text>
-      </View>
+      <Banner
+        tone="info"
+        icon="sparkle"
+        message={
+          state.status === 'refreshing'
+            ? strings.suggestions.refreshing
+            : strings.suggestions.running
+        }
+      />
     );
   }
 
   if (state.status === 'applied' || state.status === 'refreshed') {
     return (
-      <View
-        style={[styles.banner, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
-        accessibilityLiveRegion="polite"
-      >
-        <Text style={styles.glyph}>✨</Text>
-        <View style={styles.body}>
-          <Text style={[styles.title, { color: colors.text }]}>
-            {state.status === 'refreshed'
-              ? `Details updated for “${state.forName}”`
-              : 'Suggested from your photo'}
-          </Text>
-          <Text style={[styles.text, { color: colors.textMuted }]}>
-            Check the details and change anything that is wrong.
-          </Text>
-        </View>
-      </View>
+      <Banner
+        tone="info"
+        icon="sparkle"
+        title={
+          state.status === 'refreshed'
+            ? strings.suggestions.refreshed(state.forName)
+            : strings.suggestions.applied
+        }
+        message={strings.suggestions.check}
+      />
     );
   }
 
@@ -105,75 +93,37 @@ export function SuggestionBanner({
       // name field keystroke by keystroke, so announcing it would talk over
       // someone typing their correction. The other states announce because they
       // arrive on their own, out of the user's control.
-      <View
-        style={[styles.banner, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
-      >
-        <Text style={styles.glyph}>✨</Text>
-        <View style={styles.body}>
-          <Text style={[styles.title, { color: colors.text }]}>
-            Title changed to “{state.forName}”
-          </Text>
-          <Text style={[styles.text, { color: colors.textMuted }]}>
-            The category and tags still describe our earlier guess.
-          </Text>
-          {onRefresh ? (
-            <Button
-              label="Update the other details"
-              variant="ghost"
-              onPress={onRefresh}
-              accessibilityHint="Replaces the category and tags using your title"
-            />
-          ) : null}
-        </View>
-      </View>
+      <Banner
+        tone="info"
+        icon="sparkle"
+        live="off"
+        title={strings.suggestions.stale(state.forName)}
+        message={strings.suggestions.staleBody}
+        action={
+          onRefresh
+            ? {
+                label: strings.suggestions.update,
+                onPress: onRefresh,
+                accessibilityHint: strings.suggestions.updateHint,
+              }
+            : undefined
+        }
+      />
     );
   }
 
+  // A failure is a choice to type the details, not a warning, so it stays quiet.
   return (
-    <View
-      style={[
-        styles.banner,
-        { backgroundColor: colors.warningSurface, borderColor: colors.border },
-      ]}
-      accessibilityLiveRegion="polite"
-    >
-      <Text style={styles.glyph}>✍️</Text>
-      <View style={styles.body}>
-        <Text style={[styles.title, { color: colors.text }]}>Add the details yourself</Text>
-        <Text style={[styles.text, { color: colors.textMuted }]}>
-          {FAILURE_MESSAGES[state.reason]}
-        </Text>
-        {onRetry && state.reason !== 'not_configured' ? (
-          <Button label="Try suggestions again" variant="ghost" onPress={onRetry} />
-        ) : null}
-      </View>
-    </View>
+    <Banner
+      tone="info"
+      icon="edit"
+      title={strings.suggestions.failed}
+      message={FAILURE_MESSAGES[state.reason]}
+      action={
+        onRetry && state.reason !== 'not_configured'
+          ? { label: strings.suggestions.retry, onPress: onRetry }
+          : undefined
+      }
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  banner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.md,
-    padding: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-  },
-  glyph: {
-    fontSize: 20,
-  },
-  body: {
-    flex: 1,
-    gap: spacing.xs,
-  },
-  title: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  text: {
-    flex: 1,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-});
