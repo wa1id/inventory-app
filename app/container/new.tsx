@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 
 import { DROP_ZONE_SPACE_ID } from '@/db/constants';
 import type { ContainerVisualType } from '@/db/types';
@@ -8,6 +8,7 @@ import { useDirtyGuard } from '@/hooks/useDirtyGuard';
 import { useInventoryQuery } from '@/hooks/useInventoryQuery';
 import { strings } from '@/i18n/strings';
 import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
+import { useToast } from '@/providers/ToastProvider';
 import { logEvent } from '@/services/telemetry';
 import { AppText } from '@/ui/components/AppText';
 import { BottomBar } from '@/ui/components/BottomBar';
@@ -21,6 +22,7 @@ import { haptics } from '@/ui/haptics';
 import type { NewContainerResult } from '@/ui/navigation';
 import { abandonResult, deliverResult } from '@/ui/routeResult';
 import { DropZoneLocked, FormLayout, SaveNotice } from '@/ui/spaces/FormLayout';
+import { containerLabel, isOffline } from '@/ui/spaces/spaceSetup';
 import { space } from '@/ui/theme';
 
 const DEFAULT_TYPE: ContainerVisualType = 'box';
@@ -40,8 +42,8 @@ export default function NewContainerScreen() {
 
 /**
  * A new container in a known space: its type, and a name only if wanted,
- * since an unnamed container goes by the code on its label (entities
- * §14.13). It opens straight away, replacing this sheet, because a new
+ * since an unnamed container goes by the code on its label. It opens
+ * straight away, replacing this sheet, because a new
  * container is there to be filled; from the place picker it is handed back
  * instead and the picker files into it.
  */
@@ -49,6 +51,8 @@ function NewContainer({ spaceId, request }: { spaceId: string; request: string |
   const repos = useRepositories();
   const { invalidate } = useDatabase();
   const router = useRouter();
+  const navigation = useNavigation();
+  const toast = useToast();
 
   const spaceQuery = useInventoryQuery(() => repos.spaces.getById(spaceId), `space:${spaceId}`);
 
@@ -62,7 +66,7 @@ function NewContainer({ spaceId, request }: { spaceId: string; request: string |
 
   async function save() {
     // The button and the return key both save; a ref, so a double submit in
-    // one frame cannot create two containers (entities §15.7).
+    // one frame cannot create two containers.
     if (savingRef.current) return;
     savingRef.current = true;
     setSaving(true);
@@ -72,16 +76,35 @@ function NewContainer({ spaceId, request }: { spaceId: string; request: string |
       logEvent('container_created');
       invalidate();
       haptics.success();
-      if (deliverResult<NewContainerResult>(request, { containerId: container.id })) {
-        router.back();
-      } else {
-        router.replace(`/container/${container.id}`);
+      if (!navigation.isFocused()) {
+        // The header Cancel closed the sheet mid-save (swipe-down and Android
+        // back wait for it). Navigating now would act on whatever is in front
+        // (the place picker, Move, the label screen, the space), and a picker
+        // that was waiting would file into a container from a sheet the person
+        // closed: the unmount tells it nothing came of it. The container is
+        // made, and the list in front refreshes to show it.
+        toast.show({ message: strings.containerForm.created(containerLabel(container)) });
+        return;
       }
+      const delivered = deliverResult<NewContainerResult>(request, {
+        containerId: container.id,
+        name: container.name,
+        shortCode: container.shortCode,
+        visualType: container.visualType,
+        spaceId: container.spaceId,
+      });
+      if (delivered) router.back();
+      else router.replace(`/container/${container.id}`);
     } catch (cause) {
       savingRef.current = false;
       setSaving(false);
-      setFailure({ cause });
       haptics.error();
+      // Normally the banner; a sheet closed under the save says it in a toast.
+      if (navigation.isFocused()) {
+        setFailure({ cause });
+      } else {
+        toast.show({ tone: 'error', message: strings.containerForm.notCreated(isOffline(cause)) });
+      }
     }
   }
 
@@ -140,7 +163,7 @@ function NewContainer({ spaceId, request }: { spaceId: string; request: string |
         value={name}
         onChangeText={(next) => {
           setName(next);
-          // Typing clears a failed save's notice; it used to stay forever (entities §15.7).
+          // Typing clears a failed save's notice; it used to stay forever.
           setFailure(null);
         }}
         returnKeyType="done"

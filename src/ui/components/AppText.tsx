@@ -43,6 +43,8 @@ export interface AppTextProps extends Pick<
   | 'nativeID'
   | 'onLayout'
   | 'testID'
+  | 'lineBreakStrategyIOS'
+  | 'textBreakStrategy'
 > {
   variant: TextVariant;
   tone?: TextTone;
@@ -62,6 +64,12 @@ export interface AppTextProps extends Pick<
  * `accessibilityRole="text"` to opt out (the where-card path is a title-sized
  * answer, not a heading).
  */
+/**
+ * Titles and paragraphs break so their last line is not one lonely word
+ * ("Find where anything is / kept"); short labels keep the default.
+ */
+const BALANCED_VARIANTS: readonly TextVariant[] = ['display', 'title', 'heading', 'body'];
+
 export function AppText({
   variant,
   tone = 'ink',
@@ -74,9 +82,12 @@ export function AppText({
 }: AppTextProps) {
   const { colors } = useTheme();
   const base = useTextStyle(variant, weight);
+  const balanced = BALANCED_VARIANTS.includes(variant);
 
   return (
     <Text
+      lineBreakStrategyIOS={balanced ? 'standard' : undefined}
+      textBreakStrategy={balanced ? 'balanced' : undefined}
       {...textProps}
       accessibilityRole={
         accessibilityRole ?? (HEADER_VARIANTS.includes(variant) ? 'header' : undefined)

@@ -24,6 +24,7 @@ import { confirm } from '@/ui/confirm';
 import { QrCard } from '@/ui/container/QrCard';
 import {
   labelFailureMessage,
+  labelOf,
   settleWrittenLabel,
   shareText,
   type LabelAction,
@@ -70,7 +71,7 @@ export default function ContainerQrScreen() {
   );
 }
 
-/** The drop zone is a tab, not a box with a sticker on it (B4, entities §15.1). */
+/** The drop zone is a tab, not a box with a sticker on it. */
 function DropZoneLocked() {
   return (
     <EmptyState
@@ -91,8 +92,8 @@ function DropZoneLocked() {
  *
  * Nothing shows until both the container and its label have been read: the
  * old screen showed "No label yet" while the label was still loading, and a
- * tap on "Generate" then silently retired a printed sticker (entities §15.2,
- * capture §13.14). Every write is caught and told (entities §15.5, §13.3).
+ * tap on "Generate" then silently retired a printed sticker. Every write is
+ * caught and told.
  */
 function QrLabel({ id }: { id: string }) {
   const repos = useRepositories();
@@ -148,7 +149,7 @@ function QrLabel({ id }: { id: string }) {
         // "No QR label yet" can be a moment old while the screen re-reads on
         // focus: just back from linking a sticker, or one made on another
         // phone. Making one never asks, so it looks first rather than quietly
-        // retire a sticker that is on the box (entities §15.2).
+        // retire a sticker that is on the box.
         const current = await repos.qr.getByContainer(id);
         if (current) {
           shown.wrote(current.token);
@@ -280,7 +281,7 @@ function QrLabel({ id }: { id: string }) {
         {banner ? <View style={[styles.banner, styles.gutter]}>{banner}</View> : null}
         <EmptyState
           icon="qr"
-          title={strings.qr.none.title}
+          title={strings.qr.none.title(labelOf(container))}
           body={strings.qr.none.body}
           action={{
             label: strings.qr.make,
@@ -323,6 +324,7 @@ function QrLabel({ id }: { id: string }) {
         variant="secondary"
         loading={busy === 'share'}
         onPress={() => void shareLabel(container, token)}
+        fullWidth
         style={styles.share}
         testID="qr-share"
       />
@@ -390,8 +392,8 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     marginTop: space.lg,
   },
+  // Full width, on the same gutters as the sheet below rather than floating between.
   share: {
-    alignSelf: 'center',
     marginTop: space.lg,
   },
 });

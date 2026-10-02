@@ -69,7 +69,11 @@ function ScanPanel({ tone, title, message, children }: PanelProps) {
         accessibilityLiveRegion={
           tone === 'error' ? 'assertive' : tone === 'busy' ? 'polite' : 'none'
         }
-        style={[styles.panel, { backgroundColor: camera.chip }]}
+        style={[
+          styles.panel,
+          tone === 'error' ? styles.errorPad : null,
+          { backgroundColor: camera.chip },
+        ]}
       >
         {tone === 'error' ? (
           <View style={[styles.errorBar, { backgroundColor: camera.errorBar }]} />
@@ -95,7 +99,7 @@ function ScanPanel({ tone, title, message, children }: PanelProps) {
 
 interface CameraButtonProps {
   label: string;
-  icon: IconName;
+  icon?: IconName;
   onPress: () => void;
   testID: string;
 }
@@ -125,7 +129,7 @@ function CameraButton({ label, icon, onPress, testID }: CameraButtonProps) {
         focus.ringStyle ? [focus.ringStyle, { outlineColor: camera.ink }] : null,
       ]}
     >
-      <Icon name={icon} size={18} color={camera.ink} />
+      {icon ? <Icon name={icon} size={18} color={camera.ink} /> : null}
       <AppText variant="label" tone="camera" style={styles.shrink}>
         {label}
       </AppText>
@@ -134,17 +138,17 @@ function CameraButton({ label, icon, onPress, testID }: CameraButtonProps) {
 }
 
 /**
- * Scan tab: "What's in this box?" (issue #10, spec §5.17).
+ * Scan tab: "What's in this box?" (issue #10).
  *
  * Point the camera at a label and its container opens. A label this app made
  * but never linked goes to `/c/<token>`, the one place where labels are
  * linked, so the Scan tab and the iPhone Camera behave the same. Anything else
  * says plainly that it is not one of ours, and a failed lookup says what went
- * wrong instead of leaving the scanner dead (capture §13.3).
+ * wrong instead of leaving the scanner dead.
  *
  * `QrScanner` owns the camera: it runs only while this tab is in front (a tab
  * stays mounted in the background), and it ignores the second and third
- * frames of the same label, so one label opens one container (§13.2). When a
+ * frames of the same label, so one label opens one container. When a
  * label cannot be read, "Type a code instead" lists the containers to find it
  * by the code written on the box.
  */
@@ -296,13 +300,7 @@ export default function ScanScreen() {
   if (result.kind === 'notOurs') {
     footer = (
       <ScanPanel tone="error" title={strings.scan.invalidTitle} message={strings.scan.invalidBody}>
-        <Button
-          label={strings.scan.scanAgain}
-          variant="secondary"
-          size="sm"
-          onPress={scanAgain}
-          testID="scan-again"
-        />
+        <CameraButton label={strings.scan.scanAgain} onPress={scanAgain} testID="scan-again" />
         {typeCodeButton}
       </ScanPanel>
     );
@@ -310,11 +308,9 @@ export default function ScanScreen() {
     const described = describeError(result.cause);
     footer = (
       <ScanPanel tone="error" title={described.title} message={described.body}>
-        <Button
+        <CameraButton
           label={strings.common.tryAgain}
           icon="refresh"
-          variant="secondary"
-          size="sm"
           onPress={scanAgain}
           testID="scan-try-again"
         />
@@ -361,10 +357,13 @@ const styles = StyleSheet.create({
     maxWidth: CONTENT_MAX_WIDTH,
     gap: space.md,
     padding: space.lg,
-    paddingStart: space.lg + 4,
     borderRadius: radius.card,
     borderCurve: 'continuous',
     overflow: 'hidden',
+  },
+  // Room for the error edge, so the words keep the same 16 pt from it.
+  errorPad: {
+    paddingStart: space.lg + 4,
   },
   errorBar: {
     position: 'absolute',

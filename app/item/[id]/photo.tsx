@@ -48,7 +48,7 @@ function Message({ title, body, action }: { title: string; body?: string; action
 }
 
 /**
- * The item's photo, full screen (spec §5.13), opened from the thumbnail on
+ * The item's photo, full screen, opened from the thumbnail on
  * the item screen now that the photo is no longer a 260 pt banner there.
  *
  * iOS zooms natively: the picture sits in a scroll view that pinches up to

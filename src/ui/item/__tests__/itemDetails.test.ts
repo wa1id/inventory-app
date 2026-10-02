@@ -112,13 +112,59 @@ describe('attemptName', () => {
     await expect(attemptName(items, unnamed, 'Batteries')).resolves.toEqual({ kind: 'gone' });
   });
 
-  it('keeps a name given on another phone meanwhile', async () => {
-    const { items, stamps } = fake([conflict], { name: 'AA batteries', updatedAt: 20 });
-    await expect(attemptName(items, unnamed, 'Batteries')).resolves.toEqual({
-      kind: 'namedElsewhere',
+  /** One stored item with a real lock: a write over a stale stamp is refused. */
+  function store(row: { name: string; updatedAt: number }) {
+    const stamps: number[] = [];
+    return {
+      stamps,
+      row,
+      /** Something else writes it (recognition finishing, another phone). */
+      write(name: string, updatedAt: number) {
+        row.name = name;
+        row.updatedAt = updatedAt;
+      },
+      items: {
+        async update(_id: string, input: { name: string; expectedUpdatedAt: number }) {
+          stamps.push(input.expectedUpdatedAt);
+          if (input.expectedUpdatedAt !== row.updatedAt) throw new ConflictError(row.updatedAt);
+          row.name = input.name;
+          row.updatedAt += 1;
+          return { updatedAt: row.updatedAt };
+        },
+        getById: async () => ({ ...row }),
+      },
+    };
+  }
+
+  it('keeps the typed name when recognition names it between load and save', async () => {
+    // Loaded unnamed at 10; recognition then names it at 20, after the last re-read.
+    const stored = store({ name: '', updatedAt: 10 });
+    stored.write('AA batteries', 20);
+
+    // Nothing is written over the other name unasked, and the typed one is not dropped…
+    await expect(attemptName(stored.items, unnamed, 'Batteries')).resolves.toEqual({
+      kind: 'namedMeanwhile',
       name: 'AA batteries',
+      updatedAt: 20,
     });
-    expect(stamps).toEqual([10]);
+    expect(stored.row.name).toBe('AA batteries');
+
+    // …and saving it again, over the stamp that came back, stores it.
+    await expect(
+      attemptName(stored.items, { id: 'item-1', updatedAt: 20 }, 'Batteries'),
+    ).resolves.toEqual({ kind: 'named' });
+    expect(stored.row.name).toBe('Batteries');
+    expect(stored.stamps).toEqual([10, 20]);
+  });
+
+  it('saves when the name it met is the one typed', async () => {
+    const stored = store({ name: '', updatedAt: 10 });
+    stored.write('Batteries', 20);
+    await expect(attemptName(stored.items, unnamed, 'Batteries')).resolves.toEqual({
+      kind: 'named',
+    });
+    expect(stored.row.name).toBe('Batteries');
+    expect(stored.stamps).toEqual([10, 20]);
   });
 
   it('retries once when something else changed', async () => {

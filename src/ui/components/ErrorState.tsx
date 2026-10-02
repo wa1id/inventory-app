@@ -18,9 +18,13 @@ export interface ErrorStateProps {
   subject?: ErrorSubject;
   /** Overrides the described title (conflicts, where the screen knows the sentence). */
   title?: string;
-  /** @deprecated Pass `cause`; a raw message can leak codes onto the screen (B8). */
-  message?: string;
-  /** Always the query's own `reload`, never a state no-op (B2). */
+  /**
+   * Overrides the described body with the screen's own sentence from `strings`
+   * (the boot gate's reassurance). Never an `Error.message`: raw codes must not
+   * reach the screen.
+   */
+  body?: string;
+  /** Always the query's own `reload`, never a state no-op. */
   onRetry?: () => void;
   secondary?: { label: string; onPress: () => void; testID?: string };
   testID?: string;
@@ -32,25 +36,25 @@ export interface ErrorStateProps {
  * Persistence failures are surfaced with a retry rather than an empty list, so
  * a database problem never looks like "you own nothing" (issues #4, #14). The
  * words come from `describeError`, so raw codes and `Error.message` never
- * reach the screen (B8); the copy says what happened and what is still safe.
+ * reach the screen; the copy says what happened and what is still safe.
  */
 export function ErrorState({
   cause,
   context,
   subject,
   title,
-  message,
+  body: bodyOverride,
   onRetry,
   secondary,
   testID,
 }: ErrorStateProps) {
   const { colors } = useTheme();
   const described =
-    cause !== undefined || title === undefined || message === undefined
+    cause !== undefined || title === undefined || bodyOverride === undefined
       ? describeError(cause, context, subject)
       : null;
   const heading = title ?? described?.title ?? '';
-  const body = message ?? described?.body ?? '';
+  const body = bodyOverride ?? described?.body ?? '';
 
   // Android reads the assertive live region; iOS needs the title announced.
   useEffect(() => {

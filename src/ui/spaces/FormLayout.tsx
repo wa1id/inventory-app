@@ -1,5 +1,12 @@
-import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useHeaderHeight } from 'expo-router/react-navigation';
 
 import { strings } from '@/i18n/strings';
@@ -19,19 +26,35 @@ export interface FormLayoutProps {
 }
 
 /**
- * The frame of the space and container sheets (spec §4.25): fields scroll,
+ * The frame of the space and container sheets: fields scroll,
  * the primary action stays in a bar at the bottom, and the keyboard pushes
  * that bar up rather than covering it. Before the redesign nothing in the app
- * avoided the keyboard, so Save sat under it on iOS (entities §16.A).
+ * avoided the keyboard, so Save sat under it on iOS.
  */
 export function FormLayout({ notice, children, bottomBar }: FormLayoutProps) {
   const headerHeight = useHeaderHeight();
+  const { height: windowHeight } = useWindowDimensions();
+  // The form's height, for where its top sits on screen (see `keyboardOffset`).
+  const [bodyHeight, setBodyHeight] = useState(0);
+
+  // `KeyboardAvoidingView` wants the distance from the top of the screen to
+  // the form. An iPhone page sheet starts below the status bar, which the
+  // header height leaves out, so that offset alone would leave Save under the
+  // keyboard. The sheet reaches the bottom of the screen, so the form's top is
+  // the window less its height. Elsewhere (Android's full-screen sheet, iPad)
+  // the header height is the distance. As in the Add sheet.
+  const keyboardOffset =
+    Platform.OS === 'ios' && !Platform.isPad && bodyHeight > 0
+      ? windowHeight - bodyHeight
+      : headerHeight;
 
   return (
     <ScreenFrame kind="modal">
       <KeyboardAvoidingView
         behavior="padding"
-        keyboardVerticalOffset={headerHeight}
+        keyboardVerticalOffset={keyboardOffset}
+        // The keyboard pads inside this view, so its height stays the form's.
+        onLayout={(event) => setBodyHeight(event.nativeEvent.layout.height)}
         style={styles.fill}
       >
         {notice ? <View style={styles.notice}>{notice}</View> : null}
@@ -56,7 +79,7 @@ export interface SaveNoticeProps {
 }
 
 /**
- * Why a save did not happen, in plain words (B8): the raw message used to be
+ * Why a save did not happen, in plain words: the raw message used to be
  * written into the name field's error slot. What was typed stays in the form.
  */
 export function SaveNotice({ cause, subject, action }: SaveNoticeProps) {
@@ -76,7 +99,7 @@ export function SaveNotice({ cause, subject, action }: SaveNoticeProps) {
 
 /**
  * The drop zone's space and container are real rows, but not ones anyone can
- * rename, move or delete (B4, entities §15.1). Nothing links to their edit
+ * rename, move or delete. Nothing links to their edit
  * screens; this answers a stale link instead of showing the form.
  */
 export function DropZoneLocked() {

@@ -6,7 +6,7 @@ import { spellCode, type PlaceLike } from '@/ui/a11y';
 /*
  * The decisions behind the capture, review and drop-zone screens, kept pure
  * (no React Native) so they are tested in Node. The camera mechanics they
- * report on are frozen (capture §9); only what is said and where the person
+ * report on are frozen; only what is said and where the person
  * lands is decided here.
  */
 
@@ -42,8 +42,8 @@ export function fastStatus({ captured, completed, recognized }: FastTallies): {
 
 /**
  * Where ✕ and Android back go. A fast set with shots in it always ends on the
- * review, so a batch can never skip it (capture §13.6); otherwise the camera
- * simply closes and the person is back where they started (§2.5 rule 7).
+ * review, so a batch can never skip it; otherwise the camera
+ * simply closes and the person is back where they started.
  */
 export function leaveCamera(mode: 'single' | 'fast', captured: number): 'review' | 'back' {
   return mode === 'fast' && captured > 0 ? 'review' : 'back';
@@ -74,7 +74,7 @@ export type ReviewStatus = 'pending' | 'maybeLost' | 'toName' | 'allNamed';
  * The line under the review's title. Photos still on their way are "Saving N
  * more…" only while the set is still changing: `expected` is frozen when the
  * camera closes, so a shot that failed afterwards would otherwise leave it
- * saying "Saving…" for ever (capture §13.4). `stalled` is true once the list
+ * saying "Saving…" for ever. `stalled` is true once the list
  * has not changed for a while.
  */
 export function reviewStatus(summary: FastSessionSummary, stalled: boolean): ReviewStatus {
@@ -85,7 +85,10 @@ export function reviewStatus(summary: FastSessionSummary, stalled: boolean): Rev
 export function reviewStatusText(status: ReviewStatus, summary: FastSessionSummary): string {
   switch (status) {
     case 'pending':
-      return strings.review.pending(summary.pending);
+      // Under "Saving 2 photos…" (nothing landed yet), "2 more" would repeat it.
+      return summary.saved === 0
+        ? strings.review.savingFirst
+        : strings.review.pending(summary.pending);
     case 'maybeLost':
       return strings.review.maybeLost;
     case 'toName':
@@ -109,15 +112,20 @@ export function containerLabel(
 }
 
 /**
- * "4 items saved to the drop zone" / "4 items saved to Tool chest". A
- * container's name comes from its rows, so before the first one lands there is
- * no title rather than a wrong one (it used to say "the drop zone").
+ * "4 saved to the drop zone" / "4 saved to Tool chest". Until the first row
+ * lands it says what is happening ("Saving 2 photos…"), never "0 saved", a
+ * failure that has not happened. A container's name comes from its rows, so
+ * otherwise there is no title rather than a wrong one (it used to say "the
+ * drop zone").
  */
 export function reviewTitle(
-  saved: number,
+  summary: FastSessionSummary,
+  status: ReviewStatus,
   containerId: string,
   label: string | null,
 ): string | null {
+  const { saved } = summary;
+  if (saved === 0 && status === 'pending') return strings.review.savingTitle(summary.pending);
   if (containerId === DROP_ZONE_CONTAINER_ID) return strings.review.savedToDropZone(saved);
   return label === null ? null : strings.review.savedTo(saved, label);
 }

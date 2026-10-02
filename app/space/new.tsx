@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View, type TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 
 import { useDelayedFlag } from '@/hooks/useDelayedFlag';
 import { useDirtyGuard } from '@/hooks/useDirtyGuard';
@@ -8,19 +8,22 @@ import { useInventoryQuery } from '@/hooks/useInventoryQuery';
 import { useLayoutScale } from '@/hooks/useLayoutScale';
 import { strings } from '@/i18n/strings';
 import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
+import { useToast } from '@/providers/ToastProvider';
 import { logEvent } from '@/services/telemetry';
 import { AppText } from '@/ui/components/AppText';
 import { BottomBar } from '@/ui/components/BottomBar';
 import { Button } from '@/ui/components/Button';
 import { PressedOverlay, rippleFor, useFocusRing } from '@/ui/components/PressFeedback';
-import { Section } from '@/ui/components/Sheet';
 import { SpaceTile } from '@/ui/components/SpaceTile';
 import { haptics } from '@/ui/haptics';
 import { delay } from '@/ui/motion';
+import type { NewSpaceResult } from '@/ui/navigation';
+import { abandonResult, deliverResult } from '@/ui/routeResult';
 import { FormLayout, SaveNotice } from '@/ui/spaces/FormLayout';
 import { SpaceFields } from '@/ui/spaces/SpaceFields';
 import {
   isNameTaken,
+  isOffline,
   spaceValuesChanged,
   takenSpaceNames,
   type SpaceValues,
@@ -30,9 +33,6 @@ import { SPACE_COLORS, SPACE_ICONS, SPACE_PRESETS, radius, space, useTheme } fro
 type Preset = (typeof SPACE_PRESETS)[number];
 
 const DEFAULTS: SpaceValues = { name: '', icon: SPACE_ICONS[0], color: SPACE_COLORS[0] };
-
-/** A new space holds nothing yet; the preview says so. */
-const EMPTY_COUNTS = { containers: 0, items: 0 };
 
 interface PresetTileProps {
   preset: Preset;
@@ -48,7 +48,7 @@ interface PresetTileProps {
 /**
  * One quick-add preset. A tap creates the space at once, zero typing being
  * the point of a preset; one that already exists says so and stays put
- * rather than making a second Garage (entities §1).
+ * rather than making a second Garage.
  */
 function PresetTile({ preset, taken, busy, disabled, onPress }: PresetTileProps) {
   const { colors } = useTheme();
@@ -74,8 +74,10 @@ function PresetTile({ preset, taken, busy, disabled, onPress }: PresetTileProps)
       style={[
         styles.preset,
         { flexBasis: stacked ? '100%' : '40%' },
-        { backgroundColor: colors.sheet, borderColor: colors.rule },
-        // A taken preset stays readable; only a wait dims the others.
+        // Only a free preset is a raised tile. A taken one stays readable but
+        // lies flat on the plaster, so it does not look like it can be tapped.
+        { backgroundColor: taken ? 'transparent' : colors.sheet, borderColor: colors.rule },
+        // Only a wait dims the others.
         disabled && !busy && !taken ? styles.dimmed : null,
         focus.ringStyle,
       ]}
@@ -83,9 +85,17 @@ function PresetTile({ preset, taken, busy, disabled, onPress }: PresetTileProps)
       {({ pressed }) => (
         <>
           <PressedOverlay pressed={pressed} radius={radius.card} />
-          <SpaceTile icon={preset.icon} color={preset.color} size={48} />
+          <SpaceTile
+            icon={preset.icon}
+            color={preset.color}
+            size={48}
+            surface={taken ? 'plaster' : 'sheet'}
+          />
           <View style={styles.presetText}>
-            <AppText variant="name">{preset.name}</AppText>
+            <AppText variant="name" tone={taken ? 'graphite' : 'ink'}>
+              {preset.name}
+            </AppText>
+            {/* No check glyph: beside it "Already added" wraps in a half-width tile. */}
             {taken ? (
               <AppText variant="caption" tone="graphite">
                 {strings.spaceForm.alreadyAdded}
@@ -102,14 +112,22 @@ function PresetTile({ preset, taken, busy, disabled, onPress }: PresetTileProps)
 /**
  * New space: a preset in one tap, or a name, icon and colour of your own.
  * Both end on the new space, replacing this sheet, because making a place
- * means you want to fill it (spec §2.5 rule 5).
+ * means you want to fill it. Opened with `request` (the
+ * place picker, which has no space to offer a container in), the sheet hands
+ * the new space back and closes instead, so the pick carries on.
  */
 export default function NewSpaceScreen() {
   const repos = useRepositories();
   const { invalidate } = useDatabase();
   const router = useRouter();
+  const navigation = useNavigation();
+  const toast = useToast();
+  const { request } = useLocalSearchParams<{ request?: string }>();
   const { colors } = useTheme();
   const nameRef = useRef<TextInput>(null);
+
+  // Closed without a space: whoever asked hears nothing came of it.
+  useEffect(() => () => abandonResult(request), [request]);
 
   const [values, setValues] = useState<SpaceValues>(DEFAULTS);
   const [nameError, setNameError] = useState<string | null>(null);
@@ -133,22 +151,40 @@ export default function NewSpaceScreen() {
     savingRef.current = true;
     setSaving(source);
     setFailure(null);
+    const name = input.name.trim();
     try {
-      const created = await repos.spaces.create({
-        name: input.name.trim(),
-        icon: input.icon,
-        color: input.color,
-      });
+      const created = await repos.spaces.create({ name, icon: input.icon, color: input.color });
       logEvent('space_created');
       invalidate();
       haptics.success();
-      // Replace, so Back from the new space returns to where this started.
-      router.replace(`/space/${created.id}`);
+      if (!navigation.isFocused()) {
+        // The header Cancel closed the sheet mid-save (swipe-down and Android
+        // back wait for it). Navigating now would replace or pop whatever is
+        // in front, the tab shell included, and a picker that was waiting
+        // would carry on with a sheet the person closed: the unmount tells it
+        // nothing came of it. The space is made, and the list refreshes.
+        toast.show({ message: strings.spaceForm.created(created.name) });
+        return;
+      }
+      if (deliverResult<NewSpaceResult>(request, { spaceId: created.id, name: created.name })) {
+        router.back();
+      } else {
+        // Replace, so Back from the new space returns to where this started.
+        router.replace(`/space/${created.id}`);
+      }
     } catch (cause) {
       savingRef.current = false;
       setSaving(null);
-      setFailure({ cause });
       haptics.error();
+      // Normally the banner; a sheet closed under the save says it in a toast.
+      if (navigation.isFocused()) {
+        setFailure({ cause });
+      } else {
+        toast.show({
+          tone: 'error',
+          message: strings.spaceForm.notCreated(name, isOffline(cause)),
+        });
+      }
     }
   }
 
@@ -183,7 +219,9 @@ export default function NewSpaceScreen() {
         </BottomBar>
       }
     >
-      <Section title={strings.spaceForm.quickAdd} first>
+      {/* Headings, not section titles: the two ways in clearly outrank the field labels. */}
+      <View style={styles.group}>
+        <AppText variant="heading">{strings.spaceForm.quickAdd}</AppText>
         <View style={styles.presets}>
           {SPACE_PRESETS.map((preset) => (
             <PresetTile
@@ -196,25 +234,30 @@ export default function NewSpaceScreen() {
             />
           ))}
         </View>
-      </Section>
+      </View>
 
       <View style={[styles.rule, { backgroundColor: colors.rule }]} />
 
-      <Section title={strings.spaceForm.yourOwn} first>
+      <View style={styles.group}>
+        <AppText variant="heading">{strings.spaceForm.yourOwn}</AppText>
         <SpaceFields
           values={values}
           onChange={change}
           nameError={nameError}
           onSubmit={createCustom}
           nameRef={nameRef}
-          previewCounts={EMPTY_COUNTS}
+          // A new space has nothing to count yet.
+          previewMeta={strings.spaceForm.previewNew}
         />
-      </Section>
+      </View>
     </FormLayout>
   );
 }
 
 const styles = StyleSheet.create({
+  group: {
+    gap: space.md,
+  },
   presets: {
     flexDirection: 'row',
     flexWrap: 'wrap',

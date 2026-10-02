@@ -2,9 +2,10 @@ import { ConflictError } from '@/core/conflict';
 import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
 import { strings } from '@/i18n/strings';
 import { describeError } from '@/ui/errors';
+import type { MoveResult } from '@/ui/navigation';
 
 /*
- * The pure half of Move and File (spec §5.10, §5.12): the desk's
+ * The pure half of Move and File: the desk's
  * `chooseMove`/`afterMove` (`home-server/web/app.js:1517-1592`) as plain
  * functions over the two repository calls they make, so every outcome is
  * tested in Node. `useMove` and the item screen wire them to the screen.
@@ -76,7 +77,12 @@ export async function attemptMove<Fresh extends MoveSubject>(
   }
 }
 
-export type UndoOutcome = 'undone' | 'gone' | 'conflict' | 'failed';
+export type UndoOutcome =
+  | { kind: 'undone' }
+  | { kind: 'gone' }
+  | { kind: 'conflict' }
+  /** Kept, so the toast blames the connection only when it was the connection. */
+  | { kind: 'failed'; cause: unknown };
 
 /**
  * Puts the item back where it came from, but only if nothing touched it
@@ -92,17 +98,19 @@ export async function attemptUndo(
       containerId: move.from,
       expectedUpdatedAt: move.updatedAt,
     });
-    return restored ? 'undone' : 'gone';
+    return restored ? { kind: 'undone' } : { kind: 'gone' };
   } catch (cause) {
-    return cause instanceof ConflictError ? 'conflict' : 'failed';
+    return cause instanceof ConflictError ? { kind: 'conflict' } : { kind: 'failed', cause };
   }
 }
 
 /** What an Undo that did not happen says, in an error toast. */
-export function undoFailedMessage(outcome: Exclude<UndoOutcome, 'undone'>): string {
-  if (outcome === 'gone') return strings.move.undoGone;
-  if (outcome === 'conflict') return strings.move.undoConflict;
-  return strings.move.undoFailed;
+export function undoFailedMessage(outcome: Exclude<UndoOutcome, { kind: 'undone' }>): string {
+  if (outcome.kind === 'gone') return strings.move.undoGone;
+  if (outcome.kind === 'conflict') return strings.move.undoConflict;
+  return describeError(outcome.cause, 'move', 'item').kind === 'offline'
+    ? strings.move.undoFailed
+    : strings.move.undoFailedOther;
 }
 
 /** A container as a toast names it: its name, or the code on its label. */
@@ -114,10 +122,11 @@ export function containerLabel(place: { name: string | null; shortCode: string }
  * The toast after a move.
  *
  * Out of the drop zone it is filing, so it says "Filed in". In a filing run
- * the item screen goes straight on to the next waiting item, so the toast
- * says so; after the last one the run ends on the Drop zone tab, and the
- * toast says that instead (rather than a second toast pushing this one, and
- * its Undo, off the screen).
+ * the item screen goes straight on to the next waiting item, which the screen
+ * itself shows. After the last one the run ends on the Drop zone tab, and the
+ * toast says so (rather than a second toast pushing this one, and its Undo,
+ * off the screen). `moreWaiting` is `null` when the drop zone could not be
+ * read, and then the toast promises neither.
  */
 export function movedMessage({
   fromDropZone,
@@ -128,15 +137,41 @@ export function movedMessage({
 }: {
   fromDropZone: boolean;
   filing: boolean;
-  moreWaiting: boolean;
+  moreWaiting: boolean | null;
   container: string;
   space: string;
 }): string {
   if (!fromDropZone) return strings.move.movedTo(container, space);
-  if (!filing) return strings.move.filedIn(container, space);
-  return moreWaiting
-    ? strings.move.filedNext(container, space)
-    : strings.move.filedLast(container, space);
+  return filing && moreWaiting === false
+    ? strings.move.filedLast(container, space)
+    : strings.move.filedIn(container, space);
+}
+
+/**
+ * What the move sheet hands back to a filing run: the move, plus the drop
+ * zone's ids as read right after it. Absent when that read failed.
+ */
+export interface RunMoveResult extends MoveResult {
+  waiting?: string[];
+}
+
+/**
+ * After a filing step, the drop zone read once, right after the move: the
+ * toast's "Everything is filed." and the item screen's next step both come
+ * from this one read, so they cannot disagree when an item lands in the drop
+ * zone (or is filed elsewhere) in between. `moreWaiting` is `null` and
+ * `waiting` absent when the read failed.
+ */
+export async function afterFiling(
+  items: { listUnsorted(): Promise<readonly { id: string }[]> },
+  itemId: string,
+): Promise<{ waiting?: string[]; moreWaiting: boolean | null }> {
+  try {
+    const waiting = (await items.listUnsorted()).map((entry) => entry.id);
+    return { waiting, moreWaiting: waiting.some((id) => id !== itemId) };
+  } catch {
+    return { moreWaiting: null };
+  }
 }
 
 /** The picker notice when another phone moved the item first. */
@@ -180,13 +215,4 @@ export function nextInRun(
     if (id !== undefined && left.has(id)) return id;
   }
   return waiting.find((id) => left.has(id)) ?? null;
-}
-
-/** "2 of 5 waiting": where this item stands in the drop zone, or null if it is not in it. */
-export function runPosition(
-  waiting: readonly string[],
-  id: string,
-): { index: number; total: number } | null {
-  const at = waiting.indexOf(id);
-  return at < 0 ? null : { index: at + 1, total: waiting.length };
 }

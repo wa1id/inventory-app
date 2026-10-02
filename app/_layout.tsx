@@ -28,7 +28,7 @@ import { IconButton } from '@/ui/components/IconButton';
 import { OverlayHost } from '@/ui/components/Toast';
 import { useReducedMotion } from '@/ui/motion';
 import { MIN_TOUCH_TARGET, space, useTheme, type ThemeColors } from '@/ui/theme';
-import { FONT_FAMILY, textStyle } from '@/ui/typography';
+import { NAVIGATION_FONTS, textStyle } from '@/ui/typography';
 
 /**
  * A deep link opened from cold (a QR label read by the iPhone Camera) gets
@@ -50,14 +50,7 @@ function navigationTheme(colors: ThemeColors, isDark: boolean, fontsReady: boole
       border: colors.rule,
       notification: colors.tape,
     },
-    fonts: fontsReady
-      ? {
-          regular: { fontFamily: FONT_FAMILY[400], fontWeight: 'normal' },
-          medium: { fontFamily: FONT_FAMILY[500], fontWeight: 'normal' },
-          bold: { fontFamily: FONT_FAMILY[700], fontWeight: 'normal' },
-          heavy: { fontFamily: FONT_FAMILY[800], fontWeight: 'normal' },
-        }
-      : base.fonts,
+    fonts: fontsReady ? NAVIGATION_FONTS : base.fonts,
   };
 }
 
@@ -106,7 +99,7 @@ const fullScreen: NativeStackNavigationOptions = {
  * onboarding having been seen or not, and the household session having come
  * back from secure storage. Screens below this point can assume all three;
  * before the session is known, a paired phone would otherwise query its local
- * copy first and flash the wrong inventory (B1). Fonts are never waited for.
+ * copy first and flash the wrong inventory. Fonts are never waited for.
  */
 function RootNavigator() {
   const { state, retry } = useDatabase();
@@ -151,7 +144,7 @@ function RootNavigator() {
       <SafeAreaView style={[styles.fill, { backgroundColor: colors.plaster }]}>
         <ErrorState
           title={strings.boot.failedTitle}
-          message={strings.boot.failedBody}
+          body={strings.boot.failedBody}
           onRetry={retry}
         />
       </SafeAreaView>

@@ -21,9 +21,10 @@ export interface SettingsRowProps {
 
 /**
  * A settings line: label and current value. The value is part of the spoken
- * label, so a screen reader hears what a row is set to before opening it
- * (UX-17). At large text the value moves under the label instead of
- * squeezing it.
+ * label, so a screen reader hears what a row is set to before opening it.
+ * On a row that opens something, the value sits under the label, so
+ * the label never wraps beside it; a static fact (Version) keeps its value at
+ * the end, except at large text.
  */
 export function SettingsRow({
   icon,
@@ -37,12 +38,13 @@ export function SettingsRow({
   const { colors } = useTheme();
   const { stacked } = useLayoutScale();
   const toggles = expanded !== undefined;
+  const valueBelow = stacked || (Boolean(onPress) && !toggles);
 
   const valueText = value ? (
     <AppText
       variant="meta"
       tone={tone === 'signal' ? 'signal' : 'graphite'}
-      style={stacked ? null : styles.valueAside}
+      style={valueBelow ? null : styles.valueAside}
     >
       {value}
     </AppText>
@@ -54,7 +56,7 @@ export function SettingsRow({
       leading={icon ? <Icon name={icon} size={20} color={colors.graphite} /> : null}
       aside={
         <>
-          {stacked ? null : valueText}
+          {valueBelow ? null : valueText}
           {onPress && toggles ? (
             <View style={expanded ? styles.flipped : null}>
               <Icon name="chevronDown" size={20} color={colors.graphite} />
@@ -69,7 +71,7 @@ export function SettingsRow({
       testID={testID}
     >
       <AppText variant="name">{label}</AppText>
-      {stacked ? valueText : null}
+      {valueBelow ? valueText : null}
     </Row>
   );
 }

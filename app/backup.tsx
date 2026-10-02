@@ -38,9 +38,9 @@ import { GUTTER, radius, space, useTheme } from '@/ui/theme';
  * turn it on or restore; write the code down; see that it is on.
  *
  * Fixes from the research: a failed backup is said plainly with "Try again"
- * instead of "Last backup: in progress…" (B5); restoring asks before it
- * replaces what is on this phone (B7); a restore that fails leaves backup off
- * rather than adopting the code (B6, in `SyncProvider`). The code can be
+ * instead of "Last backup: in progress…"; restoring asks before it
+ * replaces what is on this phone; a restore that fails leaves backup off
+ * rather than adopting the code (in `SyncProvider`). The code can be
  * shared to Notes or a password manager, since there is no clipboard module.
  */
 export default function BackupScreen() {
@@ -52,7 +52,7 @@ export default function BackupScreen() {
   // A restore adopts the code before downloading, so the status carries an
   // account while it runs. The restore form stays up meanwhile: switching to
   // "Backup is on" would unmount it, losing the typed code and the reason a
-  // failed restore gives (the provider turns backup back off, B6).
+  // failed restore gives (the provider turns backup back off).
   const [restoring, setRestoring] = useState(false);
 
   const account = 'account' in status ? status.account : null;
@@ -333,7 +333,7 @@ function BackupOn({
   return (
     <>
       {status.state === 'error' ? (
-        // Above the card, never "in progress…" for a failure (B5). A failed
+        // Above the card, never "in progress…" for a failure. A failed
         // "Back up now" lands here too, through the provider's status.
         <Banner
           tone="warning"

@@ -116,7 +116,7 @@ describe('reviewStatus', () => {
     expect(reviewStatusText('pending', summary)).toBe('Saving 2 more…');
   });
 
-  it('stops promising once the set has gone quiet (capture §13.4)', () => {
+  it('stops promising once the set has gone quiet', () => {
     const summary = { saved: 1, named: 1, unnamed: 0, pending: 2 };
     expect(reviewStatus(summary, true)).toBe('maybeLost');
     expect(reviewStatusText('maybeLost', summary)).toBe('Some photos may not have been saved.');
@@ -146,12 +146,28 @@ describe('review title and toast', () => {
   });
 
   it('says where the set went', () => {
-    expect(reviewTitle(4, DROP_ZONE_CONTAINER_ID, null)).toBe('4 items saved to the drop zone');
-    expect(reviewTitle(1, 'c1', 'Tool chest')).toBe('1 item saved to Tool chest');
+    const four = { saved: 4, named: 3, unnamed: 1, pending: 0 };
+    expect(reviewTitle(four, 'toName', DROP_ZONE_CONTAINER_ID, null)).toBe(
+      '4 saved to the drop zone',
+    );
+    const one = { saved: 1, named: 1, unnamed: 0, pending: 0 };
+    expect(reviewTitle(one, 'allNamed', 'c1', 'Tool chest')).toBe('1 saved to Tool chest');
+  });
+
+  it('says what is happening, never "0 saved", until the first row lands', () => {
+    const none = { saved: 0, named: 0, unnamed: 0, pending: 2 };
+    expect(reviewTitle(none, 'pending', DROP_ZONE_CONTAINER_ID, null)).toBe('Saving 2 photos…');
+    expect(reviewTitle({ ...none, pending: 1 }, 'pending', 'c1', null)).toBe('Saving 1 photo…');
+    expect(reviewStatusText('pending', none)).toBe('They appear here as they are saved.');
+    const some = { saved: 1, named: 1, unnamed: 0, pending: 1 };
+    expect(reviewTitle(some, 'pending', DROP_ZONE_CONTAINER_ID, null)).toBe(
+      '1 saved to the drop zone',
+    );
   });
 
   it('never says "the drop zone" for a container whose rows have not landed yet', () => {
-    expect(reviewTitle(0, 'c1', null)).toBeNull();
+    const none = { saved: 0, named: 0, unnamed: 0, pending: 0 };
+    expect(reviewTitle(none, 'allNamed', 'c1', null)).toBeNull();
     expect(reviewDoneToast(2, 'c1', null)).toBeNull();
   });
 

@@ -77,8 +77,11 @@ export function SegmentedControl<T extends string>({
             ]}
           >
             {option.icon ? <Icon name={option.icon} size={20} color={ink} /> : null}
+            {/* One size either way, so labels do not jump when the choice changes;
+                the fill and the weight mark it. */}
             <AppText
-              variant={selected ? 'name' : 'label'}
+              variant="label"
+              weight={selected ? 700 : 600}
               tone={onCamera ? 'camera' : selected ? 'ink' : 'graphite'}
               numberOfLines={1}
               style={styles.segmentText}

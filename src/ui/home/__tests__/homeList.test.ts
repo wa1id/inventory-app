@@ -234,17 +234,28 @@ describe('resultEntries', () => {
       ]),
       false,
     );
-    expect(kinds(entries)).toEqual(['summary', 'title', 'totals', 'item', 'item']);
-    expect(entries[2]).toMatchObject({
+    expect(kinds(entries)).toEqual(['title', 'totals', 'item', 'item']);
+    expect(entries[1]).toMatchObject({
       totals: [{ name: 'AA batteries', quantity: 14, places: 2 }],
     });
   });
 
   it('starts with the first section that has anything', () => {
-    const entries = resultEntries(results([], [place('box')]), false);
-    expect(kinds(entries)).toEqual(['summary', 'title', 'place']);
+    const entries = resultEntries(results([hit('a', 'location')], [place('box')]), false);
+    expect(kinds(entries)).toEqual(['summary', 'title', 'place', 'title', 'item']);
     expect(entries[1]).toMatchObject({ title: 'Spaces and containers', first: true });
-    expect(entries[0]).toMatchObject({ text: '1 place found' });
+    expect(entries[0]).toMatchObject({ text: '1 item and 1 place found' });
+  });
+
+  it('leaves the summary to the section title when there is one section', () => {
+    expect(kinds(resultEntries(results([hit('a'), hit('b')]), false))).toEqual([
+      'title',
+      'item',
+      'item',
+    ]);
+    const entries = resultEntries(results([], [place('box')]), false);
+    expect(kinds(entries)).toEqual(['title', 'place']);
+    expect(entries[0]).toMatchObject({ title: 'Spaces and containers', count: 1, first: true });
   });
 
   it('says nothing was found as a status, not an empty list', () => {
@@ -255,6 +266,10 @@ describe('resultEntries', () => {
 
   it('keeps the results under the stale-data notice when a refresh failed', () => {
     expect(kinds(resultEntries(results([hit('a')]), true)).slice(0, 2)).toEqual([
+      'refreshFailed',
+      'title',
+    ]);
+    expect(kinds(resultEntries(results([hit('a')], [place('box')]), true)).slice(0, 2)).toEqual([
       'refreshFailed',
       'summary',
     ]);

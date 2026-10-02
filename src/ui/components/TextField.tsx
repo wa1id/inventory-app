@@ -1,5 +1,13 @@
-import { useId, useState, type ReactNode, type RefObject } from 'react';
-import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
+import { useEffect, useId, useState, type ReactNode, type RefObject } from 'react';
+import {
+  AccessibilityInfo,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type TextInputProps,
+} from 'react-native';
 
 import { strings } from '@/i18n/strings';
 import { AppText, useTextStyle } from '@/ui/components/AppText';
@@ -17,6 +25,13 @@ export interface TextFieldProps extends Omit<TextInputProps, 'style'> {
   /** Appends "(optional)" to the label. */
   optional?: boolean;
   multiline?: boolean;
+  /**
+   * With `multiline`: one line tall to start, growing with the text (a code
+   * that wraps at its hyphens), instead of a 120 pt box for notes.
+   */
+  grow?: boolean;
+  /** At the end of the label row, in caption type (a code's "12 of 26 characters"). */
+  counter?: string;
   /** A control inside the field, at its end (the Add sheet's camera button). */
   trailing?: ReactNode;
   inputRef?: RefObject<TextInput | null>;
@@ -44,6 +59,8 @@ export function TextField({
   required = false,
   optional = false,
   multiline = false,
+  grow = false,
+  counter,
   trailing,
   inputRef,
   nextRef,
@@ -59,6 +76,7 @@ export function TextField({
   const textStyle = useTextStyle(textVariant);
   const [focused, setFocused] = useState(false);
   const thick = focused || Boolean(error);
+  const box = multiline && !grow;
   const spokenLabel = [
     accessibilityLabel ?? label,
     required ? strings.forms.required : null,
@@ -67,19 +85,37 @@ export function TextField({
     .filter(Boolean)
     .join(', ');
 
+  // VoiceOver does not read live regions (Android keeps the polite one below).
+  // Queued: two fields can fail at once, and the screen may have just moved
+  // focus to the field, which VoiceOver is reading.
+  useEffect(() => {
+    if (Platform.OS === 'ios' && error) {
+      AccessibilityInfo.announceForAccessibilityWithOptions(strings.forms.errorA11y(error), {
+        queue: true,
+      });
+    }
+  }, [error]);
+
   return (
     <View style={styles.container}>
-      <AppText variant="label" nativeID={`${id}-label`}>
-        {label}
-        {optional ? (
-          <Text style={{ color: colors.graphite }}>{` ${strings.forms.optional}`}</Text>
+      <View style={styles.labelRow}>
+        <AppText variant="label" nativeID={`${id}-label`} style={styles.label}>
+          {label}
+          {optional ? (
+            <Text style={{ color: colors.graphite }}>{` ${strings.forms.optional}`}</Text>
+          ) : null}
+        </AppText>
+        {counter ? (
+          <AppText variant="caption" tone="graphite" style={styles.counter}>
+            {counter}
+          </AppText>
         ) : null}
-      </AppText>
+      </View>
       <View
         style={[
           styles.box,
           {
-            minHeight: multiline ? 120 : 52,
+            minHeight: box ? 120 : 52,
             backgroundColor: colors.sheet,
             borderColor: error ? colors.signal : focused ? colors.ink : colors.control,
             borderWidth: thick ? 2 : 1,
@@ -116,7 +152,7 @@ export function TextField({
             styles.input,
             {
               color: colors.ink,
-              textAlignVertical: multiline ? 'top' : 'center',
+              textAlignVertical: box ? 'top' : 'center',
               paddingVertical: thick ? 12 : 13,
             },
           ]}
@@ -142,6 +178,19 @@ export function TextField({
 const styles = StyleSheet.create({
   container: {
     gap: 6,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    columnGap: space.sm,
+  },
+  label: {
+    flexShrink: 1,
+  },
+  counter: {
+    fontVariant: ['tabular-nums'],
   },
   box: {
     flexDirection: 'row',

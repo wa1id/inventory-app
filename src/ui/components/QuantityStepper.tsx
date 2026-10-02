@@ -36,6 +36,18 @@ const GEOMETRY = {
   large: { cell: 56, number: 80, numberWide: 80, icon: 24 },
 } as const;
 
+/**
+ * TalkBack's three separate elements do not say the new count after a step
+ * (VoiceOver's adjustable element does), and the number cannot be a live
+ * region, because it is typed into.
+ */
+function announceCount(count: number) {
+  if (Platform.OS !== 'android') return;
+  AccessibilityInfo.announceForAccessibility(
+    count <= MIN_QUANTITY ? strings.rows.noneLeft : String(count),
+  );
+}
+
 /** A tabular digit is a little under 0.62 em wide in Atkinson and the system fonts. */
 const DIGIT_EM = 0.62;
 
@@ -78,10 +90,6 @@ export interface QuantityStepperProps {
    * steppers, which would write every keystroke through.
    */
   commitWhileTyping?: boolean;
-  /** @deprecated Use `size="compact"`. */
-  compact?: boolean;
-  /** @deprecated Ignored; the field label belongs to the form around the stepper. */
-  label?: string;
 }
 
 function StepButton({
@@ -158,17 +166,15 @@ function StepButton({
 export function QuantityStepper({
   value,
   onChange,
-  size,
+  size: kind = 'large',
   itemName,
   error,
   disabled = false,
   testIDSuffix,
   commitWhileTyping = false,
-  compact,
 }: QuantityStepperProps) {
   const { colors } = useTheme();
   const { stacked, fontScale } = useLayoutScale();
-  const kind = size ?? (compact ? 'compact' : 'large');
   const large = kind === 'large';
   const geometry = GEOMETRY[kind];
   const numberStyle = useTextStyle(large ? 'stepperL' : 'stepper');
@@ -177,6 +183,8 @@ export function QuantityStepper({
   const inputRef = useRef<TextInput>(null);
   const repeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const repeatCountRef = useRef(0);
+  /** A hold has stepped; its release says the count once. */
+  const repeatedRef = useRef(false);
   const [draft, setDraft] = useState<string | null>(null);
 
   useEffect(() => {
@@ -205,13 +213,14 @@ export function QuantityStepper({
     return next;
   }
 
-  function bump(delta: number, repeating = false) {
-    if (disabled) return;
+  /** The stepped count, or null when nothing changed (disabled, or at a bound). */
+  function bump(delta: number, repeating = false): number | null {
+    if (disabled) return null;
     const base = commitDraft();
     const next = stepQuantity(base, delta);
     if (next === base) {
       stopRepeat();
-      return;
+      return null;
     }
     valueRef.current = next;
     onChange(next);
@@ -220,13 +229,28 @@ export function QuantityStepper({
     } else if (!repeating || ++repeatCountRef.current % REPEAT_HAPTIC_EVERY === 0) {
       haptics.step();
     }
+    return next;
+  }
+
+  function step(delta: number) {
+    const next = bump(delta);
+    if (next !== null) announceCount(next);
   }
 
   function startRepeat(delta: number) {
     bump(delta);
     stopRepeat();
     repeatCountRef.current = 0;
+    repeatedRef.current = true;
     repeatRef.current = setInterval(() => bump(delta, true), delay.stepRepeatEvery);
+  }
+
+  /** Release: stop repeating, and after a hold say where it ended (not every 80 ms step). */
+  function endRepeat() {
+    stopRepeat();
+    if (!repeatedRef.current) return;
+    repeatedRef.current = false;
+    announceCount(valueRef.current);
   }
 
   function commitTyped() {
@@ -305,9 +329,9 @@ export function QuantityStepper({
           disabled={minusDisabled}
           itemName={itemName}
           testID={`quantity-decrease${suffix}`}
-          onStep={() => bump(-1)}
+          onStep={() => step(-1)}
           onRepeat={() => startRepeat(-1)}
-          onStop={stopRepeat}
+          onStop={endRepeat}
         />
         <TextInput
           ref={inputRef}
@@ -352,9 +376,9 @@ export function QuantityStepper({
           disabled={plusDisabled}
           itemName={itemName}
           testID={`quantity-increase${suffix}`}
-          onStep={() => bump(1)}
+          onStep={() => step(1)}
           onRepeat={() => startRepeat(1)}
-          onStop={stopRepeat}
+          onStop={endRepeat}
         />
       </View>
       {large && error ? (

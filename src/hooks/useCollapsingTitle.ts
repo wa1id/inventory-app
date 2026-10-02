@@ -7,7 +7,7 @@ import { useNavigation } from 'expo-router';
  * empty until that title has scrolled up under it, then shows it small.
  *
  * Without this, every detail screen showed its name twice: once in the header
- * and once in the content (entities §16.E). Attach `onTitleLayout` to the
+ * and once in the content. Attach `onTitleLayout` to the
  * in-content title's outermost wrapper inside the scroll content, and
  * `onScroll` to the list. The header only changes when the title crosses the
  * header edge, never on every scroll event.

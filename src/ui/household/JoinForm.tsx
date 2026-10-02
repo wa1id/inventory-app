@@ -58,14 +58,14 @@ export interface JoinFormProps {
 /**
  * Joining the household: the household code, a name for this phone and
  * "Join household". Shared by Settings › Household and onboarding, so a new
- * phone and a phone that skipped the intro join the same way (§5.21, flow 6.8).
+ * phone and a phone that skipped the intro join the same way.
  *
  * The code field forgives small letters, missing hyphens and the look-alikes
  * I, L and O; the code and name are checked on press, not while typing.
  * Whatever went wrong keeps both fields as typed. The import offer is decided
  * *before* pairing (`snapshotBeforeJoin`), because once joined every household
  * write is mirrored into the local database and counting afterwards would
- * offer to copy the household's own data back into it (spec R19).
+ * offer to copy the household's own data back into it.
  */
 export function JoinForm({ header, onJoined, keyboardVerticalOffset }: JoinFormProps) {
   const { state, invalidate } = useDatabase();

@@ -40,8 +40,11 @@ export interface JoinErrors {
 export function validateJoin(normalisedCode: string, name: string): JoinErrors {
   const errors: JoinErrors = {};
   const problem = codeProblem(normalisedCode);
-  if (problem?.kind === 'chars') errors.code = strings.join.badChars(problem.chars);
-  if (problem?.kind === 'length') errors.code = strings.join.wrongLength(problem.count);
+  // Nothing typed is not "this one has 0": the error replaces the hint, so it
+  // says again where the code comes from.
+  if (normalisedCode === '') errors.code = strings.join.codeRequired;
+  else if (problem?.kind === 'chars') errors.code = strings.join.badChars(problem.chars);
+  else if (problem?.kind === 'length') errors.code = strings.join.wrongLength(problem.count);
   if (name.trim() === '') errors.name = strings.join.nameRequired;
   return errors;
 }

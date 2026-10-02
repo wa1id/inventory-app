@@ -92,6 +92,8 @@ export function useSavedQuantity(
             pendingRef.current = null;
             setQuantityState(confirmedRef.current.quantity);
             fail('gone');
+            // The screen re-reads: an item screen shows that it is gone, a list drops the row.
+            invalidate();
             break;
           }
           confirmedRef.current = {
@@ -109,7 +111,9 @@ export function useSavedQuantity(
               const fresh = await repos.items.getById(item.id);
               if (!fresh) {
                 pendingRef.current = null;
+                setQuantityState(confirmedRef.current.quantity);
                 fail('gone');
+                invalidate();
                 break;
               }
               confirmedRef.current = { quantity: fresh.quantity, updatedAt: fresh.updatedAt };
@@ -128,6 +132,7 @@ export function useSavedQuantity(
           // Cloudflare (502, 520–530) also says "check the connection".
           const { kind } = describeError(cause, 'quantity', 'item');
           fail(kind === 'offline' ? 'offline' : kind === 'gone' ? 'gone' : 'other');
+          if (kind === 'gone') invalidate();
           haptics.error();
           break;
         }

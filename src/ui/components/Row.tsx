@@ -10,7 +10,8 @@ import {
 import { useLayoutScale } from '@/hooks/useLayoutScale';
 import { Icon } from '@/ui/components/Icon';
 import { PressedOverlay, rippleFor, useFocusRing } from '@/ui/components/PressFeedback';
-import { ROW_GAP, ROW_MIN, ROW_PADDING, space, useTheme } from '@/ui/theme';
+import { MIN_TOUCH_TARGET, ROW_GAP, ROW_MIN, ROW_PADDING, space, useTheme } from '@/ui/theme';
+import { TEXT_VARIANTS } from '@/ui/typography';
 
 export interface RowProps {
   /** Absent for a static row. */
@@ -23,6 +24,13 @@ export interface RowProps {
   chevron?: boolean;
   /** An interactive control, rendered beside the pressable, never inside it. */
   tool?: ReactNode;
+  /**
+   * `center` (default): the control has a column of its own at the end,
+   * centred on the row. `top`: it sits at the end of the first text line, so
+   * the lines under it run the full width; the row reserves no room for it,
+   * so the caller insets its first line by the control's width.
+   */
+  toolAlign?: 'center' | 'top';
   /** Full-width content under the row (the inline stepper). */
   below?: ReactNode;
   selected?: boolean;
@@ -45,8 +53,8 @@ export interface RowProps {
  * The base of every list row.
  *
  * A row that carries a control renders it as a sibling of its pressable area,
- * so a stepper or a "File…" button is never a pressable inside a pressable
- * (B11): screen readers get two clean focus stops, and a tap on the control
+ * so a stepper or a "File…" button is never a pressable inside a pressable:
+ * screen readers get two clean focus stops, and a tap on the control
  * can never also open the row. At large text the control drops to its own
  * line under the text instead of squeezing it.
  */
@@ -57,6 +65,7 @@ export function Row({
   aside,
   chevron = false,
   tool,
+  toolAlign = 'center',
   below,
   selected = false,
   disabled = false,
@@ -71,9 +80,16 @@ export function Row({
   const { stacked } = useLayoutScale();
   const focus = useFocusRing();
   const stackTool = stacked && Boolean(tool);
+  const toolTop = toolAlign === 'top' && Boolean(tool) && !stackTool;
   // Fill the width beside a tool; under a stacked layout, size to the text so
-  // wrapped lines at large text are never cut off.
-  const pressLayout = [styles.press, stackTool ? null : styles.fill, { minHeight }];
+  // wrapped lines at large text are never cut off. Beside a tool column the
+  // tool's own padding ends the row, so the text keeps the difference.
+  const pressLayout = [
+    styles.press,
+    stackTool ? null : styles.fill,
+    tool && !stackTool && !toolTop ? styles.pressBesideTool : null,
+    { minHeight },
+  ];
 
   const content = (
     <>
@@ -126,7 +142,7 @@ export function Row({
           </View>
         )}
         {tool ? (
-          <View style={stackTool ? styles.toolStacked : styles.tool}>
+          <View style={stackTool ? styles.toolStacked : toolTop ? styles.toolTop : styles.tool}>
             {/* Its own box, so a control that holds itself to the start (a
                 Button) still lines up at the end when stacked. */}
             <View>{tool}</View>
@@ -158,6 +174,9 @@ const styles = StyleSheet.create({
   fill: {
     flex: 1,
   },
+  pressBesideTool: {
+    paddingEnd: space.sm,
+  },
   text: {
     flex: 1,
     minWidth: 0,
@@ -166,6 +185,12 @@ const styles = StyleSheet.create({
   tool: {
     justifyContent: 'center',
     paddingEnd: space.md,
+  },
+  // The 48 pt target centred on the first (name) line.
+  toolTop: {
+    position: 'absolute',
+    top: ROW_PADDING.vertical + TEXT_VARIANTS.name.lineHeight / 2 - MIN_TOUCH_TARGET / 2,
+    end: space.md,
   },
   toolStacked: {
     alignItems: 'flex-end',

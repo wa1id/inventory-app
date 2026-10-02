@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { useSpreadGap } from '@/hooks/useSpreadGap';
 import { strings } from '@/i18n/strings';
 import { AppText } from '@/ui/components/AppText';
 import { SpaceTile } from '@/ui/components/SpaceTile';
@@ -21,6 +22,7 @@ export interface EmojiPickerProps {
  * offered too, so a Wardrobe made from a preset can be edited back to its
  * shirt, and a stored icon that is in neither list comes first, selected.
  * Each tile is announced by name ("Toolbox"), not by its emoji description.
+ * The tiles spread to the column's full width.
  */
 export function EmojiPicker({ label, options, value, onChange, color }: EmojiPickerProps) {
   const { colors } = useTheme();
@@ -29,11 +31,17 @@ export function EmojiPicker({ label, options, value, onChange, color }: EmojiPic
     ...SPACE_PRESETS.map((preset) => preset.icon).filter((icon) => !options.includes(icon)),
   ];
   const choices = offered.includes(value) || !value.trim() ? offered : [value, ...offered];
+  const spread = useSpreadGap(MIN_TOUCH_TARGET, space.sm);
 
   return (
     <View style={styles.container}>
       <AppText variant="label">{label}</AppText>
-      <View style={styles.grid} accessibilityRole="radiogroup" accessibilityLabel={label}>
+      <View
+        onLayout={spread.onLayout}
+        style={[styles.grid, { columnGap: spread.columnGap }]}
+        accessibilityRole="radiogroup"
+        accessibilityLabel={label}
+      >
         {choices.map((icon, index) => {
           const selected = icon === value;
           const name = strings.entities.iconNames[icon] ?? strings.entities.currentIcon;
@@ -76,7 +84,7 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: space.sm,
+    rowGap: space.sm,
   },
   target: {
     minWidth: MIN_TOUCH_TARGET,

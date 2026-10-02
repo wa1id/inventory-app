@@ -30,7 +30,7 @@ import { MIN_TOUCH_TARGET, camera, radius, space, useTheme } from '@/ui/theme';
  * All of it is white on translucent dark chips (`camera` tokens), readable
  * over any scene in either colour scheme. None of it touches the camera: the
  * preview, the tap-to-focus layer and the shutter mechanics stay in
- * `app/capture/index.tsx`, untouched (capture §9). Decorative pieces never
+ * `app/capture/index.tsx`, untouched. Decorative pieces never
  * take touches, so a tap anywhere else still reaches the focus layer.
  */
 

@@ -32,7 +32,7 @@ function goneTitle(subject: ErrorSubject): string {
 /**
  * Plain words for anything a read or write can fail with.
  *
- * Raw codes and `Error.message` never reach the screen (B8): the person gets
+ * Raw codes and `Error.message` never reach the screen: the person gets
  * what happened, what to do next and what is still safe; the cause itself is
  * for `logError`. A `null` result counts as gone, because a record deleted on
  * another phone comes back as `null` rather than an error. Pure, so it is

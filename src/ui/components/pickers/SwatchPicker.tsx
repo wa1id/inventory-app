@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { useSpreadGap } from '@/hooks/useSpreadGap';
 import { strings } from '@/i18n/strings';
 import { safeColor } from '@/ui/color';
 import { AppText } from '@/ui/components/AppText';
@@ -19,22 +20,29 @@ function sameColor(a: string, b: string): boolean {
 }
 
 /**
- * A space's colour. Every swatch is announced by name ("Amber, selected")
- * rather than "Colour 5", and the check on the selected one uses `onColor`,
- * so it reads on every palette entry (the old white check on amber was
- * 2.15:1). A stored colour outside the palette, from an older build or the
- * desk, comes first as the selected "Current colour", so editing a space never
- * silently changes it.
+ * A space's colour. Every swatch is announced by name ("Amber"; the radio
+ * state adds "selected") rather than "Colour 5", and the check on the
+ * selected one uses `onColor`, so it reads on every palette entry (the old
+ * white check on amber was 2.15:1). A stored colour outside the palette, from
+ * an older build or the desk, comes first as the selected "Current colour",
+ * so editing a space never silently changes it. The swatches spread to the
+ * column's full width.
  */
 export function SwatchPicker({ label, colors: palette, value, onChange }: SwatchPickerProps) {
   const { colors } = useTheme();
   const listed = palette.some((swatch) => sameColor(swatch, value));
   const swatches = listed ? palette : [value, ...palette];
+  const spread = useSpreadGap(MIN_TOUCH_TARGET, space.xs);
 
   return (
     <View style={styles.container}>
       <AppText variant="label">{label}</AppText>
-      <View style={styles.row} accessibilityRole="radiogroup" accessibilityLabel={label}>
+      <View
+        onLayout={spread.onLayout}
+        style={[styles.row, { columnGap: spread.columnGap }]}
+        accessibilityRole="radiogroup"
+        accessibilityLabel={label}
+      >
         {swatches.map((swatch, index) => {
           const selected = listed ? sameColor(swatch, value) : index === 0;
           const fill = safeColor(swatch);
@@ -52,7 +60,7 @@ export function SwatchPicker({ label, colors: palette, value, onChange }: Swatch
               }}
               accessibilityRole="radio"
               accessibilityState={{ selected }}
-              accessibilityLabel={selected ? `${name}, selected` : name}
+              accessibilityLabel={name}
               testID={`space-colour-${fill}`}
               style={styles.target}
             >
@@ -86,7 +94,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: space.xs,
+    rowGap: space.xs,
   },
   target: {
     width: MIN_TOUCH_TARGET,

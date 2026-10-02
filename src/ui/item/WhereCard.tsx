@@ -23,7 +23,7 @@ export interface WhereCardProps {
 
 /**
  * "Kept in": the answer to "where is it?", and the largest text on the item
- * screen (spec §5.10; `111b579`, "the answer was its smallest text").
+ * screen (`111b579`, "the answer was its smallest text").
  *
  * The space and the container are each a link, so either level is one tap
  * away; the card itself is not pressable. The label code is the tape on the
@@ -45,16 +45,14 @@ export function WhereCard({ place, name, onMove, actionRef }: WhereCardProps) {
         <AppText variant="factLabel" tone="graphite">
           {strings.where.keptIn}
         </AppText>
-        <View>
-          <LocationLine place={place} size="card" linked />
+        <LocationLine place={place} size="card" linked />
+        <View style={styles.footer}>
           {inDropZone ? (
-            <AppText variant="meta" tone="graphite">
+            // In the tape's place, so "File it…" does not sit alone in an empty row.
+            <AppText variant="meta" tone="graphite" style={styles.note}>
               {strings.where.notFiledNote}
             </AppText>
-          ) : null}
-        </View>
-        <View style={styles.footer}>
-          {inDropZone ? null : (
+          ) : (
             // Tape holds itself to the start of its line; the wrapper centres it in the row.
             <View>
               <Tape code={place.containerShortCode} size="m" spoken />
@@ -95,8 +93,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space.md,
   },
+  note: {
+    flexShrink: 1,
+  },
   action: {
-    // The button sits at the end of the row, after the tape, or alone.
+    // The button sits at the end of the row, after the tape or the note.
     marginStart: 'auto',
     alignSelf: 'center',
   },

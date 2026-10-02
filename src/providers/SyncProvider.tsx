@@ -173,7 +173,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       // Holds off the automatic pass that adopting the account would start:
       // until the download has landed, it would back up what is on this phone
       // now under the code being restored, and a pass still running after a
-      // failure would put the account straight back (B6).
+      // failure would put the account straight back.
       running.current = true;
       try {
         setAccount(adopted);
@@ -184,7 +184,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
 
         if (result.status === 'failed') {
           // Restore is only offered while backup is off, so a code that did
-          // not restore must not become this phone's backup account (B6): it
+          // not restore must not become this phone's backup account: it
           // used to stay adopted, and the screen claimed backup was on under
           // a code with nothing behind it.
           await forgetAccount();

@@ -22,7 +22,7 @@ import { IconButton } from '@/ui/components/IconButton';
 import { ItemRow } from '@/ui/components/ItemRow';
 import { PressedOverlay, rippleFor, useFocusRing } from '@/ui/components/PressFeedback';
 import { ScreenFrame } from '@/ui/components/ScreenFrame';
-import { Section, SheetSeparator, sheetCell } from '@/ui/components/Sheet';
+import { Section, GutterSheetSeparator, sheetCell } from '@/ui/components/Sheet';
 import { Skeleton } from '@/ui/components/Skeleton';
 import { SpacePip } from '@/ui/components/SpacePip';
 import { Tape } from '@/ui/components/Tape';
@@ -35,7 +35,7 @@ import { GUTTER, MIN_TOUCH_TARGET, ROW_GAP, TYPE_ICON, space, useTheme } from '@
 
 /** How long a just-added row stays picked out before it starts to fade. */
 const ARRIVAL_HOLD_MS = 600;
-/** The fade itself (spec §5.7). */
+/** The fade itself. */
 const ARRIVAL_FADE_MS = 1200;
 
 /** Stable for the memoised rows: they hand back the item's id. */
@@ -44,9 +44,9 @@ function openItem(itemId: string) {
 }
 
 /**
- * The drop zone is a real container row, but its screen is the Drop zone tab
- * (B4, entities §15.1). An old link goes there, in an effect rather than with
- * `<Redirect>`, which would stack a second tab shell (spec §2.5 rule 2).
+ * The drop zone is a real container row, but its screen is the Drop zone tab.
+ * An old link goes there, in an effect rather than with
+ * `<Redirect>`, which would stack a second tab shell.
  */
 function ToDropZone() {
   useEffect(() => {
@@ -155,15 +155,6 @@ function ArrivalHighlight({ createdAt }: { createdAt: number }) {
   );
 }
 
-/** The rule between two rows of the sheet, inside the screen gutter. */
-function Separator() {
-  return (
-    <View style={styles.gutter}>
-      <SheetSeparator />
-    </View>
-  );
-}
-
 export default function ContainerScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   if (id === DROP_ZONE_CONTAINER_ID) return <ToDropZone />;
@@ -178,7 +169,7 @@ export default function ContainerScreen() {
  * and what is in it reads by name with a stepper on every row. Nothing shows
  * until both the container and its contents have been read, so it never
  * flashes "empty" on the way, and a failed read of the contents is said as
- * such rather than as an empty box (entities §15.3).
+ * such rather than as an empty box.
  */
 function ContainerDetail({ id }: { id: string }) {
   const repos = useRepositories();
@@ -222,7 +213,7 @@ function ContainerDetail({ id }: { id: string }) {
     router.push({ pathname: '/item/new', params: { containerId: id } });
   }
   function takePhoto() {
-    // A container is a single-item entry point (capture §10.2).
+    // A container is a single-item entry point.
     router.push({ pathname: '/capture', params: { containerId: id } });
   }
 
@@ -293,9 +284,8 @@ function ContainerDetail({ id }: { id: string }) {
         {title}
       </AppText>
       <AppText variant="meta" tone="graphite" style={styles.sub}>
-        {place
-          ? strings.container.sub(typeName, place.name, count)
-          : strings.container.subPlain(typeName, count)}
+        {/* Empty: just the type, as "This bin is empty" below says the rest. */}
+        {items !== null && items.length === 0 ? typeName : strings.container.sub(typeName, count)}
       </AppText>
       <View style={[styles.codeRow, stacked ? styles.codeRowStacked : null]}>
         <View
@@ -396,7 +386,7 @@ function ContainerDetail({ id }: { id: string }) {
             <ItemRow item={item} line="detail" tool="stepper" onPress={openItem} />
           </View>
         )}
-        ItemSeparatorComponent={Separator}
+        ItemSeparatorComponent={GutterSheetSeparator}
         ListHeaderComponent={head}
         ListEmptyComponent={empty}
         onScroll={onScroll}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { router } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 
 import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
 import type { ItemWithContext } from '@/db/types';
@@ -12,6 +12,7 @@ import type { PickedPlace } from '@/ui/components/PlacePicker';
 import { describeError } from '@/ui/errors';
 import { haptics } from '@/ui/haptics';
 import {
+  afterFiling,
   attemptMove,
   attemptUndo,
   containerLabel,
@@ -19,6 +20,7 @@ import {
   movedElsewhereMessage,
   movedMessage,
   undoFailedMessage,
+  type RunMoveResult,
 } from '@/ui/item/moveFlow';
 import type { MoveResult } from '@/ui/navigation';
 import { abandonResult, deliverResult } from '@/ui/routeResult';
@@ -26,12 +28,13 @@ import { abandonResult, deliverResult } from '@/ui/routeResult';
 export interface UseMoveOptions {
   /** The item as the screen last read it; `null` while loading or once it is gone. */
   item: ItemWithContext | null;
-  /** The opener's `routeResult` request, answered with a `MoveResult`. */
+  /**
+   * The opener's `routeResult` request, answered with a `MoveResult` (in a
+   * filing run, a `RunMoveResult`).
+   */
   request?: string;
   /** Part of a filing run from the item screen (`filing=1`). */
   filing: boolean;
-  /** In a filing run: whether anything besides this item waits in the drop zone. */
-  moreWaiting: boolean;
 }
 
 /** Why the last pick did not move anything. */
@@ -62,14 +65,15 @@ function newer(a: ItemWithContext | null, b: ItemWithContext | null): ItemWithCo
  * A pick writes with the item's lock. Success closes the sheet, hands the
  * opener a `MoveResult` and says where it went in a toast with Undo, so the
  * person stays where they were instead of being sent into the destination
- * container (UX-4). A failure keeps the sheet open with a notice and writes
+ * container. A failure keeps the sheet open with a notice and writes
  * nothing more: an item deleted elsewhere is said to be gone (the household
  * answers `null`, which used to read as success), and an item another phone
  * moved first shows where it is now, with "Here now" following it.
  */
-export function useMove({ item, request, filing, moreWaiting }: UseMoveOptions): MoveState {
+export function useMove({ item, request, filing }: UseMoveOptions): MoveState {
   const repos = useRepositories();
   const { invalidate } = useDatabase();
+  const navigation = useNavigation();
   const toast = useToast();
   const [reread, setReread] = useState<ItemWithContext | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -85,16 +89,21 @@ export function useMove({ item, request, filing, moreWaiting }: UseMoveOptions):
 
   async function undo(move: MoveResult) {
     const outcome = await attemptUndo(repos.items, move);
-    if (outcome === 'undone') {
+    if (outcome.kind === 'undone') {
       logEvent('item_move_undone');
       invalidate();
       haptics.undo();
       toast.show({ message: strings.move.undone });
       return;
     }
-    if (outcome === 'conflict') haptics.warning();
+    if (outcome.kind === 'conflict') haptics.warning();
     else haptics.error();
-    logError('item_move_undo_failed', { outcome });
+    logError(
+      'item_move_undo_failed',
+      outcome.kind === 'failed'
+        ? { outcome: outcome.kind, errorClass: describeError(outcome.cause, 'move').kind }
+        : { outcome: outcome.kind },
+    );
     toast.show({ message: undoFailedMessage(outcome), tone: 'error' });
     // Whatever stopped it, the screen in front should show where the item really is.
     invalidate();
@@ -114,7 +123,8 @@ export function useMove({ item, request, filing, moreWaiting }: UseMoveOptions):
 
     if (outcome.kind === 'moved') {
       const name = before.name;
-      const move: MoveResult = {
+      const fromDropZone = before.containerId === DROP_ZONE_CONTAINER_ID;
+      const move: RunMoveResult = {
         itemId: before.id,
         from: before.containerId,
         to: target.id,
@@ -123,14 +133,25 @@ export function useMove({ item, request, filing, moreWaiting }: UseMoveOptions):
       logEvent('item_moved');
       haptics.success();
       void rememberPlace(target.id);
+      // A filing step reads the drop zone once, while the spinner still
+      // shows: the toast below and the run's next item both come from it.
+      let moreWaiting: boolean | null = null;
+      if (filing && fromDropZone) {
+        const after = await afterFiling(repos.items, before.id);
+        move.waiting = after.waiting;
+        moreWaiting = after.moreWaiting;
+      }
       deliverResult(request, move);
       // Back first: the closing sheet is no longer focused, so the refresh
       // does not redraw it with the item already "Here now" in its new place.
-      router.back();
+      // Not if it was closed while writing (the header Cancel): going back
+      // then would pop the item screen underneath, or switch the tab bar
+      // from the Drop zone to Home. The toast and its Undo show either way.
+      if (navigation.isFocused()) router.back();
       invalidate();
       toast.show({
         message: movedMessage({
-          fromDropZone: before.containerId === DROP_ZONE_CONTAINER_ID,
+          fromDropZone,
           filing,
           moreWaiting,
           container: containerLabel(target),

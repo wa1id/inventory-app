@@ -73,9 +73,10 @@ export function SearchField({
           backgroundColor: colors.sheet,
           borderColor: focused ? colors.ink : colors.control,
           borderWidth: focused ? 2 : 1,
-          // Keep the text still when the border thickens.
+          // Keep the text still when the border thickens. The clear button
+          // brings its own room at the end; without it the text needs some.
           paddingStart: focused ? 13 : 14,
-          paddingEnd: focused ? 1 : 2,
+          paddingEnd: value ? (focused ? 1 : 2) : focused ? 13 : 14,
         },
       ]}
     >
@@ -115,13 +116,17 @@ export function SearchField({
         style={[textStyle, styles.input, { color: colors.ink }]}
       />
       {value ? (
-        <IconButton
-          icon="close"
-          variant="chip"
-          accessibilityLabel={strings.common.clearSearch}
-          onPress={clear}
-          testID="search-clear"
-        />
+        // Takes the chip's height, not its 48 pt target's, so the field does
+        // not grow when the first letter is typed; the target stays 48 pt.
+        <View style={styles.clear}>
+          <IconButton
+            icon="close"
+            variant="chip"
+            accessibilityLabel={strings.common.clearSearch}
+            onPress={clear}
+            testID="search-clear"
+          />
+        </View>
       ) : null}
     </View>
   );
@@ -143,5 +148,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignSelf: 'stretch',
     paddingVertical: 0,
+  },
+  clear: {
+    marginVertical: -8,
   },
 });

@@ -89,10 +89,10 @@ function Panel({ tone, title, message, action }: PanelProps) {
 /**
  * Links a sticker printed earlier to this container: point the camera at it
  * and it is linked, with a question first only when something would stop
- * working (spec §5.19).
+ * working.
  *
  * It replaces the old round trip through the Scan tab with a `bindTo` param,
- * which stacked a second tab shell (engineering P6/F3); this is a camera over
+ * which stacked a second tab shell; this is a camera over
  * the QR screen that closes back to it with a toast.
  */
 export default function LinkStickerScreen() {

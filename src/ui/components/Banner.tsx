@@ -82,7 +82,8 @@ export function Banner({
       <View style={styles.main}>
         <View style={styles.text}>
           {title ? (
-            <AppText variant="name" tone={warning ? 'signal' : 'ink'} weight={700}>
+            // The app's block heading, as on the cards and sections around it.
+            <AppText variant="section" tone={warning ? 'signal' : 'ink'}>
               {title}
             </AppText>
           ) : null}
@@ -143,9 +144,12 @@ const styles = StyleSheet.create({
     columnGap: space.sm,
     rowGap: space.xs,
   },
+  // Wide enough that on a phone the action goes under the message, which
+  // then runs the full width, rather than squeezing it into a narrow column;
+  // on a tablet the action stays beside it.
   text: {
     flexGrow: 1,
-    flexBasis: 180,
+    flexBasis: 260,
     gap: space.xxs,
   },
 });

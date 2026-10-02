@@ -43,8 +43,8 @@ describe('validateJoin', () => {
     expect(validateJoin(normaliseCode('MMWKU'), 'Anna').code).toBe(strings.join.badChars('U'));
   });
 
-  it('treats an empty code as too short, not as valid', () => {
-    expect(validateJoin('', 'Anna').code).toBe(strings.join.wrongLength(0));
+  it('asks for an empty code, saying where it comes from, rather than counting it', () => {
+    expect(validateJoin('', 'Anna').code).toBe(strings.join.codeRequired);
   });
 });
 

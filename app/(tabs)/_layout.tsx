@@ -2,7 +2,6 @@ import { Tabs } from 'expo-router/js-tabs';
 
 import { strings } from '@/i18n/strings';
 import { DropZoneProvider } from '@/providers/DropZoneProvider';
-import { LegacyTabRoot } from '@/ui/components/Screen';
 import { TabBar } from '@/ui/components/TabBar';
 import { useTheme } from '@/ui/theme';
 
@@ -20,7 +19,6 @@ export default function TabsLayout() {
     <DropZoneProvider>
       <Tabs
         tabBar={(props) => <TabBar {...props} />}
-        screenLayout={({ children }) => <LegacyTabRoot>{children}</LegacyTabRoot>}
         screenOptions={{
           headerShown: false,
           sceneStyle: { backgroundColor: colors.plaster },

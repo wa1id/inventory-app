@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 
 import { useDelayedFlag } from '@/hooks/useDelayedFlag';
-import { isIconName, type IconName } from '@/ui/icons/glyphs';
+import type { IconName } from '@/ui/icons/glyphs';
 import { delay } from '@/ui/motion';
 import { AppText, toneColor, type TextTone } from '@/ui/components/AppText';
 import { Icon } from '@/ui/components/Icon';
@@ -19,20 +19,21 @@ import { MIN_TOUCH_TARGET, radius, space, useTheme } from '@/ui/theme';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'quiet' | 'destructive';
 
-/** @deprecated Pre-redesign names: `ghost` is `quiet`, `danger` is `destructive`. */
-type LegacyButtonVariant = 'ghost' | 'danger';
-
 export interface ButtonProps {
   label: string;
   onPress: () => void;
-  variant?: ButtonVariant | LegacyButtonVariant;
+  variant?: ButtonVariant;
   size?: 'md' | 'sm';
-  /**
-   * Leading glyph, decorative. Legacy call sites still pass an emoji string;
-   * anything that is not a glyph name renders nothing until cleanup.
-   */
-  icon?: IconName | (string & {});
+  /** Leading glyph, decorative. */
+  icon?: IconName;
   fullWidth?: boolean;
+  /**
+   * `quiet` and `destructive` only, at the start of a text column (an empty
+   * state, the end of a form): the glyph lines up with the column's edge
+   * instead of sitting a padding further in, and the pressed fill reaches
+   * into the margin.
+   */
+  flush?: boolean;
   disabled?: boolean;
   loading?: boolean;
   /** Defaults to `label`; pass the item-specific form ("Move “Cordless drill”…"). */
@@ -43,12 +44,6 @@ export interface ButtonProps {
   style?: StyleProp<ViewStyle>;
   /** The pressable, so a screen can move screen-reader focus to it (`sendAccessibilityEvent`). */
   ref?: Ref<View>;
-}
-
-function resolveVariant(variant: ButtonVariant | LegacyButtonVariant): ButtonVariant {
-  if (variant === 'ghost') return 'quiet';
-  if (variant === 'danger') return 'destructive';
-  return variant;
 }
 
 const TONE: Record<ButtonVariant, TextTone> = {
@@ -74,6 +69,7 @@ export function Button({
   size = 'md',
   icon,
   fullWidth = false,
+  flush = false,
   disabled = false,
   loading = false,
   accessibilityLabel,
@@ -84,16 +80,18 @@ export function Button({
 }: ButtonProps) {
   const { colors } = useTheme();
   const focus = useFocusRing();
-  const kind = resolveVariant(variant);
-  const tone = TONE[kind];
+  const tone = TONE[variant];
   const foreground = toneColor(colors, tone);
   // The label stays put while busy, so there is no width jump and screen
   // readers still hear the action; a spinner joins it only if the wait is real.
   const showSpinner = useDelayedFlag(loading, delay.spinner);
   const small = size === 'sm';
   const iconSize = small ? 18 : 20;
-  const glyph = isIconName(icon) ? icon : null;
-  const primary = kind === 'primary';
+  const primary = variant === 'primary';
+  const outdent =
+    flush && (variant === 'quiet' || variant === 'destructive')
+      ? { marginStart: -(small ? space.md : space.lg) }
+      : null;
 
   return (
     <Pressable
@@ -112,11 +110,12 @@ export function Button({
       style={({ pressed }) => [
         styles.base,
         small ? styles.small : styles.medium,
-        kind === 'secondary'
+        variant === 'secondary'
           ? { backgroundColor: colors.sheet, borderColor: colors.control, borderWidth: 1 }
           : null,
         primary ? { backgroundColor: pressed ? colors.inkPressed : colors.ink } : null,
         { alignSelf: fullWidth ? 'stretch' : 'flex-start', opacity: disabled ? 0.45 : 1 },
+        outdent,
         focus.ringStyle,
         style,
       ]}
@@ -127,8 +126,8 @@ export function Button({
           <View style={styles.content}>
             {showSpinner ? (
               <ActivityIndicator size="small" color={foreground} />
-            ) : glyph ? (
-              <Icon name={glyph} size={iconSize} color={foreground} />
+            ) : icon ? (
+              <Icon name={icon} size={iconSize} color={foreground} />
             ) : null}
             <AppText
               variant={small ? 'label' : 'button'}

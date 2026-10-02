@@ -21,17 +21,17 @@ type DatabaseState =
 
 interface DatabaseContextValue {
   state: DatabaseState;
-  /**
-   * Bumped after every write. Screens read it as a dependency so lists refresh
-   * from SQLite immediately — the database stays the single source of truth
-   * instead of a mirrored in-memory cache that could drift.
-   */
-  revision: number;
+  /** After a write: every list on screen reads again (see `useRevision`). */
   invalidate: () => void;
   retry: () => void;
 }
 
 const DatabaseContext = createContext<DatabaseContextValue | null>(null);
+/**
+ * Its own context, so a write re-renders only the queries that read it, not
+ * every component that merely writes (each quantity row, the providers).
+ */
+const RevisionContext = createContext<number>(0);
 
 export function DatabaseProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<DatabaseState>({ status: 'loading' });
@@ -71,12 +71,13 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     setAttempt((value) => value + 1);
   }, []);
 
-  const value = useMemo(
-    () => ({ state, revision, invalidate, retry }),
-    [state, revision, invalidate, retry],
-  );
+  const value = useMemo(() => ({ state, invalidate, retry }), [state, invalidate, retry]);
 
-  return <DatabaseContext.Provider value={value}>{children}</DatabaseContext.Provider>;
+  return (
+    <DatabaseContext.Provider value={value}>
+      <RevisionContext.Provider value={revision}>{children}</RevisionContext.Provider>
+    </DatabaseContext.Provider>
+  );
 }
 
 export function useDatabase(): DatabaseContextValue {
@@ -85,6 +86,15 @@ export function useDatabase(): DatabaseContextValue {
     throw new Error('useDatabase must be used inside a DatabaseProvider');
   }
   return context;
+}
+
+/**
+ * Bumped after every write. Queries read it as a dependency so lists refresh
+ * from SQLite immediately — the database stays the single source of truth
+ * instead of a mirrored in-memory cache that could drift.
+ */
+export function useRevision(): number {
+  return useContext(RevisionContext);
 }
 
 /**

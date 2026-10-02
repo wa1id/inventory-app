@@ -27,16 +27,15 @@ type Resolution = { request: string } & ({ outcome: ScanOutcome } | { cause: unk
 
 /**
  * A QR label, opened from the iPhone Camera (`inventory://c/<token>`) or
- * handed over by the Scan tab (spec §5.18).
+ * handed over by the Scan tab.
  *
  * QR payloads carry a URL so the *system* camera can open the app too. The
  * token resolves through the same repository the scanner uses: a linked
  * label replaces this screen with its container (the root layout's anchor
  * puts Home underneath on a cold start). A label this app made but never
  * linked is linked here, to a container picked from the grouped list, so the
- * token is never lost (the old screen sent people back to rescan it, capture
- * §8.3). A failed lookup offers "Try again" instead of "Opening…" for ever
- * (§13.3).
+ * token is never lost (the old screen sent people back to rescan it). A
+ * failed lookup offers "Try again" instead of "Opening…" for ever.
  *
  * The lookup is a one-shot read that ends in navigation, so it is not a
  * `useInventoryQuery`: re-reading on focus or after the link is written would
@@ -57,8 +56,8 @@ export default function QrLabelScreen() {
   // Back (the header, the iOS swipe or Android back) still works while a
   // label is being linked over a slow connection. The answer, arriving after
   // that, must not `replace` whatever screen is in front by then (it would
-  // swap out the tab shell itself), so it checks this first; S3's link screen
-  // does the same.
+  // swap out the tab shell itself), so it checks this first; the container's
+  // link screen (`app/container/[id]/link.tsx`) does the same.
   const openRef = useRef(true);
   useEffect(() => {
     openRef.current = true;
@@ -72,7 +71,7 @@ export default function QrLabelScreen() {
   const current = resolution?.request === request ? resolution : null;
 
   // The latest lookup, so the effect below re-runs for a new request only and
-  // never because the repositories object was rebuilt (spec §5.0). Effects run
+  // never because the repositories object was rebuilt. Effects run
   // in order, so the lookup effect always sees this render's closure.
   const resolveRef = useRef(() => repos.qr.resolveScan(token));
   useEffect(() => {
@@ -88,7 +87,7 @@ export default function QrLabelScreen() {
         logEvent('qr_deeplink', { outcome: outcome.kind });
         setResolution({ request, outcome });
         if (outcome.kind !== 'bound') return;
-        // The drop zone is a tab, never a container screen (B4).
+        // The drop zone is a tab, never a container screen.
         if (outcome.container.id === DROP_ZONE_CONTAINER_ID) goToTab('/drop-zone');
         else router.replace(`/container/${outcome.container.id}`);
       },
@@ -115,7 +114,7 @@ export default function QrLabelScreen() {
 
     try {
       // The picker's list carries no label token, so ask for this container's
-      // own label before deciding whether to warn (engineering F7).
+      // own label before deciding whether to warn.
       const plan = planBind(await repos.qr.getByContainer(option.id), labelToken, label);
       // Left before anything was written: they changed their mind, so nothing happens.
       if (!openRef.current) return;

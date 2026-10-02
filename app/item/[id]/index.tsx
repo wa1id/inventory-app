@@ -38,15 +38,18 @@ import { confirm } from '@/ui/confirm';
 import { describeError } from '@/ui/errors';
 import { haptics } from '@/ui/haptics';
 import { itemStamp } from '@/ui/item/itemDetails';
-import { nextInRun, runPosition } from '@/ui/item/moveFlow';
+import { nextInRun, type RunMoveResult } from '@/ui/item/moveFlow';
 import { NameItInline } from '@/ui/item/NameItInline';
 import { WhereCard } from '@/ui/item/WhereCard';
-import { focusSearch, goToTab, type MoveResult } from '@/ui/navigation';
+import { focusSearch, goToTab } from '@/ui/navigation';
 import { openForResult } from '@/ui/routeResult';
 import { GUTTER, space, useTheme } from '@/ui/theme';
 
 /** Longest a pushed screen's slide-in is waited for before focusing anyway. */
 const TRANSITION_FALLBACK_MS = 700;
+
+/** The large stepper's height: 56 pt buttons inside a 1 pt border. */
+const STEPPER_HEIGHT = 58;
 
 function HeaderSearch() {
   return (
@@ -59,7 +62,7 @@ function HeaderSearch() {
   );
 }
 
-/** "2 of 5 waiting" in the header of a filing run, until the item's name scrolls under it. */
+/** "3 waiting" in the header of a filing run, until the item's name scrolls under it. */
 function RunProgress({ label }: { label: string }) {
   return (
     <AppText variant="caption" tone="graphite" numberOfLines={1}>
@@ -81,12 +84,12 @@ function needsRefreshBanner(refreshFailed: boolean, cause: unknown): boolean {
 }
 
 /**
- * One item: where it is first, then the small edits (spec §5.10).
+ * One item: where it is first, then the small edits.
  *
  * The "Kept in" path is the largest text on the screen; the photo is a
  * thumbnail beside the name that opens full screen, rather than a 260 pt
  * picture pushing the answer down. Quantity saves itself. Move is on every
- * item, not only on drop-zone ones (entities §16.C), and ends in a toast with
+ * item, not only on drop-zone ones, and ends in a toast with
  * Undo while this screen stays put.
  *
  * `filing=1` is a filing run from the Drop zone (the desk's "runs, not
@@ -110,7 +113,7 @@ export default function ItemScreen() {
   const now = useNow(60_000);
 
   const itemQuery = useInventoryQuery(() => repos.items.getById(id), `item:${id}`);
-  // Only a filing run reads the drop zone: for "2 of 5" and the next item.
+  // Only a filing run reads the drop zone: for "3 waiting" and the next item.
   const dropZone = useInventoryQuery(
     () => (filing ? repos.items.listUnsorted() : Promise.resolve(null)),
     filing ? 'drop-zone' : 'drop-zone:unused',
@@ -118,9 +121,17 @@ export default function ItemScreen() {
   const stored = itemQuery.data;
   const waitingIds = (dropZone.data ?? []).map((waiting) => waiting.id);
 
-  // A name saved here shows at once, before the re-read brings it back.
-  const [namedHere, setNamedHere] = useState<{ id: string; name: string } | null>(null);
-  const name = stored?.name || (namedHere?.id === id ? namedHere.name : '');
+  // A name given here shows at once, before the re-read brings it back: over
+  // no name, or over the one it had as read when it was given (recognition's,
+  // say, which the name typed here replaced).
+  const [namedHere, setNamedHere] = useState<{ id: string; name: string; over: number } | null>(
+    null,
+  );
+  const ownName =
+    namedHere?.id === id && (!stored?.name || stored.updatedAt === namedHere.over)
+      ? namedHere.name
+      : null;
+  const name = ownName ?? stored?.name ?? '';
   const item: ItemWithContext | null = stored ? { ...stored, name } : null;
   const inDropZone = item?.containerId === DROP_ZONE_CONTAINER_ID;
 
@@ -163,13 +174,19 @@ export default function ItemScreen() {
       .catch(() => undefined);
   }, [arrived, filing, loaded]);
 
-  // Once named, focus moves on to what comes next: filing it, or its details.
+  // "What is it?" stays while it is in use (focused, or holding typed text),
+  // even once the item has a name: recognition often finishes while the
+  // owner is typing, and taking the field away then would drop her text.
   const named = name !== '';
+  const [namingId, setNamingId] = useState<string | null>(null);
+  const naming = !named || namingId === id;
+
+  // Once named, focus moves on to what comes next: filing it, or its details.
   useEffect(() => {
-    if (!named || !focusAfterNameRef.current) return;
+    if (naming || !focusAfterNameRef.current) return;
     focusAfterNameRef.current = false;
     focusForScreenReader(inDropZone ? fileRef.current : editRef.current);
-  }, [inDropZone, named]);
+  }, [inDropZone, naming]);
 
   function back() {
     if (router.canGoBack()) router.back();
@@ -185,7 +202,7 @@ export default function ItemScreen() {
     // The drop zone as it was before this move keeps the run in its order.
     const before = waitingIds;
     try {
-      const result = await openForResult<MoveResult>((request) =>
+      const result = await openForResult<RunMoveResult>((request) =>
         router.push({
           pathname: '/item/[id]/move',
           params: runStep ? { id, request, filing: '1' } : { id, request },
@@ -194,11 +211,15 @@ export default function ItemScreen() {
       // Outside a run nothing more happens: this screen re-reads on focus,
       // and the move sheet has said where the item went.
       if (!result || !runStep) return;
-      let waiting: string[];
-      try {
-        waiting = (await repos.items.listUnsorted()).map((entry) => entry.id);
-      } catch {
-        waiting = before.filter((entry) => entry !== id);
+      // The sheet's own read after the move, the one its toast was worded
+      // from; read again only if that failed.
+      let waiting = result.waiting;
+      if (!waiting) {
+        try {
+          waiting = (await repos.items.listUnsorted()).map((entry) => entry.id);
+        } catch {
+          waiting = before.filter((entry) => entry !== id);
+        }
       }
       // Left for another screen (search, say) while the list was read: the
       // run is over, and replacing or going back now would act on that screen.
@@ -224,15 +245,24 @@ export default function ItemScreen() {
       if (!sure) return;
       setDeleting(true);
       const result = await repos.items.delete(id);
-      deleteStoredPhotos(result.orphanedPhotoUris);
-      logEvent('item_deleted');
+      // Nothing deleted means another phone deleted it first (the household
+      // answers a 404 that way): it is gone either way, but this phone did
+      // not do it, so it is neither counted nor claimed.
+      let message: string;
+      if (result.deleted) {
+        deleteStoredPhotos(result.orphanedPhotoUris);
+        logEvent('item_deleted');
+        message = name ? strings.item.deleted(name) : strings.item.deletedUnnamed;
+      } else {
+        message = name ? strings.item.alreadyDeleted(name) : strings.item.alreadyDeletedUnnamed;
+      }
       // Back to wherever the item was opened from; leaving first means this
-      // screen is not re-read into "This item is gone" on the way out.
-      back();
+      // screen is not re-read into "This item is gone" on the way out. Not if
+      // it was left already while deleting (its header back stays live): back
+      // then would pop the screen the person went back to.
+      if (navigation.isFocused()) back();
       invalidate();
-      toast.show({
-        message: name ? strings.item.deleted(name) : strings.item.deletedUnnamed,
-      });
+      toast.show({ message });
     } catch (cause) {
       setDeleting(false);
       const kind = describeError(cause, 'delete', 'item').kind;
@@ -244,8 +274,9 @@ export default function ItemScreen() {
     }
   }
 
-  const position = filing ? runPosition(waitingIds, id) : null;
-  const progress = position ? strings.item.progress(position.index, position.total) : null;
+  // What is left to file, this item included: it counts down as the run goes.
+  const progress =
+    filing && waitingIds.includes(id) ? strings.item.progress(waitingIds.length) : null;
 
   const header = (
     <Stack.Screen
@@ -285,7 +316,8 @@ export default function ItemScreen() {
   }
 
   const photoUri = item.photoUri ?? item.photoThumbUri;
-  const hasFacts = Boolean(item.category) || item.tags.length > 0 || Boolean(item.notes);
+  // The category is read with the name, under the title, so it has no fact row of its own.
+  const hasFacts = item.tags.length > 0 || Boolean(item.notes);
 
   return (
     <ScreenFrame kind="detail">
@@ -317,7 +349,21 @@ export default function ItemScreen() {
             testID="item-photo"
           />
           <View style={[styles.identityText, stacked ? null : styles.besideThumb]}>
-            {named ? (
+            {naming ? (
+              <NameItInline
+                key={id}
+                item={item}
+                incomingName={stored?.name ?? ''}
+                autoFocus={filing && arrived}
+                headingRef={titleRef}
+                onEngagedChange={(engaged) => setNamingId(engaged ? id : null)}
+                onNamed={(given) => {
+                  focusAfterNameRef.current = true;
+                  setNamingId(null);
+                  setNamedHere({ id, name: given, over: item.updatedAt });
+                }}
+              />
+            ) : (
               <>
                 <View ref={titleRef} accessible accessibilityRole="header">
                   <AppText variant="itemTitle">{name}</AppText>
@@ -328,17 +374,6 @@ export default function ItemScreen() {
                   </AppText>
                 ) : null}
               </>
-            ) : (
-              <NameItInline
-                key={id}
-                item={item}
-                autoFocus={filing && arrived}
-                headingRef={titleRef}
-                onNamed={(given) => {
-                  focusAfterNameRef.current = true;
-                  setNamedHere({ id, name: given });
-                }}
-              />
             )}
           </View>
         </View>
@@ -347,18 +382,18 @@ export default function ItemScreen() {
 
         <Sheet inset>
           <View style={[styles.quantity, stacked ? styles.quantityStacked : null]}>
-            <AppText variant="label" style={stacked ? null : styles.quantityLabel}>
-              {strings.quantity.label}
-            </AppText>
+            {/* Level with the stepper, not with the stepper and its note at 0. */}
+            <View style={stacked ? null : styles.quantityLabel}>
+              <AppText variant="factLabel" tone="graphite">
+                {strings.quantity.label}
+              </AppText>
+            </View>
             <SavedQuantityStepper item={item} size="large" />
           </View>
         </Sheet>
 
         {hasFacts ? (
           <Sheet inset style={styles.facts}>
-            {item.category ? (
-              <FactRow label={strings.forms.categoryLabel}>{item.category}</FactRow>
-            ) : null}
             {item.tags.length > 0 ? (
               <FactRow label={strings.forms.tagsLabel}>
                 <View style={styles.tags}>
@@ -394,6 +429,7 @@ export default function ItemScreen() {
             onPress={() => void deleteItem()}
             icon="trash"
             variant="destructive"
+            flush
             loading={deleting}
             testID="item-delete"
           />
@@ -431,7 +467,7 @@ const styles = StyleSheet.create({
   },
   quantity: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: space.md,
   },
   quantityStacked: {
@@ -440,6 +476,8 @@ const styles = StyleSheet.create({
   },
   quantityLabel: {
     flex: 1,
+    minHeight: STEPPER_HEIGHT,
+    justifyContent: 'center',
   },
   facts: {
     gap: space.lg,

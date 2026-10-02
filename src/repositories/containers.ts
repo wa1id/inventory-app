@@ -51,7 +51,7 @@ export interface ContainerDeletionImpact {
 /**
  * The drop zone is a real container row so joins and counts keep working,
  * but it is not a container anyone can rename, move or delete: the UI never
- * offers it (B4), and the repository refuses as well, which also protects the
+ * offers it, and the repository refuses as well, which also protects the
  * home server, since it runs this code.
  */
 function assertNotDropZone(id: string): void {

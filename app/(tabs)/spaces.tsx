@@ -16,25 +16,16 @@ import { IconButton } from '@/ui/components/IconButton';
 import { SpaceRow } from '@/ui/components/PlaceRows';
 import { Row } from '@/ui/components/Row';
 import { ScreenFrame, TabRootHeader } from '@/ui/components/ScreenFrame';
-import { SheetSeparator, sheetCell } from '@/ui/components/Sheet';
+import { GutterSheetSeparator, sheetCell } from '@/ui/components/Sheet';
 import { Skeleton } from '@/ui/components/Skeleton';
 import { focusSearch, openSpace } from '@/ui/navigation';
 import { needsRefreshBanner } from '@/ui/spaces/spaceSetup';
 import { usePullToRefresh } from '@/ui/spaces/usePullToRefresh';
 import { GUTTER, OPTION_MIN, THUMB, space, useTheme } from '@/ui/theme';
 
-/** The rule between two rows of the sheet, inside the screen gutter. */
-function Separator() {
-  return (
-    <View style={styles.gutter}>
-      <SheetSeparator />
-    </View>
-  );
-}
-
 /**
  * "New space" as the last row of the sheet, so the owner's next step is in
- * reach at the end of the list without a bar pinned over it (spec §5.3).
+ * reach at the end of the list without a bar pinned over it.
  */
 function NewSpaceRow({ index, count }: { index: number; count: number }) {
   const router = useRouter();
@@ -42,7 +33,7 @@ function NewSpaceRow({ index, count }: { index: number; count: number }) {
 
   return (
     <>
-      <Separator />
+      <GutterSheetSeparator />
       <View style={[styles.gutter, sheetCell(index, count, colors)]}>
         <Row
           onPress={() => router.push('/space/new')}
@@ -76,7 +67,7 @@ export default function SpacesScreen() {
   const { session } = useHousehold();
   const { colors } = useTheme();
 
-  // Re-tapping the active tab scrolls back to the top (spec §2.1).
+  // Re-tapping the active tab scrolls back to the top.
   const listRef = useRef<FlatList<SpaceWithCounts>>(null);
   useScrollToTop(listRef);
 
@@ -94,8 +85,9 @@ export default function SpacesScreen() {
     <>
       <TabRootHeader
         title={strings.spaces.title}
+        // No "0 spaces" over the empty state, which says as much.
         subtitle={
-          data ? (
+          data && data.length > 0 ? (
             <AppText variant="meta" tone="graphite">
               {strings.spaces.count(data.length)}
             </AppText>
@@ -105,7 +97,7 @@ export default function SpacesScreen() {
           <>
             <IconButton
               icon="search"
-              accessibilityLabel={strings.spaces.search}
+              accessibilityLabel={strings.a11y.searchHousehold}
               accessibilityHint={strings.a11y.searchHint}
               onPress={focusSearch}
               testID="spaces-search"
@@ -175,7 +167,7 @@ export default function SpacesScreen() {
             <SpaceRow space={item} onPress={openSpace} />
           </View>
         )}
-        ItemSeparatorComponent={Separator}
+        ItemSeparatorComponent={GutterSheetSeparator}
         ListHeaderComponent={header}
         ListFooterComponent={
           spaces.length > 0 ? <NewSpaceRow index={spaces.length} count={cells} /> : null

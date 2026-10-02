@@ -1,5 +1,11 @@
 import { useSyncExternalStore } from 'react';
-import { AccessibilityInfo, Easing, LayoutAnimation } from 'react-native';
+import {
+  AccessibilityInfo,
+  Easing,
+  Keyboard,
+  LayoutAnimation,
+  type KeyboardEvent,
+} from 'react-native';
 
 /** Motion lengths in ms. All become 0 under reduced motion. */
 export const duration = {
@@ -91,4 +97,15 @@ export function animateNextLayout(): void {
   LayoutAnimation.configureNext(
     LayoutAnimation.create(duration.expand, 'easeInEaseOut', 'opacity'),
   );
+}
+
+/**
+ * Moves the next layout change with the iOS keyboard, on its curve (call it
+ * from a `keyboardWill…` event). Skipped under reduced motion, like
+ * `animateNextLayout`, so the change is instant.
+ */
+export function animateWithKeyboard(event: KeyboardEvent): void {
+  listen();
+  if (reducedMotion) return;
+  Keyboard.scheduleLayoutAnimation(event);
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactElement } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactElement } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
@@ -33,7 +33,7 @@ import { EmptyState } from '@/ui/components/EmptyState';
 import { ErrorState } from '@/ui/components/ErrorState';
 import { ItemRow } from '@/ui/components/ItemRow';
 import { ScreenFrame } from '@/ui/components/ScreenFrame';
-import { SheetSeparator, sheetCell } from '@/ui/components/Sheet';
+import { GutterSheetSeparator, sheetCell } from '@/ui/components/Sheet';
 import { Skeleton } from '@/ui/components/Skeleton';
 import { confirm } from '@/ui/confirm';
 import { describeError } from '@/ui/errors';
@@ -47,21 +47,12 @@ import { GUTTER, space, useTheme } from '@/ui/theme';
 /**
  * How long a set may sit unchanged before "Saving N more…" stops promising.
  * `expected` is frozen when the camera closes, so a shot whose pipeline failed
- * afterwards would otherwise keep it saying "Saving…" for ever (capture §13.4).
+ * afterwards would otherwise keep it saying "Saving…" for ever.
  */
 const STALL_MS = 30_000;
 
-/** The rule between two rows of the sheet, inside the screen gutter. */
-function Separator() {
-  return (
-    <View style={styles.gutter}>
-      <SheetSeparator />
-    </View>
-  );
-}
-
 /**
- * The end of a Quick Snap set (spec §5.16): what it saved, what still needs a
+ * The end of a Quick Snap set: what it saved, what still needs a
  * name, and the way back to where the set started.
  *
  * Everything is already saved by the time this shows, so there is nothing to
@@ -141,10 +132,13 @@ export default function FastReviewScreen() {
   const status = reviewStatus(summary, waiting && quietSignature === signature);
   const stillSaving = status === 'pending';
 
-  function openItem(id: string) {
-    // Drop-zone items are named and filed in one run on the item screen.
-    router.push(containerId === DROP_ZONE_CONTAINER_ID ? `/item/${id}?filing=1` : `/item/${id}`);
-  }
+  // Drop-zone items are named and filed in one run on the item screen.
+  // Stable for the memoised rows, as is `deleteItem` below.
+  const openItem = useCallback(
+    (id: string) =>
+      router.push(containerId === DROP_ZONE_CONTAINER_ID ? `/item/${id}?filing=1` : `/item/${id}`),
+    [containerId, router],
+  );
 
   async function remove(id: string) {
     // Held from the question on: a second trash tap must not open a second
@@ -173,6 +167,14 @@ export default function FastReviewScreen() {
       deletingRef.current = false;
     }
   }
+
+  // The rows' delete always runs the latest `remove` (its session and repos)
+  // without changing identity; the ref is updated after render, never during.
+  const removeRef = useRef(remove);
+  useEffect(() => {
+    removeRef.current = remove;
+  });
+  const deleteItem = useCallback((id: string) => void removeRef.current(id), []);
 
   // Back to where the set started: capture was replaced by this screen, so
   // the screen underneath is the origin (Home, the Drop zone, a container).
@@ -212,7 +214,7 @@ export default function FastReviewScreen() {
 
   // Nothing is claimed before the first read: no "0 items saved" while loading.
   const showHead = items.data !== null && (list.length > 0 || stillSaving);
-  const title = reviewTitle(summary.saved, containerId, label);
+  const title = reviewTitle(summary, status, containerId, label);
   const header = (
     <>
       {showHead ? (
@@ -294,11 +296,11 @@ export default function FastReviewScreen() {
               tool="delete"
               thumb={76}
               onPress={openItem}
-              onDelete={(id) => void remove(id)}
+              onDelete={deleteItem}
             />
           </View>
         )}
-        ItemSeparatorComponent={Separator}
+        ItemSeparatorComponent={GutterSheetSeparator}
         ListHeaderComponent={header}
         ListEmptyComponent={empty}
         contentContainerStyle={styles.content}

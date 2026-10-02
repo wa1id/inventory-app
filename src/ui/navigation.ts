@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 
 import { DROP_ZONE_CONTAINER_ID, DROP_ZONE_SPACE_ID } from '@/db/constants';
+import type { ContainerVisualType } from '@/db/types';
 import type { StoredImage } from '@/services/capture/imageStore';
 import { requestSearchFocus } from '@/ui/searchFocus';
 
@@ -12,7 +13,7 @@ export type TabHref = '/' | '/spaces' | '/scan' | '/drop-zone';
  * From a pushed screen or a modal, pushing or navigating to a tab path pushes
  * another `(tabs)` with its own tab bar, so the stack is popped back to the
  * existing one instead. At a tab root there is nothing to pop and `POP_TO` is
- * not handled by the tab router, so it navigates within the tabs (spec §2.5).
+ * not handled by the tab router, so it navigates within the tabs.
  */
 export function goToTab(href: TabHref): void {
   if (router.canDismiss()) router.dismissTo(href);
@@ -21,7 +22,7 @@ export function goToTab(href: TabHref): void {
 
 /**
  * Opens a container. The drop zone is a real container row, but its screen is
- * the Drop zone tab: nothing ever navigates to `/container/drop-zone` (B4).
+ * the Drop zone tab: nothing ever navigates to `/container/drop-zone`.
  */
 export function openContainer(containerId: string): void {
   if (containerId === DROP_ZONE_CONTAINER_ID) goToTab('/drop-zone');
@@ -44,6 +45,14 @@ export function focusSearch(): void {
   goToTab('/');
 }
 
+/**
+ * Quick Snap: fast capture straight into the drop zone (Add's long press,
+ * Home's drop-zone card, the Drop zone tab).
+ */
+export function openQuickSnap(): void {
+  router.push(`/capture?containerId=${DROP_ZONE_CONTAINER_ID}&mode=fast`);
+}
+
 /*
  * What routes opened with a `request` param deliver through `routeResult`.
  * Producers and consumers live in different packages, so the shapes are
@@ -59,9 +68,22 @@ export interface MoveResult {
   updatedAt: number;
 }
 
-/** `/container/new?spaceId&request=`: the container just created. */
+/**
+ * `/container/new?spaceId&request=`: the container just created, with what
+ * the place picker shows of it, so the picker need not read it back.
+ */
 export interface NewContainerResult {
   containerId: string;
+  name: string | null;
+  shortCode: string;
+  visualType: ContainerVisualType;
+  spaceId: string;
+}
+
+/** `/space/new?request=`: the space just created. */
+export interface NewSpaceResult {
+  spaceId: string;
+  name: string;
 }
 
 /** `/capture?…&request=`: the photo taken in single mode, already stored. */

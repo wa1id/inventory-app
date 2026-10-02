@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { isIconName, type IconName } from '@/ui/icons/glyphs';
+import type { IconName } from '@/ui/icons/glyphs';
 import { AppText } from '@/ui/components/AppText';
 import { Button } from '@/ui/components/Button';
 import { Icon } from '@/ui/components/Icon';
@@ -18,20 +18,12 @@ export interface EmptyStateAction {
 export interface EmptyStateProps {
   title: string;
   body: string;
-  /** A line icon in a soft circle. Legacy emoji strings are ignored. */
-  icon?: IconName | (string & {});
+  /** A line icon in a soft circle. */
+  icon?: IconName;
   action?: EmptyStateAction;
   secondary?: EmptyStateAction;
   align?: 'start' | 'center';
   testID?: string;
-  /** @deprecated Use `action`. */
-  actionLabel?: string;
-  /** @deprecated Use `action`. */
-  onAction?: () => void;
-  /** @deprecated Use `secondary`. */
-  secondaryActionLabel?: string;
-  /** @deprecated Use `secondary`. */
-  onSecondaryAction?: () => void;
 }
 
 /**
@@ -49,24 +41,13 @@ export function EmptyState({
   secondary,
   align = 'start',
   testID,
-  actionLabel,
-  onAction,
-  secondaryActionLabel,
-  onSecondaryAction,
 }: EmptyStateProps) {
   const { colors } = useTheme();
-  const primary: EmptyStateAction | undefined =
-    action ?? (actionLabel && onAction ? { label: actionLabel, onPress: onAction } : undefined);
-  const quiet: EmptyStateAction | undefined =
-    secondary ??
-    (secondaryActionLabel && onSecondaryAction
-      ? { label: secondaryActionLabel, onPress: onSecondaryAction }
-      : undefined);
   const centered = align === 'center';
 
   return (
     <View style={[styles.container, centered ? styles.centered : null]} testID={testID}>
-      {isIconName(icon) ? (
+      {icon ? (
         <View style={[styles.iconCircle, { backgroundColor: colors.sheet2 }]}>
           <Icon name={icon} size={28} color={colors.graphite} />
         </View>
@@ -77,25 +58,28 @@ export function EmptyState({
       <AppText variant="body" tone="graphite" center={centered} style={styles.body}>
         {body}
       </AppText>
-      {primary || quiet ? (
+      {action || secondary ? (
         <View style={[styles.actions, centered ? styles.centered : null]}>
-          {primary ? (
+          {action ? (
             <Button
-              label={primary.label}
-              onPress={primary.onPress}
-              icon={primary.icon}
-              loading={primary.loading}
-              testID={primary.testID}
+              label={action.label}
+              onPress={action.onPress}
+              icon={action.icon}
+              loading={action.loading}
+              testID={action.testID}
             />
           ) : null}
-          {quiet ? (
+          {secondary ? (
+            // Quiet under a primary, lined up with the text; on its own it is
+            // the next step, so it is bordered rather than loose text.
             <Button
-              label={quiet.label}
-              onPress={quiet.onPress}
-              icon={quiet.icon}
-              loading={quiet.loading}
-              testID={quiet.testID}
-              variant="quiet"
+              label={secondary.label}
+              onPress={secondary.onPress}
+              icon={secondary.icon}
+              loading={secondary.loading}
+              testID={secondary.testID}
+              variant={action ? 'quiet' : 'secondary'}
+              flush={!centered}
             />
           ) : null}
         </View>

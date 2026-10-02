@@ -1,4 +1,10 @@
-import { compact, filterPlaces, matchesPlace, placeTerms } from '@/ui/placeMatch';
+import {
+  compact,
+  joinPlaceOptions,
+  matchesPlace,
+  placeTerms,
+  toPlaceOption,
+} from '@/ui/placeMatch';
 
 const drawer = {
   id: 'c1',
@@ -26,6 +32,11 @@ describe('compact', () => {
   it('drops case, spaces and punctuation', () => {
     expect(compact('DRW-7K2M')).toBe('drw7k2m');
     expect(compact(' Tool  chest! ')).toBe('toolchest');
+  });
+
+  it('folds accents and keeps letters of any script, like Home search', () => {
+    expect(compact('Küche')).toBe('kuche');
+    expect(compact('Кухня')).toBe('кухня');
   });
 });
 
@@ -58,11 +69,70 @@ describe('matchesPlace', () => {
   });
 });
 
-describe('filterPlaces', () => {
-  it('keeps the matching options in their order', () => {
-    const options = [drawer, toolChest, unnamedBox];
-    expect(filterPlaces(options, 'o').map((option) => option.id)).toEqual(['c1', 'c2', 'c3']);
-    expect(filterPlaces(options, 'box').map((option) => option.id)).toEqual(['c3']);
-    expect(filterPlaces(options, '  ')).toEqual(options);
+describe('matchesPlace beyond ASCII', () => {
+  const kitchen = { name: 'Küche', shortCode: 'DRW-1K2M', spaceName: 'Haus', visualType: 'drawer' };
+  const cyrillic = { name: 'Кухня', shortCode: 'BOX-4F2A', spaceName: 'Дом', visualType: 'box' };
+
+  it('finds an accented name typed with or without the accent', () => {
+    expect(matchesPlace(kitchen, placeTerms('kuche'))).toBe(true);
+    expect(matchesPlace(kitchen, placeTerms('Küche'))).toBe(true);
+  });
+
+  it('finds a name in another script, and does not match everything', () => {
+    expect(placeTerms('кухня')).not.toEqual([]);
+    expect(matchesPlace(cyrillic, placeTerms('кух'))).toBe(true);
+    expect(matchesPlace(drawer, placeTerms('кухня'))).toBe(false);
+  });
+});
+
+describe('joinPlaceOptions', () => {
+  it('adds each container’s space colour and icon', () => {
+    const [joined] = joinPlaceOptions(
+      [
+        {
+          id: 'c1',
+          spaceId: 's1',
+          name: null,
+          visualType: 'drawer',
+          shortCode: 'DRW-1',
+          createdAt: 0,
+          updatedAt: 0,
+          spaceName: 'Kitchen',
+          itemCount: 3,
+        },
+      ],
+      [{ id: 's1', color: '#2E9E4F', icon: '🍳' }],
+    );
+    expect(joined).toEqual({
+      id: 'c1',
+      name: null,
+      shortCode: 'DRW-1',
+      visualType: 'drawer',
+      spaceId: 's1',
+      spaceName: 'Kitchen',
+      spaceColor: '#2E9E4F',
+      spaceIcon: '🍳',
+      itemCount: 3,
+    });
+  });
+});
+
+describe('toPlaceOption', () => {
+  it('gives no colour or icon for a space not known yet', () => {
+    const option = toPlaceOption(
+      {
+        id: 'c9',
+        name: 'Crate',
+        shortCode: 'CRT-9X',
+        visualType: 'crate',
+        spaceId: 's9',
+        spaceName: 'Shed',
+        itemCount: 0,
+      },
+      undefined,
+    );
+    expect(option.spaceColor).toBe('');
+    expect(option.spaceIcon).toBe('');
+    expect(option.spaceName).toBe('Shed');
   });
 });

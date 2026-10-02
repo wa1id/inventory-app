@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import type { ItemWithContext } from '@/db/types';
@@ -18,7 +18,7 @@ import { Row } from '@/ui/components/Row';
 import { SavedQuantityStepper } from '@/ui/components/SavedQuantityStepper';
 import { Thumb } from '@/ui/components/Thumb';
 import { animateNextLayout } from '@/ui/motion';
-import { ROW_MIN, ROW_MIN_PHOTO, ROW_PADDING, space } from '@/ui/theme';
+import { MIN_TOUCH_TARGET, ROW_MIN, ROW_MIN_PHOTO, ROW_PADDING, space } from '@/ui/theme';
 
 export interface ItemRowProps {
   item: ItemWithContext;
@@ -63,22 +63,43 @@ function ItemName({ item, terms }: { item: ItemWithContext; terms?: readonly str
   );
 }
 
-function SecondLine({ item, line }: { item: ItemWithContext; line: ItemRowProps['line'] }) {
-  if (line === 'detail') {
-    return item.category ? (
-      <AppText variant="meta" tone="graphite">
-        {item.category}
-      </AppText>
-    ) : null;
-  }
-  if (line === 'added') {
-    return (
-      <AppText variant="meta" tone="graphite">
-        {strings.rows.added(ago(item.createdAt))}
+/**
+ * `count`: the quantity, folded in front of the line on rows whose end is
+ * taken by a control ("×30 · 28 days ago"), so the text keeps that width.
+ */
+function SecondLine({
+  item,
+  line,
+  count,
+}: {
+  item: ItemWithContext;
+  line: ItemRowProps['line'];
+  count?: number;
+}) {
+  if (line === 'where' || line === undefined) return <LocationLine place={item} size="row" />;
+  const lead =
+    count === undefined || count === 1 ? null : (
+      <AppText variant="meta" weight={600} tone={count === 0 ? 'signal' : 'ink'}>
+        {count === 0 ? strings.rows.noneLeft : strings.rows.times(count)}
       </AppText>
     );
-  }
-  return <LocationLine place={item} size="row" />;
+  const when = ago(item.createdAt);
+  const rest =
+    line === 'detail'
+      ? item.category
+      : count === undefined
+        ? strings.rows.added(when)
+        : lead
+          ? when
+          : strings.rows.addedShort(when);
+  if (!lead && !rest) return null;
+  return (
+    <AppText variant="meta" tone="graphite">
+      {lead}
+      {lead && rest ? strings.rows.separator : null}
+      {rest}
+    </AppText>
+  );
 }
 
 /** "×4" or "None left" beside rows without a quantity control; nothing for one (desk). */
@@ -100,6 +121,17 @@ function rowLabel(item: ItemWithContext, quantity: number): string {
   return strings.rows.itemA11y(displayName(item), whereSpoken(item), quantitySpoken(quantity));
 }
 
+/**
+ * The small thumbnail (48) beside a stepper, and on every 56 row in the
+ * stacked layout, so the name keeps the room.
+ */
+function thumbSize(thumb: 56 | 76, small: boolean): 48 | 56 | 76 {
+  return thumb === 56 && small ? 48 : thumb;
+}
+
+/** Between the name and the chip that sits at the end of its line. */
+const CHIP_CLEARANCE = space.sm + space.md - ROW_PADDING.end;
+
 /** A row whose quantity is a chip that opens a large stepper under it. */
 function ChipItemRow({
   item,
@@ -115,6 +147,9 @@ function ChipItemRow({
   const { stacked } = useLayoutScale();
   const name = item.name.trim() ? item.name : undefined;
   const toast = useToast();
+  // The chip sits at the end of the name's line, not in a column of its own,
+  // so where the item is (the answer) runs the full width under it.
+  const [chipWidth, setChipWidth] = useState<number>(MIN_TOUCH_TARGET);
   // One hook per row, shared by the chip and the stepper so they never disagree.
   const { quantity, setQuantity, error } = useSavedQuantity(item, {
     onError: (kind) => {
@@ -132,16 +167,19 @@ function ChipItemRow({
   return (
     <Row
       onPress={() => onPress(item.id)}
-      leading={<Thumb uri={item.photoThumbUri ?? item.photoUri} size={thumb} />}
+      leading={<Thumb uri={item.photoThumbUri ?? item.photoUri} size={thumbSize(thumb, stacked)} />}
       tool={
-        <QuantityChip
-          quantity={quantity}
-          itemName={displayName(item)}
-          itemId={item.id}
-          expanded={expanded}
-          onToggle={toggle}
-        />
+        <View onLayout={(event) => setChipWidth(Math.ceil(event.nativeEvent.layout.width))}>
+          <QuantityChip
+            quantity={quantity}
+            itemName={displayName(item)}
+            itemId={item.id}
+            expanded={expanded}
+            onToggle={toggle}
+          />
+        </View>
       }
+      toolAlign="top"
       below={
         expanded ? (
           <View style={[styles.below, stacked ? styles.belowStacked : null]}>
@@ -168,7 +206,9 @@ function ChipItemRow({
       accessibilityHint={strings.a11y.opensItem}
       testID={testID ?? `item-row-${item.id}`}
     >
-      <ItemName item={item} terms={terms} />
+      <View style={stacked ? null : { paddingEnd: chipWidth + CHIP_CLEARANCE }}>
+        <ItemName item={item} terms={terms} />
+      </View>
       <SecondLine item={item} line={line} />
     </Row>
   );
@@ -187,8 +227,12 @@ function PlainItemRow({
   onQuantityError,
   testID,
 }: ItemRowProps) {
+  const { stacked } = useLayoutScale();
   const name = displayName(item);
   const unnamed = !item.name.trim();
+  // Beside "File…" or a delete, the count joins the second line rather than
+  // taking width from the name; a stepper shows it already.
+  const folded = tool === 'file' || tool === 'delete';
 
   const control =
     tool === 'stepper' ? (
@@ -220,8 +264,13 @@ function PlainItemRow({
   return (
     <Row
       onPress={() => onPress(item.id)}
-      leading={<Thumb uri={item.photoThumbUri ?? item.photoUri} size={thumb} />}
-      aside={tool === 'stepper' ? null : <QuantityBadge quantity={item.quantity} />}
+      leading={
+        <Thumb
+          uri={item.photoThumbUri ?? item.photoUri}
+          size={thumbSize(thumb, stacked || tool === 'stepper')}
+        />
+      }
+      aside={tool === 'none' ? <QuantityBadge quantity={item.quantity} /> : null}
       tool={control}
       minHeight={thumb === 76 ? ROW_MIN_PHOTO : ROW_MIN}
       accessibilityLabel={rowLabel(item, item.quantity)}
@@ -229,7 +278,7 @@ function PlainItemRow({
       testID={testID ?? `item-row-${item.id}`}
     >
       <ItemName item={item} terms={terms} />
-      <SecondLine item={item} line={line} />
+      <SecondLine item={item} line={line} count={folded ? item.quantity : undefined} />
     </Row>
   );
 }
@@ -247,7 +296,7 @@ function ItemRowBase(props: ItemRowProps) {
  * An item in any list: the name over the answer to "where is it?", set the
  * same size so the answer is never the smallest thing on the row (`111b579`).
  *
- * The quantity control sits beside the pressable row, never inside it (B11).
+ * The quantity control sits beside the pressable row, never inside it.
  * The whole row speaks as one sentence: name, where, how many. Memoised on
  * what it shows; parents pass stable handlers that take the id. The place is
  * compared too: renaming a space or container elsewhere does not touch the

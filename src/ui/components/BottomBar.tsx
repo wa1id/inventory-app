@@ -1,5 +1,5 @@
-import { Children, useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Children, cloneElement, isValidElement, useState, type ReactNode } from 'react';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useKeyboardInset } from '@/hooks/useKeyboardInset';
@@ -15,6 +15,12 @@ export interface BottomBarProps {
   children: ReactNode;
   /** Stack the buttons (primary on top) at large text and on narrow phones. */
   stackOnLarge?: boolean;
+  /**
+   * The primary's label is short ("Save") and the secondary's long ("Save and
+   * add another"): the primary sizes to its label and the secondary takes the
+   * rest, so it stays on one line.
+   */
+  primaryFit?: boolean;
   testID?: string;
 }
 
@@ -26,13 +32,19 @@ export interface BottomBarProps {
  * drops the home-indicator inset it would otherwise leave under the buttons.
  * Toasts float just above it while its screen is focused.
  */
-export function BottomBar({ children, stackOnLarge = true, testID }: BottomBarProps) {
+export function BottomBar({
+  children,
+  stackOnLarge = true,
+  primaryFit = false,
+  testID,
+}: BottomBarProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const keyboard = useKeyboardInset();
   const { stacked } = useLayoutScale();
   const items = Children.toArray(children);
   const stack = stackOnLarge && stacked && items.length > 1;
+  const pair = !stack && items.length > 1;
   const [height, setHeight] = useState(0);
   useBottomChrome(height);
 
@@ -58,12 +70,20 @@ export function BottomBar({ children, stackOnLarge = true, testID }: BottomBarPr
             style={
               stack
                 ? styles.cellStacked
-                : primary && items.length > 1
-                  ? styles.primary
-                  : styles.cell
+                : !pair
+                  ? styles.cell
+                  : primary
+                    ? primaryFit
+                      ? styles.primaryFit
+                      : styles.primary
+                    : styles.cell
             }
           >
-            {child}
+            {/* Side by side, both buttons take the taller one's height, so
+                their edges line up when one label wraps. */}
+            {pair && isValidElement<{ style?: StyleProp<ViewStyle> }>(child)
+              ? cloneElement(child, { style: [child.props.style, styles.fillCell] })
+              : child}
           </View>
         );
       })}
@@ -80,7 +100,7 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
   },
   // Primary last in the children, first on screen.
   stacked: {
@@ -91,6 +111,14 @@ const styles = StyleSheet.create({
   },
   primary: {
     flex: 1.4,
+  },
+  primaryFit: {
+    flexGrow: 0,
+    flexShrink: 0,
+    minWidth: 120,
+  },
+  fillCell: {
+    flexGrow: 1,
   },
   cellStacked: {
     alignSelf: 'stretch',

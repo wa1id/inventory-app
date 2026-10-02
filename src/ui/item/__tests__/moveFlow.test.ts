@@ -2,6 +2,7 @@ import { ConflictError } from '@/core/conflict';
 import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
 import { HouseholdHttpError } from '@/services/household/client';
 import {
+  afterFiling,
   attemptMove,
   attemptUndo,
   containerLabel,
@@ -9,7 +10,6 @@ import {
   movedElsewhereMessage,
   movedMessage,
   nextInRun,
-  runPosition,
   undoFailedMessage,
   type MoveItems,
   type MoveSubject,
@@ -145,14 +145,14 @@ describe('attemptUndo', () => {
 
   it('moves it back with the stamp the move left', async () => {
     const { items, calls } = fakeItems({ updates: [async () => ({ updatedAt: 250 })] });
-    await expect(attemptUndo(items, move)).resolves.toBe('undone');
+    await expect(attemptUndo(items, move)).resolves.toEqual({ kind: 'undone' });
     expect(calls).toEqual([{ id: 'item-1', containerId: 'box-a', expectedUpdatedAt: 200 }]);
   });
 
   it('tells deleted, changed again and failed apart', async () => {
-    await expect(attemptUndo(fakeItems({ updates: [async () => null] }).items, move)).resolves.toBe(
-      'gone',
-    );
+    await expect(
+      attemptUndo(fakeItems({ updates: [async () => null] }).items, move),
+    ).resolves.toEqual({ kind: 'gone' });
     await expect(
       attemptUndo(
         fakeItems({
@@ -164,7 +164,7 @@ describe('attemptUndo', () => {
         }).items,
         move,
       ),
-    ).resolves.toBe('conflict');
+    ).resolves.toEqual({ kind: 'conflict' });
     await expect(
       attemptUndo(
         fakeItems({
@@ -176,13 +176,23 @@ describe('attemptUndo', () => {
         }).items,
         move,
       ),
-    ).resolves.toBe('failed');
+    ).resolves.toMatchObject({ kind: 'failed' });
   });
 
   it('words each refusal differently', () => {
-    expect(undoFailedMessage('gone')).toMatch(/deleted/);
-    expect(undoFailedMessage('conflict')).toMatch(/changed again/);
-    expect(undoFailedMessage('failed')).toMatch(/connection/);
+    expect(undoFailedMessage({ kind: 'gone' })).toMatch(/deleted/);
+    expect(undoFailedMessage({ kind: 'conflict' })).toMatch(/changed again/);
+    expect(
+      undoFailedMessage({ kind: 'failed', cause: new HouseholdHttpError(0, 'offline') }),
+    ).toMatch(/connection/);
+  });
+
+  it('only blames the connection when it was the connection', () => {
+    for (const cause of [new HouseholdHttpError(500, 'http_500'), new Error('sqlite')]) {
+      const message = undoFailedMessage({ kind: 'failed', cause });
+      expect(message).not.toMatch(/connection/);
+      expect(message).toMatch(/Try again/);
+    }
   });
 });
 
@@ -192,19 +202,26 @@ describe('messages', () => {
     expect(containerLabel({ name: 'Tool chest', shortCode: 'CAB-J92R' })).toBe('Tool chest');
   });
 
-  it('says moved, filed, next one or everything filed', () => {
+  it('says moved, filed or everything filed', () => {
     const where = { container: 'Tool chest', space: 'Garage' };
-    expect(movedMessage({ ...where, fromDropZone: false, filing: false, moreWaiting: false })).toBe(
-      'Moved to Tool chest (Garage)',
+    expect(movedMessage({ ...where, fromDropZone: false, filing: false, moreWaiting: null })).toBe(
+      'Moved to Tool chest (Garage).',
     );
-    expect(movedMessage({ ...where, fromDropZone: true, filing: false, moreWaiting: true })).toBe(
-      'Filed in Tool chest (Garage)',
+    expect(movedMessage({ ...where, fromDropZone: true, filing: false, moreWaiting: null })).toBe(
+      'Filed in Tool chest (Garage).',
     );
     expect(movedMessage({ ...where, fromDropZone: true, filing: true, moreWaiting: true })).toBe(
-      'Filed in Tool chest (Garage). Next one.',
+      'Filed in Tool chest (Garage).',
     );
     expect(movedMessage({ ...where, fromDropZone: true, filing: true, moreWaiting: false })).toBe(
       'Filed in Tool chest (Garage). Everything is filed.',
+    );
+  });
+
+  it('promises nothing about the run when the drop zone could not be read', () => {
+    const where = { container: 'Tool chest', space: 'Garage' };
+    expect(movedMessage({ ...where, fromDropZone: true, filing: true, moreWaiting: null })).toBe(
+      'Filed in Tool chest (Garage).',
     );
   });
 
@@ -271,12 +288,46 @@ describe('nextInRun', () => {
   });
 });
 
-describe('runPosition', () => {
-  it('counts from one', () => {
-    expect(runPosition(['a', 'b', 'c', 'd', 'e'], 'b')).toEqual({ index: 2, total: 5 });
+describe('afterFiling', () => {
+  /** A drop zone that changes under the run: each read answers the next list. */
+  function dropZone(...reads: string[][]) {
+    let count = 0;
+    return {
+      get reads() {
+        return count;
+      },
+      async listUnsorted() {
+        const ids = reads[count] ?? [];
+        count += 1;
+        return ids.map((id) => ({ id }));
+      },
+    };
+  }
+
+  it('words the toast from the same read the run goes on from', async () => {
+    // A second Quick Snap item lands just after the first is filed.
+    const items = dropZone(['b']);
+    const after = await afterFiling(items, 'a');
+    expect(after).toEqual({ waiting: ['b'], moreWaiting: true });
+    expect(items.reads).toBe(1);
+    expect(nextInRun(['a'], 'a', after.waiting ?? [])).toBe('b');
   });
 
-  it('is null for an item that is not waiting', () => {
-    expect(runPosition(['a'], 'b')).toBeNull();
+  it('says everything is filed only when the run ends', async () => {
+    const after = await afterFiling(dropZone(['a']), 'a');
+    expect(after.moreWaiting).toBe(false);
+    expect(nextInRun(['a', 'b'], 'a', after.waiting ?? [])).toBeNull();
+  });
+
+  it('leaves the run to the item screen when the read fails', async () => {
+    const after = await afterFiling(
+      {
+        listUnsorted: async () => {
+          throw new HouseholdHttpError(0, 'offline');
+        },
+      },
+      'a',
+    );
+    expect(after).toEqual({ moreWaiting: null });
   });
 });

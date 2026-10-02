@@ -10,7 +10,7 @@ import { labelOf } from '@/ui/container/containerRules';
 import type { QrSvg } from '@/ui/container/labelImage';
 import { GUTTER, fixed, radius, space, useTheme } from '@/ui/theme';
 
-/** The code's modules on screen (spec §5.8). */
+/** The code's modules on screen. */
 const MODULES = 220;
 /**
  * White drawn into the picture itself around the modules, so a saved or
@@ -32,7 +32,7 @@ export interface QrCardProps {
  * its code on tape.
  *
  * Always black on white, in dark mode too, because scanners need the contrast
- * and a sticker is printed on white (entities §14.14). The payload is the
+ * and a sticker is printed on white. The payload is the
  * unchanged `inventory://c/<token>` link, so the phone's own camera opens the
  * container as well. On a narrow phone the code shrinks to fit rather than
  * overflowing the card.

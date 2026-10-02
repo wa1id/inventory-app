@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { strings } from '@/i18n/strings';
 import { entryId, type WhereEntry } from '@/ui/add/addSheet';
@@ -45,7 +45,7 @@ function entryTestID(entry: WhereEntry): string {
  * Each container is written as its location (pip, space › container, tape),
  * the same answer every list gives, so "● Kitchen › Drawer by the oven" reads
  * the way it will read when she looks for it later. The drop zone is always
- * there: "somewhere" is a valid place (Q2). The options are one radio group;
+ * there: "somewhere" is a valid place. The options are one radio group;
  * "Somewhere else…" sits after it as a plain button.
  */
 export function WhereList({ entries, selectedId, onSelect, onMore }: WhereListProps) {
@@ -114,6 +114,12 @@ export function WhereList({ entries, selectedId, onSelect, onMore }: WhereListPr
       <SheetSeparator />
       <Row
         onPress={onMore}
+        // A glyph in a slot the width of the tiles above: one text column for the whole list.
+        leading={
+          <View style={styles.slot}>
+            <Icon name="search" size={20} color={colors.graphite} />
+          </View>
+        }
         chevron
         minHeight={OPTION_MIN}
         accessibilityLabel={strings.add.elsewhere}
@@ -127,3 +133,12 @@ export function WhereList({ entries, selectedId, onSelect, onMore }: WhereListPr
     </Sheet>
   );
 }
+
+const styles = StyleSheet.create({
+  slot: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

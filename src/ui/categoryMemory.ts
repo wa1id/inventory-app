@@ -99,19 +99,26 @@ export function recordCategory(category: string | null | undefined): void {
   })();
 }
 
-/** Known categories that start with `prefix` (case-insensitive), without an exact match. */
+/**
+ * Known categories that start with `prefix` (case-insensitive), without an
+ * exact match, each once and trimmed.
+ */
 export function suggestCategories(
   categories: readonly string[],
   prefix: string,
   max: number = MAX_SUGGESTIONS,
 ): string[] {
   const typed = key(prefix);
-  return categories
-    .filter((category) => {
-      const k = key(category);
-      return k !== typed && k.startsWith(typed);
-    })
-    .slice(0, max);
+  const offered = new Set<string>();
+  const matches: string[] = [];
+  for (const category of categories) {
+    const k = key(category);
+    if (!k || k === typed || offered.has(k) || !k.startsWith(typed)) continue;
+    offered.add(k);
+    matches.push(category.trim());
+    if (matches.length === max) break;
+  }
+  return matches;
 }
 
 function subscribe(listener: () => void): () => void {

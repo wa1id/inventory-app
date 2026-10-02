@@ -43,7 +43,7 @@ export type HomeEntry =
 /** The search field: always the first entry, and the list's one sticky row. */
 export const FIELD_ENTRY: HomeEntry = { kind: 'field', key: 'field' };
 
-/** How many recent items Home asks for first, and after "Show more" (§7.5 R9). */
+/** How many recent items Home asks for first, and after "Show more". */
 export const RECENT_FIRST = 12;
 export const RECENT_MORE = 40;
 
@@ -183,11 +183,15 @@ export function resultEntries(results: SearchResults, refreshFailed: boolean): H
 
   const entries: HomeEntry[] = [];
   if (refreshFailed) entries.push({ kind: 'refreshFailed', key: 'refresh-failed' });
-  entries.push({
-    kind: 'summary',
-    key: 'summary',
-    text: strings.search.summary(results.items.length, places.length),
-  });
+  // With one section, its title already says how many ("Items 4"), so the
+  // summary would only repeat it; the search key still announces it.
+  if ([direct, places, location].filter((section) => section.length > 0).length > 1) {
+    entries.push({
+      kind: 'summary',
+      key: 'summary',
+      text: strings.search.summary(results.items.length, places.length),
+    });
+  }
 
   let first = true;
   if (direct.length > 0) {

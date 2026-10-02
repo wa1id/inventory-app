@@ -115,7 +115,7 @@ export function createQrRepository(db: SqlDatabase) {
      * containers.
      */
     async bind(token: string, containerId: string): Promise<QrBinding> {
-      // The drop zone is a tab, not a box with a sticker on it (B4).
+      // The drop zone is a tab, not a box with a sticker on it.
       if (containerId === DROP_ZONE_CONTAINER_ID) throw new Error('system_record');
       const now = Date.now();
       const binding: QrBinding = {

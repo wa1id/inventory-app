@@ -6,16 +6,17 @@ import {
   RefreshControl,
   StyleSheet,
   View,
+  type LayoutChangeEvent,
   type ListRenderItem,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   type TextInput,
+  type ViewToken,
 } from 'react-native';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import type { BottomTabNavigationProp } from 'expo-router/js-tabs';
 import type { ParamListBase } from 'expo-router/react-navigation';
 
-import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
 import type { ItemWithContext } from '@/db/types';
 import { useDelayedFlag } from '@/hooks/useDelayedFlag';
 import { useInventoryQuery } from '@/hooks/useInventoryQuery';
@@ -55,14 +56,15 @@ import {
 } from '@/ui/home/homeList';
 import { TotalLine } from '@/ui/home/TotalLine';
 import { useUnpairedNotice } from '@/ui/home/unpairedNotice';
-import { animateNextLayout, delay } from '@/ui/motion';
-import { goToTab, openContainer, openSpace } from '@/ui/navigation';
+import { animateNextLayout, delay, useReducedMotion } from '@/ui/motion';
+import { goToTab, openContainer, openQuickSnap, openSpace } from '@/ui/navigation';
 import { useSearchFocusRequest } from '@/ui/searchFocus';
 import { GUTTER, space, useTheme } from '@/ui/theme';
 
-const QUICK_SNAP_HREF = `/capture?containerId=${DROP_ZONE_CONTAINER_ID}&mode=fast` as const;
 const NO_CONTAINERS: ContainerWithSpace[] = [];
 const SEARCHING: HomeEntry = { kind: 'status', key: 'status', status: 'searching' };
+/** A row counts as on screen only when all of it is (see `revealExpanded`). */
+const FULLY_VISIBLE = { itemVisiblePercentThreshold: 100 };
 
 /**
  * A failure the screen does not need to explain itself: the connection
@@ -88,7 +90,7 @@ function announceSummary(results: SearchResults) {
 
 function openPlace(hit: LocationSearchResult) {
   Keyboard.dismiss();
-  // Never `/container/drop-zone` or the drop zone's space (B4): both helpers
+  // Never `/container/drop-zone` or the drop zone's space: both helpers
   // send the system records to the Drop zone tab.
   if (hit.kind === 'space') openSpace(hit.id);
   else openContainer(hit.id);
@@ -104,7 +106,7 @@ function openPlace(hit: LocationSearchResult) {
  * Results replace the overview in place; the item rows carry where each
  * thing is and a quantity chip, so most searches end without opening
  * anything (#1, #14, `111b579`). Search used to be its own tab with a 14 px
- * location chip (`search.tsx:373-385`); it lives here now (UX-6, UX-11).
+ * location chip (`search.tsx:373-385`); it lives here now.
  */
 export default function HomeScreen() {
   const repos = useRepositories();
@@ -113,6 +115,7 @@ export default function HomeScreen() {
   const { session } = useHousehold();
   const connection = useConnection();
   const dropZone = useDropZone();
+  const reduceMotion = useReducedMotion();
   const navigation = useNavigation<BottomTabNavigationProp<ParamListBase>>();
   const params = useLocalSearchParams<{ q?: string }>();
 
@@ -121,6 +124,8 @@ export default function HomeScreen() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [recentLimit, setRecentLimit] = useState(RECENT_FIRST);
   const [pulled, setPulled] = useState(false);
+  // Rows have scrolled up under the pinned field, which then shows its edge.
+  const [pinned, setPinned] = useState(false);
 
   // `/?q=` fills the field once per value; typing afterwards is hers.
   const [prefilled, setPrefilled] = useState<string | undefined>(undefined);
@@ -143,7 +148,7 @@ export default function HomeScreen() {
 
   const spaces = useInventoryQuery(() => repos.spaces.listWithCounts(), 'spaces');
   // Twelve first: when joined, a list resolves only once its thumbnails are
-  // in (§7.5 R9). "Show more" asks for forty; the twelve stay on screen meanwhile.
+  // in. "Show more" asks for forty; the twelve stay on screen meanwhile.
   const recent = useInventoryQuery(
     () => repos.items.listRecent(recentLimit),
     `recent:${recentLimit}`,
@@ -157,7 +162,7 @@ export default function HomeScreen() {
   // The recent rows on screen. "Show more" reads forty under a new key, and a
   // failed read keeps only data read under its own key, so without this a
   // failed "Show more" would swap the twelve rows for an error page. They
-  // stay instead, under the "could not be refreshed" banner (§5.0).
+  // stay instead, under the "could not be refreshed" banner.
   const [shownRecent, setShownRecent] = useState<readonly ItemWithContext[] | null>(null);
   if (recent.data !== null && recent.data !== shownRecent) setShownRecent(recent.data);
   const recentRows = recent.data ?? shownRecent;
@@ -169,6 +174,13 @@ export default function HomeScreen() {
   const listRef = useRef<FlatList<HomeEntry>>(null);
   const inputRef = useRef<TextInput>(null);
   const scrollY = useRef(0);
+  const pinnedRef = useRef(false);
+  /** Where the title block ends, and so where the field starts to stick. */
+  const headerHeight = useRef(0);
+  /** Keys of the rows that are entirely on screen. */
+  const viewableKeys = useRef<ReadonlySet<string>>(new Set());
+  /** The item whose stepper just opened, until its row has its new height. */
+  const revealId = useRef<string | null>(null);
   /** The search key was pressed before the results were in (see `announceResults`). */
   const announceWhenSettled = useRef(false);
 
@@ -176,7 +188,7 @@ export default function HomeScreen() {
     if (recent.data) rememberCategories(recent.data);
   }, [recent.data]);
 
-  // Re-tapping Home: back to the top, and from the top into the field (§2.1).
+  // Re-tapping Home: back to the top, and from the top into the field.
   useEffect(
     () =>
       navigation.addListener('tabPress', () => {
@@ -187,7 +199,7 @@ export default function HomeScreen() {
     [navigation],
   );
 
-  // The search buttons on other screens land here with the keyboard up (§2.5 rule 4).
+  // The search buttons on other screens land here with the keyboard up.
   useSearchFocusRequest(() => inputRef.current?.focus());
 
   const spacesById = useMemo(
@@ -200,8 +212,35 @@ export default function HomeScreen() {
   );
 
   const toggleExpand = useCallback((id: string) => {
+    revealId.current = id;
     setExpandedId((current) => (current === id ? null : id));
   }, []);
+
+  const onViewableItemsChanged = useCallback(
+    ({ viewableItems }: { viewableItems: ViewToken<HomeEntry>[] }) => {
+      viewableKeys.current = new Set(viewableItems.map((token) => token.key));
+    },
+    [],
+  );
+
+  // A chip near the bottom opens its stepper below the fold, where nothing
+  // would tell her it opened. Once the row has its new height (and the list
+  // has measured it), a row that is not entirely on screen scrolls up just
+  // enough to show the stepper, Done and the sheet's edge.
+  function revealExpanded(entry: Extract<HomeEntry, { kind: 'item' }>, index: number) {
+    if (revealId.current !== entry.item.id) return;
+    revealId.current = null;
+    if (expandedId !== entry.item.id) return;
+    requestAnimationFrame(() => {
+      if (viewableKeys.current.has(entry.key)) return;
+      listRef.current?.scrollToIndex({
+        index,
+        viewPosition: 1,
+        viewOffset: -space.md,
+        animated: !reduceMotion,
+      });
+    });
+  }
 
   // A pull ends when every list it asked for has answered.
   const reloading = spaces.loading || recent.loading || (searching && search.refreshing);
@@ -268,6 +307,15 @@ export default function HomeScreen() {
 
   function onScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
     scrollY.current = event.nativeEvent.contentOffset.y;
+    // Only when rows cross under the field, never on every scroll event.
+    const next = scrollY.current > (compact ? 0 : headerHeight.current);
+    if (next === pinnedRef.current) return;
+    pinnedRef.current = next;
+    setPinned(next);
+  }
+
+  function onHeaderLayout(event: LayoutChangeEvent) {
+    headerHeight.current = event.nativeEvent.layout.height;
   }
 
   // Older results stay while a new query runs, dimmed and out of reach; past
@@ -353,45 +401,48 @@ export default function HomeScreen() {
   const reconnecting = paired && connection.state === 'offline';
 
   const header = compact ? null : (
-    <TabRootHeader
-      title={householdName}
-      actions={
-        <IconButton
-          icon="settings"
-          accessibilityLabel={strings.home.settings}
-          onPress={() => router.push('/settings')}
-          testID="home-settings"
-        />
-      }
-      subtitle={
-        <>
-          {counts ? (
-            <AppText variant="meta" tone="graphite">
-              {strings.home.summary(counts.spaces, counts.containers, counts.items)}
-            </AppText>
-          ) : null}
-          {/* Where the data lives is always on screen (UX-10, UX-15). */}
-          <View style={styles.caption}>
-            <Icon
-              name={paired ? 'server' : 'phone'}
-              size={inlineIconSize(16, fontScale)}
-              color={reconnecting ? colors.signal : colors.graphite}
-            />
-            <AppText
-              variant="caption"
-              tone={reconnecting ? 'signal' : 'graphite'}
-              style={styles.captionText}
-            >
-              {reconnecting
-                ? strings.connection.sharedReconnecting
-                : paired
-                  ? strings.connection.shared
-                  : strings.connection.local}
-            </AppText>
-          </View>
-        </>
-      }
-    />
+    <View onLayout={onHeaderLayout}>
+      <TabRootHeader
+        title={householdName}
+        actions={
+          <IconButton
+            icon="settings"
+            accessibilityLabel={strings.home.settings}
+            onPress={() => router.push('/settings')}
+            testID="home-settings"
+          />
+        }
+        subtitle={
+          <>
+            {/* An empty household's zeros would only repeat the empty state below. */}
+            {counts && counts.spaces + counts.items > 0 ? (
+              <AppText variant="meta" tone="graphite">
+                {strings.home.summary(counts.spaces, counts.containers, counts.items)}
+              </AppText>
+            ) : null}
+            {/* Where the data lives is always on screen. */}
+            <View style={styles.caption}>
+              <Icon
+                name={paired ? 'server' : 'phone'}
+                size={inlineIconSize(16, fontScale)}
+                color={reconnecting ? colors.signal : colors.graphite}
+              />
+              <AppText
+                variant="caption"
+                tone={reconnecting ? 'signal' : 'graphite'}
+                style={styles.captionText}
+              >
+                {reconnecting
+                  ? strings.connection.sharedReconnecting
+                  : paired
+                    ? strings.connection.shared
+                    : strings.connection.local}
+              </AppText>
+            </View>
+          </>
+        }
+      />
+    </View>
   );
 
   function renderStatus(status: Extract<HomeEntry, { kind: 'status' }>['status']) {
@@ -408,15 +459,22 @@ export default function HomeScreen() {
             <Skeleton variant="rows" rows={5} />
           </View>
         ) : null;
-      case 'error':
+      case 'error': {
+        const cause = recent.cause ?? spaces.cause;
+        // The connection banner already says the home server is not answering
+        // and offers the one "Try again"; the list fills in once it answers.
+        if (explainedElsewhere(cause)) {
+          return (
+            <View style={[styles.gutter, styles.block]} testID="home-waiting">
+              <AppText variant="body" tone="graphite">
+                {strings.home.waitingForServer}
+              </AppText>
+            </View>
+          );
+        }
         // Never an empty list: a failed read must not look like "you own nothing".
-        return (
-          <ErrorState
-            cause={recent.cause ?? spaces.cause}
-            onRetry={reloadOverview}
-            testID="home-error"
-          />
-        );
+        return <ErrorState cause={cause} onRetry={reloadOverview} testID="home-error" />;
+      }
       case 'searchFailed': {
         const described = describeError(search.cause);
         return (
@@ -435,6 +493,7 @@ export default function HomeScreen() {
             body={strings.search.none.body}
             secondary={{
               label: strings.search.none.add(trimmed),
+              icon: 'plus',
               onPress: () => router.push({ pathname: '/item/new', params: { name: trimmed } }),
               testID: 'search-add-missing',
             }}
@@ -484,11 +543,19 @@ export default function HomeScreen() {
     }
   }
 
-  function renderEntry(entry: HomeEntry) {
+  function renderEntry(entry: HomeEntry, index: number) {
     switch (entry.kind) {
       case 'field':
         return (
-          <View style={[styles.field, { backgroundColor: colors.plaster }]}>
+          <View
+            style={[
+              styles.field,
+              {
+                backgroundColor: colors.plaster,
+                borderBottomColor: pinned ? colors.rule : 'transparent',
+              },
+            ]}
+          >
             <SearchField
               size="large"
               value={query}
@@ -546,7 +613,7 @@ export default function HomeScreen() {
               items={dropZone.items}
               count={dropZone.count}
               onSort={() => goToTab('/drop-zone')}
-              onQuickSnap={() => router.push(QUICK_SNAP_HREF)}
+              onQuickSnap={openQuickSnap}
             />
           </View>
         );
@@ -575,6 +642,7 @@ export default function HomeScreen() {
         return (
           <View
             style={[styles.gutter, sheetCell(entry.position.index, entry.position.count, colors)]}
+            onLayout={() => revealExpanded(entry, index)}
           >
             {entry.position.index > 0 ? <SheetSeparator /> : null}
             <ItemRow
@@ -599,6 +667,7 @@ export default function HomeScreen() {
               spaces={spacesById}
               containers={containersById}
               onPress={openPlace}
+              terms={search.results?.terms}
             />
           </View>
         );
@@ -619,8 +688,8 @@ export default function HomeScreen() {
     }
   }
 
-  const renderItem: ListRenderItem<HomeEntry> = ({ item: entry }) => {
-    if (entry.kind === 'field' || entry.kind === 'status') return renderEntry(entry);
+  const renderItem: ListRenderItem<HomeEntry> = ({ item: entry, index }) => {
+    if (entry.kind === 'field' || entry.kind === 'status') return renderEntry(entry, index);
     // Results for the previous query stay for continuity, but are never
     // tappable or announced as the answer to what is in the field now. The
     // wrapper is always there, so dimming never remounts a row (and its
@@ -632,7 +701,7 @@ export default function HomeScreen() {
         accessibilityElementsHidden={older}
         importantForAccessibility={older ? 'no-hide-descendants' : 'auto'}
       >
-        {renderEntry(entry)}
+        {renderEntry(entry, index)}
       </View>
     );
   };
@@ -649,6 +718,8 @@ export default function HomeScreen() {
         stickyHeaderIndices={[header ? 1 : 0]}
         onScroll={onScroll}
         scrollEventThrottle={32}
+        viewabilityConfig={FULLY_VISIBLE}
+        onViewableItemsChanged={onViewableItemsChanged}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         contentContainerStyle={styles.content}
@@ -681,9 +752,12 @@ const styles = StyleSheet.create({
   captionText: {
     flexShrink: 1,
   },
+  // The 1 pt rule is always there, so the field never changes height when
+  // rows start to pass under it; only its colour changes.
   field: {
     paddingHorizontal: GUTTER,
     paddingVertical: space.sm,
+    borderBottomWidth: 1,
   },
   gutter: {
     marginHorizontal: GUTTER,
@@ -691,8 +765,10 @@ const styles = StyleSheet.create({
   block: {
     marginTop: space.md,
   },
+  // A section title follows; without the gap the summary reads as its caption.
   summary: {
     marginTop: space.xs,
+    marginBottom: space.sm,
   },
   totals: {
     marginBottom: space.sm,

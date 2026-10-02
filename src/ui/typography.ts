@@ -17,6 +17,17 @@ export const FONT_FAMILY: Record<FontWeight, string> = {
   800: 'AtkinsonHyperlegibleNext_800ExtraBold',
 };
 
+/**
+ * React Navigation's theme fonts once Atkinson has loaded. The weight is the
+ * family, so `fontWeight` stays `normal` (a set weight would be faked).
+ */
+export const NAVIGATION_FONTS = {
+  regular: { fontFamily: FONT_FAMILY[400], fontWeight: 'normal' },
+  medium: { fontFamily: FONT_FAMILY[500], fontWeight: 'normal' },
+  bold: { fontFamily: FONT_FAMILY[700], fontWeight: 'normal' },
+  heavy: { fontFamily: FONT_FAMILY[800], fontWeight: 'normal' },
+} as const;
+
 interface VariantSpec {
   size: number;
   lineHeight: number;

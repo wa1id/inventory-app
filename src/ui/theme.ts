@@ -2,13 +2,7 @@ import { useColorScheme } from 'react-native';
 
 import type { ContainerVisualType } from '@/db/types';
 import type { IconName } from '@/ui/icons/glyphs';
-import {
-  darkColors,
-  lightColors,
-  radius as tokenRadius,
-  space,
-  type ColorTokens,
-} from '@/ui/tokens';
+import { darkColors, lightColors, type ColorTokens } from '@/ui/tokens';
 
 export {
   BOTTOM_BAR_PADDING,
@@ -28,6 +22,7 @@ export {
   THUMB_SMALL,
   camera,
   fixed,
+  radius,
   shadowFloat,
   space,
   type ColorTokens,
@@ -105,18 +100,6 @@ export function onColor(hex: string): typeof ON_DARK | typeof ON_LIGHT {
     : ON_LIGHT;
 }
 
-/** @deprecated Emoji type glyphs; use `TYPE_ICON` with `Icon`. Removed in cleanup. */
-export const CONTAINER_ICONS: Record<string, string> = {
-  box: '📦',
-  drawer: '🗄️',
-  shelf: '🗂️',
-  cabinet: '🚪',
-  bin: '🗑️',
-  bag: '👜',
-  crate: '🧰',
-  other: '📥',
-};
-
 /**
  * Container types are line icons of the same name. Typed as a plain record so
  * a stored type this build does not know falls back with `?? 'other'`.
@@ -132,84 +115,8 @@ export const TYPE_ICON: Record<string, IconName> = {
   other: 'other',
 } satisfies Record<ContainerVisualType, IconName>;
 
-/**
- * The colour keys screens used before the redesign, mapped onto the desk's
- * tokens so every unconverted screen already reads as the new design. There is
- * no green success colour and no brand blue: success is said in words, a check
- * and a haptic. Removed in cleanup, once no screen reads them.
- */
-interface LegacyColors {
-  /** @deprecated Use `plaster`. */
-  background: string;
-  /** @deprecated Use `sheet`. */
-  surface: string;
-  /** @deprecated Use `sheet2`. */
-  surfaceAlt: string;
-  /** @deprecated Use `rule` (decorative) or `control` (a control's edge). */
-  border: string;
-  /** @deprecated Use `ink`. */
-  text: string;
-  /** @deprecated Use `graphite`. */
-  textMuted: string;
-  /** @deprecated Use `ink`. */
-  primary: string;
-  /** @deprecated Use `onInk`. */
-  primaryText: string;
-  /** @deprecated Use `signal`. */
-  danger: string;
-  /** @deprecated Use `signalWash`. */
-  dangerSurface: string;
-  /** @deprecated Use `ink`; success is said in words. */
-  success: string;
-  /** @deprecated Use `signal`. */
-  warning: string;
-  /** @deprecated Use `signalWash`. */
-  warningSurface: string;
-  /** @deprecated Use `scrim`. */
-  overlay: string;
-}
-
-function withLegacy(tokens: ColorTokens): ColorTokens & LegacyColors {
-  return {
-    ...tokens,
-    background: tokens.plaster,
-    surface: tokens.sheet,
-    surfaceAlt: tokens.sheet2,
-    border: tokens.rule,
-    text: tokens.ink,
-    textMuted: tokens.graphite,
-    primary: tokens.ink,
-    primaryText: tokens.onInk,
-    danger: tokens.signal,
-    dangerSurface: tokens.signalWash,
-    success: tokens.ink,
-    warning: tokens.signal,
-    warningSurface: tokens.signalWash,
-    overlay: tokens.scrim,
-  };
-}
-
-const light = withLegacy(lightColors);
-const dark = withLegacy(darkColors);
-
-export type ThemeColors = typeof light;
-
-/** @deprecated Alias of `space` (same names and values). Removed in cleanup. */
-export const spacing = space;
-
-/**
- * Radii by role. `sm`, `md` and `lg` are the pre-redesign names, kept as
- * deprecated aliases until cleanup.
- */
-export const radius = {
-  ...tokenRadius,
-  /** @deprecated Use `control`. */
-  sm: 8,
-  /** @deprecated Use `sheet`. */
-  md: 12,
-  /** @deprecated No new equivalent; use `sheet`. */
-  lg: 16,
-} as const;
+/** The colours `useTheme()` returns: the desk's tokens for one scheme. */
+export type ThemeColors = ColorTokens;
 
 /**
  * Minimum interactive size.
@@ -220,12 +127,12 @@ export const radius = {
 export const MIN_TOUCH_TARGET = 48;
 
 /**
- * Colours for the current scheme: the desk's tokens plus the legacy keys.
+ * Colours for the current scheme.
  *
  * Follows the system setting; there is no in-app override.
  */
 export function useTheme(): { colors: ThemeColors; isDark: boolean } {
   const scheme = useColorScheme();
   const isDark = scheme === 'dark';
-  return { colors: isDark ? dark : light, isDark };
+  return { colors: isDark ? darkColors : lightColors, isDark };
 }

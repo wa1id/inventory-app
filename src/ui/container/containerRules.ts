@@ -14,7 +14,7 @@ interface Named {
 
 /**
  * What a sentence calls a container: its name, or else the code on its label,
- * which is what is written on the box (entities §14.13).
+ * which is what is written on the box.
  */
 export function labelOf(container: Named): string {
   return container.name?.trim() ? container.name : container.shortCode;
@@ -85,13 +85,13 @@ export type StickerPlan =
   | { kind: 'link'; token: string; confirm: ConfirmCopy | null };
 
 /**
- * Decides what a scanned sticker does to `target` (spec §5.19).
+ * Decides what a scanned sticker does to `target`.
  *
  * A new sticker links straight away unless the container already has a
  * label, whose old sticker would stop working. A sticker that opens another
  * container is moved only after saying which one loses it. Both are asked
- * as questions with the impact spelled out (capture §10.15; the old title
- * "Move this label?" for a replacement was wrong, §13.16).
+ * as questions with the impact spelled out (the old title "Move this
+ * label?" for a replacement was wrong).
  */
 export function planSticker(
   outcome: ScanOutcome,
@@ -163,7 +163,7 @@ export type LabelAction = 'make' | 'replace' | 'remove';
 /**
  * The error toast for a label change that did not happen, in plain words and
  * saying what still holds: until a replace or remove succeeds, the sticker on
- * the box keeps working (entities §15.5, capture §13.3).
+ * the box keeps working.
  */
 export function labelFailureMessage(action: LabelAction, cause: unknown): string {
   const { kind } = describeError(cause, 'label', 'container');

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useIsFocused } from 'expo-router';
 
-import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
+import { useRepositories, useRevision } from '@/providers/DatabaseProvider';
 import type { SearchResults } from '@/repositories/search';
 import { logEvent } from '@/services/telemetry';
 import { rememberCategories } from '@/ui/categoryMemory';
@@ -24,7 +24,7 @@ export interface SearchState {
   pending: boolean;
   /** The current query is running again (Home refocused, a write elsewhere, Try again). */
   refreshing: boolean;
-  /** Runs the current query again; "Try again" after a failure (B2). */
+  /** Runs the current query again; "Try again" after a failure. */
   retry: () => void;
 }
 
@@ -46,17 +46,17 @@ const NOTHING_SETTLED: Settled = { query: '', run: '', results: null, cause: nul
  *   starts at once.
  * - Results always belong to a query (`settledQuery`), so `pending` is derived
  *   rather than stored, and results for an older query are never shown as the
- *   answer to the current one (screens-home §10.11).
+ *   answer to the current one.
  * - The current query runs again when Home is focused and after any write
  *   (`revision`), so an item edited, moved or deleted elsewhere is never
- *   shown as it was (B3). Like `useInventoryQuery`, a write only re-runs the
+ *   shown as it was. Like `useInventoryQuery`, a write only re-runs the
  *   search while Home is in front; Home catches up when it is focused again.
  * - `search_performed` is logged once per settled query with counts only;
  *   the text she typed is never logged.
  */
 export function useSearch(query: string): SearchState {
   const repos = useRepositories();
-  const { revision } = useDatabase();
+  const revision = useRevision();
   const isFocused = useIsFocused();
   const trimmed = query.trim();
 
@@ -67,7 +67,7 @@ export function useSearch(query: string): SearchState {
     setSeenRevision(revision);
   }
   // Bumped on focus and by `retry`. A plain counter, so "Try again" always
-  // changes something (the old retry re-set the same string and did nothing, B2).
+  // changes something (the old retry re-set the same string and did nothing).
   const [nonce, setNonce] = useState(0);
   const run = `${seenRevision}|${nonce}`;
 

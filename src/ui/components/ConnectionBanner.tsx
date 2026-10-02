@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { strings } from '@/i18n/strings';
 import { useConnection } from '@/providers/ConnectionProvider';
+import { useDatabase } from '@/providers/DatabaseProvider';
 import { useHousehold } from '@/providers/HouseholdProvider';
 import { AppText } from '@/ui/components/AppText';
 import { Banner } from '@/ui/components/Banner';
@@ -17,6 +18,9 @@ import { CONTENT_MAX_WIDTH, GUTTER, space, useTheme } from '@/ui/theme';
  * requests have failed for 2.5 s, and gone as soon as one succeeds. Nothing
  * for brief blips, and nothing when the phone is not part of a household.
  * What was on screen stays; the banner only says it may be a few minutes old.
+ *
+ * Silent: every screen draws its own copy, so `ConnectionProvider` announces
+ * the change once instead of each banner announcing itself as it mounts.
  */
 export function ConnectionBanner() {
   const { state, retry } = useConnection();
@@ -29,6 +33,7 @@ export function ConnectionBanner() {
         icon="cloudOff"
         message={strings.connection.reconnecting}
         action={{ label: strings.connection.retry, onPress: retry }}
+        live="off"
         testID="banner-connection"
       />
     </View>
@@ -51,6 +56,7 @@ function RevokedContent() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { disconnect } = useHousehold();
+  const { invalidate } = useDatabase();
 
   useEffect(() => {
     // Close whatever was open underneath, so leaving the layer lands on Home.
@@ -61,9 +67,17 @@ function RevokedContent() {
     return () => subscription.remove();
   }, []);
 
+  // Leaving swaps the household's lists for this phone's own; nothing else
+  // re-reads them, because the layer is not a screen and Home stays focused.
   async function joinAgain() {
     await disconnect();
+    invalidate();
     router.push('/household');
+  }
+
+  async function carryOnAlone() {
+    await disconnect();
+    invalidate();
   }
 
   return (
@@ -94,7 +108,7 @@ function RevokedContent() {
           />
           <Button
             label={strings.revoked.local}
-            onPress={() => void disconnect()}
+            onPress={() => void carryOnAlone()}
             variant="quiet"
             fullWidth
             testID="revoked-local"

@@ -1,17 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useIsFocused } from 'expo-router';
 
-import { useDatabase } from '@/providers/DatabaseProvider';
+import { useRevision } from '@/providers/DatabaseProvider';
 
 export interface QueryResult<T> {
   /** The latest result for this key, kept while a refresh runs or fails. */
   data: T | null;
   loading: boolean;
-  /**
-   * @deprecated The raw message, for screens that have not moved to `cause`.
-   * Never render it: it can carry codes and internals (B8).
-   */
-  error: string | null;
   /** What the latest read threw; describe it with `ErrorState` / `describeError`. */
   cause: unknown;
   /** The latest read failed but earlier data is still on screen. */
@@ -25,7 +20,8 @@ interface Settled<T> {
   /** The query key it was read for, so a failure keeps only this key's data. */
   key: string;
   data: T | null;
-  error: string | null;
+  /** The read threw (kept apart from `cause`, which may itself be `undefined`). */
+  failed: boolean;
   cause: unknown;
 }
 
@@ -54,7 +50,7 @@ interface Settled<T> {
  *   no longer re-reads every mounted screen over HTTP.
  */
 export function useInventoryQuery<T>(run: () => Promise<T>, key: string): QueryResult<T> {
-  const { revision } = useDatabase();
+  const revision = useRevision();
   const isFocused = useIsFocused();
   const [localRevision, setLocalRevision] = useState(0);
   const [seenRevision, setSeenRevision] = useState(revision);
@@ -62,7 +58,7 @@ export function useInventoryQuery<T>(run: () => Promise<T>, key: string): QueryR
     token: -1,
     key,
     data: null,
-    error: null,
+    failed: false,
     cause: null,
   });
 
@@ -90,7 +86,7 @@ export function useInventoryQuery<T>(run: () => Promise<T>, key: string): QueryR
       .current()
       .then((result) => {
         if (cancelled) return;
-        setSettled({ token: requestToken, key, data: result, error: null, cause: null });
+        setSettled({ token: requestToken, key, data: result, failed: false, cause: null });
       })
       .catch((cause: unknown) => {
         if (cancelled) return;
@@ -98,7 +94,7 @@ export function useInventoryQuery<T>(run: () => Promise<T>, key: string): QueryR
           token: requestToken,
           key,
           data: previous.key === key ? previous.data : null,
-          error: cause instanceof Error ? cause.message : 'Could not read your inventory.',
+          failed: true,
           cause,
         }));
       });
@@ -119,11 +115,10 @@ export function useInventoryQuery<T>(run: () => Promise<T>, key: string): QueryR
   const reload = useCallback(() => setLocalRevision((value) => value + 1), []);
 
   const current = settled.token === requestToken;
-  const failed = current && settled.error !== null;
+  const failed = current && settled.failed;
 
   return {
     data: settled.data,
-    error: current ? settled.error : null,
     cause: failed ? settled.cause : null,
     refreshFailed: failed && settled.data !== null,
     loading: !current,

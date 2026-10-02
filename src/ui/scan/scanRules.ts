@@ -10,7 +10,7 @@ import { describeError } from '@/ui/errors';
 
 /**
  * What a sentence calls a container: its name, or else the code on its
- * label, which is what is written on the box (entities §14.13).
+ * label, which is what is written on the box.
  */
 export function labelFor(container: { name: string | null; shortCode: string }): string {
   return container.name?.trim() ? container.name : container.shortCode;
@@ -37,12 +37,12 @@ export interface BindPlan {
 }
 
 /**
- * Linking a new label to the container someone picked (spec §5.18).
+ * Linking a new label to the container someone picked.
  *
  * A container has one label at a time, so linking a new one retires the old
- * sticker. That is asked as a question with the impact spelled out (capture
- * §10.15); the old title, "Move this label?", described a different case
- * (§13.16). `existing` comes from `qr.getByContainer`, because the picker's
+ * sticker. That is asked as a question with the impact spelled out; the old
+ * title, "Move this label?", described a different case.
+ * `existing` comes from `qr.getByContainer`, because the picker's
  * container list carries no label token.
  */
 export function planBind(
@@ -63,7 +63,7 @@ export function planBind(
 }
 
 /**
- * The error toast when a label could not be linked, in plain words (B8). The
+ * The error toast when a label could not be linked, in plain words. The
  * label stays on screen with the picker, so trying again needs no rescan.
  */
 export function linkFailureMessage(cause: unknown): string {

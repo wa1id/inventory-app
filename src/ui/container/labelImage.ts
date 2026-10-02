@@ -36,7 +36,7 @@ function snapshot(svg: QrSvg): Promise<string> {
 /**
  * Saves the label's QR code as a PNG in the cache and returns its URI, so the
  * iOS share sheet offers Save Image and Print rather than only a line of
- * text (spec §5.8). No new native module: react-native-svg draws it and
+ * text. No new native module: react-native-svg draws it and
  * expo-file-system writes it. The file is overwritten on the next share and
  * the system may clear the cache whenever it likes.
  */

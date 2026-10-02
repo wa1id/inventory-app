@@ -8,8 +8,8 @@ import { QuantityStepper } from '@/ui/components/QuantityStepper';
 import { space } from '@/ui/theme';
 
 export interface SavedQuantityStepperProps {
-  /** `name` may be missing on legacy call sites; labels then stay generic. */
-  item: { id: string; name?: string; quantity: number; updatedAt: number };
+  /** A blank `name` (an unnamed item) keeps the labels generic. */
+  item: { id: string; name: string; quantity: number; updatedAt: number };
   size?: 'compact' | 'large';
   testIDSuffix?: string;
   /**
@@ -18,10 +18,6 @@ export interface SavedQuantityStepperProps {
    * Defaults to an error toast, so a failure in a long list is never silent.
    */
   onError?: (message: string, kind: QuantityErrorKind) => void;
-  /** @deprecated Use `size="compact"`. */
-  compact?: boolean;
-  /** @deprecated Shows "Quantity" above the stepper; new screens label it themselves. */
-  showLabel?: boolean;
 }
 
 /**
@@ -33,15 +29,12 @@ export interface SavedQuantityStepperProps {
  */
 export function SavedQuantityStepper({
   item,
-  size,
+  size: kind = 'large',
   testIDSuffix,
   onError,
-  compact,
-  showLabel = false,
 }: SavedQuantityStepperProps) {
-  const kind = size ?? (compact ? 'compact' : 'large');
   const large = kind === 'large';
-  const name = item.name?.trim() ? item.name : undefined;
+  const name = item.name.trim() ? item.name : undefined;
   const toast = useToast();
   const { quantity, setQuantity, error } = useSavedQuantity(item, {
     onError: (failure) => {
@@ -58,7 +51,6 @@ export function SavedQuantityStepper({
 
   return (
     <View style={large ? styles.large : styles.compact}>
-      {showLabel ? <AppText variant="label">{strings.quantity.label}</AppText> : null}
       <QuantityStepper
         value={quantity}
         onChange={setQuantity}

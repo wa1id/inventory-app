@@ -42,7 +42,7 @@ type CaptureMode = 'single' | 'fast';
 
 /**
  * Photograph one thing (single) or many in a row (fast, Quick Snap) without
- * waiting on anything (issue #6, spec §5.15).
+ * waiting on anything (issue #6).
  *
  * Permission is requested only once the user has chosen to take a photo, so the
  * system prompt always arrives with context. Every denial path keeps manual
@@ -50,7 +50,7 @@ type CaptureMode = 'single' | 'fast';
  *
  * The redesign changed the chrome only. The camera mechanics (the preview and
  * tap-to-focus frame, continuous autofocus, the capture options, the fast
- * pipeline's order and the replace to review) are frozen (capture §9); the
+ * pipeline's order and the replace to review) are frozen; the
  * chrome lives in `CameraChrome.tsx`.
  *
  * Opened with `request` (the Add sheet's photo), it is a single-photo camera
@@ -106,7 +106,7 @@ export default function CaptureScreen() {
   // The newest fast-mode photo, for the last-shot tile and the shutter flash.
   const [lastShot, setLastShot] = useState<string | null>(null);
   // Single mode: `processing` turns on only once the photo is back, so a quick
-  // second tap used to take two photos and replace twice (capture §13.7).
+  // second tap used to take two photos and replace twice.
   const takingRef = useRef(false);
   // The library picker is open: a second tap would ask for another one, and
   // its refusal read as "That photo could not be opened."
@@ -114,7 +114,7 @@ export default function CaptureScreen() {
   // The camera is on its way out (✕, Android back, Done, Type it instead) or
   // gone. Leaving happens once, and a photo still being saved then neither
   // navigates (it would replace the screen the person went back to, or the
-  // Add sheet that was waiting for it) nor stays on the phone (capture §13.8).
+  // Add sheet that was waiting for it) nor stays on the phone.
   const closedRef = useRef(false);
   // Everything created from the first fast shutter press on belongs to this
   // session; the review screen selects by creation time because rows keep
@@ -303,7 +303,7 @@ export default function CaptureScreen() {
     closedRef.current = true;
     invalidate();
     if (captured === 0) {
-      // Back to wherever the camera was opened from (spec §2.5 rule 7).
+      // Back to wherever the camera was opened from.
       // Replacing with `/drop-zone` would now stack a second tab shell.
       router.back();
       return;
@@ -317,7 +317,7 @@ export default function CaptureScreen() {
     router.replace(`/capture/review?${params.toString()}`);
   }
 
-  /** ✕ and Android back: a fast set with shots always ends on its review (capture §13.6). */
+  /** ✕ and Android back: a fast set with shots always ends on its review. */
   function close() {
     if (closedRef.current) return;
     if (leaveCamera(mode, captured) === 'review') {
@@ -356,7 +356,7 @@ export default function CaptureScreen() {
         allowsMultipleSelection: false,
       });
     } catch (cause) {
-      // The picker used to reject unhandled here (capture §13.15).
+      // The picker used to reject unhandled here.
       report(
         isPermissionError(cause)
           ? strings.permissions.libraryDeniedBody
@@ -409,7 +409,7 @@ export default function CaptureScreen() {
         flash={flash}
         // Continuous AF. 'on' would lock after a single shot (issue #44).
         autofocus="off"
-        // A camera that cannot start used to leave a silent black screen (capture §13.13).
+        // A camera that cannot start used to leave a silent black screen.
         onMountError={() => setError(strings.capture.didNotStart)}
       />
       <TapToFocusLayer

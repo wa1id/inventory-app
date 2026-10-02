@@ -11,7 +11,7 @@ import { SpacePip } from '@/ui/components/SpacePip';
 import { Tape } from '@/ui/components/Tape';
 import { openContainer, openSpace } from '@/ui/navigation';
 import { MIN_TOUCH_TARGET, camera, useTheme } from '@/ui/theme';
-import type { TextVariant } from '@/ui/typography';
+import { TEXT_VARIANTS, maxScale, type TextVariant } from '@/ui/typography';
 
 export type { PlaceLike } from '@/ui/a11y';
 
@@ -50,6 +50,12 @@ function PlaceLink({
   onPress: () => void;
 }) {
   const { colors } = useTheme();
+  const { fontScale } = useLayoutScale();
+  // The 48 pt target reaches past the text line rather than padding it, so a
+  // wrapped path sets solid instead of opening a gap between its lines.
+  const line =
+    TEXT_VARIANTS[variant].lineHeight * Math.min(Math.max(fontScale, 1), maxScale(variant));
+  const slop = Math.max(0, Math.ceil((MIN_TOUCH_TARGET - line) / 2));
   return (
     <Pressable
       onPress={onPress}
@@ -57,14 +63,21 @@ function PlaceLink({
       accessibilityHint={hint}
       testID={testID}
       android_ripple={rippleFor(colors)}
-      hitSlop={4}
+      hitSlop={{ top: slop, bottom: slop, left: 4, right: 4 }}
       style={styles.link}
     >
       {({ pressed }) => (
+        // Always underlined: touch has no hover to show that the name is a link.
         <AppText
           variant={variant}
           accessibilityRole="text"
-          style={[styles.segment, pressed && Platform.OS === 'ios' ? styles.underline : null]}
+          style={[
+            styles.segment,
+            styles.underline,
+            Platform.OS === 'ios'
+              ? { textDecorationColor: pressed ? colors.ink : colors.ruleStrong }
+              : null,
+          ]}
         >
           {label}
         </AppText>
@@ -105,14 +118,15 @@ export function LocationLine({
           size={inlineIconSize(spec.inbox, fontScale)}
           color={tone === 'camera' ? camera.ink : colors.ink}
         />
+        {/* One text, so a wrap falls between words rather than before the dot. */}
         <AppText variant={spec.variant} tone={textTone} style={styles.segment}>
           {strings.where.dropZone}
+          {size === 'card' ? null : (
+            <AppText variant={spec.variant} tone={quietTone}>
+              {strings.where.notFiledYet}
+            </AppText>
+          )}
         </AppText>
-        {size === 'card' ? null : (
-          <AppText variant={spec.variant} tone={quietTone} style={styles.segment}>
-            {strings.where.notFiledYet}
-          </AppText>
-        )}
       </View>
     );
   }
@@ -179,7 +193,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   link: {
-    minHeight: MIN_TOUCH_TARGET,
     justifyContent: 'center',
     flexShrink: 1,
   },

@@ -104,6 +104,11 @@ export const fixed = {
   qrPaper: '#FFFFFF',
   qrInk: '#000000',
   photoBackdrop: 'rgba(12,14,13,0.96)',
+  /** The label tape's embossed edge (`s` and `m`); the tape looks the same in both schemes. */
+  tapeBevel: 'inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -1px 0 rgba(0,0,0,0.14)',
+  /** The large tape's edge, plus a slight lift off the card. */
+  tapeBevelL:
+    'inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -2px 0 rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14)',
 } as const;
 
 /**
@@ -119,6 +124,8 @@ export const camera = {
   selected: 'rgba(255,255,255,0.22)',
   accent: '#FFD23F',
   errorBar: '#FF9573',
+  /** Scan reticle corners while looking; they turn `accent` once a label is locked. */
+  reticle: 'rgba(255,255,255,0.85)',
 } as const;
 
 export const space = {

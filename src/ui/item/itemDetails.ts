@@ -4,7 +4,7 @@ import { strings } from '@/i18n/strings';
 import type { ItemFormValues } from '@/ui/components/ItemForm';
 
 /*
- * Pure helpers for the item screen and Edit details (spec §5.10, §5.11),
+ * Pure helpers for the item screen and Edit details,
  * tested in Node.
  */
 
@@ -17,7 +17,7 @@ export interface DetailsSource {
   quantity: number;
 }
 
-/** What Edit details is seeded with, once per item id (entities §14.2). */
+/** What Edit details is seeded with, once per item id. */
 export function detailsSeed(item: DetailsSource): ItemFormValues {
   return {
     name: item.name,
@@ -96,7 +96,7 @@ export type DetailsOutcome =
  * place changed, the save goes through once with the new stamp: most often
  * that change is this phone's own stepper on the item screen underneath,
  * whose write landed after the form was read, and blaming "another device"
- * for it was the self-conflict this form exists to remove (entities §10).
+ * for it was the self-conflict this form exists to remove.
  */
 export async function attemptDetails(
   items: {
@@ -144,15 +144,20 @@ export type NameOutcome =
   | { kind: 'named' }
   /** Deleted on another phone (a household update answers 404 as `null`). */
   | { kind: 'gone' }
-  /** Another phone named it first; theirs stands, nothing was written. */
-  | { kind: 'namedElsewhere'; name: string }
+  /**
+   * It was given another name first, by recognition or on another phone
+   * (which of the two is not known). Nothing was written; saving again over
+   * `updatedAt` keeps the typed name.
+   */
+  | { kind: 'namedMeanwhile'; name: string; updatedAt: number }
   | { kind: 'failed'; cause: unknown };
 
 /**
  * Names an unnamed item, carrying its lock (the "What is it?" field on the
- * item screen). On a conflict the item is re-read: if someone named it
- * meanwhile their name stands, otherwise (a quantity changed, say) the name
- * is written once more with the new stamp.
+ * item screen). On a conflict the item is re-read. If it now has another
+ * name, nothing is written and the person decides; the typed name is never
+ * dropped. Otherwise (a quantity changed, say, or it was given this very
+ * name) the name is written once more with the new stamp.
  */
 export async function attemptName(
   items: {
@@ -175,7 +180,9 @@ export async function attemptName(
   try {
     const fresh = await items.getById(item.id);
     if (!fresh) return { kind: 'gone' };
-    if (fresh.name) return { kind: 'namedElsewhere', name: fresh.name };
+    if (fresh.name && fresh.name !== name) {
+      return { kind: 'namedMeanwhile', name: fresh.name, updatedAt: fresh.updatedAt };
+    }
     const updated = await items.update(item.id, { name, expectedUpdatedAt: fresh.updatedAt });
     return updated ? { kind: 'named' } : { kind: 'gone' };
   } catch (cause) {

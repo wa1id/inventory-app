@@ -243,11 +243,3 @@ export const GLYPHS = {
 } satisfies Record<string, ReactElement>;
 
 export type IconName = keyof typeof GLYPHS;
-
-/**
- * True for a glyph name. Lets legacy call sites that still pass an emoji as an
- * `icon` keep compiling: anything that is not a glyph renders nothing.
- */
-export function isIconName(value: unknown): value is IconName {
-  return typeof value === 'string' && Object.prototype.hasOwnProperty.call(GLYPHS, value);
-}

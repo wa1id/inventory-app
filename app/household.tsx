@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Platform, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { useNavigation, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useInventoryQuery, type QueryResult } from '@/hooks/useInventoryQuery';
@@ -33,6 +33,7 @@ import { haptics } from '@/ui/haptics';
 import { JoinForm, type Joined } from '@/ui/household/JoinForm';
 import { deviceMeta, sortDevices } from '@/ui/household/status';
 import { goToTab } from '@/ui/navigation';
+import { usePullToRefresh } from '@/ui/spaces/usePullToRefresh';
 import { GUTTER, OPTION_MIN, space, useTheme } from '@/ui/theme';
 
 /** Leaving tells the home server only in passing; the request must not linger on a dead connection. */
@@ -49,14 +50,25 @@ export default function HouseholdScreen() {
   return session ? <Paired session={session} /> : <Unpaired />;
 }
 
-/** Back to wherever Household was opened from; Home if it was somehow the only screen. */
-function leaveScreen(router: ReturnType<typeof useRouter>) {
+/**
+ * Back to wherever Household was opened from; Home if it was somehow the only
+ * screen. Nothing if the person already left (a slow join or leave finishing
+ * late), which would otherwise pop the screen they went back to.
+ */
+function leaveScreen(
+  router: ReturnType<typeof useRouter>,
+  navigation: { isFocused: () => boolean },
+) {
+  if (!navigation.isFocused()) return;
   if (router.canGoBack()) router.back();
   else goToTab('/');
 }
 
 function Unpaired() {
   const router = useRouter();
+  // The route's own navigation object: still answers after joining swaps this
+  // view for the paired one, and reads the live stack.
+  const navigation = useNavigation();
   const toast = useToast();
 
   function joined({ householdName, hasImportOffer }: Joined) {
@@ -64,7 +76,7 @@ function Unpaired() {
     // A phone with an inventory of its own stays here: the paired view now
     // offers to copy it in, and that is best done before anything changes.
     // Her phone (empty at join time) goes straight back.
-    if (!hasImportOffer) leaveScreen(router);
+    if (!hasImportOffer) leaveScreen(router, navigation);
   }
 
   return (
@@ -86,15 +98,14 @@ function Unpaired() {
 
 function Paired({ session }: { session: HouseholdSession }) {
   const router = useRouter();
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
   const toast = useToast();
   const { state: database, invalidate } = useDatabase();
   const { disconnect } = useHousehold();
 
   const devices = useInventoryQuery(() => listDevices(session), `devices:${session.deviceId}`);
-  const [pulled, setPulled] = useState(false);
-  if (pulled && !devices.loading) setPulled(false);
+  const refreshControl = usePullToRefresh(devices.loading, devices.reload);
 
   const [offer, setOffer] = useState<ImportOffer | null>(null);
   useEffect(() => {
@@ -132,7 +143,7 @@ function Paired({ session }: { session: HouseholdSession }) {
     setImportFailure(null);
     try {
       // From the local database, never the shadowed repositories: what this
-      // phone held of its own. The import itself is unchanged (spec §7.4).
+      // phone held of its own. The import itself is unchanged.
       const result = await importLocalInventory({ session, db: database.repos.db });
       await clearImportOffer();
       setOffer(null);
@@ -140,7 +151,7 @@ function Paired({ session }: { session: HouseholdSession }) {
       haptics.success();
       toast.show({ message: strings.household.copied(result.items, result.photosUploaded) });
     } catch (cause) {
-      // Never the raw message (B8): it used to show codes like `http_500`.
+      // Never the raw message: it used to show codes like `http_500`.
       logError('household_import_failed', {
         errorClass: cause instanceof Error ? cause.name : 'unknown',
       });
@@ -204,7 +215,7 @@ function Paired({ session }: { session: HouseholdSession }) {
     setLeaving(true);
     // Forget the session first. Once the home server drops this phone's
     // token, any request still in flight would come back 401 and flash the
-    // removed-phone layer over a phone that is leaving on purpose (V18).
+    // removed-phone layer over a phone that is leaving on purpose.
     await disconnect();
     // Then tell the home server, best effort and not waited for, so the
     // household's list of phones stays tidy and leaving is instant offline:
@@ -215,7 +226,7 @@ function Paired({ session }: { session: HouseholdSession }) {
     await clearImportOffer();
     logEvent('household_left');
     invalidate();
-    leaveScreen(router);
+    leaveScreen(router, navigation);
     toast.show({ message: strings.household.left });
   }
 
@@ -223,53 +234,34 @@ function Paired({ session }: { session: HouseholdSession }) {
     <ScreenFrame kind="detail">
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + space.xl }]}
-        refreshControl={
-          // A `RefreshControl` element itself, never a component wrapping one:
-          // Android clones it around the scroll view and passes the content
-          // as its children, which a wrapper would drop (a blank screen).
-          <RefreshControl
-            refreshing={pulled && devices.loading}
-            onRefresh={() => {
-              setPulled(true);
-              devices.reload();
-            }}
-            tintColor={Platform.OS === 'ios' ? colors.graphite : undefined}
-            colors={[colors.ink]}
-            progressBackgroundColor={colors.sheet}
-          />
-        }
+        // The hook returns a bare `RefreshControl` element on purpose: Android
+        // passes it the content as children, which a wrapper would drop.
+        refreshControl={refreshControl}
       >
         <StatusCard session={session} />
 
         {offer ? (
           <View style={styles.offer}>
+            {/* The choices sit in the notice they answer, as on Home's unpaired notice. */}
             <Banner
               tone="info"
               message={strings.household.importNotice(offer.spaces, offer.items)}
+              action={{
+                label: importing ? strings.household.copying : strings.household.importAction,
+                onPress: () => void copyIn(),
+                testID: 'household-import',
+              }}
+              secondary={
+                importing
+                  ? undefined
+                  : { label: strings.household.notNeeded, onPress: () => void notNeeded() }
+              }
             />
             {importFailure ? (
               // Read wording on purpose: nothing was typed to keep, and copying
               // again is safe ("…then try again. Nothing on this phone was lost.").
               <FailureNotice cause={importFailure.cause} context="read" />
             ) : null}
-            <View style={styles.offerActions}>
-              <Button
-                label={importing ? strings.household.copying : strings.household.importAction}
-                onPress={() => void copyIn()}
-                loading={importing}
-                variant="secondary"
-                size="sm"
-                testID="household-import"
-              />
-              {importing ? null : (
-                <Button
-                  label={strings.household.notNeeded}
-                  onPress={() => void notNeeded()}
-                  variant="quiet"
-                  size="sm"
-                />
-              )}
-            </View>
           </View>
         ) : null}
 
@@ -298,6 +290,7 @@ function Paired({ session }: { session: HouseholdSession }) {
             onPress={() => void leave()}
             loading={leaving}
             variant="destructive"
+            flush
             testID="household-leave"
           />
         </View>
@@ -325,7 +318,10 @@ function StatusCard({ session }: { session: HouseholdSession }) {
         <AppText variant="meta" tone="graphite">
           {strings.household.partOf(session.householdName)}
         </AppText>
-        <View style={styles.statusLine} accessible accessibilityLiveRegion="polite">
+        {/* One stop for the dot and its word, but not a live region: every
+            `unsure` blip would be read aloud, and the connection banner
+            already says a real outage. */}
+        <View style={styles.statusLine} accessible>
           <View style={[styles.dot, { backgroundColor: connected ? colors.ink : colors.signal }]} />
           <AppText variant="meta" tone={connected ? 'ink' : 'signal'} weight={600}>
             {connected ? strings.connection.connected : strings.connection.reconnectingShort}
@@ -336,7 +332,7 @@ function StatusCard({ session }: { session: HouseholdSession }) {
   );
 }
 
-/** A write that did not happen, in plain words (B8); the rest of the screen keeps working. */
+/** A write that did not happen, in plain words; the rest of the screen keeps working. */
 function FailureNotice({
   cause,
   context,
@@ -378,11 +374,22 @@ interface PhonesProps {
  */
 function Phones({ query, thisDeviceId, removingId, onRemove }: PhonesProps) {
   const now = useNow(60_000);
+  const { state: connection } = useConnection();
   const { data, loading, cause, refreshFailed, reload } = query;
 
   if (data === null) {
     if (cause) {
       const described = describeError(cause, 'read');
+      if (described.kind === 'offline' && connection !== 'online') {
+        // The connection banner already says the home server is out of reach,
+        // and its "Try again" reloads this list; a second warning here made a
+        // secondary list the loudest thing on the screen.
+        return (
+          <AppText variant="meta" tone="graphite">
+            {strings.household.phonesOffline}
+          </AppText>
+        );
+      }
       return (
         <Banner
           tone="warning"
@@ -446,7 +453,7 @@ function PhoneRow({
     <Row
       leading={<Icon name="phone" size={24} color={colors.graphite} />}
       minHeight={OPTION_MIN}
-      accessibilityLabel={`${device.name}, ${meta}`}
+      accessibilityLabel={strings.household.phoneA11y(device.name, meta)}
       tool={
         removable ? (
           <Button
@@ -501,12 +508,6 @@ const styles = StyleSheet.create({
   },
   offer: {
     marginTop: space.xl,
-    gap: space.sm,
-  },
-  offerActions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
     gap: space.sm,
   },
   phones: {

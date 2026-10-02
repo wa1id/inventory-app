@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
+import { useLayoutScale } from '@/hooks/useLayoutScale';
 import { AppText } from '@/ui/components/AppText';
 import { ConnectionBanner } from '@/ui/components/ConnectionBanner';
 import { CONTENT_MAX_WIDTH, GUTTER, camera, space, useTheme } from '@/ui/theme';
@@ -63,7 +64,10 @@ export function ScreenFrame({
 export interface TabRootHeaderProps {
   title: string;
   subtitle?: ReactNode;
-  /** `IconButton`s or small buttons, at the end of the title row. */
+  /**
+   * `IconButton`s or small buttons, at the end of the title row; on their own
+   * line under the title in the stacked layout.
+   */
   actions?: ReactNode;
 }
 
@@ -72,14 +76,19 @@ export interface TabRootHeaderProps {
  * content and scrolls away with it; there is no native header on tab roots.
  */
 export function TabRootHeader({ title, subtitle, actions }: TabRootHeaderProps) {
+  const { stacked } = useLayoutScale();
   return (
     <View style={styles.header}>
       <View style={styles.titleRow}>
         <AppText variant="display" style={styles.title}>
           {title}
         </AppText>
-        {actions ? <View style={styles.actions}>{actions}</View> : null}
+        {actions && !stacked ? <View style={styles.actions}>{actions}</View> : null}
       </View>
+      {/* Large text: the title keeps the full width rather than breaking mid-word. */}
+      {actions && stacked ? (
+        <View style={[styles.actions, styles.actionsStacked]}>{actions}</View>
+      ) : null}
       {subtitle ? <View style={styles.subtitle}>{subtitle}</View> : null}
     </View>
   );
@@ -116,6 +125,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     // The 48 pt targets' padding lines the last glyph up with the gutter.
     marginEnd: -space.md,
+  },
+  actionsStacked: {
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    marginTop: space.xs,
   },
   subtitle: {
     marginTop: space.xs,

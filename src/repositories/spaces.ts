@@ -37,7 +37,7 @@ export type UpdateSpaceInput = Partial<CreateSpaceInput>;
 
 /**
  * The drop zone's space is a real row so joins and counts keep working, but
- * nobody can rename or delete it: the UI never offers it (B4), and the
+ * nobody can rename or delete it: the UI never offers it, and the
  * repository refuses as well, which also protects the home server, since it
  * runs this code.
  */

@@ -50,7 +50,7 @@ describe('planBind', () => {
     });
   });
 
-  it('never says "Move this label?" for a replacement (capture §13.16)', () => {
+  it('never says "Move this label?" for a replacement', () => {
     const plan = planBind({ token: OTHER_TOKEN }, TOKEN, 'BOX-7K2M');
     expect(plan.confirm?.title).not.toMatch(/move/i);
   });

@@ -2,15 +2,14 @@ import { deleteStoredPhotos } from '@/services/capture/imageStore';
 import { photoFiles, type AddDraftState } from '@/ui/add/addSheet';
 
 /**
- * What the Add sheet held when it was swiped away (spec §5.9 "Drafts").
+ * What the Add sheet held when it was swiped away.
  *
  * One draft, in memory: a sheet closed by a swipe or Back keeps what was
  * typed, the place and the photo, and the next plain open of Add within half
  * an hour brings them back. Only the header's Cancel throws a draft away (after
  * asking). The draft also owns its photo until the item is saved, so a photo
- * taken for an item nobody saved is deleted rather than left on the phone
- * (entities §15.6, capture §13.8). Lost when the app restarts, which is fine
- * for half an hour's typing.
+ * taken for an item nobody saved is deleted rather than left on the phone.
+ * Lost when the app restarts, which is fine for half an hour's typing.
  */
 
 export interface AddDraft extends AddDraftState {

@@ -2,8 +2,10 @@ import type { RefObject } from 'react';
 import { StyleSheet, View, type TextInput } from 'react-native';
 
 import { strings } from '@/i18n/strings';
-import { SpaceRow } from '@/ui/components/PlaceRows';
+import { AppText } from '@/ui/components/AppText';
+import { Row } from '@/ui/components/Row';
 import { Sheet } from '@/ui/components/Sheet';
+import { SpaceTile } from '@/ui/components/SpaceTile';
 import { TextField } from '@/ui/components/TextField';
 import { EmojiPicker } from '@/ui/components/pickers/EmojiPicker';
 import { SwatchPicker } from '@/ui/components/pickers/SwatchPicker';
@@ -19,11 +21,11 @@ export interface SpaceFieldsProps {
   onSubmit: () => void;
   nameRef?: RefObject<TextInput | null>;
   /**
-   * What the preview row counts. New spaces hold nothing yet; an existing
-   * space passes its real counts, or `null` while they load, which hides the
-   * preview rather than showing wrong numbers.
+   * The preview row's second line: "New space" for one not made yet, the
+   * real counts for one being edited, or `null` while those load, which hides
+   * the preview rather than showing wrong numbers.
    */
-  previewCounts: { containers: number; items: number } | null;
+  previewMeta: string | null;
   /**
    * The preview's name while the field is empty: "Kitchen" as an example for
    * a new space, the stored name for one being edited (never another room's).
@@ -37,7 +39,7 @@ export interface SpaceFieldsProps {
  * The icons are drawn in the chosen colour and a live row shows the space as
  * the Spaces tab will, so the tint is seen before saving. The icon grid also
  * offers the presets' shirt and door, so a Wardrobe or Cellar shows its icon
- * as selected when edited (entities §3), and swatches are named rather than
+ * as selected when edited, and swatches are named rather than
  * "Colour 3".
  */
 export function SpaceFields({
@@ -46,7 +48,7 @@ export function SpaceFields({
   nameError,
   onSubmit,
   nameRef,
-  previewCounts,
+  previewMeta,
   previewFallbackName = strings.spaceForm.previewName,
 }: SpaceFieldsProps) {
   return (
@@ -76,22 +78,28 @@ export function SpaceFields({
         value={values.color}
         onChange={(color) => onChange({ ...values, color })}
       />
-      {previewCounts ? (
-        // A picture of the fields above, so screen readers skip it.
-        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      {previewMeta !== null ? (
+        // A picture of the fields above, so screen readers skip it. Labelled
+        // like every other block, so it is not taken for a stray list row.
+        <View
+          style={styles.preview}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <AppText variant="label">{strings.spaceForm.previewLabel}</AppText>
           <Sheet>
-            <SpaceRow
-              space={{
-                id: 'preview',
-                name: values.name.trim() || previewFallbackName,
-                icon: values.icon,
-                color: values.color,
-                containerCount: previewCounts.containers,
-                itemCount: previewCounts.items,
-                createdAt: 0,
-                updatedAt: 0,
-              }}
-            />
+            {/* The Spaces tab's row, drawn static: no chevron, nothing to open. */}
+            <Row
+              leading={<SpaceTile icon={values.icon} color={values.color} size={56} />}
+              testID="space-row-preview"
+            >
+              <AppText variant="name" style={styles.previewName}>
+                {values.name.trim() || previewFallbackName}
+              </AppText>
+              <AppText variant="meta" tone="graphite">
+                {previewMeta}
+              </AppText>
+            </Row>
           </Sheet>
         </View>
       ) : null}
@@ -102,5 +110,12 @@ export function SpaceFields({
 const styles = StyleSheet.create({
   fields: {
     gap: space.xl,
+  },
+  // As the pickers' label sits over its grid.
+  preview: {
+    gap: space.sm,
+  },
+  previewName: {
+    flexShrink: 1,
   },
 });

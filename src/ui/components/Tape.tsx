@@ -3,7 +3,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { strings } from '@/i18n/strings';
 import { spellCode } from '@/ui/a11y';
 import { AppText } from '@/ui/components/AppText';
-import { radius, useTheme } from '@/ui/theme';
+import { fixed, radius, useTheme } from '@/ui/theme';
 import type { TextVariant } from '@/ui/typography';
 
 type TapeSize = 's' | 'm' | 'l' | 'badge';
@@ -63,14 +63,13 @@ export function Tape({ code, size = 's', spoken = false, testID }: TapeProps) {
 
 const EMBOSS = StyleSheet.create({
   s: {
-    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -1px 0 rgba(0,0,0,0.14)',
+    boxShadow: fixed.tapeBevel,
   },
   m: {
-    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -1px 0 rgba(0,0,0,0.14)',
+    boxShadow: fixed.tapeBevel,
   },
   l: {
-    boxShadow:
-      'inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -2px 0 rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14)',
+    boxShadow: fixed.tapeBevelL,
   },
   badge: {},
 });

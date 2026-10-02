@@ -1,5 +1,4 @@
 import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
-import type { Container, Space } from '@/db/types';
 import { strings } from '@/i18n/strings';
 import type { StoredImage } from '@/services/capture/imageStore';
 import { spellCode } from '@/ui/a11y';
@@ -8,7 +7,7 @@ import type { PlaceOption } from '@/ui/components/PlacePicker';
 import type { SuggestionState } from '@/ui/components/SuggestionBanner';
 
 /*
- * The Add sheet's logic that needs no screen (spec §5.9): where its state
+ * The Add sheet's logic that needs no screen: where its state
  * starts, which places it offers, and how it names the place it saves to.
  * Pure, so it is tested in Node.
  */
@@ -22,7 +21,7 @@ export interface AddPhoto {
   byteSize?: number;
 }
 
-/** `/item/new` route params, all optional (spec §5.9 entry points). */
+/** `/item/new` route params, all optional (each way into Add sets its own). */
 export interface AddParams {
   containerId?: string;
   name?: string;
@@ -64,8 +63,7 @@ export function photoFromStored(stored: StoredImage): AddPhoto {
 }
 
 /**
- * Both files of a photo. Removing only `uri` left every thumbnail behind
- * (entities §15.6).
+ * Both files of a photo. Removing only `uri` left every thumbnail behind.
  */
 export function photoFiles(photo: AddPhoto | null): (string | null)[] {
   return photo ? [photo.uri, photo.thumbUri ?? null] : [];
@@ -152,25 +150,6 @@ export function initialAddState(
     restored: false,
     recognize: photo !== null,
   };
-}
-
-/** Containers joined with their spaces, as the place picker offers them. */
-export function joinPlaceOptions(
-  containers: readonly (Container & { spaceName: string; itemCount: number })[],
-  spaces: readonly Pick<Space, 'id' | 'color' | 'icon'>[],
-): PlaceOption[] {
-  const spaceById = new Map(spaces.map((entry) => [entry.id, entry]));
-  return containers.map((container) => ({
-    id: container.id,
-    name: container.name,
-    shortCode: container.shortCode,
-    visualType: container.visualType,
-    spaceId: container.spaceId,
-    spaceName: container.spaceName,
-    spaceColor: spaceById.get(container.spaceId)?.color ?? '',
-    spaceIcon: spaceById.get(container.spaceId)?.icon ?? '',
-    itemCount: container.itemCount,
-  }));
 }
 
 /** Recent places shown under "Where it goes"; the picker shows more. */

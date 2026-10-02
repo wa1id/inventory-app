@@ -29,7 +29,7 @@ const MAX_WIDTH = 480;
  * the household with the owner beside it (flow 6.8: "Join your household",
  * the code, "Join household", "Start"). Using the phone on its own is one tap
  * and asks nothing. It no longer promises suggestions a build may not have or
- * offline use a joined phone does not get (UX-16), and no longer sends a new
+ * offline use a joined phone does not get, and no longer sends a new
  * phone into creating its own first space on an empty local inventory.
  */
 export default function OnboardingScreen() {
@@ -97,8 +97,9 @@ export default function OnboardingScreen() {
                   icon="back"
                   variant="quiet"
                   size="sm"
+                  // The chevron lines up with the title below, not the padding.
+                  flush
                   testID="onboarding-back"
-                  style={styles.back}
                 />
                 <AppText variant="title">{strings.household.joinHeading}</AppText>
                 <AppText variant="body" tone="graphite">
@@ -191,8 +192,10 @@ function JoinedStep({ householdName, onStart }: { householdName: string; onStart
   return (
     <>
       <ScrollView contentContainerStyle={styles.joined}>
-        <View style={[styles.check, { backgroundColor: colors.selected }]}>
-          <Icon name="check" size={28} color={colors.ink} />
+        {/* Ink, like the Mark on Welcome and "Start", so the end of joining
+            carries weight in both schemes (`selected` vanished on plaster). */}
+        <View style={[styles.check, { backgroundColor: colors.ink }]}>
+          <Icon name="check" size={28} color={colors.onInk} />
         </View>
         <AppText variant="title">{strings.onboarding.joinedTitle}</AppText>
         <AppText variant="body" tone="graphite">
@@ -244,10 +247,6 @@ const styles = StyleSheet.create({
   },
   joinHead: {
     gap: space.sm,
-  },
-  // The chevron lines up with the title below rather than the button's padding.
-  back: {
-    marginStart: -space.md,
   },
   joined: {
     flexGrow: 1,

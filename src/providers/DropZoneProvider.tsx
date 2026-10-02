@@ -23,7 +23,7 @@ const DropZoneContext = createContext<DropZoneContextValue | null>(null);
 /**
  * One read of the drop zone shared by the tab badge, Home's card and the Drop
  * zone list, instead of a count query per screen. When paired, counting
- * downloaded the whole list anyway (B9), so the list itself is shared.
+ * downloaded the whole list anyway, so the list itself is shared.
  *
  * Mounted in the tabs layout, a screen of the root stack, so it refreshes
  * when the tabs come back into view like any other screen's query.

@@ -18,7 +18,7 @@ export interface ImportOffer {
  * here, before joining, because once joined every household write is mirrored
  * into the same local database: counting afterwards would offer to "import"
  * shadow copies of the household's own data, and copying them back could
- * overwrite newer household edits (spec R19). A phone that has joined before
+ * overwrite newer household edits. A phone that has joined before
  * is never offered again, so leaving and rejoining cannot trigger it either.
  */
 export async function snapshotBeforeJoin(

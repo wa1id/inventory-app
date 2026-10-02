@@ -1,5 +1,5 @@
 import { strings } from '@/i18n/strings';
-import { FAILURE_MESSAGES, type RecognitionFailureReason } from '@/services/ai/contract';
+import type { RecognitionFailureReason } from '@/services/ai/contract';
 import { Banner } from '@/ui/components/Banner';
 
 export type SuggestionState =
@@ -118,7 +118,7 @@ export function SuggestionBanner({
       tone="info"
       icon="edit"
       title={strings.suggestions.failed}
-      message={FAILURE_MESSAGES[state.reason]}
+      message={strings.suggestions.failedBody[state.reason]}
       action={
         onRetry && state.reason !== 'not_configured'
           ? { label: strings.suggestions.retry, onPress: onRetry }

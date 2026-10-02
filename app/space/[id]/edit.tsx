@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { StyleSheet, View, type TextInput } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 
 import { DROP_ZONE_SPACE_ID } from '@/db/constants';
 import type { Space } from '@/db/types';
@@ -41,13 +41,14 @@ export default function EditSpaceScreen() {
  *
  * Save is the primary action in the bottom bar; Delete is quiet red text at
  * the end of the form, behind a confirm that spells out what goes with it.
- * They used to be equal-weight neighbours (entities §16.E). The sheet's
+ * They used to be equal-weight neighbours. The sheet's
  * Cancel comes from the root layout.
  */
 function EditSpace({ id }: { id: string }) {
   const repos = useRepositories();
   const { invalidate } = useDatabase();
   const router = useRouter();
+  const navigation = useNavigation();
   const toast = useToast();
   const { colors } = useTheme();
   const nameRef = useRef<TextInput>(null);
@@ -65,8 +66,7 @@ function EditSpace({ id }: { id: string }) {
   const busyRef = useRef(false);
 
   // Seed the form from the loaded record once per id, during render rather
-  // than in an effect, so a background refetch never overwrites typing
-  // (entities §14.2).
+  // than in an effect, so a background refetch never overwrites typing.
   const [seed, setSeed] = useState<{ id: string; values: SpaceValues } | null>(null);
   if (stored && seed?.id !== stored.id) {
     const initial = { name: stored.name, icon: stored.icon, color: stored.color };
@@ -98,27 +98,44 @@ function EditSpace({ id }: { id: string }) {
       const updated = await repos.spaces.update(id, { ...values, name: values.name.trim() });
       if (!updated) {
         // Deleted on another phone while this was open: never a fake success.
-        release();
-        setFailure({ cause: null });
-        haptics.error();
+        fail(null);
         return;
       }
       logEvent('space_updated');
       invalidate();
-      router.back();
-      // An edit closes and says so, like every other form (spec §2.5 rule 5).
+      // Only from the front: the header Cancel can close the sheet mid-save
+      // (swipe-down and Android back wait for it), and going back again would
+      // pop the space screen under it.
+      if (navigation.isFocused()) router.back();
+      // An edit closes and says so, like every other form.
       toast.show({ message: strings.spaceForm.saved });
     } catch (cause) {
-      release();
-      setFailure({ cause });
-      haptics.error();
+      fail(cause);
     }
+  }
+
+  /** A save that did not happen: the banner, or a toast once the sheet has closed. */
+  function fail(cause: unknown) {
+    release();
+    haptics.error();
+    if (navigation.isFocused()) {
+      setFailure({ cause });
+      return;
+    }
+    const name = stored?.name ?? values.name;
+    toast.show({
+      tone: 'error',
+      message:
+        cause === null
+          ? strings.spaceForm.alreadyDeleted(name)
+          : strings.spaceForm.notSaved(name, isOffline(cause)),
+    });
   }
 
   /**
    * Deleting a space takes its containers and items with it, so the confirm
    * says exactly what is lost, QR labels included (issue #4). Every step can
-   * fail over the network, so all of it is caught and told (entities §15.5).
+   * fail over the network, so all of it is caught and told.
    */
   async function deleteSpace(current: Space) {
     if (busyRef.current) return;
@@ -229,8 +246,8 @@ function EditSpace({ id }: { id: string }) {
         nameError={nameError}
         onSubmit={() => void save()}
         nameRef={nameRef}
-        previewCounts={
-          counts ? { containers: counts.containerCount, items: counts.itemCount } : null
+        previewMeta={
+          counts ? strings.entities.spaceCounts(counts.containerCount, counts.itemCount) : null
         }
         previewFallbackName={stored.name}
       />
@@ -240,6 +257,7 @@ function EditSpace({ id }: { id: string }) {
           label={strings.spaceForm.delete}
           icon="trash"
           variant="destructive"
+          flush
           onPress={() => void deleteSpace(stored)}
           loading={busy === 'delete'}
           disabled={busy === 'save' || gone}

@@ -6,33 +6,17 @@ import { plural, sentenceList } from '@/i18n/format';
  * The MVP ships English only, but every string is routed through here so
  * adding a locale later is a data change rather than a hunt through JSX
  * (issue #12). Keys are grouped by screen.
- *
- * Each top-level section has one owner. Foundation (F) owns the shared
- * sections at the top; each screen package (S1–S8) adds keys only inside its
- * own sections, and may change the wording of a key it owns. Renaming or
- * removing a key, or changing a function's parameters, waits for Cleanup,
- * because screens that have not moved yet may still read it.
  */
 export const strings = {
-  // Foundation sections (owner: F). Screen packages read these and never edit them.
-  app: {
-    name: 'Inventory',
-  },
+  // Shared sections, used across screens.
   common: {
     cancel: 'Cancel',
     delete: 'Delete',
-    save: 'Save',
-    retry: 'Retry',
-    done: 'Done',
-    back: 'Back',
-    edit: 'Edit',
-    settings: 'Settings',
     close: 'Close',
     tryAgain: 'Try again',
     dismiss: 'Dismiss',
     notNow: 'Not now',
     showMore: 'Show more',
-    loading: 'Loading…',
     undo: 'Undo',
     view: 'View',
     goToHome: 'Go to Home',
@@ -44,8 +28,6 @@ export const strings = {
   tabs: {
     home: 'Home',
     spaces: 'Spaces',
-    /** @deprecated The Search tab goes when Home's search lands (S1). */
-    search: 'Search',
     add: 'Add',
     addA11y: 'Add an item',
     addHint: 'Long press for Quick Snap',
@@ -119,8 +101,18 @@ export const strings = {
     } as Record<string, string>,
     currentIcon: 'Current icon',
     items: (count: number) => plural(count, 'item', 'items'),
+    /** What a container holds, in words rather than "0 items". */
+    contents: (count: number) => (count === 0 ? 'Empty' : plural(count, 'item', 'items')),
+    /** No row of zeros for an empty place: "No containers yet", "2 containers, all empty". */
     spaceCounts: (containers: number, items: number) =>
-      sentenceList([plural(containers, 'container', 'containers'), plural(items, 'item', 'items')]),
+      containers === 0
+        ? 'No containers yet'
+        : items === 0
+          ? `${plural(containers, 'container', 'containers')}, ${containers === 1 ? 'empty' : 'all empty'}`
+          : sentenceList([
+              plural(containers, 'container', 'containers'),
+              plural(items, 'item', 'items'),
+            ]),
   },
   rows: {
     itemA11y: (name: string, where: string, quantity: string) => `${name}. ${where}. ${quantity}.`,
@@ -128,6 +120,10 @@ export const strings = {
     noneLeft: 'None left',
     times: (count: number) => `×${count}`,
     added: (ago: string) => `Added ${ago}`,
+    /** On lists of new additions only (Drop zone, Review), where "Added" goes without saying. */
+    addedShort: (ago: string) => ago.charAt(0).toUpperCase() + ago.slice(1),
+    /** Between a quantity folded into a row's second line and the rest of it. */
+    separator: ' · ',
     spaceA11y: (name: string, counts: string) => `${name}. ${counts}.`,
     containerA11y: (
       label: string,
@@ -145,14 +141,12 @@ export const strings = {
   where: {
     keptIn: 'Kept in',
     dropZone: 'Drop zone',
-    notFiledYet: '· not filed yet',
+    /** No-break spaces: a wrapped line never starts or ends with the dot. */
+    notFiledYet: '\u00A0·\u00A0not filed yet',
     notFiledNote: 'Not filed yet',
-    into: 'Into the drop zone',
-    sortLater: 'Sort it later',
   },
   quantity: {
     label: 'Quantity',
-    howMany: 'How many',
     noneRightNow: 'None left right now',
     decrease: (name: string) => `Decrease quantity of ${name}`,
     increase: (name: string) => `Increase quantity of ${name}`,
@@ -176,7 +170,7 @@ export const strings = {
     gone: 'This item is gone, so the quantity was not saved.',
   },
   picker: {
-    filter: 'Type a container, space or label code',
+    filter: 'Container, space or code',
     filterA11y: 'Find a container',
     recent: 'Recent',
     dropZone: 'Drop zone',
@@ -186,6 +180,8 @@ export const strings = {
     optionA11y: (label: string, space: string, spelled: string) =>
       `${label}, in ${space}, label ${spelled}`,
     newContainerIn: (space: string) => `New container in ${space}…`,
+    /** Over the "New container in …" rows when nothing matches the filter. */
+    newContainerTitle: 'Make a new container',
     noMatch: (query: string) => `No container matches “${query}”.`,
     none: {
       title: 'There are no containers yet',
@@ -210,6 +206,7 @@ export const strings = {
     tagsHint: 'Separate tags with commas.',
     notesLabel: 'Notes',
     itemNameRequired: 'Give the item a name.',
+    quantityInvalid: 'Quantity must be a whole number of 0 or more.',
     codeCounter: (count: number, total: number) => `${count} of ${total} characters`,
   },
   errors: {
@@ -270,24 +267,18 @@ export const strings = {
   },
   permissions: {
     cameraRationaleTitle: 'Use the camera',
-    cameraRationaleBody:
-      'Inventory uses the camera to photograph items and scan QR labels. Photos stay on this device.',
     captureBodyPaired:
       'Photos of items are shared with your household, not saved to your photo library.',
     captureBodyLocal: 'Photos of items stay in this app, not in your photo library.',
     scanBody: 'Point it at the label on a box and the box opens straight away.',
     cameraDeniedTitle: 'Camera access is off',
-    cameraDeniedBody:
-      'Camera access is off. You can turn it on in Settings, or keep adding items by typing the details.',
     offBodyCapture: 'Turn it on in Settings, or type it instead.',
     offBodyScan: 'Turn it on in Settings, or type the code instead.',
     openSettings: 'Open Settings',
     grant: 'Allow camera',
-    continueManually: 'Continue without the camera',
     choosePhotoInstead: 'Choose a photo instead',
     typeItInstead: 'Type it instead',
     typeCodeInstead: 'Type a code instead',
-    libraryDeniedTitle: 'Photo library unavailable',
     libraryDeniedBody:
       'Photo access is off. You can turn it on in Settings, or add the item without a photo.',
   },
@@ -302,18 +293,28 @@ export const strings = {
     update: 'Update the other details',
     updateHint: 'Replaces the category and tags using your title',
     failed: 'Add the details yourself',
+    /** Under `failed`, which already says what to do: only why there is no suggestion. */
+    failedBody: {
+      not_configured: 'Photo suggestions are not set up on this phone.',
+      offline: 'There is no connection, so there are no suggestions.',
+      timeout: 'The suggestion took too long.',
+      rate_limited: 'Too many photos were sent for suggestions just now. Try again in a moment.',
+      server_error: 'Suggestions are not available right now.',
+      malformed_response: 'The suggestion could not be read.',
+      unsupported_version: 'This version of the app cannot read suggestions. Update the app.',
+      low_confidence: 'The photo was not clear enough for a guess.',
+      unrecognized: 'The item in the photo could not be recognised.',
+    },
     retry: 'Try suggestions again',
   },
   camera: {
     close: 'Close camera',
-    torch: 'Torch',
     torchState: (on: boolean) => `Torch, ${on ? 'on' : 'off'}`,
     notOurs: { title: 'Not one of our labels', body: 'That code was not made by this app.' },
     scanAgain: 'Scan again',
     didNotStartScan: 'The camera did not start. Close and try again, or type the code instead.',
   },
 
-  // owner: S1
   home: {
     title: 'Home',
     settings: 'Settings',
@@ -336,11 +337,13 @@ export const strings = {
         count === 1
           ? '1 item is waiting in the drop zone'
           : `${count} items are waiting in the drop zone`,
-      body: 'Added without a place, or snapped with Quick Snap. Give them a home when you have a moment.',
+      body: 'Give them a home when you have a moment.',
       sort: 'Sort the drop zone',
       quickSnap: 'Quick Snap',
     },
     recent: 'Recently added',
+    /** In place of the list while the connection banner explains the outage and offers "Try again". */
+    waitingForServer: 'Your household’s things show here as soon as the home server answers.',
     /** The "Show more" button under Recently added, named for screen readers. */
     recentMoreA11y: 'Show more recently added items',
     empty: {
@@ -351,8 +354,7 @@ export const strings = {
         start: 'Start with a space',
       },
       paired: {
-        title: 'Nothing is stored in Home yet',
-        /** The household's own name, when it has one other than "Home". */
+        /** The household's own name, or "Home" when it has none. */
         titleIn: (household: string) => `Nothing is stored in ${household} yet`,
         body: 'Items added on any phone in the household show up here.',
         add: 'Add an item',
@@ -365,7 +367,6 @@ export const strings = {
       },
     },
   },
-  // owner: S1
   search: {
     summary: (items: number, places: number) =>
       items + places === 0
@@ -392,47 +393,12 @@ export const strings = {
       add: (query: string) => `Add “${query}”…`,
     },
     failed: 'The search did not finish',
-    placeholder: 'Search items, tags, or boxes',
-    idle: {
-      title: 'Find anything you have stored',
-      body: 'Search by item name, category, tag, or a container code like BOX-7K2M.',
-    },
-    noResults: {
-      title: 'No matches',
-      body: 'Try fewer words, or check a different spelling.',
-    },
-    locations: 'Locations',
-    itemsHeading: 'Items',
-    locationMatch: 'Matched this location',
   },
 
-  // owner: S2
   spaces: {
     title: 'Spaces',
-    empty: {
-      title: 'Start with a space',
-      body: 'A space is a room or broad area where you keep things — a garage, a loft, a kitchen.',
-      action: 'Create your first space',
-    },
-    create: 'New space',
-    quickAddLabel: 'Quick add',
-    customLabel: 'Custom space name',
-    customAction: 'Create custom space',
-    presetHint: (name: string) => `Create ${name} straight away`,
-    nameLabel: 'Name',
-    namePlaceholder: 'Enter a custom name',
-    nameRequired: 'Give the space a name.',
-    iconLabel: 'Icon',
-    colorLabel: 'Colour',
-    itemCount: (items: number) => `${items} item${items === 1 ? '' : 's'}`,
-    deleteTitle: 'Delete this space?',
-    counts: (containers: number, items: number) =>
-      `${containers} container${containers === 1 ? '' : 's'} · ${items} item${
-        items === 1 ? '' : 's'
-      }`,
     count: (spaces: number) => plural(spaces, 'space', 'spaces'),
     newSpace: 'New space',
-    search: 'Search the household',
     start: {
       title: 'Start with a space',
       body: 'A space is a room or area where you keep things, like a garage, a loft or a kitchen.',
@@ -447,7 +413,6 @@ export const strings = {
       action: 'Add a container',
     },
   },
-  // owner: S2
   spaceForm: {
     /** Header title, read by the root layout. */
     newTitle: 'New space',
@@ -463,6 +428,10 @@ export const strings = {
     nameRequired: 'Give the space a name.',
     /** The preview row's name until one is typed. */
     previewName: 'Kitchen',
+    /** Over the preview row, so it is not taken for a list row or a field. */
+    previewLabel: 'On the Spaces tab it looks like this',
+    /** The preview row's second line for a space not made yet. */
+    previewNew: 'New space',
     iconLabel: 'Icon',
     colourLabel: 'Colour',
     create: 'Create space',
@@ -483,10 +452,19 @@ export const strings = {
       offline
         ? `${name} was not deleted. Check the connection and try again.`
         : `${name} was not deleted. Try again.`,
-    /** Toast after Save changes closes the sheet (spec §2.5 rule 5), as Edit details says it. */
+    /** Toast after Save changes closes the sheet, as Edit details says it. */
     saved: 'Changes saved.',
+    /** Toasts for a save that ended after the sheet was closed (header Cancel mid-save). */
+    created: (name: string) => `${name} was added.`,
+    notCreated: (name: string, offline: boolean) =>
+      offline
+        ? `${name} was not added. Check the connection and try again.`
+        : `${name} was not added. Try again.`,
+    notSaved: (name: string, offline: boolean) =>
+      offline
+        ? `Changes to ${name} were not saved. Check the connection and try again.`
+        : `Changes to ${name} were not saved. Try again.`,
   },
-  // owner: S2
   containerForm: {
     /** Header title, read by the root layout. */
     newTitle: 'New container',
@@ -498,8 +476,11 @@ export const strings = {
     namePlaceholder: 'Winter clothes',
     nameHint: 'Leave it empty and the container goes by its label code.',
     spaceLabel: 'Space',
+    /** Read out for the code note under the name, with the code spelled. */
     codeStays: (code: string) =>
       `The label code stays ${code}, because it is printed on the label.`,
+    /** Beside the code's tape under the name. */
+    codeNote: 'On the label, so it never changes.',
     create: 'Create container',
     save: 'Save changes',
     delete: 'Delete container…',
@@ -516,18 +497,25 @@ export const strings = {
       offline
         ? `${label} was not deleted. Check the connection and try again.`
         : `${label} was not deleted. Try again.`,
-    /** Toast after Save changes closes the sheet (spec §2.5 rule 5), as Edit details says it. */
+    /** Toast after Save changes closes the sheet, as Edit details says it. */
     saved: 'Changes saved.',
+    /** Toasts for a save that ended after the sheet was closed (header Cancel mid-save). */
+    created: (label: string) => `${label} was added.`,
+    notCreated: (offline: boolean) =>
+      offline
+        ? 'The container was not added. Check the connection and try again.'
+        : 'The container was not added. Try again.',
+    notSaved: (label: string, offline: boolean) =>
+      offline
+        ? `Changes to ${label} were not saved. Check the connection and try again.`
+        : `Changes to ${label} were not saved. Try again.`,
   },
 
-  // owner: S3
   container: {
     edit: (label: string) => `Edit ${label}`,
     crumbA11y: (space: string) => `In ${space}. Opens the space.`,
-    sub: (type: string, space: string, items: number) =>
-      `${type} in ${space}, ${plural(items, 'item', 'items')}`,
-    /** The same line while the space has not loaded (or could not be read). */
-    subPlain: (type: string, items: number) => `${type}, ${plural(items, 'item', 'items')}`,
+    /** Under the title; the space is the crumb above it, so it is not said again. */
+    sub: (type: string, items: number) => `${type} · ${plural(items, 'item', 'items')}`,
     qrLinked: 'QR label',
     qrLinkedA11y: 'QR label, linked. Opens the label.',
     qrNone: 'Add a QR label',
@@ -540,7 +528,6 @@ export const strings = {
       body: 'Add the first item with a photo, or type its name.',
     },
   },
-  // owner: S3
   qr: {
     title: 'QR label',
     cardA11y: (label: string, spelled: string) => `QR label for ${label}, label ${spelled}`,
@@ -562,7 +549,8 @@ export const strings = {
     made: 'New label made. Print it and replace the old sticker.',
     removed: 'Label removed.',
     none: {
-      title: 'No QR label yet',
+      /** Names the container: the screen shows neither its name nor its code otherwise. */
+      title: (label: string) => `No QR label on ${label} yet`,
       body: 'Make a label to print, or link a sticker you already printed.',
     },
     make: 'Make a QR label',
@@ -584,7 +572,6 @@ export const strings = {
     /** "Make" found a label after all (just linked, or made on another phone). */
     alreadyLabelled: 'This container already has a label, so no new one was made.',
   },
-  // owner: S3
   link: {
     title: (label: string) => `Scan the sticker for ${label}`,
     /** Until the container has loaded. */
@@ -605,7 +592,6 @@ export const strings = {
     notLinked: (label: string) => `The sticker was not linked to ${label}. Try again.`,
   },
 
-  // owner: S4
   item: {
     photoA11y: (name: string) => `Photo of ${name}. Opens it full screen.`,
     photoA11yUnnamed: 'Photo of this item. Opens it full screen.',
@@ -616,7 +602,15 @@ export const strings = {
       save: 'Save name',
       failed: 'The name was not saved. Try again.',
       failedOffline: 'The name was not saved. Check the connection and try again.',
-      justNamed: (name: string) => `It was just named “${name}” on another device.`,
+      /**
+       * A name arrived while one was being typed (recognition, or another
+       * phone; which is not known, so neither is claimed).
+       */
+      justNamed: (name: string) => `It was just named “${name}”.`,
+      /** Saving met that name: nothing was written, and saving again keeps the typed one. */
+      namedMeanwhile: (name: string) =>
+        `It was just named “${name}”. Save name again to keep yours.`,
+      useName: (name: string) => `Use “${name}”`,
     },
     move: 'Move…',
     moveA11y: (name: string) => `Move “${name}”…`,
@@ -637,14 +631,15 @@ export const strings = {
     deleteBodyLocal: 'This removes it and its photo from this phone. This cannot be undone.',
     deleted: (name: string) => `“${name}” was deleted.`,
     deletedUnnamed: 'The item was deleted.',
+    alreadyDeleted: (name: string) => `“${name}” was already deleted, probably on another phone.`,
+    alreadyDeletedUnnamed: 'The item was already deleted, probably on another phone.',
     deleteFailed: (offline: boolean) =>
       offline
         ? 'The item was not deleted. Check the connection and try again.'
         : 'The item was not deleted. Try again.',
-    progress: (index: number, total: number) => `${index} of ${total} waiting`,
-    allFiled: 'Everything is filed.',
+    /** How many wait in a filing run, this item included; it counts down as the run goes. */
+    progress: (waiting: number) => (waiting === 1 ? 'Last one waiting' : `${waiting} waiting`),
   },
-  // owner: S4
   editItem: {
     /** Header title, read by the root layout. */
     title: 'Edit details',
@@ -655,15 +650,13 @@ export const strings = {
       'Someone changed this item on another device while you were editing. Save again to keep your version, or cancel to see theirs.',
     notSaved: 'The changes were not saved. They are still here, so try again.',
   },
-  // owner: S4
   move: {
     titleMove: (name: string) => `Move “${name}”`,
     titleFile: (name: string) => `File “${name}”`,
     titleMoveUnnamed: 'Move this item',
     titleFileUnnamed: 'File this item',
-    movedTo: (container: string, space: string) => `Moved to ${container} (${space})`,
-    filedIn: (container: string, space: string) => `Filed in ${container} (${space})`,
-    filedNext: (container: string, space: string) => `Filed in ${container} (${space}). Next one.`,
+    movedTo: (container: string, space: string) => `Moved to ${container} (${space}).`,
+    filedIn: (container: string, space: string) => `Filed in ${container} (${space}).`,
     /** The last one of a filing run: the run ends on the Drop zone tab. */
     filedLast: (container: string, space: string) =>
       `Filed in ${container} (${space}). Everything is filed.`,
@@ -679,15 +672,14 @@ export const strings = {
     undoGone: 'It could not be undone, because the item was deleted.',
     undoConflict: 'It could not be undone, because the item changed again since.',
     undoFailed: 'It could not be undone. Check the connection and try again.',
+    undoFailedOther: 'It could not be undone. Try again.',
   },
-  // owner: S4
   photo: {
     close: 'Close photo',
     a11y: (name: string) => `Photo of ${name}`,
     a11yUnnamed: 'Photo of this item',
   },
 
-  // owner: S5
   add: {
     /** Header title, read by the root layout. */
     title: 'Add an item',
@@ -733,33 +725,17 @@ export const strings = {
     discardBody: 'What you typed will be lost.',
   },
 
-  // owner: S6
   dropZone: {
     title: 'Drop zone',
-    tagline: 'Snap now, sort later',
     quickSnap: 'Quick Snap',
-    capture: 'Add items',
-    fileAction: 'Choose a container',
-    intro: 'These are waiting for a home. Tap one to file it.',
-    count: (count: number) => `${count} item${count === 1 ? '' : 's'} waiting`,
-    moveIntro: (name: string) => `Where does “${name}” belong?`,
-    empty: {
-      title: 'Nothing waiting',
-      body: 'Photograph things as you find them and they land here, ready to file whenever you like.',
-    },
-    noContainers: {
-      title: 'No containers yet',
-      body: 'Create a space and a container first, then you can file what you have captured.',
-    },
     intro2: (count: number) =>
-      `${plural(count, 'item', 'items')}, added without a place or photographed with Quick Snap. Open one to name it, then file it.`,
+      `${plural(count, 'item', 'items')} waiting for a place. Open one to name it, then file it.`,
     emptyAll: {
       title: 'Everything is filed',
       body: 'Items added without a place, and Quick Snap photos, wait here until they get a home.',
       action: 'Quick Snap',
     },
   },
-  // owner: S6
   capture: {
     modeLabel: 'Capture mode',
     modeSingle: 'One item',
@@ -767,10 +743,8 @@ export const strings = {
     singleHint: 'Tap to focus, then fill the frame.',
     tapToFocus: 'Focus camera',
     fastHint: 'Keep shooting. Each photo becomes an item.',
-    fastBadge: '⚡ Fast mode',
     saving: 'Saving your photo…',
     done: 'Done',
-    doneCount: (count: number) => `Done · ${count}`,
     /** The font has no ✓; the status pill draws a `check` icon instead. */
     identified: (count: number) => `${count} identified`,
     identifying: (count: number) => `Identifying ${count}…`,
@@ -802,25 +776,15 @@ export const strings = {
     notProcessed: 'That photo could not be saved. Try again, or type it instead.',
     noRoom:
       'There is not enough free space on this phone for a photo. Free some space, or type it instead.',
-    review: {
-      summary: (count: number) => `${count} item${count === 1 ? '' : 's'} captured`,
-      pending: (count: number) => `Saving ${count} more…`,
-      toName: (count: number) =>
-        count === 1 ? '1 still needs a name' : `${count} still need a name`,
-      keepAll: (count: number) => (count === 1 ? 'Keep this item' : `Keep all ${count}`),
-      keepShooting: 'Keep shooting',
-      empty: {
-        title: 'Nothing was saved',
-        body: 'None of the photos from this session could be saved. Head back and try again.',
-      },
-    },
   },
-  // owner: S6
   review: {
     title: 'Review',
-    savedTo: (count: number, container: string) =>
-      `${plural(count, 'item', 'items')} saved to ${container}`,
-    savedToDropZone: (count: number) => `${plural(count, 'item', 'items')} saved to the drop zone`,
+    /** Short enough to keep "the drop zone" on one line at 390 pt. */
+    savedTo: (count: number, container: string) => `${count} saved to ${container}`,
+    savedToDropZone: (count: number) => `${count} saved to the drop zone`,
+    /** Before the first row lands: what is happening, rather than "0 saved". */
+    savingTitle: (count: number) => `Saving ${plural(count, 'photo', 'photos')}…`,
+    savingFirst: 'They appear here as they are saved.',
     pending: (count: number) => `Saving ${count} more…`,
     toName: (count: number) =>
       count === 1 ? '1 still needs a name' : `${count} still need a name`,
@@ -853,15 +817,11 @@ export const strings = {
     },
   },
 
-  // owner: S7
   scan: {
     title: 'Scan a label',
     hint: 'Point the camera at the label on a box.',
-    unknownTitle: 'New label',
-    unknownBody: 'This label is not linked yet. Choose the container it belongs to.',
     invalidTitle: 'Not one of our labels',
     invalidBody: 'That code was not made by this app.',
-    rebindTitle: 'Move this label?',
     scanAgain: 'Scan again',
     typeCode: 'Type a code instead',
     codeTitle: 'Type a label code',
@@ -870,7 +830,6 @@ export const strings = {
     /** While a scanned label is looked up (over the network when paired). */
     opening: 'Opening that label…',
   },
-  // owner: S7
   deepLink: {
     /** Header title, read by the root layout. */
     title: 'QR label',
@@ -890,14 +849,12 @@ export const strings = {
     containerGone: 'That container is not in the household any more. Choose another one.',
   },
 
-  // owner: S8
   settings: {
     /** Header title, read by the root layout. */
     title: 'Settings',
     household: 'Household',
     joinedAs: (name: string) => `Joined as “${name}”`,
     thisPhoneOnly: 'This phone only',
-    cantReach: 'Can’t reach the home server',
     onThisPhone: 'On this phone',
     backup: 'Off-device backup',
     help: 'Help',
@@ -919,36 +876,11 @@ export const strings = {
       notYetRun: 'On, not yet run',
       working: 'Backing up…',
       attention: 'Needs attention',
-      notConfigured: 'Not configured',
+      /** The words Photo suggestions uses; short, since this row's value sits beside its label. */
+      notConfigured: 'Not set up',
     },
   },
-  // owner: S8
   household: {
-    title: 'Home server',
-    settingsLabel: 'Home server',
-    disconnected: 'This phone',
-    connected: 'Connected',
-    connectedAs: (name: string) => `Paired as ${name}`,
-    originHint: 'Uses https://inventory.wystudio.be',
-    secretLabel: 'Bootstrap secret',
-    secretPlaceholder: 'MMWKY-M2H78-…',
-    secretHint: 'Printed once in the server logs when the household was created.',
-    deviceNameLabel: 'Name for this phone',
-    pair: 'Pair this phone',
-    pairing: 'Pairing…',
-    disconnect: 'Stop using the home server',
-    body: 'Pairing makes this phone read and write the household inventory on the home server. Your local copy stays on the phone until you import it.',
-    error: 'Could not pair. Check the secret and that the server is reachable.',
-    offline: 'The home server could not be reached. Try again when you are online.',
-    conflict:
-      'Someone else changed this item. Open it again to see the latest version, then retry.',
-    importLabel: 'Import this phone’s inventory',
-    importing: 'Importing…',
-    importTitle: 'Copy this phone onto the home server?',
-    importBody:
-      'Spaces, containers, items, and photos on this phone become the household inventory. Photos go to the existing cloud bucket, not the home server disk.',
-    importDone: (items: number, photos: number) =>
-      `Imported ${items} item${items === 1 ? '' : 's'} and ${photos} photo${photos === 1 ? '' : 's'}.`,
     /** Header title, read by the root layout. */
     screenTitle: 'Household',
     joinHeading: 'Join your household',
@@ -959,6 +891,8 @@ export const strings = {
     thisPhone: 'This phone',
     lastUsed: (ago: string) => `Last used ${ago}`,
     neverUsed: 'Never used',
+    /** A phone's row, spoken: its name, then "This phone" or when it was last used. */
+    phoneA11y: (name: string, meta: string) => `${name}, ${meta}`,
     remove: 'Remove…',
     removeA11y: (name: string) => `Remove ${name}`,
     removeTitle: (name: string) => `Remove “${name}”?`,
@@ -968,6 +902,8 @@ export const strings = {
     removed: (name: string) => `${name} was removed.`,
     removeOffline: (name: string) =>
       `“${name}” was not removed. Check the internet connection and try again.`,
+    /** Where the list would be while the home server is out of reach; the connection banner offers "Try again". */
+    phonesOffline: 'The phones show up here when the home server answers.',
     importNotice: (spaces: number, items: number) =>
       `Before it joined, this phone had its own inventory: ${sentenceList([plural(spaces, 'space', 'spaces'), plural(items, 'item', 'items')])}.`,
     importAction: 'Copy it into the household…',
@@ -988,7 +924,6 @@ export const strings = {
     joined: (household: string) => `This phone is now part of ${household}.`,
     server: (host: string) => `Home server: ${host}`,
   },
-  // owner: S8
   join: {
     codeLabel: 'Household code',
     codeHint:
@@ -1000,6 +935,8 @@ export const strings = {
     busy: 'Joining…',
     badChars: (chars: string) =>
       `That code has a character it never uses (${chars}). Check it with whoever set up the home server.`,
+    /** Nothing typed: it replaces the hint, so it says again where the code comes from. */
+    codeRequired: 'Type the household code. Whoever set up the home server has it.',
     wrongLength: (count: number) => `The code has 26 letters and numbers. This one has ${count}.`,
     nameRequired: 'Give this phone a name.',
     refused: 'That code was not accepted. Check it with whoever set up the home server.',
@@ -1007,7 +944,6 @@ export const strings = {
       'The home server did not answer. Check that this phone is online, then try again. Joining needs the internet, even at home.',
     other: 'Joining did not work. Try again in a moment.',
   },
-  // owner: S8
   backup: {
     /** Header title, read by the root layout. */
     title: 'Backup',
@@ -1067,30 +1003,29 @@ export const strings = {
       other: 'The backup service could not be reached. Your inventory is safe on this phone.',
     },
   },
-  // owner: S8
   // Owner to approve before release: privacy notice (#8).
   privacy: {
     /** Header title, read by the root layout. */
-    title: 'Privacy',
+    title: 'Privacy and your data',
     householdTitle: 'When this phone is part of a household',
     householdBody:
       'The inventory lives on your household’s home server, and this phone keeps a copy of what it reads and writes. Photos are stored in the household’s private storage, so every phone in the household can see them. Changes need an internet connection, even at home. Other phones in the household can see everything you add.',
     whereTitle: 'Where your inventory lives',
     whereBody:
-      'Spaces, containers, items, notes, and photos are stored in a database on this phone. That copy is the one the app reads from, and everything keeps working with no network at all.',
+      'Spaces, containers, items, notes and photos are stored in a database on this phone. That copy is the one the app reads from, and everything keeps working with no network at all.',
     whereBodyPaired:
-      'Spaces, containers, items, notes, and photos this phone has read or written are kept in a database on this phone.',
+      'Spaces, containers, items, notes and photos this phone has read or written are kept in a database on this phone.',
     backupOff:
       'Backup is off unless you turn it on. If you do, a copy of that database and your photos is uploaded so you can get them back after losing or replacing this phone. If you leave it off, nothing is uploaded and uninstalling the app deletes everything.',
     backupOffPaired:
       'Backup is off unless you turn it on. If you do, a copy of this phone’s database and photos is uploaded so you can get them back after losing or replacing this phone. If you leave it off, uninstalling the app deletes this phone’s copy; the household’s inventory stays on the home server.',
     noBackupService:
-      'This build has no backup service configured, so nothing is uploaded anywhere. Uninstalling the app deletes all of it.',
+      'Backup is not set up in this build, so nothing is uploaded anywhere. Uninstalling the app deletes all of it.',
     noBackupServicePaired:
-      'This build has no backup service configured, so this phone’s copy is not uploaded anywhere else. Uninstalling the app deletes that copy.',
+      'Backup is not set up in this build, so this phone’s copy is not uploaded anywhere else. Uninstalling the app deletes that copy.',
     backupTitle: 'If you turn on backup',
     backupAccount:
-      'There is no account, no email address, and no password. The app generates a recovery code on this phone and stores your backup under a name derived from it. That code is the only way to reach the backup, including for us. It is not recoverable, and if you lose it the backup cannot be opened by anyone, including you.',
+      'There is no account, no email address and no password. The app generates a recovery code on this phone and stores your backup under a name derived from it. That code is the only way to reach the backup, including for us. It is not recoverable, and if you lose it the backup cannot be opened by anyone, including you.',
     backupPassword:
       'Anyone who has the code can read that inventory, so it is worth treating like a password. Uploads travel over an encrypted connection. Your five most recent database snapshots are kept, so a mistake you notice later can still be undone.',
     backupLocal:
@@ -1105,27 +1040,24 @@ export const strings = {
     photosResized: (maxDimension: number) =>
       `Importing a photo copies it; the original is left untouched. Each photo is resized to at most ${maxDimension} pixels on its long edge and re-encoded as a WebP image before it is saved, alongside a small thumbnail used in lists.`,
     photosDeleted:
-      'Deleting an item, its container, or its space also deletes the photo file from this phone.',
+      'Deleting an item, its container or its space also deletes the photo file from this phone.',
     suggestionsTitle: 'Photo suggestions',
     suggestionsSent:
-      'When you add an item with a photo, that single image is sent to our service to suggest a name, category, and tags. The suggestion is only a suggestion: you can edit or ignore it, and saving an item never requires it.',
+      'When you add an item with a photo, that single image is sent to our service to suggest a name, category and tags. The suggestion is only a suggestion: you can edit or ignore it, and saving an item never requires it.',
     suggestionsPrivate:
       'Images are sent for that one request and are not used to build a profile of you. Your notes and other item details are never sent.',
     suggestionsOff:
       'Photo suggestions are not configured in this build, so no image is ever sent for suggestions. Items are always added by typing the details.',
     diagnosticsTitle: 'Diagnostics',
     diagnosticsBody:
-      'Diagnostic events record only timings and outcome categories: how long something took and whether it succeeded. Item names, notes, photos, search text, and QR codes are filtered out before anything is recorded, and no crash or analytics provider is enabled in this build.',
+      'Diagnostic events record only timings and outcome categories: how long something took and whether it succeeded. Item names, notes, photos, search text and QR codes are filtered out before anything is recorded, and no crash or analytics provider is enabled in this build.',
     offlineTitle: 'Working offline',
     offlineBody:
-      'Everything except photo suggestions and backup works with no network connection at all, including adding items, scanning labels, and searching. Backups wait for a connection and catch up on their own; nothing you do is blocked while they wait.',
+      'Everything except photo suggestions and backup works with no network connection at all, including adding items, scanning labels and searching. Backups wait for a connection and catch up on their own; nothing you do is blocked while they wait.',
     offlinePaired:
       'Searching and browsing what this phone last loaded can work without the internet. Adding and changing things needs it.',
   },
-  // owner: S8
   onboarding: {
-    skip: 'Skip',
-    next: 'Next',
     start: 'Start',
     brand: 'Inventory',
     title: 'Find where anything is kept',
@@ -1140,77 +1072,5 @@ export const strings = {
     back: 'Back',
     joinedTitle: 'You are in',
     joinedBody: (household: string) => `Everything stored in ${household} is on this phone now.`,
-    steps: [
-      {
-        icon: '📸',
-        title: 'Capture',
-        body: 'Photograph an item as you put it away. Suggestions fill in the details, and you can always type them yourself.',
-      },
-      {
-        icon: '📦',
-        title: 'Store',
-        body: 'Group items into containers, and containers into spaces like a garage or a loft. Stick a QR label on a box to open it instantly later.',
-      },
-      {
-        icon: '🔎',
-        title: 'Find',
-        body: 'Search what you remember. Results show the exact space and container an item is in — and it all works offline.',
-      },
-    ],
-  },
-
-  // Legacy sections: read-only for every package, removed by Cleanup.
-  items: {
-    empty: {
-      title: 'Nothing in here yet',
-      body: 'Add the first item with a photo, or type the details yourself.',
-      photoAction: 'Take a photo',
-      manualAction: 'Add without a photo',
-    },
-    nameLabel: 'Name',
-    namePlaceholder: 'Cordless drill',
-    nameRequired: 'Give the item a name.',
-    /** Shown in place of a title for items captured but not yet identified. */
-    unnamed: 'Needs a name',
-    categoryLabel: 'Category',
-    tagsLabel: 'Tags',
-    tagsHint: 'Separate tags with commas.',
-    quantityLabel: 'Quantity',
-    quantityInvalid: 'Quantity must be a whole number of 0 or more.',
-    quantityDecrease: 'Decrease quantity',
-    quantityIncrease: 'Increase quantity',
-    quantityA11y: (count: number) => `Quantity ${count}`,
-    quantitySaveFailed: 'Quantity could not be saved.',
-    notesLabel: 'Notes',
-    save: 'Save item',
-    saveAndAdd: 'Save and add another',
-    deleteTitle: 'Delete this item?',
-    deleteBody: 'This removes the item and its photo from this device.',
-  },
-  containers: {
-    empty: {
-      title: 'Add a container',
-      body: 'Containers are the boxes, drawers, and shelves inside this space.',
-      action: 'Add a container',
-    },
-    create: 'New container',
-    createAction: 'Create container',
-    typeNames: {
-      box: 'Box',
-      drawer: 'Drawer',
-      shelf: 'Shelf',
-      cabinet: 'Cabinet',
-      bin: 'Bin',
-      bag: 'Bag',
-      crate: 'Crate',
-      other: 'Other',
-    } as Record<string, string>,
-    nameLabel: 'Name (optional)',
-    namePlaceholder: 'Winter clothes',
-    typeLabel: 'Type',
-    spaceLabel: 'Space',
-    deleteTitle: 'Delete this container?',
-    qrBound: 'QR label attached',
-    qrUnbound: 'No QR label',
   },
 } as const;

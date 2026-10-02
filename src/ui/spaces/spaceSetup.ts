@@ -37,8 +37,7 @@ function nameKey(name: string): string {
 /**
  * The names already used by spaces, compared without case or surrounding
  * spaces. A quick-add preset whose name is here is shown as "Already added",
- * so a second tap on another visit no longer makes a second Garage
- * (entities §1).
+ * so a second tap on another visit no longer makes a second Garage.
  */
 export function takenSpaceNames(spaces: readonly { name: string }[]): ReadonlySet<string> {
   return new Set(spaces.map((entry) => nameKey(entry.name)));
@@ -92,7 +91,7 @@ export function spaceValuesChanged(values: SpaceValues, initial: SpaceValues): b
   );
 }
 
-/** What the container form edits. The label code is not here: it never changes (entities §14.13). */
+/** What the container form edits. The label code is not here: it never changes. */
 export interface ContainerValues {
   name: string;
   visualType: string;
@@ -112,7 +111,7 @@ export function containerValuesChanged(values: ContainerValues, initial: Contain
  * A refresh that failed while data stayed on screen gets its own "could not
  * be refreshed" banner, except when the reason already has one: the
  * connection banner explains an unreachable home server, and the
- * removed-phone layer covers a revoked one (spec §5.0).
+ * removed-phone layer covers a revoked one.
  */
 export function needsRefreshBanner(refreshFailed: boolean, cause: unknown): boolean {
   if (!refreshFailed) return false;

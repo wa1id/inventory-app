@@ -4,7 +4,7 @@ import type { Container, SpaceWithCounts } from '@/db/types';
 import { strings } from '@/i18n/strings';
 import type { LocationSearchResult } from '@/repositories/search';
 import { spellCode } from '@/ui/a11y';
-import { AppText } from '@/ui/components/AppText';
+import { AppText, Highlighted } from '@/ui/components/AppText';
 import { LocationLine } from '@/ui/components/LocationLine';
 import { Row } from '@/ui/components/Row';
 import { SpaceTile, TypeTile } from '@/ui/components/SpaceTile';
@@ -19,6 +19,19 @@ export interface SpaceRowProps {
   surface?: 'sheet' | 'plaster';
   /** 56 on the Spaces tab, 48 in search results. */
   tileSize?: 48 | 56;
+  /** Search terms to mark in the name, so a result shows why it matched. */
+  terms?: readonly string[];
+}
+
+/** A place's name, with the search terms marked when there are any. */
+function PlaceName({ name, terms }: { name: string; terms?: readonly string[] }) {
+  return terms && terms.length > 0 ? (
+    <Highlighted variant="name" text={name} terms={terms} style={styles.name} />
+  ) : (
+    <AppText variant="name" style={styles.name}>
+      {name}
+    </AppText>
+  );
 }
 
 /** A space: its tile, its name, and how much is in it. */
@@ -27,6 +40,7 @@ export function SpaceRow({
   onPress,
   surface = 'sheet',
   tileSize = 56,
+  terms,
 }: SpaceRowProps) {
   const counts = strings.entities.spaceCounts(item.containerCount, item.itemCount);
   return (
@@ -37,7 +51,7 @@ export function SpaceRow({
       accessibilityLabel={strings.rows.spaceA11y(item.name, counts)}
       testID={`space-row-${item.id}`}
     >
-      <AppText variant="name">{item.name}</AppText>
+      <PlaceName name={item.name} terms={terms} />
       <AppText variant="meta" tone="graphite">
         {counts}
       </AppText>
@@ -62,16 +76,21 @@ export interface ContainerRowProps {
   /** In a space the meta is its contents; in search it is where the container is. */
   context: 'space' | 'search';
   onPress: (id: string) => void;
+  /** Search terms to mark in the name. */
+  terms?: readonly string[];
 }
 
 function typeName(visualType: string): string {
   return strings.entities.typeNames[visualType] ?? strings.entities.typeNames.other ?? visualType;
 }
 
-/** A container: its type, its name followed by its label tape. Unnamed ones show the tape alone. */
-export function ContainerRow({ container, context, onPress }: ContainerRowProps) {
+/**
+ * A container: its type, its name followed by its label tape. An unnamed one
+ * is called what its own screen calls it ("Unnamed bag"), quietly.
+ */
+export function ContainerRow({ container, context, onPress, terms }: ContainerRowProps) {
   const type = typeName(container.visualType);
-  const items = strings.entities.items(container.itemCount);
+  const items = strings.entities.contents(container.itemCount);
   const label = container.name ?? strings.entities.unnamedContainer(type);
   const inSearch = context === 'search';
 
@@ -98,10 +117,12 @@ export function ContainerRow({ container, context, onPress }: ContainerRowProps)
     >
       <View style={styles.nameLine}>
         {container.name ? (
-          <AppText variant="name" style={styles.name}>
-            {container.name}
+          <PlaceName name={container.name} terms={terms} />
+        ) : (
+          <AppText variant="name" tone="graphite" weight={500} style={styles.name}>
+            {label}
           </AppText>
-        ) : null}
+        )}
         <Tape code={container.shortCode} size="s" />
       </View>
       {inSearch ? (
@@ -137,6 +158,8 @@ export interface PlaceRowProps {
   /** From `containers.listAllWithSpace()`, by id: code and type. */
   containers: ReadonlyMap<string, ContainerWithSpace>;
   onPress: (hit: LocationSearchResult) => void;
+  /** Search terms to mark in the place's name. */
+  terms?: readonly string[];
 }
 
 /**
@@ -146,14 +169,14 @@ export interface PlaceRowProps {
  * subtitle are shown, so a row is never blank; the preformatted subtitle is
  * shown as is and never parsed.
  */
-export function PlaceRow({ hit, spaces, containers, onPress }: PlaceRowProps) {
+export function PlaceRow({ hit, spaces, containers, onPress, terms }: PlaceRowProps) {
   const testID = `place-row-${hit.id}`;
   const space = spaces.get(hit.kind === 'space' ? hit.id : hit.spaceId);
 
   if (hit.kind === 'space' && space) {
     return (
       <View testID={testID}>
-        <SpaceRow space={space} onPress={() => onPress(hit)} tileSize={48} />
+        <SpaceRow space={space} onPress={() => onPress(hit)} tileSize={48} terms={terms} />
       </View>
     );
   }
@@ -175,6 +198,7 @@ export function PlaceRow({ hit, spaces, containers, onPress }: PlaceRowProps) {
           }}
           context="search"
           onPress={() => onPress(hit)}
+          terms={terms}
         />
       </View>
     );
@@ -188,7 +212,7 @@ export function PlaceRow({ hit, spaces, containers, onPress }: PlaceRowProps) {
       accessibilityLabel={`${hit.title}. ${hit.subtitle}`}
       testID={testID}
     >
-      <AppText variant="name">{hit.title}</AppText>
+      <PlaceName name={hit.title} terms={terms} />
       <AppText variant="meta" tone="graphite">
         {hit.subtitle}
       </AppText>

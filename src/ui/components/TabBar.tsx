@@ -4,7 +4,6 @@ import { router } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { CommonActions } from 'expo-router/react-navigation';
 
-import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
 import { useKeyboardInset } from '@/hooks/useKeyboardInset';
 import { strings } from '@/i18n/strings';
 import { useDropZone } from '@/providers/DropZoneProvider';
@@ -14,6 +13,7 @@ import { Icon, type IconName } from '@/ui/components/Icon';
 import { PressedOverlay, rippleFor } from '@/ui/components/PressFeedback';
 import { Tape } from '@/ui/components/Tape';
 import { haptics } from '@/ui/haptics';
+import { openQuickSnap } from '@/ui/navigation';
 import { MIN_TOUCH_TARGET, TAB_BAR_CONTENT, space, useTheme } from '@/ui/theme';
 
 /** The bar's tabs by route name. Add is not a route; it sits between Spaces and Scan. */
@@ -31,7 +31,6 @@ const SLOTS = ['index', 'spaces', ADD, 'scan', 'drop-zone'] as const;
 const ADD_BLOCK_HEIGHT = 40;
 /** On tablets the five slots stop growing and sit centred. */
 const SLOT_MAX_WIDTH = 120;
-const QUICK_SNAP_HREF = `/capture?containerId=${DROP_ZONE_CONTAINER_ID}&mode=fast` as const;
 
 /**
  * Home · Spaces · [Add] · Scan · Drop zone.
@@ -44,7 +43,9 @@ const QUICK_SNAP_HREF = `/capture?containerId=${DROP_ZONE_CONTAINER_ID}&mode=fas
  */
 export function TabBar({ state, navigation, insets }: BottomTabBarProps) {
   const { colors } = useTheme();
-  const keyboard = useKeyboardInset();
+  // Only Android hides the bar; on iOS a subscription would animate every
+  // keyboard change in the app for nothing.
+  const keyboard = useKeyboardInset({ enabled: Platform.OS === 'android' });
   const dropZone = useDropZone();
   const [height, setHeight] = useState(0);
   // Android lifts the bar over the keyboard otherwise; iOS covers it.
@@ -171,7 +172,7 @@ function AddSlot() {
 
   function quickSnap() {
     haptics.longPress();
-    router.push(QUICK_SNAP_HREF);
+    openQuickSnap();
   }
 
   return (

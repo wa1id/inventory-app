@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, SectionList, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 
@@ -20,23 +20,18 @@ import { SpacePip } from '@/ui/components/SpacePip';
 import { TypeTile } from '@/ui/components/SpaceTile';
 import { Tape } from '@/ui/components/Tape';
 import { haptics } from '@/ui/haptics';
-import type { NewContainerResult } from '@/ui/navigation';
-import { placeTerms, matchesPlace } from '@/ui/placeMatch';
+import type { NewContainerResult, NewSpaceResult } from '@/ui/navigation';
+import {
+  joinPlaceOptions,
+  matchesPlace,
+  placeTerms,
+  toPlaceOption,
+  type PlaceOption,
+} from '@/ui/placeMatch';
 import { openForResult } from '@/ui/routeResult';
 import { GUTTER, OPTION_MIN, space, useTheme } from '@/ui/theme';
 
-/** A container as the picker offers it, joined with its space. */
-export interface PlaceOption {
-  id: string;
-  name: string | null;
-  shortCode: string;
-  visualType: string;
-  spaceId: string;
-  spaceName: string;
-  spaceColor: string;
-  spaceIcon: string;
-  itemCount: number;
-}
+export type { PlaceOption } from '@/ui/placeMatch';
 
 export type PickedPlace = { kind: 'dropZone' } | { kind: 'container'; option: PlaceOption };
 
@@ -74,23 +69,25 @@ const MAX_RECENT_SHOWN = 4;
 type Entry =
   | { kind: 'option'; option: PlaceOption; recent: boolean }
   | { kind: 'dropZone' }
-  | { kind: 'newContainer'; spaceId: string; spaceName: string };
+  /** `color`: in the one "Make a new container" list, where its space pip leads the row. */
+  | { kind: 'newContainer'; spaceId: string; spaceName: string; color?: string };
 
 interface PickerSection {
   key: string;
-  kind: 'top' | 'recent' | 'space';
+  kind: 'top' | 'recent' | 'space' | 'new';
   title?: string;
   color?: string;
   data: Entry[];
 }
 
-function optionLabel(option: PlaceOption): string {
-  return (
-    option.name ??
-    strings.entities.unnamedContainer(
-      strings.entities.typeNames[option.visualType] ?? strings.entities.typeNames.other ?? '',
-    )
+function unnamedLabel(option: PlaceOption): string {
+  return strings.entities.unnamedContainer(
+    strings.entities.typeNames[option.visualType] ?? strings.entities.typeNames.other ?? '',
   );
+}
+
+function optionLabel(option: PlaceOption): string {
+  return option.name ?? unnamedLabel(option);
 }
 
 function byLabel(a: PlaceOption, b: PlaceOption): number {
@@ -126,24 +123,16 @@ export function PlacePicker({
   const { colors } = useTheme();
   const [query, setQuery] = useState('');
   const recentIds = useRecentPlaces();
+  /** A space or container form is open (or opening) for a pick. */
+  const openingRef = useRef(false);
 
   const containers = useInventoryQuery(() => repos.containers.listAllWithSpace(), 'containers-all');
   const spaces = useInventoryQuery(() => repos.spaces.listWithCounts(), 'spaces');
 
-  const options = useMemo(() => {
-    const spaceById = new Map((spaces.data ?? []).map((entry) => [entry.id, entry]));
-    return (containers.data ?? []).map((container): PlaceOption => ({
-      id: container.id,
-      name: container.name,
-      shortCode: container.shortCode,
-      visualType: container.visualType,
-      spaceId: container.spaceId,
-      spaceName: container.spaceName,
-      spaceColor: spaceById.get(container.spaceId)?.color ?? '',
-      spaceIcon: spaceById.get(container.spaceId)?.icon ?? '',
-      itemCount: container.itemCount,
-    }));
-  }, [containers.data, spaces.data]);
+  const options = useMemo(
+    () => joinPlaceOptions(containers.data ?? [], spaces.data ?? []),
+    [containers.data, spaces.data],
+  );
 
   const filtering = query.trim().length > 0;
 
@@ -185,10 +174,28 @@ export function PlacePicker({
       }
     }
 
-    const noMatch = filtering && matching.length === 0;
+    // Nothing matches: one list of the spaces to make it in, rather than a
+    // header and a one-row sheet per space.
+    if (filtering && matching.length === 0) {
+      if (allowNewContainer && order.length > 0) {
+        result.push({
+          key: 'new',
+          kind: 'new',
+          title: strings.picker.newContainerTitle,
+          data: order.map((entry) => ({
+            kind: 'newContainer',
+            spaceId: entry.id,
+            spaceName: entry.name,
+            color: entry.color,
+          })),
+        });
+      }
+      return result;
+    }
+
     for (const entry of order) {
       const inSpace = matching.filter((option) => option.spaceId === entry.id).sort(byLabel);
-      const offerNew = allowNewContainer && (!filtering || inSpace.length > 0 || noMatch);
+      const offerNew = allowNewContainer && (!filtering || inSpace.length > 0);
       if (inSpace.length === 0 && !offerNew) continue;
       const data: Entry[] = inSpace.map((option) => ({ kind: 'option', option, recent: false }));
       if (offerNew) data.push({ kind: 'newContainer', spaceId: entry.id, spaceName: entry.name });
@@ -197,31 +204,69 @@ export function PlacePicker({
     return result;
   }, [allowNewContainer, filtering, mode, options, query, recentIds, showDropZone, spaces.data]);
 
+  /**
+   * Opens a form that answers, one at a time: a second tap before the first
+   * form is up would stack another (as the Add sheet's camera guards).
+   */
+  async function openOnce<T>(open: (request: string) => void): Promise<T | undefined> {
+    if (openingRef.current) return undefined;
+    openingRef.current = true;
+    try {
+      return await openForResult<T>(open);
+    } finally {
+      openingRef.current = false;
+    }
+  }
+
+  /**
+   * The form hands back what the picker shows of the new container, so it is
+   * picked without reading it back over the network.
+   */
   async function newContainer(spaceId: string, spaceName: string) {
-    const created = await openForResult<NewContainerResult>((request) =>
+    if (busyId !== null) return;
+    const created = await openOnce<NewContainerResult>((request) =>
       router.push({ pathname: '/container/new', params: { spaceId, request } }),
     );
     if (!created) return;
-    const container = await repos.containers.getById(created.containerId);
-    if (!container) return;
-    const home = spaces.data?.find((entry) => entry.id === container.spaceId);
+    // The spaces list may not have the space yet (just made from here).
+    const home = spaces.data?.find((entry) => entry.id === created.spaceId);
     await onPick({
       kind: 'container',
-      option: {
-        id: container.id,
-        name: container.name,
-        shortCode: container.shortCode,
-        visualType: container.visualType,
-        spaceId: container.spaceId,
-        spaceName: home?.name ?? spaceName,
-        spaceColor: home?.color ?? '',
-        spaceIcon: home?.icon ?? '',
-        itemCount: 0,
-      },
+      option: toPlaceOption(
+        {
+          id: created.containerId,
+          name: created.name,
+          shortCode: created.shortCode,
+          visualType: created.visualType,
+          spaceId: created.spaceId,
+          spaceName: home?.name ?? spaceName,
+          itemCount: 0,
+        },
+        home,
+      ),
     });
   }
 
+  /**
+   * No spaces at all: make one, then a container in it, and pick that, so a
+   * sheet waiting for a place ends with one. Where nothing is waiting (opening
+   * a container by its code) the new space simply opens.
+   */
+  async function newSpace() {
+    if (!allowNewContainer) {
+      router.push('/space/new');
+      return;
+    }
+    if (busyId !== null) return;
+    const created = await openOnce<NewSpaceResult>((request) =>
+      router.push({ pathname: '/space/new', params: { request } }),
+    );
+    if (created) await newContainer(created.spaceId, created.name);
+  }
+
   function pick(place: PickedPlace) {
+    // Locked while a pick saves; a screen reader can still activate a row.
+    if (busyId !== null) return;
     haptics.choice();
     void onPick(place);
   }
@@ -260,6 +305,8 @@ export function PlacePicker({
   const header = (
     <>
       {notice ? <View style={styles.notice}>{notice}</View> : null}
+      {/* The drop zone has no header of its own; this keeps it off the filter. */}
+      {!notice && sections[0]?.kind === 'top' ? <View style={styles.topGap} /> : null}
       {filtering && options.length > 0 && !sections.some(hasOption) ? (
         <AppText variant="meta" tone="graphite" style={styles.noMatch}>
           {strings.picker.noMatch(query.trim())}
@@ -288,15 +335,18 @@ export function PlacePicker({
         ListHeaderComponent={header}
         ListFooterComponent={
           nothingAtAll ? (
-            <EmptyState
-              title={strings.picker.none.title}
-              body={strings.picker.none.body}
-              action={{
-                label: strings.picker.none.action,
-                onPress: () => router.push('/space/new'),
-                testID: 'move-no-containers',
-              }}
-            />
+            // The list already has the gutter; the empty state brings its own.
+            <View style={styles.flush}>
+              <EmptyState
+                title={strings.picker.none.title}
+                body={strings.picker.none.body}
+                action={{
+                  label: strings.picker.none.action,
+                  onPress: () => void newSpace(),
+                  testID: 'move-no-containers',
+                }}
+              />
+            </View>
           ) : null
         }
         renderSectionHeader={({ section }) => <SectionHeader section={section} />}
@@ -344,16 +394,22 @@ function SectionHeader({ section }: { section: PickerSection }) {
   const { colors } = useTheme();
   if (section.kind === 'top') return null;
   return (
-    <View
-      accessibilityRole="header"
-      style={[styles.sectionHeader, { backgroundColor: colors.plaster }]}
-    >
+    <View style={[styles.sectionHeader, { backgroundColor: colors.plaster }]}>
       {section.kind === 'recent' ? (
         <Icon name="clock" size={16} color={colors.graphite} />
+      ) : section.kind === 'new' ? (
+        <Icon name="plus" size={16} color={colors.graphite} />
       ) : (
         <SpacePip color={section.color} size={12} />
       )}
-      <AppText variant="label" numberOfLines={2} style={styles.sectionTitle}>
+      {/* The header trait on the text itself: a plain View's is ignored, so
+          the screen reader's headings list would be empty. */}
+      <AppText
+        variant="label"
+        accessibilityRole="header"
+        numberOfLines={2}
+        style={styles.sectionTitle}
+      >
         {section.title}
       </AppText>
     </View>
@@ -380,19 +436,24 @@ function EntryRow({
   onNewContainer,
 }: EntryRowProps) {
   const { colors } = useTheme();
+  // While a pick saves, the other rows say they are unavailable and the
+  // picked one says it is busy (it stays enabled, so it is not "dimmed").
+  const locked = busyId !== null;
+  const check = <Icon name="check" size={20} color={colors.ink} />;
 
   if (entry.kind === 'dropZone') {
     // Adding defaults to the drop zone: "somewhere" is a valid place.
     const selected =
       selectedContainerId === undefined || selectedContainerId === DROP_ZONE_CONTAINER_ID;
+    const busy = busyId === DROP_ZONE_CONTAINER_ID;
     return (
       <Row
         onPress={() => onPick({ kind: 'dropZone' })}
         leading={<TypeTile type="other" icon="inbox" size={40} />}
-        aside={
-          busyId === DROP_ZONE_CONTAINER_ID ? <ActivityIndicator color={colors.graphite} /> : null
-        }
+        aside={busy ? <ActivityIndicator color={colors.graphite} /> : selected ? check : null}
         selected={selected}
+        disabled={locked && !busy}
+        accessibilityState={{ busy }}
         minHeight={OPTION_MIN}
         accessibilityRole="radio"
         accessibilityLabel={`${strings.picker.dropZone}, ${strings.picker.sortLater}`}
@@ -413,9 +474,14 @@ function EntryRow({
         onPress={() => onNewContainer(entry.spaceId, entry.spaceName)}
         leading={
           <View style={styles.plus}>
-            <Icon name="plus" size={20} color={colors.ink} />
+            {entry.color !== undefined ? (
+              <SpacePip color={entry.color} size={12} />
+            ) : (
+              <Icon name="plus" size={20} color={colors.ink} />
+            )}
           </View>
         }
+        disabled={locked}
         minHeight={OPTION_MIN}
         accessibilityLabel={label}
         testID={`place-new-container-${entry.spaceId}`}
@@ -432,23 +498,26 @@ function EntryRow({
   const hereNow = (mode === 'move' || mode === 'file') && option.id === currentContainerId;
   const selected = mode === 'choose' && option.id === selectedContainerId;
   const spelled = spellCode(option.shortCode);
+  const busy = busyId === option.id;
 
   return (
     <Row
       onPress={() => onPick({ kind: 'container', option })}
       leading={<TypeTile type={option.visualType} size={40} />}
       aside={
-        busyId === option.id ? (
+        busy ? (
           <ActivityIndicator color={colors.graphite} />
         ) : (
           // Tape holds itself to the start of its line; the wrapper centres it in the row.
-          <View>
+          <View style={styles.aside}>
             <Tape code={option.shortCode} />
+            {selected ? check : null}
           </View>
         )
       }
       selected={selected}
-      disabled={hereNow}
+      disabled={hereNow || (locked && !busy)}
+      accessibilityState={{ busy }}
       minHeight={OPTION_MIN}
       accessibilityRole={mode === 'choose' ? 'radio' : 'button'}
       accessibilityLabel={
@@ -462,7 +531,12 @@ function EntryRow({
         <AppText variant="name" tone={hereNow ? 'graphite' : 'ink'}>
           {option.name}
         </AppText>
-      ) : null}
+      ) : (
+        // Called what its own screen calls it; the tape at the end carries the code.
+        <AppText variant="name" tone="graphite" weight={500}>
+          {unnamedLabel(option)}
+        </AppText>
+      )}
       {entry.recent ? (
         <AppText variant="caption" tone="graphite">
           {option.spaceName}
@@ -488,6 +562,12 @@ const styles = StyleSheet.create({
   },
   notice: {
     paddingBottom: space.md,
+  },
+  topGap: {
+    height: space.sm,
+  },
+  flush: {
+    marginHorizontal: -GUTTER,
   },
   noMatch: {
     paddingBottom: space.md,
@@ -521,5 +601,10 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  aside: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
   },
 });

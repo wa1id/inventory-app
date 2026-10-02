@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactElement } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 
 import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
 import type { Container, ContainerVisualType } from '@/db/types';
@@ -19,9 +19,11 @@ import { ErrorState } from '@/ui/components/ErrorState';
 import { ScreenFrame } from '@/ui/components/ScreenFrame';
 import { Skeleton } from '@/ui/components/Skeleton';
 import { SpaceTile } from '@/ui/components/SpaceTile';
+import { Tape } from '@/ui/components/Tape';
 import { TextField } from '@/ui/components/TextField';
 import { ChoiceList } from '@/ui/components/pickers/ChoiceList';
 import { TypeGrid } from '@/ui/components/pickers/TypeGrid';
+import { spellCode } from '@/ui/a11y';
 import { confirm } from '@/ui/confirm';
 import { describeError } from '@/ui/errors';
 import { haptics } from '@/ui/haptics';
@@ -43,7 +45,7 @@ interface Values {
 
 export default function EditContainerScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  // The drop zone is not a container anyone can rename, move or delete (B4).
+  // The drop zone is not a container anyone can rename, move or delete.
   if (id === DROP_ZONE_CONTAINER_ID) return <DropZoneLocked />;
   return <EditContainer id={id} />;
 }
@@ -54,13 +56,13 @@ export default function EditContainerScreen() {
  * The type is the same tile grid as when creating it (it was a strip of
  * lower-case chips here), the spaces are all on screen as a list (they were a
  * horizontal strip with the choice often off screen), and the label code is
- * said to stay as it is, because it is printed on the label (entities §6,
- * §14.13).
+ * said to stay as it is, because it is printed on the label.
  */
 function EditContainer({ id }: { id: string }) {
   const repos = useRepositories();
   const { invalidate } = useDatabase();
   const router = useRouter();
+  const navigation = useNavigation();
   const toast = useToast();
   const { colors } = useTheme();
 
@@ -75,7 +77,7 @@ function EditContainer({ id }: { id: string }) {
   const busyRef = useRef(false);
 
   // Seed once per id, during render, so a background refetch never overwrites
-  // what is being edited (entities §14.2).
+  // what is being edited.
   const [seed, setSeed] = useState<{ id: string; values: Values } | null>(null);
   if (stored && seed?.id !== stored.id) {
     const initial = {
@@ -112,27 +114,44 @@ function EditContainer({ id }: { id: string }) {
       const updated = await repos.containers.update(id, values);
       if (!updated) {
         // Deleted on another phone while this was open: never a fake success.
-        release();
-        setFailure({ cause: null });
-        haptics.error();
+        fail(null);
         return;
       }
       logEvent('container_updated');
       invalidate();
-      router.back();
-      // An edit closes and says so, like every other form (spec §2.5 rule 5).
+      // Only from the front: the header Cancel can close the sheet mid-save
+      // (swipe-down and Android back wait for it), and going back again would
+      // pop the container screen under it.
+      if (navigation.isFocused()) router.back();
+      // An edit closes and says so, like every other form.
       toast.show({ message: strings.containerForm.saved });
     } catch (cause) {
-      release();
-      setFailure({ cause });
-      haptics.error();
+      fail(cause);
     }
+  }
+
+  /** A save that did not happen: the banner, or a toast once the sheet has closed. */
+  function fail(cause: unknown) {
+    release();
+    haptics.error();
+    if (navigation.isFocused()) {
+      setFailure({ cause });
+      return;
+    }
+    const label = stored ? containerLabel(stored) : values.name;
+    toast.show({
+      tone: 'error',
+      message:
+        cause === null
+          ? strings.containerForm.alreadyDeleted(label)
+          : strings.containerForm.notSaved(label, isOffline(cause)),
+    });
   }
 
   /**
    * Deleting a container takes its items with it and unlinks its label, so
    * the confirm says so (issue #4); every step is caught and told, rather
-   * than failing silently over the network (entities §15.5).
+   * than failing silently over the network.
    */
   async function deleteContainer(current: Container) {
     if (busyRef.current) return;
@@ -161,7 +180,7 @@ function EditContainer({ id }: { id: string }) {
       invalidate();
       // Not `dismissTo`: when the space screen was never opened (the container
       // came from search or a label) that would leave the deleted container in
-      // the stack (spec §2.5 rule 8).
+      // the stack.
       router.dismissAll();
       router.push(`/space/${current.spaceId}`);
       toast.show({
@@ -260,28 +279,38 @@ function EditContainer({ id }: { id: string }) {
         </BottomBar>
       }
     >
-      <TextField
-        label={strings.containerForm.nameLabel}
-        optional
-        // Empty, it goes by its code, so the code is what the field shows.
-        placeholder={stored.shortCode}
-        hint={strings.containerForm.nameHint}
-        value={values.name}
-        onChangeText={(name) => change({ name })}
-        returnKeyType="done"
-        onSubmitEditing={() => void save()}
-        testID="container-name"
+      {/* Type, then name, as when it was created. */}
+      <TypeGrid
+        label={strings.containerForm.typeLabel}
+        value={values.visualType}
+        onChange={(visualType) => change({ visualType })}
       />
 
       <View style={styles.group}>
-        <TypeGrid
-          label={strings.containerForm.typeLabel}
-          value={values.visualType}
-          onChange={(visualType) => change({ visualType })}
+        <TextField
+          label={strings.containerForm.nameLabel}
+          optional
+          // Empty, it goes by its code, so the code is what the field shows.
+          placeholder={stored.shortCode}
+          hint={strings.containerForm.nameHint}
+          value={values.name}
+          onChangeText={(name) => change({ name })}
+          returnKeyType="done"
+          onSubmitEditing={() => void save()}
+          testID="container-name"
         />
-        <AppText variant="caption" tone="graphite">
-          {strings.containerForm.codeStays(stored.shortCode)}
-        </AppText>
+        {/* The code it goes by, as the tape it is on the box. */}
+        <View
+          style={styles.code}
+          accessible
+          accessibilityRole="text"
+          accessibilityLabel={strings.containerForm.codeStays(spellCode(stored.shortCode))}
+        >
+          <Tape code={stored.shortCode} size="s" />
+          <AppText variant="caption" tone="graphite" style={styles.codeText}>
+            {strings.containerForm.codeNote}
+          </AppText>
+        </View>
       </View>
 
       <View style={styles.group}>
@@ -294,6 +323,7 @@ function EditContainer({ id }: { id: string }) {
           label={strings.containerForm.delete}
           icon="trash"
           variant="destructive"
+          flush
           onPress={() => void deleteContainer(stored)}
           loading={busy === 'delete'}
           disabled={busy === 'save' || gone}
@@ -311,6 +341,14 @@ const styles = StyleSheet.create({
   },
   group: {
     gap: space.sm,
+  },
+  code: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+  },
+  codeText: {
+    flexShrink: 1,
   },
   // With the form's 16 pt gap, 40 pt above the rule: Delete is never a
   // neighbour of Save.

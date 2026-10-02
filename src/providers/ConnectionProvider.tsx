@@ -8,8 +8,9 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { AppState, type AppStateStatus } from 'react-native';
+import { AccessibilityInfo, AppState, type AppStateStatus } from 'react-native';
 
+import { strings } from '@/i18n/strings';
 import { useDatabase } from '@/providers/DatabaseProvider';
 import { useHousehold } from '@/providers/HouseholdProvider';
 import { householdFetch, onHouseholdReachability } from '@/services/household/client';
@@ -150,6 +151,14 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
   }, [appState, invalidate, sessionKey]);
 
   const offline = state === 'offline';
+
+  // Said once here, on the change, rather than by each screen's banner: every
+  // screen draws its own, so they would talk over each other and over every
+  // screen opened while offline.
+  useEffect(() => {
+    if (offline) AccessibilityInfo.announceForAccessibility(strings.connection.reconnecting);
+  }, [offline]);
+
   useEffect(() => {
     if (!offline || appState !== 'active') return;
     const timer = setInterval(ping, HEALTH_PING_MS);

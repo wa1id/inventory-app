@@ -55,7 +55,7 @@ const RETICLE = 240;
  * the battery, keeps the OS camera light on and blocks other apps. The scan
  * guard is set synchronously before anything is awaited, so the second and
  * third frames of the same label are ignored rather than pushing the
- * container two more times (capture §13.2).
+ * container two more times.
  */
 export function QrScanner({
   active,
@@ -164,7 +164,8 @@ export function QrScanner({
           <StatusPill text={title} />
         </View>
         <View style={styles.side}>
-          {/* The torch is the first thing to suspect when the camera will not start (R16). */}
+          {/* Hidden once the camera fails to start: the torch is unverified while barcode
+              scanning is on, so it is the first thing to rule out. */}
           {mountFailed ? null : (
             <IconButton
               icon="torch"
@@ -208,7 +209,7 @@ const CORNERS = ['topLeft', 'topRight', 'bottomLeft', 'bottomRight'] as const;
 
 /** Four corner brackets around where the label should go. Decorative. */
 function Reticle({ locked }: { locked: boolean }) {
-  const color = locked ? camera.accent : 'rgba(255,255,255,0.85)';
+  const color = locked ? camera.accent : camera.reticle;
   return (
     <View
       pointerEvents="none"

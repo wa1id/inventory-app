@@ -4,7 +4,6 @@ import {
   formHasContent,
   hasDetails,
   initialAddState,
-  joinPlaceOptions,
   photoFiles,
   photoFromParams,
   photoFromStored,
@@ -167,38 +166,6 @@ describe('initialAddState', () => {
     );
     expect(state.suggestion).toEqual(applied);
     expect(state.recognize).toBe(false);
-  });
-});
-
-describe('joinPlaceOptions', () => {
-  it('adds each container’s space colour and icon', () => {
-    const [joined] = joinPlaceOptions(
-      [
-        {
-          id: 'c1',
-          spaceId: 's1',
-          name: null,
-          visualType: 'drawer',
-          shortCode: 'DRW-1',
-          createdAt: 0,
-          updatedAt: 0,
-          spaceName: 'Kitchen',
-          itemCount: 3,
-        },
-      ],
-      [{ id: 's1', color: '#2E9E4F', icon: '🍳' }],
-    );
-    expect(joined).toEqual({
-      id: 'c1',
-      name: null,
-      shortCode: 'DRW-1',
-      visualType: 'drawer',
-      spaceId: 's1',
-      spaceName: 'Kitchen',
-      spaceColor: '#2E9E4F',
-      spaceIcon: '🍳',
-      itemCount: 3,
-    });
   });
 });
 

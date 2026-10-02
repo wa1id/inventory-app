@@ -31,6 +31,7 @@ import type { Item } from '@/db/types';
 import { useInventoryQuery } from '@/hooks/useInventoryQuery';
 import { useRecentPlaces } from '@/hooks/useRecentPlaces';
 import { strings } from '@/i18n/strings';
+import { useConnection } from '@/providers/ConnectionProvider';
 import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
 import { useToast } from '@/providers/ToastProvider';
 import { recognizeItem } from '@/services/ai/recognition';
@@ -44,7 +45,6 @@ import {
   formHasContent,
   hasDetails,
   initialAddState,
-  joinPlaceOptions,
   photoFiles,
   photoFromStored,
   resolvePlace,
@@ -83,6 +83,7 @@ import { describeError } from '@/ui/errors';
 import { haptics } from '@/ui/haptics';
 import { duration, easing, useReducedMotion } from '@/ui/motion';
 import type { PhotoResult } from '@/ui/navigation';
+import { joinPlaceOptions } from '@/ui/placeMatch';
 import { openForResult } from '@/ui/routeResult';
 import { GUTTER, MIN_TOUCH_TARGET, space } from '@/ui/theme';
 
@@ -121,7 +122,7 @@ function AddCancel({ onPress }: { onPress: () => void }) {
   );
 }
 
-/** Why the last save did not happen, in plain words (B8: it used to be the raw message). */
+/** Why the last save did not happen, in plain words (it used to be the raw message). */
 function SaveProblem({ cause }: { cause: unknown }) {
   // A 404 here means the container went, not the item.
   const described = describeError(cause, 'save', 'container');
@@ -138,16 +139,16 @@ function SaveProblem({ cause }: { cause: unknown }) {
 }
 
 /**
- * Add an item (spec §5.9): a name is enough. The place defaults to the drop
+ * Add an item: a name is enough. The place defaults to the drop
  * zone, the container it was opened from and the last few places are one tap
  * each, and "Somewhere else…" swaps the sheet to the full place picker. The
  * keyboard's return key saves, so "add AA batteries somewhere" is Add, type,
- * return (§6.4). Before this, adding needed a container first and Save sat
- * under the keyboard (entities §16.A).
+ * return. Before this, adding needed a container first and Save sat
+ * under the keyboard.
  *
  * A photo is optional. When there is one, recognition runs in the background
  * and only fills blanks; it never blocks saving and never overwrites typing
- * (issues #7, #13; entities §14.7).
+ * (issues #7, #13).
  *
  * Nothing typed is lost to a stray swipe: the sheet keeps a draft (`addDraft`)
  * that the next plain open of Add restores. The draft owns the photo until the
@@ -204,9 +205,6 @@ export default function AddItemScreen() {
   const recognitionRef = useRef<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   const nameRef = useRef<TextInput>(null);
-  const categoryRef = useRef<TextInput>(null);
-  const tagsRef = useRef<TextInput>(null);
-  const notesRef = useRef<TextInput>(null);
 
   // Every container with its space, for the recent places, the one the sheet
   // was opened for and the toast. Containers only: no photos are fetched.
@@ -349,8 +347,10 @@ export default function AddItemScreen() {
   }
 
   // Back, a swipe-down or Android back in the place step return to the form
-  // without changing the place.
-  usePreventRemove(step === 'place', () => showStep('form'));
+  // without changing the place. Not while the removed-phone layer is up: it
+  // closes every sheet, and there is nothing to go back to.
+  const revoked = useConnection().state === 'revoked';
+  usePreventRemove(step === 'place' && !revoked, () => showStep('form'));
 
   // While saving, the sheet stays put (iOS: `gestureEnabled` below). A sheet
   // closed mid-save would leave its draft for the next Add to restore while
@@ -400,7 +400,10 @@ export default function AddItemScreen() {
     setSuggestion({ status: 'idle' });
   }
 
-  /** Single-mode camera; the photo comes back through `routeResult` (S6's `request` contract). */
+  /**
+   * Single-mode camera; the photo comes back through `routeResult` (the
+   * capture screen's `request` param).
+   */
   async function takePhoto() {
     if (savingRef.current || cameraOpenRef.current) return;
     cameraOpenRef.current = true;
@@ -464,7 +467,7 @@ export default function AddItemScreen() {
         cancelLabel: strings.forms.keepEditing,
       });
       if (!discard) return;
-      // Cancelling after a capture used to leave the photo on the phone (capture §13.8).
+      // Cancelling after a capture used to leave the photo on the phone.
       recognitionRef.current = null;
       deleteStoredPhotos(photoFiles(photo));
     }
@@ -575,8 +578,9 @@ export default function AddItemScreen() {
       setSaving(null);
       startNext();
       // Said in the sheet, not as a toast: the name field has the keyboard up
-      // again, and a toast sits at the bottom of the screen, behind it (the
-      // R5 fallback for feedback inside a modal).
+      // again, and a toast sits at the bottom of the screen, behind it.
+      // Feedback inside a modal sheet stays inline; a toast is shown only
+      // after the sheet closes.
       setSavedNext(true);
       return;
     }
@@ -588,18 +592,13 @@ export default function AddItemScreen() {
 
     // Back to wherever Add was opened from; the toast says where it went.
     if (here) router.back();
-    let undone = false;
+    // The toast runs its action once, even if Undo is tapped again as it fades.
     toast.show({
       message: savedMessage(target),
       action: {
         label: strings.common.undo,
         accessibilityLabel: strings.add.undoA11y(parsed.name),
-        onPress: () => {
-          // Once, even if Undo is tapped again while the toast fades.
-          if (undone) return;
-          undone = true;
-          void undoAdd(item.id, addedPhoto);
-        },
+        onPress: () => void undoAdd(item.id, addedPhoto),
       },
     });
   }
@@ -654,9 +653,9 @@ export default function AddItemScreen() {
   // `KeyboardAvoidingView` wants the distance from the top of the screen to
   // the form. An iPhone page sheet starts below the status bar, which the
   // header height leaves out, so that offset alone would leave Save under the
-  // keyboard (entities §16.A). The sheet reaches the bottom of the screen, so
+  // keyboard. The sheet reaches the bottom of the screen, so
   // the form's top is the window less its height. Elsewhere (Android's
-  // full-screen sheet, iPad) the header height is the distance (spec §4.25).
+  // full-screen sheet, iPad) the header height is the distance.
   const keyboardOffset =
     Platform.OS === 'ios' && !Platform.isPad && bodyHeight > 0
       ? windowHeight - bodyHeight
@@ -766,7 +765,7 @@ export default function AddItemScreen() {
 
             <View style={styles.group}>
               <AppText variant="label">{strings.add.where}</AppText>
-              {/* Never a silent short list (§5.0): without the read, the
+              {/* Never a silent short list: without the read, the
                   container it was opened for and the recent places are missing. */}
               {places.cause !== null && places.data === null ? (
                 <Banner
@@ -809,33 +808,33 @@ export default function AddItemScreen() {
               />
             </View>
 
-            <View style={styles.group}>
-              <Button
-                label={strings.forms.moreDetails}
-                accessibilityLabel={strings.forms.moreDetailsA11y(detailsShown)}
-                icon={detailsShown ? 'chevronDown' : 'chevronRight'}
-                variant="quiet"
-                onPress={toggleDetails}
-                testID="item-more-details"
-              />
-              {detailsShown ? (
-                <ItemDetailsFields
-                  values={values}
-                  onChange={edit}
-                  refs={{ category: categoryRef, tags: tagsRef, notes: notesRef }}
+            {/* The two quiet links sit together, their glyphs on the form's
+                edge; opened, the details keep the form's spacing below them. */}
+            <View style={detailsShown ? styles.linksOpen : styles.links}>
+              <View style={styles.group}>
+                <Button
+                  label={strings.forms.moreDetails}
+                  accessibilityLabel={strings.forms.moreDetailsA11y(detailsShown)}
+                  icon={detailsShown ? 'chevronDown' : 'chevronRight'}
+                  variant="quiet"
+                  flush
+                  onPress={toggleDetails}
+                  testID="item-more-details"
                 />
-              ) : null}
-            </View>
+                {detailsShown ? <ItemDetailsFields values={values} onChange={edit} /> : null}
+              </View>
 
-            <Button
-              label={strings.add.snapSeveral}
-              icon="layers"
-              variant="quiet"
-              onPress={snapSeveral}
-              testID="item-snap-several"
-            />
+              <Button
+                label={strings.add.snapSeveral}
+                icon="layers"
+                variant="quiet"
+                flush
+                onPress={snapSeveral}
+                testID="item-snap-several"
+              />
+            </View>
           </ScrollView>
-          <BottomBar>
+          <BottomBar primaryFit>
             <Button
               label={strings.add.saveAndAnother}
               variant="secondary"
@@ -876,6 +875,12 @@ const styles = StyleSheet.create({
   },
   group: {
     gap: space.sm,
+  },
+  links: {
+    gap: space.xs,
+  },
+  linksOpen: {
+    gap: space.xl,
   },
   howMany: {
     flexDirection: 'row',

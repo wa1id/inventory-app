@@ -4,7 +4,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { AppText } from '@/ui/components/AppText';
 import { Button } from '@/ui/components/Button';
 import type { IconName } from '@/ui/components/Icon';
-import { radius, space, useTheme, type ThemeColors } from '@/ui/theme';
+import { GUTTER, radius, space, useTheme, type ThemeColors } from '@/ui/theme';
 
 /** Rules are a full point: `hairlineWidth` vanishes with this pale rule on 3× screens. */
 const RULE = 1;
@@ -75,6 +75,15 @@ export function SheetSeparator() {
   return <View style={[styles.separator, { backgroundColor: colors.rule }]} />;
 }
 
+/**
+ * `SheetSeparator` inside the screen gutter, as the `ItemSeparatorComponent`
+ * of a list whose cells carry `marginHorizontal: GUTTER` themselves.
+ */
+export function GutterSheetSeparator() {
+  const { colors } = useTheme();
+  return <View style={[styles.separator, styles.gutter, { backgroundColor: colors.rule }]} />;
+}
+
 export interface SectionAction {
   label: string;
   onPress: () => void;
@@ -97,7 +106,9 @@ export function Section({ title, count, action, footer, first = false, children 
   return (
     <View style={first ? null : styles.sectionGap}>
       {title || action ? (
-        <View style={styles.titleRow}>
+        // Tall enough for the action only when there is one, so a bare title
+        // sits 8 pt over its sheet rather than floating in a 40 pt row.
+        <View style={[styles.titleRow, action ? styles.titleRowAction : null]}>
           <View style={styles.titleText}>
             {title ? (
               <AppText variant="section" accessibilityRole="header" style={styles.title}>
@@ -145,6 +156,9 @@ const styles = StyleSheet.create({
   separator: {
     height: RULE,
   },
+  gutter: {
+    marginHorizontal: GUTTER,
+  },
   sectionGap: {
     marginTop: space.xxl,
   },
@@ -154,6 +168,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: space.sm,
     marginBottom: space.sm,
+  },
+  titleRowAction: {
     minHeight: 40,
   },
   titleText: {

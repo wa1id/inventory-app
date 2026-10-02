@@ -1,4 +1,4 @@
-import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import type { PermissionResponse } from 'expo-camera';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -13,7 +13,7 @@ import { IconButton } from '@/ui/components/IconButton';
 import { delay } from '@/ui/motion';
 import { CONTENT_MAX_WIDTH, GUTTER, camera, space, useTheme } from '@/ui/theme';
 
-/** Room above the content for the close button. */
+/** Room above the content for the close button (none on the Scan tab). */
 const MIN_TOP = 72;
 
 export interface CameraPermissionProps {
@@ -62,7 +62,8 @@ export function CameraPermission({
     <View style={[styles.close, { top: insets.top + space.sm, start: insets.left + space.sm }]}>
       <IconButton
         icon="close"
-        variant="camera"
+        // The camera chip only over the black wait; the rationale is on plaster.
+        variant={permission ? 'plain' : 'camera'}
         accessibilityLabel={strings.camera.close}
         onPress={onCancel}
         testID={closeTestID}
@@ -99,72 +100,77 @@ export function CameraPermission({
     });
   }
 
+  // Scrolls, so the way on without the camera is never pushed off the screen
+  // at the largest text sizes. On the Scan tab there is no close button to
+  // clear, and the tab bar already pads the home indicator.
   return (
-    <View
-      style={[
-        styles.fill,
-        {
-          backgroundColor: colors.plaster,
-          paddingTop: insets.top + MIN_TOP,
-          paddingBottom: insets.bottom + space.xl,
-        },
-      ]}
-    >
-      <View style={styles.content}>
-        <View style={[styles.iconCircle, { backgroundColor: colors.sheet2 }]}>
-          <Icon name="camera" size={28} color={colors.graphite} />
+    <View style={[styles.fill, { backgroundColor: colors.plaster }]}>
+      <ScrollView
+        style={styles.fill}
+        alwaysBounceVertical={false}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingTop: insets.top + (onCancel ? MIN_TOP : space.xxxl),
+          paddingBottom: (onCancel ? insets.bottom : 0) + space.xl,
+        }}
+      >
+        <View style={styles.content}>
+          <View style={[styles.iconCircle, { backgroundColor: colors.sheet2 }]}>
+            <Icon name="camera" size={28} color={colors.graphite} />
+          </View>
+          <AppText variant="heading">
+            {blocked
+              ? strings.permissions.cameraDeniedTitle
+              : strings.permissions.cameraRationaleTitle}
+          </AppText>
+          <AppText variant="body" tone="graphite">
+            {body}
+          </AppText>
+          <View style={styles.actions}>
+            {blocked ? (
+              <Button
+                label={strings.permissions.openSettings}
+                onPress={() => void Linking.openSettings()}
+                testID="camera-open-settings"
+              />
+            ) : (
+              <Button
+                label={strings.permissions.grant}
+                onPress={() => void allow()}
+                testID="camera-allow"
+              />
+            )}
+            {scan && onManual ? (
+              <Button
+                label={strings.permissions.typeCodeInstead}
+                icon="keyboard"
+                variant="secondary"
+                onPress={onManual}
+                testID="camera-manual"
+              />
+            ) : null}
+            {!scan && onLibrary ? (
+              <Button
+                label={strings.permissions.choosePhotoInstead}
+                icon="gallery"
+                variant="secondary"
+                onPress={onLibrary}
+                testID="camera-library"
+              />
+            ) : null}
+            {!scan && onManual ? (
+              <Button
+                label={strings.permissions.typeItInstead}
+                icon="keyboard"
+                variant="quiet"
+                flush
+                onPress={onManual}
+                testID="camera-manual"
+              />
+            ) : null}
+          </View>
         </View>
-        <AppText variant="heading">
-          {blocked
-            ? strings.permissions.cameraDeniedTitle
-            : strings.permissions.cameraRationaleTitle}
-        </AppText>
-        <AppText variant="body" tone="graphite">
-          {body}
-        </AppText>
-        <View style={styles.actions}>
-          {blocked ? (
-            <Button
-              label={strings.permissions.openSettings}
-              onPress={() => void Linking.openSettings()}
-              testID="camera-open-settings"
-            />
-          ) : (
-            <Button
-              label={strings.permissions.grant}
-              onPress={() => void allow()}
-              testID="camera-allow"
-            />
-          )}
-          {scan && onManual ? (
-            <Button
-              label={strings.permissions.typeCodeInstead}
-              icon="keyboard"
-              variant="secondary"
-              onPress={onManual}
-              testID="camera-manual"
-            />
-          ) : null}
-          {!scan && onLibrary ? (
-            <Button
-              label={strings.permissions.choosePhotoInstead}
-              icon="gallery"
-              variant="secondary"
-              onPress={onLibrary}
-              testID="camera-library"
-            />
-          ) : null}
-          {!scan && onManual ? (
-            <Button
-              label={strings.permissions.typeItInstead}
-              icon="keyboard"
-              variant="quiet"
-              onPress={onManual}
-              testID="camera-manual"
-            />
-          ) : null}
-        </View>
-      </View>
+      </ScrollView>
       {close}
     </View>
   );

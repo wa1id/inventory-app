@@ -1,5 +1,5 @@
+import { suggestCategories } from '@/ui/categoryMemory';
 import { splitHighlight } from '@/ui/components/AppText';
-import { matchCategories } from '@/ui/components/ItemForm';
 import { numberFieldWidth } from '@/ui/components/QuantityStepper';
 
 describe('splitHighlight', () => {
@@ -19,16 +19,16 @@ describe('splitHighlight', () => {
   });
 });
 
-describe('matchCategories', () => {
+describe('suggestCategories', () => {
   const known = ['Tools', 'Toys', 'tools', 'Kitchen', 'Tape', 'Tins', 'Tea', 'Towels', 'Tiles'];
 
   it('offers known categories that start with what is typed, once each', () => {
-    expect(matchCategories(known, 'to')).toEqual(['Tools', 'Toys', 'Towels']);
+    expect(suggestCategories(known, 'to')).toEqual(['Tools', 'Toys', 'Towels']);
   });
 
   it('hides an exact match and caps the list at six', () => {
-    expect(matchCategories(known, 'Tools')).toEqual([]);
-    expect(matchCategories(known, '')).toHaveLength(6);
+    expect(suggestCategories(known, 'Tools')).toEqual([]);
+    expect(suggestCategories(known, '')).toHaveLength(6);
   });
 });
 

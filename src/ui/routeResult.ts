@@ -1,6 +1,6 @@
 /**
- * Results handed back between routes: a photo from the camera, a container
- * just created from the place picker, a finished move.
+ * Results handed back between routes: a photo from the camera, a space or a
+ * container just created from the place picker, a finished move.
  *
  * The opener passes a short `request` id in the route params and awaits a
  * promise; the screen it opened delivers a value under that id and closes.

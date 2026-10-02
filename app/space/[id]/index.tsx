@@ -17,7 +17,7 @@ import { ErrorState } from '@/ui/components/ErrorState';
 import { IconButton } from '@/ui/components/IconButton';
 import { ContainerRow } from '@/ui/components/PlaceRows';
 import { ScreenFrame } from '@/ui/components/ScreenFrame';
-import { SheetSeparator, sheetCell } from '@/ui/components/Sheet';
+import { GutterSheetSeparator, sheetCell } from '@/ui/components/Sheet';
 import { Skeleton } from '@/ui/components/Skeleton';
 import { SpaceTile } from '@/ui/components/SpaceTile';
 import { focusSearch, goToTab, openContainer } from '@/ui/navigation';
@@ -26,8 +26,8 @@ import { usePullToRefresh } from '@/ui/spaces/usePullToRefresh';
 import { GUTTER, space, useTheme } from '@/ui/theme';
 
 /**
- * The drop zone's system space is the Drop zone tab, not a space screen
- * (spec §2.5 rule 3). An old link goes there; no `<Redirect>`, which would
+ * The drop zone's system space is the Drop zone tab, not a space screen.
+ * An old link goes there; no `<Redirect>`, which would
  * stack a second tab shell.
  */
 function ToDropZone() {
@@ -44,7 +44,7 @@ function HeaderActions({ spaceId, name }: { spaceId: string; name: string | null
     <View style={styles.headerActions}>
       <IconButton
         icon="search"
-        accessibilityLabel={strings.spaces.search}
+        accessibilityLabel={strings.a11y.searchHousehold}
         accessibilityHint={strings.a11y.searchHint}
         onPress={focusSearch}
       />
@@ -56,15 +56,6 @@ function HeaderActions({ spaceId, name }: { spaceId: string; name: string | null
           testID="space-edit"
         />
       ) : null}
-    </View>
-  );
-}
-
-/** The rule between two rows of the sheet, inside the screen gutter. */
-function Separator() {
-  return (
-    <View style={styles.gutter}>
-      <SheetSeparator />
     </View>
   );
 }
@@ -82,7 +73,7 @@ export default function SpaceScreen() {
  * every screen, rather than by a header filled with its colour (which needed
  * `onColor` juggling and fought the iOS 26 header). The title moves into the
  * header once it scrolls away. There are no peeks at each container's
- * contents: that would be one list call per row over the network (Q12).
+ * contents: that would be one list call per row over the network.
  */
 function SpaceDetail({ id }: { id: string }) {
   const repos = useRepositories();
@@ -151,22 +142,29 @@ function SpaceDetail({ id }: { id: string }) {
     );
   }
 
+  const showRefreshBanner =
+    needsRefreshBanner(spaceQuery.refreshFailed, spaceQuery.cause) ||
+    needsRefreshBanner(containers.refreshFailed, containers.cause);
+  // Over an empty state the head stops short: that state's own top padding is
+  // the gap, 40 pt as on an empty container, not 64.
+  const overEmpty = containers.data !== null && sorted.length === 0 && !showRefreshBanner;
+
   const head = (
     <View>
       {/* The title block alone, so a refresh banner under it does not delay the header title. */}
-      <View style={styles.head} onLayout={onTitleLayout}>
+      <View style={[styles.head, overEmpty ? styles.headOverEmpty : null]} onLayout={onTitleLayout}>
         <SpaceTile icon={spaceData.icon} color={spaceData.color} size={64} surface="plaster" />
         <View style={styles.headText}>
           <AppText variant="title">{spaceData.name}</AppText>
-          {containers.data ? (
+          {/* Not "0 containers and 0 items" over "No containers in Shed yet". */}
+          {sorted.length > 0 ? (
             <AppText variant="meta" tone="graphite">
               {strings.entities.spaceCounts(sorted.length, itemTotal)}
             </AppText>
           ) : null}
         </View>
       </View>
-      {needsRefreshBanner(spaceQuery.refreshFailed, spaceQuery.cause) ||
-      needsRefreshBanner(containers.refreshFailed, containers.cause) ? (
+      {showRefreshBanner ? (
         <View style={[styles.gutter, styles.banner]}>
           <Banner
             tone="info"
@@ -233,7 +231,7 @@ function SpaceDetail({ id }: { id: string }) {
             <ContainerRow container={item} context="space" onPress={openContainer} />
           </View>
         )}
-        ItemSeparatorComponent={Separator}
+        ItemSeparatorComponent={GutterSheetSeparator}
         ListHeaderComponent={head}
         ListEmptyComponent={empty}
         onScroll={onScroll}
@@ -264,6 +262,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: GUTTER,
     paddingTop: space.sm,
     paddingBottom: space.xl,
+  },
+  headOverEmpty: {
+    paddingBottom: 0,
   },
   headText: {
     flex: 1,
