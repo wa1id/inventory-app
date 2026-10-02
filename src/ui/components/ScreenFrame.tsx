@@ -3,8 +3,11 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { useLayoutScale } from '@/hooks/useLayoutScale';
+import { strings } from '@/i18n/strings';
 import { AppText } from '@/ui/components/AppText';
 import { ConnectionBanner } from '@/ui/components/ConnectionBanner';
+import { IconButton } from '@/ui/components/IconButton';
+import { focusSearch } from '@/ui/navigation';
 import { CONTENT_MAX_WIDTH, GUTTER, camera, space, useTheme } from '@/ui/theme';
 
 export type ScreenKind = 'tabRoot' | 'detail' | 'modal' | 'camera';
@@ -91,6 +94,22 @@ export function TabRootHeader({ title, subtitle, actions }: TabRootHeaderProps) 
       ) : null}
       {subtitle ? <View style={styles.subtitle}>{subtitle}</View> : null}
     </View>
+  );
+}
+
+/**
+ * The search button in tab-root titles and detail headers: Home with the
+ * keyboard up, wherever it was pressed (`focusSearch`).
+ */
+export function SearchButton({ testID }: { testID?: string }) {
+  return (
+    <IconButton
+      icon="search"
+      accessibilityLabel={strings.a11y.searchHousehold}
+      accessibilityHint={strings.a11y.searchHint}
+      onPress={focusSearch}
+      testID={testID}
+    />
   );
 }
 

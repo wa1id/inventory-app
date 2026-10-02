@@ -15,10 +15,10 @@ import { Icon } from '@/ui/components/Icon';
 import { IconButton } from '@/ui/components/IconButton';
 import { SpaceRow } from '@/ui/components/PlaceRows';
 import { Row } from '@/ui/components/Row';
-import { ScreenFrame, TabRootHeader } from '@/ui/components/ScreenFrame';
+import { ScreenFrame, SearchButton, TabRootHeader } from '@/ui/components/ScreenFrame';
 import { GutterSheetSeparator, sheetCell } from '@/ui/components/Sheet';
 import { Skeleton } from '@/ui/components/Skeleton';
-import { focusSearch, openSpace } from '@/ui/navigation';
+import { openSpace } from '@/ui/navigation';
 import { needsRefreshBanner } from '@/ui/spaces/spaceSetup';
 import { usePullToRefresh } from '@/ui/spaces/usePullToRefresh';
 import { GUTTER, OPTION_MIN, THUMB, space, useTheme } from '@/ui/theme';
@@ -95,13 +95,7 @@ export default function SpacesScreen() {
         }
         actions={
           <>
-            <IconButton
-              icon="search"
-              accessibilityLabel={strings.a11y.searchHousehold}
-              accessibilityHint={strings.a11y.searchHint}
-              onPress={focusSearch}
-              testID="spaces-search"
-            />
+            <SearchButton testID="spaces-search" />
             <IconButton
               icon="plus"
               accessibilityLabel={strings.spaces.newSpace}

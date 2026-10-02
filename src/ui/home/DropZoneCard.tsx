@@ -59,7 +59,7 @@ export function DropZoneCard({ items, count, onSort, onQuickSnap }: DropZoneCard
                 index > 0 ? styles.overlap : null,
               ]}
             >
-              <Thumb uri={item.photoThumbUri ?? item.photoUri} size={48} />
+              <Thumb uri={item.photoThumbUri ?? item.photoUri} size={40} />
             </View>
           ))}
         </View>

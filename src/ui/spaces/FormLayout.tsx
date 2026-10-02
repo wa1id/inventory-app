@@ -1,14 +1,7 @@
-import { useState, type ReactNode } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-} from 'react-native';
-import { useHeaderHeight } from 'expo-router/react-navigation';
+import type { ReactNode } from 'react';
+import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native';
 
+import { useSheetKeyboardOffset } from '@/hooks/useSheetKeyboardOffset';
 import { strings } from '@/i18n/strings';
 import { Banner, type BannerAction } from '@/ui/components/Banner';
 import { EmptyState } from '@/ui/components/EmptyState';
@@ -32,29 +25,14 @@ export interface FormLayoutProps {
  * avoided the keyboard, so Save sat under it on iOS.
  */
 export function FormLayout({ notice, children, bottomBar }: FormLayoutProps) {
-  const headerHeight = useHeaderHeight();
-  const { height: windowHeight } = useWindowDimensions();
-  // The form's height, for where its top sits on screen (see `keyboardOffset`).
-  const [bodyHeight, setBodyHeight] = useState(0);
-
-  // `KeyboardAvoidingView` wants the distance from the top of the screen to
-  // the form. An iPhone page sheet starts below the status bar, which the
-  // header height leaves out, so that offset alone would leave Save under the
-  // keyboard. The sheet reaches the bottom of the screen, so the form's top is
-  // the window less its height. Elsewhere (Android's full-screen sheet, iPad)
-  // the header height is the distance. As in the Add sheet.
-  const keyboardOffset =
-    Platform.OS === 'ios' && !Platform.isPad && bodyHeight > 0
-      ? windowHeight - bodyHeight
-      : headerHeight;
+  const keyboard = useSheetKeyboardOffset();
 
   return (
     <ScreenFrame kind="modal">
       <KeyboardAvoidingView
         behavior="padding"
-        keyboardVerticalOffset={keyboardOffset}
-        // The keyboard pads inside this view, so its height stays the form's.
-        onLayout={(event) => setBodyHeight(event.nativeEvent.layout.height)}
+        keyboardVerticalOffset={keyboard.keyboardVerticalOffset}
+        onLayout={keyboard.onLayout}
         style={styles.fill}
       >
         {notice ? <View style={styles.notice}>{notice}</View> : null}

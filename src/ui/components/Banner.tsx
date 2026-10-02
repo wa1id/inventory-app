@@ -12,6 +12,8 @@ import { radius, space, useTheme } from '@/ui/theme';
 export interface BannerAction {
   label: string;
   onPress: () => void;
+  /** Busy: the button keeps its label, takes no presses and shows a spinner if the wait is real. */
+  loading?: boolean;
   accessibilityHint?: string;
   testID?: string;
 }
@@ -93,6 +95,7 @@ export function Banner({
           <Button
             label={action.label}
             onPress={action.onPress}
+            loading={action.loading}
             accessibilityHint={action.accessibilityHint}
             testID={action.testID}
             variant={secondary ? 'secondary' : 'quiet'}
@@ -103,6 +106,7 @@ export function Banner({
           <Button
             label={secondary.label}
             onPress={secondary.onPress}
+            loading={secondary.loading}
             accessibilityHint={secondary.accessibilityHint}
             testID={secondary.testID}
             variant="quiet"

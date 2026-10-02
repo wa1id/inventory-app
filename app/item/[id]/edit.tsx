@@ -9,11 +9,11 @@ import {
   type TextInput,
 } from 'react-native';
 import { Stack, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import { useHeaderHeight } from 'expo-router/react-navigation';
 
 import { useDirtyGuard } from '@/hooks/useDirtyGuard';
 import { useInventoryQuery } from '@/hooks/useInventoryQuery';
 import { useLayoutScale } from '@/hooks/useLayoutScale';
+import { useSheetKeyboardOffset } from '@/hooks/useSheetKeyboardOffset';
 import { strings } from '@/i18n/strings';
 import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
 import { useToast } from '@/providers/ToastProvider';
@@ -116,7 +116,7 @@ export default function EditItemScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const toast = useToast();
-  const headerHeight = useHeaderHeight();
+  const keyboard = useSheetKeyboardOffset();
   const { fontScale, stacked } = useLayoutScale();
 
   const itemQuery = useInventoryQuery(() => repos.items.getById(id), `item:${id}`);
@@ -149,8 +149,6 @@ export default function EditItemScreen() {
 
   const nameRef = useRef<TextInput>(null);
   const categoryRef = useRef<TextInput>(null);
-  const tagsRef = useRef<TextInput>(null);
-  const notesRef = useRef<TextInput>(null);
 
   const dirty = seed !== null && detailsDirty(values, seed.values);
   useDirtyGuard(dirty && !gone, { saving });
@@ -260,7 +258,8 @@ export default function EditItemScreen() {
       {header}
       <KeyboardAvoidingView
         behavior="padding"
-        keyboardVerticalOffset={headerHeight}
+        keyboardVerticalOffset={keyboard.keyboardVerticalOffset}
+        onLayout={keyboard.onLayout}
         style={styles.fill}
       >
         {/* Above the fields, so it is seen whatever was scrolled to. */}
@@ -308,7 +307,7 @@ export default function EditItemScreen() {
           <ItemDetailsFields
             values={values}
             onChange={setValues}
-            refs={{ category: categoryRef, tags: tagsRef, notes: notesRef }}
+            refs={{ category: categoryRef }}
           />
         </ScrollView>
         <BottomBar>

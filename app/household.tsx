@@ -249,6 +249,7 @@ function Paired({ session }: { session: HouseholdSession }) {
               action={{
                 label: importing ? strings.household.copying : strings.household.importAction,
                 onPress: () => void copyIn(),
+                loading: importing,
                 testID: 'household-import',
               }}
               secondary={

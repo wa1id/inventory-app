@@ -8,9 +8,9 @@ import { animateWithKeyboard } from '@/ui/motion';
  *
  * `BottomBar` reads `visible` to drop the home-indicator inset on both
  * platforms; `TabBar` reads it to hide itself on Android only, so it passes
- * `enabled: false` on iOS. `height` is for where `KeyboardAvoidingView`
- * misbehaves (an iOS page sheet's offset, Android edge-to-edge): a bottom bar
- * can lift itself by it.
+ * `enabled: false` on iOS. `height` is a fallback for wherever
+ * `KeyboardAvoidingView` still misbehaves (sheets measure their offset with
+ * `useSheetKeyboardOffset`): a bottom bar can lift itself by it.
  *
  * iOS reports before the keyboard moves, so each subscribed caller schedules
  * a global layout animation on the keyboard's curve (none under reduced

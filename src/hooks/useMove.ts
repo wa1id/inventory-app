@@ -20,7 +20,6 @@ import {
   movedElsewhereMessage,
   movedMessage,
   undoFailedMessage,
-  type RunMoveResult,
 } from '@/ui/item/moveFlow';
 import type { MoveResult } from '@/ui/navigation';
 import { abandonResult, deliverResult } from '@/ui/routeResult';
@@ -29,8 +28,8 @@ export interface UseMoveOptions {
   /** The item as the screen last read it; `null` while loading or once it is gone. */
   item: ItemWithContext | null;
   /**
-   * The opener's `routeResult` request, answered with a `MoveResult` (in a
-   * filing run, a `RunMoveResult`).
+   * The opener's `routeResult` request, answered with a `MoveResult` (with
+   * `waiting` in a filing run).
    */
   request?: string;
   /** Part of a filing run from the item screen (`filing=1`). */
@@ -124,7 +123,7 @@ export function useMove({ item, request, filing }: UseMoveOptions): MoveState {
     if (outcome.kind === 'moved') {
       const name = before.name;
       const fromDropZone = before.containerId === DROP_ZONE_CONTAINER_ID;
-      const move: RunMoveResult = {
+      const move: MoveResult = {
         itemId: before.id,
         from: before.containerId,
         to: target.id,

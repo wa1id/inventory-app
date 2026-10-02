@@ -9,7 +9,6 @@ import {
   ScrollView,
   StyleSheet,
   View,
-  useWindowDimensions,
   type TextInput,
 } from 'react-native';
 import {
@@ -19,17 +18,14 @@ import {
   useRouter,
   type NativeStackNavigationProp,
 } from 'expo-router';
-import {
-  useHeaderHeight,
-  usePreventRemove,
-  type ParamListBase,
-} from 'expo-router/react-navigation';
+import { usePreventRemove, type ParamListBase } from 'expo-router/react-navigation';
 
 import { parseQuantityInput } from '@/core/quantity';
 import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
 import type { Item } from '@/db/types';
 import { useInventoryQuery } from '@/hooks/useInventoryQuery';
 import { useRecentPlaces } from '@/hooks/useRecentPlaces';
+import { useSheetKeyboardOffset } from '@/hooks/useSheetKeyboardOffset';
 import { strings } from '@/i18n/strings';
 import { useConnection } from '@/providers/ConnectionProvider';
 import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
@@ -169,10 +165,7 @@ export default function AddItemScreen() {
   const router = useRouter();
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const toast = useToast();
-  const headerHeight = useHeaderHeight();
-  const { height: windowHeight } = useWindowDimensions();
-  // The form's height, for where its top sits on screen (see `keyboardOffset`).
-  const [bodyHeight, setBodyHeight] = useState(0);
+  const keyboard = useSheetKeyboardOffset();
   const reduceMotion = useReducedMotion();
   // Which sheet wrote the draft: only this one may clear it.
   const owner = useId();
@@ -650,27 +643,15 @@ export default function AddItemScreen() {
   }
 
   const quantity = parseQuantityInput(values.quantity) ?? 1;
-  // `KeyboardAvoidingView` wants the distance from the top of the screen to
-  // the form. An iPhone page sheet starts below the status bar, which the
-  // header height leaves out, so that offset alone would leave Save under the
-  // keyboard. The sheet reaches the bottom of the screen, so
-  // the form's top is the window less its height. Elsewhere (Android's
-  // full-screen sheet, iPad) the header height is the distance.
-  const keyboardOffset =
-    Platform.OS === 'ios' && !Platform.isPad && bodyHeight > 0
-      ? windowHeight - bodyHeight
-      : headerHeight;
 
   return (
     <ScreenFrame kind="modal">
       {header}
-      <Animated.View
-        onLayout={(event) => setBodyHeight(event.nativeEvent.layout.height)}
-        style={[styles.fill, { opacity: fade }]}
-      >
+      {/* Measured for the keyboard: the form fills it from the top. */}
+      <Animated.View onLayout={keyboard.onLayout} style={[styles.fill, { opacity: fade }]}>
         <KeyboardAvoidingView
           behavior="padding"
-          keyboardVerticalOffset={keyboardOffset}
+          keyboardVerticalOffset={keyboard.keyboardVerticalOffset}
           style={styles.fill}
         >
           {/* Above the fields, so it is seen whatever was scrolled to. */}
@@ -716,7 +697,8 @@ export default function AddItemScreen() {
                 photo ? (
                   <Thumb
                     uri={photo.thumbUri ?? photo.uri}
-                    size={48}
+                    // Inset from the field's border rather than filling it.
+                    size={40}
                     onPress={photoOptions}
                     accessibilityLabel={strings.add.photoOptions}
                     testID="item-photo-options"

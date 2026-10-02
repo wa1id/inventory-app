@@ -26,10 +26,9 @@ import { AppText } from '@/ui/components/AppText';
 import { Banner } from '@/ui/components/Banner';
 import { Button } from '@/ui/components/Button';
 import { ErrorState } from '@/ui/components/ErrorState';
-import { IconButton } from '@/ui/components/IconButton';
 import { Chip } from '@/ui/components/pickers/Chip';
 import { SavedQuantityStepper } from '@/ui/components/SavedQuantityStepper';
-import { ScreenFrame } from '@/ui/components/ScreenFrame';
+import { ScreenFrame, SearchButton } from '@/ui/components/ScreenFrame';
 import { FactRow } from '@/ui/components/SettingsRow';
 import { Sheet } from '@/ui/components/Sheet';
 import { Skeleton } from '@/ui/components/Skeleton';
@@ -38,10 +37,10 @@ import { confirm } from '@/ui/confirm';
 import { describeError } from '@/ui/errors';
 import { haptics } from '@/ui/haptics';
 import { itemStamp } from '@/ui/item/itemDetails';
-import { nextInRun, type RunMoveResult } from '@/ui/item/moveFlow';
+import { nextInRun } from '@/ui/item/moveFlow';
 import { NameItInline } from '@/ui/item/NameItInline';
 import { WhereCard } from '@/ui/item/WhereCard';
-import { focusSearch, goToTab } from '@/ui/navigation';
+import { goToTab, type MoveResult } from '@/ui/navigation';
 import { openForResult } from '@/ui/routeResult';
 import { GUTTER, space, useTheme } from '@/ui/theme';
 
@@ -50,17 +49,6 @@ const TRANSITION_FALLBACK_MS = 700;
 
 /** The large stepper's height: 56 pt buttons inside a 1 pt border. */
 const STEPPER_HEIGHT = 58;
-
-function HeaderSearch() {
-  return (
-    <IconButton
-      icon="search"
-      accessibilityLabel={strings.a11y.searchHousehold}
-      accessibilityHint={strings.a11y.searchHint}
-      onPress={focusSearch}
-    />
-  );
-}
 
 /** "3 waiting" in the header of a filing run, until the item's name scrolls under it. */
 function RunProgress({ label }: { label: string }) {
@@ -202,7 +190,7 @@ export default function ItemScreen() {
     // The drop zone as it was before this move keeps the run in its order.
     const before = waitingIds;
     try {
-      const result = await openForResult<RunMoveResult>((request) =>
+      const result = await openForResult<MoveResult>((request) =>
         router.push({
           pathname: '/item/[id]/move',
           params: runStep ? { id, request, filing: '1' } : { id, request },
@@ -281,7 +269,7 @@ export default function ItemScreen() {
   const header = (
     <Stack.Screen
       options={{
-        headerRight: HeaderSearch,
+        headerRight: () => <SearchButton />,
         headerTitle: progress && !collapsed ? () => <RunProgress label={progress} /> : undefined,
       }}
     />

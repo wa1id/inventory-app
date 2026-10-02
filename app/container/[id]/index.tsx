@@ -21,14 +21,14 @@ import { Icon } from '@/ui/components/Icon';
 import { IconButton } from '@/ui/components/IconButton';
 import { ItemRow } from '@/ui/components/ItemRow';
 import { PressedOverlay, rippleFor, useFocusRing } from '@/ui/components/PressFeedback';
-import { ScreenFrame } from '@/ui/components/ScreenFrame';
+import { ScreenFrame, SearchButton } from '@/ui/components/ScreenFrame';
 import { Section, GutterSheetSeparator, sheetCell } from '@/ui/components/Sheet';
 import { Skeleton } from '@/ui/components/Skeleton';
 import { SpacePip } from '@/ui/components/SpacePip';
 import { Tape } from '@/ui/components/Tape';
 import { isFreshArrival, sortContents, titleOf, typeNameOf } from '@/ui/container/containerRules';
 import { motionMs, useReducedMotion } from '@/ui/motion';
-import { focusSearch, goToTab, openSpace } from '@/ui/navigation';
+import { goToTab, openSpace } from '@/ui/navigation';
 import { needsRefreshBanner } from '@/ui/spaces/spaceSetup';
 import { usePullToRefresh } from '@/ui/spaces/usePullToRefresh';
 import { GUTTER, MIN_TOUCH_TARGET, ROW_GAP, TYPE_ICON, space, useTheme } from '@/ui/theme';
@@ -59,12 +59,7 @@ function ToDropZone() {
 function HeaderActions({ containerId, title }: { containerId: string; title: string | null }) {
   return (
     <View style={styles.headerActions}>
-      <IconButton
-        icon="search"
-        accessibilityLabel={strings.a11y.searchHousehold}
-        accessibilityHint={strings.a11y.searchHint}
-        onPress={focusSearch}
-      />
+      <SearchButton />
       {title !== null ? (
         <IconButton
           icon="edit"

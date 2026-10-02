@@ -153,8 +153,12 @@ export default function FastReviewScreen() {
       });
       if (!confirmed) return;
       const result = await repos.items.delete(id);
-      deleteStoredPhotos(result.orphanedPhotoUris);
-      logEvent('item_deleted');
+      // Nothing deleted means another phone deleted it first: the row goes
+      // either way, but this phone did not delete it, so it is not counted.
+      if (result.deleted) {
+        deleteStoredPhotos(result.orphanedPhotoUris);
+        logEvent('item_deleted');
+      }
       animateNextLayout();
       setHidden((previous) => hideRow(previous, shownRef.current, id));
       invalidate();

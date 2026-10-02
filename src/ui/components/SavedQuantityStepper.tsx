@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
+import { useLayoutScale } from '@/hooks/useLayoutScale';
 import { useSavedQuantity, type QuantityErrorKind } from '@/hooks/useSavedQuantity';
 import { strings } from '@/i18n/strings';
 import { useToast } from '@/providers/ToastProvider';
@@ -34,6 +35,7 @@ export function SavedQuantityStepper({
   onError,
 }: SavedQuantityStepperProps) {
   const large = kind === 'large';
+  const { stacked } = useLayoutScale();
   const name = item.name.trim() ? item.name : undefined;
   const toast = useToast();
   const { quantity, setQuantity, error } = useSavedQuantity(item, {
@@ -50,7 +52,7 @@ export function SavedQuantityStepper({
   });
 
   return (
-    <View style={large ? styles.large : styles.compact}>
+    <View style={large ? [styles.large, stacked ? null : styles.largeEnd] : styles.compact}>
       <QuantityStepper
         value={quantity}
         onChange={setQuantity}
@@ -71,6 +73,12 @@ export function SavedQuantityStepper({
 const styles = StyleSheet.create({
   large: {
     gap: 6,
+  },
+  // Beside its label, the "None left right now" note lines up with the
+  // stepper's end; stacked, the stepper is full width and the note starts
+  // under the label like the rest of the column.
+  largeEnd: {
+    alignItems: 'flex-end',
   },
   compact: {
     alignItems: 'flex-end',

@@ -3,12 +3,13 @@ import { Image, Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/ui/components/Icon';
 import { PressedOverlay, rippleFor, useFocusRing } from '@/ui/components/PressFeedback';
-import { radius, useTheme } from '@/ui/theme';
+import { MIN_TOUCH_TARGET, radius, useTheme } from '@/ui/theme';
 
 export interface ThumbProps {
   /** Callers pass `photoThumbUri ?? photoUri`: lists never load a full photo (`4fa33a6`). */
   uri?: string | null;
-  size: 48 | 56 | 76 | 88;
+  /** 40 for small marks inside other controls (a field, a card's stack). */
+  size: 40 | 48 | 56 | 76 | 88;
   /** Item screen only: opens the photo full screen. */
   onPress?: () => void;
   accessibilityLabel?: string;
@@ -62,6 +63,8 @@ export function Thumb({ uri, size, onPress, accessibilityLabel, testID }: ThumbP
     <Pressable
       testID={testID}
       onPress={onPress}
+      // A 40 pt thumb still takes a full-size press.
+      hitSlop={Math.max(0, (MIN_TOUCH_TARGET - size) / 2)}
       onFocus={focus.onFocus}
       onBlur={focus.onBlur}
       accessibilityRole="imagebutton"

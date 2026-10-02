@@ -16,11 +16,11 @@ import { EmptyState } from '@/ui/components/EmptyState';
 import { ErrorState } from '@/ui/components/ErrorState';
 import { IconButton } from '@/ui/components/IconButton';
 import { ContainerRow } from '@/ui/components/PlaceRows';
-import { ScreenFrame } from '@/ui/components/ScreenFrame';
+import { ScreenFrame, SearchButton } from '@/ui/components/ScreenFrame';
 import { GutterSheetSeparator, sheetCell } from '@/ui/components/Sheet';
 import { Skeleton } from '@/ui/components/Skeleton';
 import { SpaceTile } from '@/ui/components/SpaceTile';
-import { focusSearch, goToTab, openContainer } from '@/ui/navigation';
+import { goToTab, openContainer } from '@/ui/navigation';
 import { byContainerLabel, needsRefreshBanner } from '@/ui/spaces/spaceSetup';
 import { usePullToRefresh } from '@/ui/spaces/usePullToRefresh';
 import { GUTTER, space, useTheme } from '@/ui/theme';
@@ -42,12 +42,7 @@ function HeaderActions({ spaceId, name }: { spaceId: string; name: string | null
   const router = useRouter();
   return (
     <View style={styles.headerActions}>
-      <IconButton
-        icon="search"
-        accessibilityLabel={strings.a11y.searchHousehold}
-        accessibilityHint={strings.a11y.searchHint}
-        onPress={focusSearch}
-      />
+      <SearchButton />
       {name !== null ? (
         <IconButton
           icon="edit"

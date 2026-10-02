@@ -13,10 +13,7 @@ import { space } from '@/ui/theme';
 
 export interface SpaceRowProps {
   space: SpaceWithCounts;
-  /** Absent for the space form's live preview, which is static and has no chevron. */
-  onPress?: (id: string) => void;
-  /** The surface the row sits on, for the tile's tint. */
-  surface?: 'sheet' | 'plaster';
+  onPress: (id: string) => void;
   /** 56 on the Spaces tab, 48 in search results. */
   tileSize?: 48 | 56;
   /** Search terms to mark in the name, so a result shows why it matched. */
@@ -35,19 +32,13 @@ function PlaceName({ name, terms }: { name: string; terms?: readonly string[] })
 }
 
 /** A space: its tile, its name, and how much is in it. */
-export function SpaceRow({
-  space: item,
-  onPress,
-  surface = 'sheet',
-  tileSize = 56,
-  terms,
-}: SpaceRowProps) {
+export function SpaceRow({ space: item, onPress, tileSize = 56, terms }: SpaceRowProps) {
   const counts = strings.entities.spaceCounts(item.containerCount, item.itemCount);
   return (
     <Row
-      onPress={onPress ? () => onPress(item.id) : undefined}
-      leading={<SpaceTile icon={item.icon} color={item.color} size={tileSize} surface={surface} />}
-      chevron={Boolean(onPress)}
+      onPress={() => onPress(item.id)}
+      leading={<SpaceTile icon={item.icon} color={item.color} size={tileSize} />}
+      chevron
       accessibilityLabel={strings.rows.spaceA11y(item.name, counts)}
       testID={`space-row-${item.id}`}
     >

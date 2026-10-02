@@ -2,7 +2,6 @@ import { ConflictError } from '@/core/conflict';
 import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
 import { strings } from '@/i18n/strings';
 import { describeError } from '@/ui/errors';
-import type { MoveResult } from '@/ui/navigation';
 
 /*
  * The pure half of Move and File: the desk's
@@ -145,14 +144,6 @@ export function movedMessage({
   return filing && moreWaiting === false
     ? strings.move.filedLast(container, space)
     : strings.move.filedIn(container, space);
-}
-
-/**
- * What the move sheet hands back to a filing run: the move, plus the drop
- * zone's ids as read right after it. Absent when that read failed.
- */
-export interface RunMoveResult extends MoveResult {
-  waiting?: string[];
 }
 
 /**

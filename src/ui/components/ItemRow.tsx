@@ -27,6 +27,11 @@ export interface ItemRowProps {
   tool?: 'chip' | 'stepper' | 'file' | 'delete' | 'none';
   /** Search terms to mark in the name. */
   terms?: readonly string[];
+  /**
+   * `added` rows: the time "Added 5 minutes ago" counts from (`useNow`), so a
+   * memoised row still ages. Without it, the time the row last drew.
+   */
+  now?: number;
   thumb?: 56 | 76;
   /** `chip` rows: the list keeps at most one row expanded. */
   expanded?: boolean;
@@ -71,10 +76,12 @@ function SecondLine({
   item,
   line,
   count,
+  now,
 }: {
   item: ItemWithContext;
   line: ItemRowProps['line'];
   count?: number;
+  now?: number;
 }) {
   if (line === 'where' || line === undefined) return <LocationLine place={item} size="row" />;
   const lead =
@@ -83,7 +90,7 @@ function SecondLine({
         {count === 0 ? strings.rows.noneLeft : strings.rows.times(count)}
       </AppText>
     );
-  const when = ago(item.createdAt);
+  const when = ago(item.createdAt, now);
   const rest =
     line === 'detail'
       ? item.category
@@ -138,6 +145,7 @@ function ChipItemRow({
   line = 'where',
   terms,
   thumb = 56,
+  now,
   expanded = false,
   onToggleExpand,
   onPress,
@@ -209,7 +217,7 @@ function ChipItemRow({
       <View style={stacked ? null : { paddingEnd: chipWidth + CHIP_CLEARANCE }}>
         <ItemName item={item} terms={terms} />
       </View>
-      <SecondLine item={item} line={line} />
+      <SecondLine item={item} line={line} now={now} />
     </Row>
   );
 }
@@ -221,6 +229,7 @@ function PlainItemRow({
   tool = 'none',
   terms,
   thumb = 56,
+  now,
   onPress,
   onFile,
   onDelete,
@@ -278,7 +287,7 @@ function PlainItemRow({
       testID={testID ?? `item-row-${item.id}`}
     >
       <ItemName item={item} terms={terms} />
-      <SecondLine item={item} line={line} count={folded ? item.quantity : undefined} />
+      <SecondLine item={item} line={line} count={folded ? item.quantity : undefined} now={now} />
     </Row>
   );
 }
@@ -323,6 +332,7 @@ export const ItemRow = memo(ItemRowBase, (prev, next) => {
     prev.line === next.line &&
     prev.tool === next.tool &&
     prev.thumb === next.thumb &&
+    prev.now === next.now &&
     prev.onPress === next.onPress &&
     prev.onToggleExpand === next.onToggleExpand &&
     prev.onFile === next.onFile &&

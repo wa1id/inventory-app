@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type ReactElement } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router, useScrollToTop } from 'expo-router';
 
 import type { ItemWithContext } from '@/db/types';
+import { useLayoutScale } from '@/hooks/useLayoutScale';
+import { useNow } from '@/hooks/useNow';
 import { strings } from '@/i18n/strings';
 import { useDropZone } from '@/providers/DropZoneProvider';
 import { hideRow, visibleRows, type HiddenRows } from '@/ui/capture/captureFlow';
@@ -12,17 +14,24 @@ import { Banner } from '@/ui/components/Banner';
 import { Button } from '@/ui/components/Button';
 import { EmptyState } from '@/ui/components/EmptyState';
 import { ErrorState } from '@/ui/components/ErrorState';
-import { IconButton } from '@/ui/components/IconButton';
 import { ItemRow } from '@/ui/components/ItemRow';
-import { ScreenFrame, TabRootHeader } from '@/ui/components/ScreenFrame';
+import { ScreenFrame, SearchButton, TabRootHeader } from '@/ui/components/ScreenFrame';
 import { GutterSheetSeparator, sheetCell } from '@/ui/components/Sheet';
 import { Skeleton } from '@/ui/components/Skeleton';
 import { animateNextLayout } from '@/ui/motion';
-import { focusSearch, openQuickSnap, type MoveResult } from '@/ui/navigation';
+import { openQuickSnap, type MoveResult } from '@/ui/navigation';
 import { openForResult } from '@/ui/routeResult';
 import { needsRefreshBanner } from '@/ui/spaces/spaceSetup';
 import { usePullToRefresh } from '@/ui/spaces/usePullToRefresh';
 import { GUTTER, space, useTheme } from '@/ui/theme';
+
+/**
+ * The 76 pt photo needs a 390 pt phone at standard text size. At 360 pt the
+ * photo and "File…" left the second line 120 pt, so "×30 · 28 days ago"
+ * wrapped with "ago" alone; the 56 pt thumbnail gives it 20 pt back. Stacked
+ * rows put "File…" under the text, so they keep the photo.
+ */
+const PHOTO_THUMB_WIDTH = 390;
 
 /**
  * Stable for the memoised rows: the item screen as a filing run (name it,
@@ -50,6 +59,10 @@ function openItem(id: string) {
  */
 export default function DropZoneScreen() {
   const { colors } = useTheme();
+  const { width, fontScale } = useWindowDimensions();
+  const { stacked } = useLayoutScale();
+  // Text smaller than standard does not lower the bar.
+  const thumb = stacked || width >= PHOTO_THUMB_WIDTH * Math.max(fontScale, 1) ? 76 : 56;
   const { items, loading, cause, refreshFailed, reading, reload } = useDropZone();
   // Rows filed a moment ago leave at once rather than when the refetch lands.
   const [hidden, setHidden] = useState<HiddenRows | null>(null);
@@ -60,6 +73,8 @@ export default function DropZoneScreen() {
   const listRef = useRef<FlatList<ItemWithContext>>(null);
   useScrollToTop(listRef);
   const refreshControl = usePullToRefresh(reading, reload);
+  // "Added just now" ages while the tab stays open; the rows are memoised.
+  const now = useNow(60_000);
 
   // The categories of waiting items are offered when naming them.
   useEffect(() => {
@@ -125,15 +140,7 @@ export default function DropZoneScreen() {
             </>
           ) : undefined
         }
-        actions={
-          <IconButton
-            icon="search"
-            accessibilityLabel={strings.a11y.searchHousehold}
-            accessibilityHint={strings.a11y.searchHint}
-            onPress={focusSearch}
-            testID="drop-zone-search"
-          />
-        }
+        actions={<SearchButton testID="drop-zone-search" />}
       />
       {/* Offline has the connection banner; anything else is said here, over the old list. */}
       {needsRefreshBanner(refreshFailed, cause) ? (
@@ -153,7 +160,7 @@ export default function DropZoneScreen() {
   if (loading) {
     empty = (
       <View style={styles.gutter}>
-        <Skeleton variant="rows" thumb={76} />
+        <Skeleton variant="rows" thumb={thumb} />
       </View>
     );
   } else if (cause && !refreshFailed) {
@@ -182,7 +189,8 @@ export default function DropZoneScreen() {
               item={item}
               line="added"
               tool="file"
-              thumb={76}
+              thumb={thumb}
+              now={now}
               onPress={openItem}
               onFile={fileItem}
             />

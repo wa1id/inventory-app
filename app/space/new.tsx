@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View, type TextInput } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+  type TextInput,
+} from 'react-native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 
 import { useDelayedFlag } from '@/hooks/useDelayedFlag';
@@ -34,6 +41,21 @@ type Preset = (typeof SPACE_PRESETS)[number];
 
 const DEFAULTS: SpaceValues = { name: '', icon: SPACE_ICONS[0], color: SPACE_COLORS[0] };
 
+/**
+ * Two presets to a row from a 390 pt phone at standard text size, the
+ * narrowest where "Already added" (88 pt, the widest label) fits beside the
+ * tile. At 360 pt half a row left 74, so it wrapped and "Wardrobe" broke
+ * mid-word; narrower, or with larger text, each preset takes a whole row.
+ */
+const TWO_UP_WIDTH = 390;
+
+function usePresetsTwoUp(): boolean {
+  const { width, fontScale } = useWindowDimensions();
+  const { stacked } = useLayoutScale();
+  // Text smaller than standard does not lower the bar.
+  return !stacked && width >= TWO_UP_WIDTH * Math.max(fontScale, 1);
+}
+
 interface PresetTileProps {
   preset: Preset;
   /** A space with this name exists already. */
@@ -52,7 +74,7 @@ interface PresetTileProps {
  */
 function PresetTile({ preset, taken, busy, disabled, onPress }: PresetTileProps) {
   const { colors } = useTheme();
-  const { stacked } = useLayoutScale();
+  const twoUp = usePresetsTwoUp();
   const focus = useFocusRing();
   const showSpinner = useDelayedFlag(busy, delay.spinner);
 
@@ -73,7 +95,7 @@ function PresetTile({ preset, taken, busy, disabled, onPress }: PresetTileProps)
       android_ripple={rippleFor(colors)}
       style={[
         styles.preset,
-        { flexBasis: stacked ? '100%' : '40%' },
+        { flexBasis: twoUp ? '40%' : '100%' },
         // Only a free preset is a raised tile. A taken one stays readable but
         // lies flat on the plaster, so it does not look like it can be tapped.
         { backgroundColor: taken ? 'transparent' : colors.sheet, borderColor: colors.rule },

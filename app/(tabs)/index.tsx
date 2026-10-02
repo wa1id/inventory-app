@@ -3,7 +3,6 @@ import {
   AccessibilityInfo,
   FlatList,
   Keyboard,
-  RefreshControl,
   StyleSheet,
   View,
   type LayoutChangeEvent,
@@ -59,6 +58,7 @@ import { useUnpairedNotice } from '@/ui/home/unpairedNotice';
 import { animateNextLayout, delay, useReducedMotion } from '@/ui/motion';
 import { goToTab, openContainer, openQuickSnap, openSpace } from '@/ui/navigation';
 import { useSearchFocusRequest } from '@/ui/searchFocus';
+import { usePullToRefresh } from '@/ui/spaces/usePullToRefresh';
 import { GUTTER, space, useTheme } from '@/ui/theme';
 
 const NO_CONTAINERS: ContainerWithSpace[] = [];
@@ -123,7 +123,6 @@ export default function HomeScreen() {
   const [focused, setFocused] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [recentLimit, setRecentLimit] = useState(RECENT_FIRST);
-  const [pulled, setPulled] = useState(false);
   // Rows have scrolled up under the pinned field, which then shows its edge.
   const [pinned, setPinned] = useState(false);
 
@@ -242,10 +241,6 @@ export default function HomeScreen() {
     });
   }
 
-  // A pull ends when every list it asked for has answered.
-  const reloading = spaces.loading || recent.loading || (searching && search.refreshing);
-  if (pulled && !reloading) setPulled(false);
-
   function reloadOverview() {
     spaces.reload();
     recent.reload();
@@ -253,7 +248,6 @@ export default function HomeScreen() {
   }
 
   function refresh() {
-    setPulled(true);
     reloadOverview();
     if (searching) {
       search.retry();
@@ -261,6 +255,11 @@ export default function HomeScreen() {
       containers.reload();
     }
   }
+  // A pull ends when every list it asked for has answered.
+  const refreshControl = usePullToRefresh(
+    spaces.loading || recent.loading || (searching && search.refreshing),
+    refresh,
+  );
 
   function changeFocus(next: boolean) {
     if ((next || searching) !== compact) animateNextLayout();
@@ -723,15 +722,7 @@ export default function HomeScreen() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         contentContainerStyle={styles.content}
-        refreshControl={
-          <RefreshControl
-            refreshing={pulled}
-            onRefresh={refresh}
-            tintColor={colors.graphite}
-            colors={[colors.ink]}
-            progressBackgroundColor={colors.sheet}
-          />
-        }
+        refreshControl={refreshControl}
         testID="home-list"
       />
     </ScreenFrame>

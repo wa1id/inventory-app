@@ -66,6 +66,11 @@ export interface MoveResult {
   to: string;
   /** The item's `updatedAt` after the move, for an Undo that does not conflict with itself. */
   updatedAt: number;
+  /**
+   * A filing run only: the drop zone's ids as read right after the move, so
+   * the run's next item agrees with the toast. Absent when that read failed.
+   */
+  waiting?: string[];
 }
 
 /**
