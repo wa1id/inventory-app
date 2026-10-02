@@ -1,183 +1,120 @@
-import { useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import type { ReactElement } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
+import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
 import { useInventoryQuery } from '@/hooks/useInventoryQuery';
+import { useMove } from '@/hooks/useMove';
 import { strings } from '@/i18n/strings';
-import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
-import { ConflictError, HouseholdHttpError } from '@/services/household/client';
-import { logEvent } from '@/services/telemetry';
-import { EmptyState } from '@/ui/components/EmptyState';
-import { ErrorState, LoadingState, Screen } from '@/ui/components/Screen';
-import { CONTAINER_ICONS, MIN_TOUCH_TARGET, radius, spacing, useTheme } from '@/ui/theme';
+import { useRepositories } from '@/providers/DatabaseProvider';
+import { Banner } from '@/ui/components/Banner';
+import { ErrorState } from '@/ui/components/ErrorState';
+import { PlacePicker } from '@/ui/components/PlacePicker';
+import { ScreenFrame } from '@/ui/components/ScreenFrame';
+import { Skeleton } from '@/ui/components/Skeleton';
+import { GUTTER, space } from '@/ui/theme';
+
+function sheetTitle(name: string, filing: boolean): string {
+  if (filing) return name ? strings.move.titleFile(name) : strings.move.titleFileUnnamed;
+  return name ? strings.move.titleMove(name) : strings.move.titleMoveUnnamed;
+}
 
 /**
- * Files one item into a container.
+ * Move or File one item (spec §5.12): the one place picker, grouped by space
+ * and filterable, with the item's own container shown as "Here now" and
+ * unavailable, so "moving" it where it already is cannot happen (§15.8).
  *
- * Flat rather than a space-then-container drill-down: most inventories have few
- * enough containers that one list beats two taps, and the space name rides
- * along on each row so the choice stays unambiguous.
+ * Opened from the item screen ("Move…", "File it…") and from the Drop zone's
+ * "File…", usually with a `request` that the opener awaits; the toast with
+ * Undo comes from here either way, and the sheet always closes back to where
+ * it was opened (it used to replace itself with the destination container).
+ * `filing=1` marks a filing run from the item screen, which goes on to the
+ * next waiting item, so the toast says "Next one."
  */
 export default function MoveItemScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ id: string; filing?: string; request?: string }>();
+  const { id } = params;
+  const filing = params.filing === '1';
   const repos = useRepositories();
-  const { invalidate } = useDatabase();
   const router = useRouter();
-  const { colors } = useTheme();
 
-  const [saving, setSaving] = useState(false);
+  const itemQuery = useInventoryQuery(() => repos.items.getById(id), `item:${id}`);
+  // Only a filing run needs the drop zone, to know whether another item waits.
+  const dropZone = useInventoryQuery(
+    () => (filing ? repos.items.listUnsorted() : Promise.resolve(null)),
+    filing ? 'drop-zone' : 'drop-zone:unused',
+  );
+  // Until the list has loaded, assume the run goes on; the item screen
+  // decides for itself once the move is done.
+  const moreWaiting = dropZone.data?.some((waiting) => waiting.id !== id) ?? true;
 
-  const item = useInventoryQuery(() => repos.items.getById(id), `item:${id}`);
-  const containers = useInventoryQuery(() => repos.containers.listAllWithSpace(), 'containers-all');
+  const move = useMove({ item: itemQuery.data, request: params.request, filing, moreWaiting });
+  const item = move.item;
+  const inDropZone = item?.containerId === DROP_ZONE_CONTAINER_ID;
 
-  async function moveTo(containerId: string) {
-    if (saving) return;
-    setSaving(true);
-    try {
-      await repos.items.update(id, {
-        containerId,
-        expectedUpdatedAt: item.data?.updatedAt,
-      });
-      logEvent('item_moved');
-      invalidate();
-      router.replace(`/container/${containerId}`);
-    } catch (cause) {
-      setSaving(false);
-      Alert.alert(
-        'Could not move',
-        cause instanceof ConflictError
-          ? strings.household.conflict
-          : cause instanceof HouseholdHttpError &&
-              (cause.code === 'offline' || cause.code === 'timeout')
-            ? strings.household.offline
-            : cause instanceof Error
-              ? cause.message
-              : 'The item could not be moved.',
+  let body: ReactElement;
+  if (item === null) {
+    if (itemQuery.cause) {
+      body = <ErrorState cause={itemQuery.cause} subject="item" onRetry={itemQuery.reload} />;
+    } else if (itemQuery.loading) {
+      body = (
+        <View style={styles.skeleton}>
+          <Skeleton variant="options" />
+        </View>
+      );
+    } else {
+      // Deleted on another phone before the sheet opened: say so, write nothing.
+      body = (
+        <ErrorState
+          cause={null}
+          subject="item"
+          secondary={{ label: strings.common.close, onPress: () => router.back() }}
+        />
       );
     }
-  }
-
-  if ((item.loading && !item.data) || (containers.loading && !containers.data)) {
-    return (
-      <Screen edges={['left', 'right', 'bottom']}>
-        <LoadingState />
-      </Screen>
-    );
-  }
-
-  if (item.error || containers.error) {
-    return (
-      <Screen edges={['left', 'right', 'bottom']}>
-        <ErrorState
-          message={item.error ?? containers.error ?? 'That item no longer exists.'}
-          onRetry={() => {
-            item.reload();
-            containers.reload();
-          }}
+  } else {
+    body = (
+      <>
+        {/* Above the picker rather than in its list, so it is seen however far the list was scrolled. */}
+        {move.notice ? (
+          <View style={styles.notice}>
+            <Banner
+              tone="warning"
+              message={move.notice.message}
+              live="assertive"
+              action={
+                move.notice.kind === 'gone'
+                  ? { label: strings.common.close, onPress: () => router.back() }
+                  : undefined
+              }
+            />
+          </View>
+        ) : null}
+        <PlacePicker
+          mode={inDropZone ? 'file' : 'move'}
+          currentContainerId={item.containerId}
+          busyId={move.busyId}
+          onPick={move.pick}
         />
-      </Screen>
+      </>
     );
   }
-
-  const list = containers.data ?? [];
 
   return (
-    <Screen edges={['left', 'right', 'bottom']}>
-      <FlatList
-        data={list}
-        keyExtractor={(container) => container.id}
-        contentContainerStyle={[styles.list, list.length === 0 && styles.listEmpty]}
-        ListHeaderComponent={
-          item.data ? (
-            <Text style={[styles.intro, { color: colors.textMuted }]}>
-              {strings.dropZone.moveIntro(item.data.name || strings.items.unnamed)}
-            </Text>
-          ) : null
-        }
-        renderItem={({ item: container }) => (
-          <Pressable
-            onPress={() => void moveTo(container.id)}
-            disabled={saving}
-            accessibilityRole="button"
-            accessibilityLabel={`${container.name ?? container.shortCode}, in ${container.spaceName}`}
-            testID={`move-to-${container.id}`}
-            style={({ pressed }) => [
-              styles.row,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-                opacity: saving ? 0.5 : pressed ? 0.8 : 1,
-              },
-            ]}
-          >
-            <Text style={styles.glyph} accessibilityElementsHidden importantForAccessibility="no">
-              {CONTAINER_ICONS[container.visualType] ?? CONTAINER_ICONS.other}
-            </Text>
-            <View style={styles.rowBody}>
-              <Text style={[styles.rowTitle, { color: colors.text }]} numberOfLines={1}>
-                {container.name ?? container.shortCode}
-              </Text>
-              <Text style={[styles.rowMeta, { color: colors.textMuted }]} numberOfLines={1}>
-                {container.spaceName} · {container.itemCount} item
-                {container.itemCount === 1 ? '' : 's'}
-              </Text>
-            </View>
-            <Text style={[styles.chevron, { color: colors.textMuted }]}>›</Text>
-          </Pressable>
-        )}
-        ListEmptyComponent={
-          <EmptyState
-            icon="📦"
-            title={strings.dropZone.noContainers.title}
-            body={strings.dropZone.noContainers.body}
-            actionLabel={strings.spaces.create}
-            onAction={() => router.replace('/space/new')}
-            testID="move-no-containers"
-          />
-        }
-      />
-    </Screen>
+    <ScreenFrame kind="modal">
+      <Stack.Screen options={{ title: item ? sheetTitle(item.name, inDropZone || filing) : '' }} />
+      {body}
+    </ScreenFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  list: {
-    padding: spacing.lg,
-    gap: spacing.sm,
+  skeleton: {
+    paddingHorizontal: GUTTER,
+    paddingTop: space.md,
   },
-  listEmpty: {
-    flexGrow: 1,
-    justifyContent: 'center',
-  },
-  intro: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: spacing.sm,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    padding: spacing.md,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    minHeight: MIN_TOUCH_TARGET,
-  },
-  glyph: {
-    fontSize: 26,
-  },
-  rowBody: {
-    flex: 1,
-    gap: 2,
-  },
-  rowTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  rowMeta: {
-    fontSize: 14,
-  },
-  chevron: {
-    fontSize: 26,
+  notice: {
+    paddingHorizontal: GUTTER,
+    paddingTop: space.md,
   },
 });

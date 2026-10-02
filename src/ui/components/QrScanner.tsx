@@ -1,7 +1,8 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { useFocusEffect, useIsFocused } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { strings } from '@/i18n/strings';
@@ -28,6 +29,17 @@ export interface QrScannerProps {
   onManual?: () => void;
   /** Full-screen hosts (linking a sticker) close the camera; the Scan tab has nothing to close. */
   onClose?: () => void;
+  /** The close button's testID, here and on the permission screen; each host names its own. */
+  closeTestID?: string;
+  /** The torch button's testID; each host names its own (default `scanner-torch`). */
+  torchTestID?: string;
+  /**
+   * Drawn over the bottom of the picture (the Scan tab's hint and "Type a
+   * code instead"), positioned by the host. Shown only while the camera is
+   * up: not over the permission screen, and not under the panel that says
+   * the camera did not start.
+   */
+  footer?: ReactNode;
   torchLabelOn?: string;
   torchLabelOff?: string;
 }
@@ -51,6 +63,9 @@ export function QrScanner({
   onScan,
   onManual,
   onClose,
+  closeTestID,
+  torchTestID = 'scanner-torch',
+  footer,
   torchLabelOn,
   torchLabelOff,
 }: QrScannerProps) {
@@ -104,6 +119,7 @@ export function QrScanner({
         requestPermission={requestPermission}
         onManual={onManual}
         onCancel={onClose}
+        closeTestID={closeTestID}
       />
     );
   }
@@ -114,6 +130,8 @@ export function QrScanner({
 
   return (
     <View style={[styles.fill, { backgroundColor: camera.bg }]}>
+      {/* Light on the black camera, and only while in front: a tab stays mounted in the background. */}
+      {isFocused ? <StatusBar style="light" /> : null}
       {isFocused && active ? (
         <CameraView
           style={StyleSheet.absoluteFill}
@@ -138,7 +156,7 @@ export function QrScanner({
               variant="camera"
               accessibilityLabel={strings.camera.close}
               onPress={onClose}
-              testID="scanner-close"
+              testID={closeTestID ?? 'scanner-close'}
             />
           ) : null}
         </View>
@@ -154,11 +172,13 @@ export function QrScanner({
               selected={torch}
               accessibilityLabel={torchLabel}
               onPress={() => setTorch((on) => !on)}
-              testID="scanner-torch"
+              testID={torchTestID}
             />
           )}
         </View>
       </View>
+
+      {mountFailed ? null : footer}
 
       {mountFailed ? (
         <View

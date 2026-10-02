@@ -31,6 +31,8 @@ export interface CameraPermissionProps {
   onLibrary?: () => void;
   /** Closes the camera screen; the Scan tab has nothing to close. */
   onCancel?: () => void;
+  /** The close button's testID, so each camera screen keeps its own. */
+  closeTestID?: string;
 }
 
 /**
@@ -49,6 +51,7 @@ export function CameraPermission({
   onManual,
   onLibrary,
   onCancel,
+  closeTestID = 'camera-close',
 }: CameraPermissionProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -62,7 +65,7 @@ export function CameraPermission({
         variant="camera"
         accessibilityLabel={strings.camera.close}
         onPress={onCancel}
-        testID="camera-close"
+        testID={closeTestID}
       />
     </View>
   ) : null;

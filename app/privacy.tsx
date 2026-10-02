@@ -1,150 +1,110 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { ReactNode } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { strings } from '@/i18n/strings';
+import { useHousehold } from '@/providers/HouseholdProvider';
 import { MAX_IMAGE_DIMENSION } from '@/services/capture/imageScaling';
 import { appConfig } from '@/services/config';
-import { Screen } from '@/ui/components/Screen';
-import { radius, spacing, useTheme } from '@/ui/theme';
+import { AppText } from '@/ui/components/AppText';
+import { ScreenFrame } from '@/ui/components/ScreenFrame';
+import { GUTTER, space } from '@/ui/theme';
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  const { colors } = useTheme();
+function Part({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-      <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
-        {title}
-      </Text>
+    <View style={styles.part}>
+      <AppText variant="heading">{title}</AppText>
       {children}
     </View>
   );
 }
 
-function Body({ children }: { children: React.ReactNode }) {
-  const { colors } = useTheme();
-  return <Text style={[styles.body, { color: colors.textMuted }]}>{children}</Text>;
+function Body({ children }: { children: string }) {
+  return (
+    <AppText variant="body" tone="graphite">
+      {children}
+    </AppText>
+  );
 }
 
 /**
  * In-app privacy notice covering camera and gallery data handling and
- * retention, required before beta (issue #8).
+ * retention, required before beta (issue #8). What it says follows this
+ * build (`appConfig`: backup service, photo suggestions) and this phone
+ * (joined to a household or not), so it never promises something untrue:
+ * a joined phone's inventory and photos live on the home server, and changes
+ * need the internet. The paired copy awaits the owner's sign-off (spec Q7).
  */
 export default function PrivacyScreen() {
-  return (
-    <Screen edges={['left', 'right', 'bottom']}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Section title="Where your inventory lives">
-          <Body>
-            Spaces, containers, items, notes, and photos are stored in a database on this phone.
-            That copy is the one the app reads from, and everything keeps working with no network at
-            all.
-          </Body>
-          {appConfig.syncEndpoint ? (
-            <Body>
-              Backup is off unless you turn it on. If you do, a copy of that database and your
-              photos is uploaded so you can get them back after losing or replacing this phone. If
-              you leave it off, nothing is uploaded and uninstalling the app deletes everything.
-            </Body>
-          ) : (
-            <Body>
-              This build has no backup service configured, so nothing is uploaded anywhere.
-              Uninstalling the app deletes all of it.
-            </Body>
-          )}
-        </Section>
+  const insets = useSafeAreaInsets();
+  const paired = useHousehold().session !== null;
+  const copy = strings.privacy;
 
-        {appConfig.syncEndpoint ? (
-          <Section title="If you turn on backup">
-            <Body>
-              There is no account, no email address, and no password. The app generates a recovery
-              code on this device and stores your backup under a name derived from it. That code is
-              the only way to reach the backup — including for us. It is not recoverable, and if you
-              lose it the backup cannot be opened by anyone, including you.
-            </Body>
-            <Body>
-              Anyone who has the code can read that inventory, so it is worth treating like a
-              password. Uploads travel over an encrypted connection. Your five most recent database
-              snapshots are kept, so a mistake you notice later can still be undone.
-            </Body>
-            <Body>
-              Turning backup on does not change what is on this phone. Deleting an item deletes the
-              stored copy of its photo too.
-            </Body>
-          </Section>
+  return (
+    <ScreenFrame kind="detail">
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + space.xl }]}
+      >
+        {paired ? (
+          <Part title={copy.householdTitle}>
+            <Body>{copy.householdBody}</Body>
+          </Part>
         ) : null}
 
-        <Section title="Camera and photos">
-          <Body>
-            The camera is used for two things: photographing an item you are adding, and scanning a
-            QR label. Photos you take in the app are saved to the app&apos;s own private storage —
-            not to your camera roll. Importing a photo copies it; the original is left untouched.
-            Each photo is resized to at most {MAX_IMAGE_DIMENSION} pixels on its long edge and
-            re-encoded as a WebP image before it is saved, alongside a small thumbnail used in
-            lists.
-          </Body>
-          <Body>
-            Deleting an item, its container, or its space also deletes the photo file from this
-            device.
-          </Body>
-        </Section>
+        <Part title={copy.whereTitle}>
+          <Body>{paired ? copy.whereBodyPaired : copy.whereBody}</Body>
+          {appConfig.syncEndpoint ? (
+            // "Nothing is uploaded" is not true of a joined phone.
+            <Body>{paired ? copy.backupOffPaired : copy.backupOff}</Body>
+          ) : (
+            <Body>{paired ? copy.noBackupServicePaired : copy.noBackupService}</Body>
+          )}
+        </Part>
 
-        <Section title="Photo suggestions">
+        {appConfig.syncEndpoint ? (
+          <Part title={copy.backupTitle}>
+            <Body>{copy.backupAccount}</Body>
+            <Body>{copy.backupPassword}</Body>
+            <Body>{copy.backupLocal}</Body>
+          </Part>
+        ) : null}
+
+        <Part title={copy.cameraTitle}>
+          <Body>{copy.cameraUse}</Body>
+          <Body>{paired ? copy.photosPaired : copy.photosLocal}</Body>
+          <Body>{copy.photosResized(MAX_IMAGE_DIMENSION)}</Body>
+          <Body>{copy.photosDeleted}</Body>
+        </Part>
+
+        <Part title={copy.suggestionsTitle}>
           {appConfig.recognitionEndpoint ? (
             <>
-              <Body>
-                When you add an item with a photo, that single image is sent to our service to
-                suggest a name, category, and tags. The suggestion is only a suggestion — you can
-                edit or ignore it, and saving an item never requires it.
-              </Body>
-              <Body>
-                Images are sent for that one request and are not used to build a profile of you.
-                Your notes and other item details are never sent.
-              </Body>
+              <Body>{copy.suggestionsSent}</Body>
+              <Body>{copy.suggestionsPrivate}</Body>
             </>
           ) : (
-            <Body>
-              Photo suggestions are not configured in this build, so no image ever leaves this
-              device. Items are always added by typing the details.
-            </Body>
+            <Body>{copy.suggestionsOff}</Body>
           )}
-        </Section>
+        </Part>
 
-        <Section title="Diagnostics">
-          <Body>
-            Diagnostic events record only timings and outcome categories — how long something took
-            and whether it succeeded. Item names, notes, photos, search text, and QR codes are
-            filtered out before anything is recorded, and no crash or analytics provider is enabled
-            in this build.
-          </Body>
-        </Section>
+        <Part title={copy.diagnosticsTitle}>
+          <Body>{copy.diagnosticsBody}</Body>
+        </Part>
 
-        <Section title="Working offline">
-          <Body>
-            Everything except photo suggestions and backup works with no network connection at all,
-            including adding items, scanning labels, and searching. Backups wait for a connection
-            and catch up on their own; nothing you do is blocked while they wait.
-          </Body>
-        </Section>
+        <Part title={copy.offlineTitle}>
+          <Body>{paired ? copy.offlinePaired : copy.offlineBody}</Body>
+        </Part>
       </ScrollView>
-    </Screen>
+    </ScreenFrame>
   );
 }
 
 const styles = StyleSheet.create({
   content: {
-    padding: spacing.lg,
-    gap: spacing.md,
-    paddingBottom: spacing.xxl,
+    padding: GUTTER,
+    gap: space.xxl,
   },
-  card: {
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    padding: spacing.lg,
-    gap: spacing.sm,
-  },
-  title: {
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  body: {
-    fontSize: 15,
-    lineHeight: 22,
+  part: {
+    gap: space.sm,
   },
 });

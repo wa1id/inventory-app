@@ -1,195 +1,212 @@
-import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useEffect, useRef, useState, type ReactElement } from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
+import { useRouter, useScrollToTop } from 'expo-router';
 
 import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
 import type { ItemWithContext } from '@/db/types';
-import { useInventoryQuery } from '@/hooks/useInventoryQuery';
 import { strings } from '@/i18n/strings';
-import { useRepositories } from '@/providers/DatabaseProvider';
+import { useDropZone } from '@/providers/DropZoneProvider';
+import { hideRow, visibleRows, type HiddenRows } from '@/ui/capture/captureFlow';
+import { rememberCategories } from '@/ui/categoryMemory';
+import { AppText } from '@/ui/components/AppText';
+import { Banner } from '@/ui/components/Banner';
 import { Button } from '@/ui/components/Button';
 import { EmptyState } from '@/ui/components/EmptyState';
-import { ErrorState, LoadingState, Screen } from '@/ui/components/Screen';
-import { radius, spacing, useTheme } from '@/ui/theme';
+import { ErrorState } from '@/ui/components/ErrorState';
+import { IconButton } from '@/ui/components/IconButton';
+import { ItemRow } from '@/ui/components/ItemRow';
+import { ScreenFrame, TabRootHeader } from '@/ui/components/ScreenFrame';
+import { SheetSeparator, sheetCell } from '@/ui/components/Sheet';
+import { Skeleton } from '@/ui/components/Skeleton';
+import { animateNextLayout } from '@/ui/motion';
+import { focusSearch, type MoveResult } from '@/ui/navigation';
+import { openForResult } from '@/ui/routeResult';
+import { needsRefreshBanner } from '@/ui/spaces/spaceSetup';
+import { usePullToRefresh } from '@/ui/spaces/usePullToRefresh';
+import { GUTTER, space, useTheme } from '@/ui/theme';
 
-function UnsortedCard({ item, onPress }: { item: ItemWithContext; onPress: () => void }) {
-  const { colors } = useTheme();
+const QUICK_SNAP_HREF = `/capture?containerId=${DROP_ZONE_CONTAINER_ID}&mode=fast` as const;
 
+/** The rule between two rows of the sheet, inside the screen gutter. */
+function Separator() {
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${item.name || strings.items.unnamed}. ${strings.dropZone.fileAction}`}
-      style={({ pressed }) => [
-        styles.card,
-        { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.8 : 1 },
-      ]}
-    >
-      {item.photoUri ? (
-        <Image
-          source={{ uri: item.photoThumbUri ?? item.photoUri }}
-          style={styles.thumb}
-          accessibilityIgnoresInvertColors
-        />
-      ) : (
-        <View style={[styles.thumb, styles.thumbEmpty, { backgroundColor: colors.surfaceAlt }]}>
-          <Text style={styles.thumbGlyph}>🧾</Text>
-        </View>
-      )}
-
-      <View style={styles.cardBody}>
-        <Text
-          style={[
-            styles.cardTitle,
-            { color: item.name ? colors.text : colors.textMuted },
-            !item.name && styles.cardTitleUnnamed,
-          ]}
-          numberOfLines={2}
-        >
-          {item.name || strings.items.unnamed}
-        </Text>
-        <Text style={[styles.cardAction, { color: colors.primary }]}>
-          {strings.dropZone.fileAction} ›
-        </Text>
-      </View>
-    </Pressable>
+    <View style={styles.gutter}>
+      <SheetSeparator />
+    </View>
   );
 }
 
 /**
- * The holding area for things photographed before they had a home (issue #26).
+ * The holding area for things added "somewhere" or photographed with Quick
+ * Snap before they had a home (issue #26), and the owner's filing queue.
  *
- * Capturing and filing are separate jobs done at different moments — usually
- * standing in a room versus sitting down later — so this screen exists to make
- * the second one cheap rather than to make the first one wait for it.
+ * Capturing and filing are separate jobs done at different moments, usually
+ * standing in a room versus sitting down later, so this screen exists to make
+ * the second one cheap rather than to make the first one wait for it. Filing
+ * a named item is two taps and you stay on the list (spec §6.7): "File…"
+ * opens the place picker and the row leaves as soon as it is filed. Opening a
+ * row starts a filing run on the item screen, where an unnamed photo gets its
+ * name and then its home, one after another. The card that only ever opened
+ * Move, then dropped you inside the destination container, is gone (UX-4).
+ *
+ * The list is the drop-zone read shared with the tab badge and Home's card
+ * (`DropZoneProvider`), so the three never disagree.
  */
 export default function DropZoneScreen() {
-  const repos = useRepositories();
   const router = useRouter();
   const { colors } = useTheme();
+  const { items, loading, cause, refreshFailed, reading, reload } = useDropZone();
+  // Rows filed a moment ago leave at once rather than when the refetch lands.
+  const [hidden, setHidden] = useState<HiddenRows | null>(null);
+  // One move sheet at a time: a second tap while the first opens would stack another.
+  const filingRef = useRef(false);
 
-  const { data, loading, error, reload } = useInventoryQuery(
-    () => repos.items.listUnsorted(),
-    'drop-zone',
-  );
+  // Re-tapping the active tab scrolls back to the top (spec §2.1).
+  const listRef = useRef<FlatList<ItemWithContext>>(null);
+  useScrollToTop(listRef);
+  const refreshControl = usePullToRefresh(reading, reload);
 
-  if (loading && data === null) {
-    return (
-      <Screen edges={['left', 'right', 'bottom']}>
-        <LoadingState />
-      </Screen>
-    );
+  // The categories of waiting items are offered when naming them (§4.30).
+  useEffect(() => {
+    rememberCategories(items);
+  }, [items]);
+
+  const rows = visibleRows(items, hidden);
+
+  function quickSnap() {
+    router.push(QUICK_SNAP_HREF);
   }
 
-  if (error) {
-    return (
-      <Screen edges={['left', 'right', 'bottom']}>
-        <ErrorState message={error} onRetry={reload} />
-      </Screen>
-    );
+  // The item screen as a filing run: name it, file it, then on to the next one.
+  function openItem(id: string) {
+    router.push(`/item/${id}?filing=1`);
   }
 
-  const items = data ?? [];
+  // No `filing=1` here: the list itself is the run, and the move sheet's
+  // toast ("Filed in Tool chest (Garage)" with Undo) is the confirmation.
+  async function file(id: string) {
+    if (filingRef.current) return;
+    filingRef.current = true;
+    try {
+      const moved = await openForResult<MoveResult>((request) =>
+        router.push(`/item/${id}/move?request=${request}`),
+      );
+      if (!moved) return;
+      animateNextLayout();
+      setHidden((previous) => hideRow(previous, items, id));
+      reload();
+    } finally {
+      filingRef.current = false;
+    }
+  }
 
-  return (
-    <Screen edges={['left', 'right', 'bottom']}>
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={[styles.list, items.length === 0 && styles.listEmpty]}
-        renderItem={({ item }) => (
-          <UnsortedCard item={item} onPress={() => router.push(`/item/${item.id}/move`)} />
-        )}
-        ListHeaderComponent={
-          items.length > 0 ? (
-            <Text style={[styles.intro, { color: colors.textMuted }]}>
-              {strings.dropZone.intro}
-            </Text>
-          ) : null
+  const header = (
+    <>
+      <TabRootHeader
+        title={strings.dropZone.title}
+        subtitle={
+          rows.length > 0 ? (
+            <AppText variant="meta" tone="graphite">
+              {strings.dropZone.intro2(rows.length)}
+            </AppText>
+          ) : undefined
         }
-        ListEmptyComponent={
-          <EmptyState
-            icon="📥"
-            title={strings.dropZone.empty.title}
-            body={strings.dropZone.empty.body}
-            actionLabel={strings.dropZone.capture}
-            onAction={() => router.push(`/capture?containerId=${DROP_ZONE_CONTAINER_ID}&mode=fast`)}
-            testID="drop-zone-empty"
-          />
+        actions={
+          <>
+            <Button
+              label={strings.dropZone.quickSnap}
+              icon="layers"
+              variant="secondary"
+              size="sm"
+              onPress={quickSnap}
+              testID="drop-zone-capture"
+              style={styles.headerButton}
+            />
+            <IconButton
+              icon="search"
+              accessibilityLabel={strings.a11y.searchHousehold}
+              accessibilityHint={strings.a11y.searchHint}
+              onPress={focusSearch}
+              testID="drop-zone-search"
+            />
+          </>
         }
       />
-
-      {items.length > 0 ? (
-        <View
-          style={[
-            styles.actionBar,
-            { backgroundColor: colors.background, borderTopColor: colors.border },
-          ]}
-        >
-          <Button
-            label={strings.dropZone.capture}
-            icon="📸"
-            fullWidth
-            onPress={() => router.push(`/capture?containerId=${DROP_ZONE_CONTAINER_ID}&mode=fast`)}
-            testID="drop-zone-capture"
+      {/* Offline has the connection banner; anything else is said here, over the old list. */}
+      {needsRefreshBanner(refreshFailed, cause) ? (
+        <View style={[styles.gutter, styles.banner]}>
+          <Banner
+            tone="info"
+            message={strings.errors.refreshFailed}
+            action={{ label: strings.common.tryAgain, onPress: reload }}
           />
         </View>
       ) : null}
-    </Screen>
+    </>
+  );
+
+  // A failed first read is never shown as "everything is filed" (issue #12).
+  let empty: ReactElement;
+  if (loading) {
+    empty = (
+      <View style={styles.gutter}>
+        <Skeleton variant="rows" thumb={76} />
+      </View>
+    );
+  } else if (cause && !refreshFailed) {
+    empty = <ErrorState cause={cause} onRetry={reload} />;
+  } else {
+    empty = (
+      <EmptyState
+        icon="inbox"
+        title={strings.dropZone.emptyAll.title}
+        body={strings.dropZone.emptyAll.body}
+        action={{ label: strings.dropZone.emptyAll.action, icon: 'layers', onPress: quickSnap }}
+        testID="drop-zone-empty"
+      />
+    );
+  }
+
+  return (
+    <ScreenFrame kind="tabRoot">
+      <FlatList
+        ref={listRef}
+        data={rows}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item, index }) => (
+          <View style={[styles.gutter, sheetCell(index, rows.length, colors)]}>
+            <ItemRow
+              item={item}
+              line="added"
+              tool="file"
+              thumb={76}
+              onPress={openItem}
+              onFile={(id) => void file(id)}
+            />
+          </View>
+        )}
+        ItemSeparatorComponent={Separator}
+        ListHeaderComponent={header}
+        ListEmptyComponent={empty}
+        contentContainerStyle={styles.content}
+        refreshControl={refreshControl}
+      />
+    </ScreenFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  list: {
-    padding: spacing.lg,
-    gap: spacing.md,
+  content: {
+    paddingBottom: space.xl,
   },
-  listEmpty: {
-    flexGrow: 1,
-    justifyContent: 'center',
+  gutter: {
+    marginHorizontal: GUTTER,
   },
-  intro: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: spacing.xs,
+  banner: {
+    marginBottom: space.lg,
   },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    padding: spacing.sm,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-  },
-  thumb: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.md,
-  },
-  thumbEmpty: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  thumbGlyph: {
-    fontSize: 24,
-  },
-  cardBody: {
-    flex: 1,
-    gap: spacing.xs,
-  },
-  cardTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  cardTitleUnnamed: {
-    fontStyle: 'italic',
-    fontWeight: '600',
-  },
-  cardAction: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  actionBar: {
-    padding: spacing.lg,
-    borderTopWidth: StyleSheet.hairlineWidth,
+  // Buttons hold themselves to the start; in the title row they centre on it.
+  headerButton: {
+    alignSelf: 'center',
   },
 });

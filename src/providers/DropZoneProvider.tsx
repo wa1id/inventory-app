@@ -11,6 +11,10 @@ interface DropZoneContextValue {
   /** No answer yet: badges and cards stay hidden rather than showing 0. */
   loading: boolean;
   cause: unknown;
+  /** A refresh failed while earlier items are still shown (the Drop zone's banner). */
+  refreshFailed: boolean;
+  /** A read is in flight, first or not (the Drop zone's pull-to-refresh spinner). */
+  reading: boolean;
   reload: () => void;
 }
 
@@ -26,7 +30,7 @@ const DropZoneContext = createContext<DropZoneContextValue | null>(null);
  */
 export function DropZoneProvider({ children }: { children: ReactNode }) {
   const repos = useRepositories();
-  const { data, loading, cause, reload } = useInventoryQuery(
+  const { data, loading, cause, refreshFailed, reload } = useInventoryQuery(
     () => repos.items.listUnsorted(),
     'drop-zone',
   );
@@ -37,9 +41,11 @@ export function DropZoneProvider({ children }: { children: ReactNode }) {
       count: data?.length ?? 0,
       loading: loading && data === null,
       cause,
+      refreshFailed,
+      reading: loading,
       reload,
     }),
-    [cause, data, loading, reload],
+    [cause, data, loading, refreshFailed, reload],
   );
 
   return <DropZoneContext.Provider value={value}>{children}</DropZoneContext.Provider>;

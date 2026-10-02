@@ -24,6 +24,12 @@ export interface TextFieldProps extends Omit<TextInputProps, 'style'> {
   nextRef?: RefObject<TextInput | null>;
   /** The input's type style; `code` for household and recovery codes. */
   textVariant?: TextVariant;
+  /**
+   * What a screen reader calls the field, when the visible label is a
+   * question ("What is it?" is announced as "Name"). Defaults to `label`;
+   * ", required" and the error are still added.
+   */
+  accessibilityLabel?: string;
 }
 
 /**
@@ -42,6 +48,7 @@ export function TextField({
   inputRef,
   nextRef,
   textVariant = 'body',
+  accessibilityLabel,
   onFocus,
   onBlur,
   onSubmitEditing,
@@ -53,7 +60,7 @@ export function TextField({
   const [focused, setFocused] = useState(false);
   const thick = focused || Boolean(error);
   const spokenLabel = [
-    label,
+    accessibilityLabel ?? label,
     required ? strings.forms.required : null,
     error ? strings.forms.errorA11y(error) : null,
   ]

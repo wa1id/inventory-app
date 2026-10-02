@@ -1,111 +1,163 @@
-import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import { CONTAINER_VISUAL_TYPES, type ContainerVisualType } from '@/db/types';
+import { DROP_ZONE_SPACE_ID } from '@/db/constants';
+import type { ContainerVisualType } from '@/db/types';
+import { useDirtyGuard } from '@/hooks/useDirtyGuard';
 import { useInventoryQuery } from '@/hooks/useInventoryQuery';
 import { strings } from '@/i18n/strings';
 import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
 import { logEvent } from '@/services/telemetry';
+import { AppText } from '@/ui/components/AppText';
+import { BottomBar } from '@/ui/components/BottomBar';
 import { Button } from '@/ui/components/Button';
-import { TileRow } from '@/ui/components/PickerRow';
-import { Screen } from '@/ui/components/Screen';
+import { ErrorState } from '@/ui/components/ErrorState';
+import { ScreenFrame } from '@/ui/components/ScreenFrame';
+import { SpacePip } from '@/ui/components/SpacePip';
 import { TextField } from '@/ui/components/TextField';
-import { CONTAINER_ICONS, spacing, useTheme } from '@/ui/theme';
+import { TypeGrid } from '@/ui/components/pickers/TypeGrid';
+import { haptics } from '@/ui/haptics';
+import type { NewContainerResult } from '@/ui/navigation';
+import { abandonResult, deliverResult } from '@/ui/routeResult';
+import { DropZoneLocked, FormLayout, SaveNotice } from '@/ui/spaces/FormLayout';
+import { space } from '@/ui/theme';
 
-const TYPE_OPTIONS = CONTAINER_VISUAL_TYPES.map((value) => ({
-  value,
-  glyph: CONTAINER_ICONS[value] ?? '📦',
-  label: strings.containers.typeNames[value] ?? value,
-}));
+const DEFAULT_TYPE: ContainerVisualType = 'box';
 
 export default function NewContainerScreen() {
-  const { spaceId } = useLocalSearchParams<{ spaceId: string }>();
+  const { spaceId, request } = useLocalSearchParams<{ spaceId: string; request?: string }>();
+
+  // Opened from the place picker, the sheet answers with the new container;
+  // closed without one, it tells the picker to stop waiting. Idempotent, so
+  // it is harmless after a delivery.
+  useEffect(() => () => abandonResult(request), [request]);
+
+  // Nothing offers the drop zone's system space; a stale link gets no form.
+  if (spaceId === DROP_ZONE_SPACE_ID) return <DropZoneLocked />;
+  return <NewContainer spaceId={spaceId} request={request} />;
+}
+
+/**
+ * A new container in a known space: its type, and a name only if wanted,
+ * since an unnamed container goes by the code on its label (entities
+ * §14.13). It opens straight away, replacing this sheet, because a new
+ * container is there to be filled; from the place picker it is handed back
+ * instead and the picker files into it.
+ */
+function NewContainer({ spaceId, request }: { spaceId: string; request: string | undefined }) {
   const repos = useRepositories();
   const { invalidate } = useDatabase();
   const router = useRouter();
-  const { colors } = useTheme();
+
+  const spaceQuery = useInventoryQuery(() => repos.spaces.getById(spaceId), `space:${spaceId}`);
 
   const [name, setName] = useState('');
-  const [visualType, setVisualType] = useState<ContainerVisualType>('box');
-  const [error, setError] = useState<string | null>(null);
+  const [visualType, setVisualType] = useState<ContainerVisualType>(DEFAULT_TYPE);
+  const [failure, setFailure] = useState<{ cause: unknown } | null>(null);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
 
-  const { data: space } = useInventoryQuery(
-    () => repos.spaces.getById(spaceId),
-    `space:${spaceId}`,
-  );
+  useDirtyGuard(name.trim() !== '' || visualType !== DEFAULT_TYPE, { saving });
 
   async function save() {
+    // The button and the return key both save; a ref, so a double submit in
+    // one frame cannot create two containers (entities §15.7).
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
+    setFailure(null);
     try {
       const container = await repos.containers.create({ spaceId, name, visualType });
       logEvent('container_created');
       invalidate();
-      router.replace(`/container/${container.id}`);
+      haptics.success();
+      if (deliverResult<NewContainerResult>(request, { containerId: container.id })) {
+        router.back();
+      } else {
+        router.replace(`/container/${container.id}`);
+      }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'The container could not be saved.');
+      savingRef.current = false;
       setSaving(false);
+      setFailure({ cause });
+      haptics.error();
     }
   }
 
+  const spaceData = spaceQuery.data;
+  if (spaceData === null && !spaceQuery.loading && !spaceQuery.cause) {
+    // The space was deleted, probably on another phone: nothing to add to.
+    return (
+      <ScreenFrame kind="modal">
+        <ErrorState
+          cause={null}
+          subject="space"
+          secondary={{ label: strings.common.goBack, onPress: () => router.back() }}
+        />
+      </ScreenFrame>
+    );
+  }
+
   return (
-    <Screen edges={['left', 'right', 'bottom']}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {space ? (
-          <Text style={[styles.context, { color: colors.textMuted }]}>
-            Adding to {space.icon} {space.name}
-          </Text>
-        ) : null}
-
-        <TileRow
-          label={strings.containers.typeLabel}
-          options={TYPE_OPTIONS}
-          value={visualType}
-          onChange={setVisualType}
-        />
-
-        <TextField
-          label={strings.containers.nameLabel}
-          placeholder={strings.containers.namePlaceholder}
-          value={name}
-          onChangeText={setName}
-          error={error}
-          hint="Leave empty and we'll label it with its code."
-          returnKeyType="done"
-          onSubmitEditing={save}
-        />
-
-        <View style={styles.actions}>
+    <FormLayout
+      notice={failure ? <SaveNotice cause={failure.cause} subject="container" /> : null}
+      bottomBar={
+        <BottomBar>
           <Button
-            label={strings.containers.createAction}
-            onPress={save}
+            label={strings.containerForm.create}
+            onPress={() => void save()}
             loading={saving}
             fullWidth
             testID="container-create"
           />
-          <Button
-            label={strings.common.cancel}
-            onPress={() => router.back()}
-            variant="ghost"
-            fullWidth
-          />
+        </BottomBar>
+      }
+    >
+      {spaceData ? (
+        <View style={styles.context}>
+          <SpacePip color={spaceData.color} size={10} />
+          <AppText variant="meta" style={styles.contextText}>
+            {strings.containerForm.inSpace(spaceData.name)}
+          </AppText>
         </View>
-      </ScrollView>
-    </Screen>
+      ) : null}
+
+      <TypeGrid
+        label={strings.containerForm.typeLabel}
+        value={visualType}
+        onChange={(next) => {
+          setVisualType(next);
+          setFailure(null);
+        }}
+      />
+
+      <TextField
+        label={strings.containerForm.nameLabel}
+        optional
+        placeholder={strings.containerForm.namePlaceholder}
+        hint={strings.containerForm.nameHint}
+        value={name}
+        onChangeText={(next) => {
+          setName(next);
+          // Typing clears a failed save's notice; it used to stay forever (entities §15.7).
+          setFailure(null);
+        }}
+        returnKeyType="done"
+        onSubmitEditing={() => void save()}
+        testID="container-name"
+      />
+    </FormLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    padding: spacing.lg,
-    gap: spacing.xl,
-  },
   context: {
-    fontSize: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
   },
-  actions: {
-    gap: spacing.sm,
-    marginTop: spacing.md,
+  contextText: {
+    flexShrink: 1,
   },
 });

@@ -23,6 +23,11 @@ export interface BannerProps {
   title?: string;
   message: string;
   action?: BannerAction;
+  /**
+   * A second, quieter choice after `action` (Home's "Not now"). With one, the
+   * main action becomes the bordered button so the two are told apart.
+   */
+  secondary?: BannerAction;
   onDismiss?: () => void;
   /**
    * How the banner announces itself. `off` for copy that follows typing
@@ -43,6 +48,7 @@ export function Banner({
   title,
   message,
   action,
+  secondary,
   onDismiss,
   live = 'polite',
   testID,
@@ -88,6 +94,16 @@ export function Banner({
             onPress={action.onPress}
             accessibilityHint={action.accessibilityHint}
             testID={action.testID}
+            variant={secondary ? 'secondary' : 'quiet'}
+            size="sm"
+          />
+        ) : null}
+        {secondary ? (
+          <Button
+            label={secondary.label}
+            onPress={secondary.onPress}
+            accessibilityHint={secondary.accessibilityHint}
+            testID={secondary.testID}
             variant="quiet"
             size="sm"
           />

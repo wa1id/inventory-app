@@ -70,6 +70,14 @@ export interface QuantityStepperProps {
    * screen. Bare on the item screen and the Add form (kept contract).
    */
   testIDSuffix?: string;
+  /**
+   * Report each whole number as it is typed, not only when the field is left.
+   * For a form whose Save sits outside its scroll view (the Add sheet's bottom
+   * bar): tapping Save does not blur the number, so a count typed but not yet
+   * committed would otherwise be saved as the old one. Off for the saved
+   * steppers, which would write every keystroke through.
+   */
+  commitWhileTyping?: boolean;
   /** @deprecated Use `size="compact"`. */
   compact?: boolean;
   /** @deprecated Ignored; the field label belongs to the form around the stepper. */
@@ -155,6 +163,7 @@ export function QuantityStepper({
   error,
   disabled = false,
   testIDSuffix,
+  commitWhileTyping = false,
   compact,
 }: QuantityStepperProps) {
   const { colors } = useTheme();
@@ -225,6 +234,18 @@ export function QuantityStepper({
     if (next !== value) onChange(next);
   }
 
+  function typeDraft(text: string) {
+    setDraft(text);
+    if (!commitWhileTyping) return;
+    // An empty or partial entry waits for more typing; leaving the field
+    // then keeps the last whole number typed.
+    const parsed = parseQuantityInput(text);
+    if (parsed === null) return;
+    const next = clampQuantity(parsed);
+    valueRef.current = next;
+    if (next !== value) onChange(next);
+  }
+
   function onAccessibilityAction(event: AccessibilityActionEvent) {
     switch (event.nativeEvent.actionName) {
       case 'increment':
@@ -291,7 +312,7 @@ export function QuantityStepper({
         <TextInput
           ref={inputRef}
           value={draft ?? String(value)}
-          onChangeText={setDraft}
+          onChangeText={typeDraft}
           onFocus={() => setDraft(String(valueRef.current))}
           onBlur={commitTyped}
           onSubmitEditing={commitTyped}

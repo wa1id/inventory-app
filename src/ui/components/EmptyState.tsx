@@ -10,6 +10,8 @@ export interface EmptyStateAction {
   label: string;
   onPress: () => void;
   icon?: IconName;
+  /** The action is running: the button shows its spinner and ignores presses. */
+  loading?: boolean;
   testID?: string;
 }
 
@@ -19,7 +21,7 @@ export interface EmptyStateProps {
   /** A line icon in a soft circle. Legacy emoji strings are ignored. */
   icon?: IconName | (string & {});
   action?: EmptyStateAction;
-  secondary?: Omit<EmptyStateAction, 'icon'>;
+  secondary?: EmptyStateAction;
   align?: 'start' | 'center';
   testID?: string;
   /** @deprecated Use `action`. */
@@ -53,9 +55,9 @@ export function EmptyState({
   onSecondaryAction,
 }: EmptyStateProps) {
   const { colors } = useTheme();
-  const primary =
+  const primary: EmptyStateAction | undefined =
     action ?? (actionLabel && onAction ? { label: actionLabel, onPress: onAction } : undefined);
-  const quiet =
+  const quiet: EmptyStateAction | undefined =
     secondary ??
     (secondaryActionLabel && onSecondaryAction
       ? { label: secondaryActionLabel, onPress: onSecondaryAction }
@@ -82,6 +84,7 @@ export function EmptyState({
               label={primary.label}
               onPress={primary.onPress}
               icon={primary.icon}
+              loading={primary.loading}
               testID={primary.testID}
             />
           ) : null}
@@ -89,6 +92,8 @@ export function EmptyState({
             <Button
               label={quiet.label}
               onPress={quiet.onPress}
+              icon={quiet.icon}
+              loading={quiet.loading}
               testID={quiet.testID}
               variant="quiet"
             />

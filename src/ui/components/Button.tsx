@@ -1,3 +1,4 @@
+import type { Ref } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -40,6 +41,8 @@ export interface ButtonProps {
   testID?: string;
   /** Layout only, e.g. `flex` inside a bottom bar. */
   style?: StyleProp<ViewStyle>;
+  /** The pressable, so a screen can move screen-reader focus to it (`sendAccessibilityEvent`). */
+  ref?: Ref<View>;
 }
 
 function resolveVariant(variant: ButtonVariant | LegacyButtonVariant): ButtonVariant {
@@ -77,6 +80,7 @@ export function Button({
   accessibilityHint,
   testID,
   style,
+  ref,
 }: ButtonProps) {
   const { colors } = useTheme();
   const focus = useFocusRing();
@@ -93,6 +97,7 @@ export function Button({
 
   return (
     <Pressable
+      ref={ref}
       testID={testID}
       onPress={onPress}
       onFocus={focus.onFocus}

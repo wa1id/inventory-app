@@ -20,6 +20,8 @@ export interface SegmentedControlProps<T extends string> {
   /** `camera` sits on the live picture: translucent track, white text. */
   tone?: 'surface' | 'camera';
   disabled?: boolean;
+  /** Read on each option, e.g. why the control is locked ("Finish this set first"). */
+  accessibilityHint?: string;
 }
 
 /** Two to four mutually exclusive options in one track, such as Single and Several. */
@@ -30,6 +32,7 @@ export function SegmentedControl<T extends string>({
   accessibilityLabel,
   tone = 'surface',
   disabled = false,
+  accessibilityHint,
 }: SegmentedControlProps<T>) {
   const { colors } = useTheme();
   const onCamera = tone === 'camera';
@@ -60,6 +63,7 @@ export function SegmentedControl<T extends string>({
             disabled={disabled}
             accessibilityRole="radio"
             accessibilityLabel={option.label}
+            accessibilityHint={accessibilityHint}
             accessibilityState={{ selected, disabled }}
             testID={option.testID}
             style={[

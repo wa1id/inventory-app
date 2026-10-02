@@ -11,7 +11,12 @@ import type { ReactNode } from 'react';
 import { AppState } from 'react-native';
 
 import { useDatabase } from '@/providers/DatabaseProvider';
-import { createAccount, importAccount, loadAccount } from '@/services/account/identity';
+import {
+  createAccount,
+  forgetAccount,
+  importAccount,
+  loadAccount,
+} from '@/services/account/identity';
 import type { Account } from '@/services/account/identity';
 import { appConfig } from '@/services/config';
 import { lastBackupAt, maybeBackup, restoreBackup, runBackup } from '@/services/sync/backup';
@@ -165,25 +170,43 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       }
 
       const adopted = imported.account;
-      setAccount(adopted);
-      setStatus({ state: 'working', account: adopted });
+      // Holds off the automatic pass that adopting the account would start:
+      // until the download has landed, it would back up what is on this phone
+      // now under the code being restored, and a pass still running after a
+      // failure would put the account straight back (B6).
+      running.current = true;
+      try {
+        setAccount(adopted);
+        setStatus({ state: 'working', account: adopted });
 
-      const adoptedClient = createSyncClient({ recoveryCode: adopted.recoveryCode });
-      const result = await restoreBackup(repos.db, adoptedClient);
+        const adoptedClient = createSyncClient({ recoveryCode: adopted.recoveryCode });
+        const result = await restoreBackup(repos.db, adoptedClient);
 
-      if (result.status === 'failed') {
-        setStatus({ state: 'error', account: adopted, reason: result.reason });
-        return { ok: false as const, reason: result.reason };
+        if (result.status === 'failed') {
+          // Restore is only offered while backup is off, so a code that did
+          // not restore must not become this phone's backup account (B6): it
+          // used to stay adopted, and the screen claimed backup was on under
+          // a code with nothing behind it.
+          await forgetAccount();
+          setAccount(null);
+          setStatus({ state: 'off' });
+          return { ok: false as const, reason: result.reason };
+        }
+
+        // Every screen is reading from SQLite, so the restored rows have to be
+        // announced before the photos start arriving behind them.
+        invalidate();
+        // The rows are back whatever happens to the photos, and the next pass
+        // fetches any still missing; a throw here must not leave the status
+        // stuck on "working" with the restore reported as failed.
+        await syncPhotos(repos.db, adoptedClient).catch(() => undefined);
+        invalidate();
+
+        setStatus({ state: 'idle', account: adopted, lastBackupAt: await lastBackupAt() });
+        return { ok: true as const };
+      } finally {
+        running.current = false;
       }
-
-      // Every screen is reading from SQLite, so the restored rows have to be
-      // announced before the photos start arriving behind them.
-      invalidate();
-      await syncPhotos(repos.db, adoptedClient);
-      invalidate();
-
-      setStatus({ state: 'idle', account: adopted, lastBackupAt: await lastBackupAt() });
-      return { ok: true as const };
     },
     [repos, invalidate],
   );

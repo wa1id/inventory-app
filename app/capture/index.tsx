@@ -1,43 +1,78 @@
-import { useRef, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { BackHandler, StyleSheet, View } from 'react-native';
 import { CameraView, useCameraPermissions, type FlashMode } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
+import { useInventoryQuery } from '@/hooks/useInventoryQuery';
 import { strings } from '@/i18n/strings';
 import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
+import { useToast } from '@/providers/ToastProvider';
 import { recognizeItem } from '@/services/ai/recognition';
 import { captureFastItem } from '@/services/capture/fastCapture';
-import { hasRoomForPhoto, storeItemPhoto } from '@/services/capture/imageStore';
+import { deleteStoredPhotos, hasRoomForPhoto, storeItemPhoto } from '@/services/capture/imageStore';
 import { logError, logEvent } from '@/services/telemetry';
-import { Button } from '@/ui/components/Button';
+import type { PlaceLike } from '@/ui/a11y';
+import {
+  CameraNotice,
+  DoneButton,
+  IntoPill,
+  LastShot,
+  Reticle,
+  Shutter,
+  ShutterFlash,
+  SideSpacer,
+} from '@/ui/capture/CameraChrome';
+import { fastStatus, isPermissionError, leaveCamera } from '@/ui/capture/captureFlow';
+import { AppText } from '@/ui/components/AppText';
+import { CameraPermission } from '@/ui/components/CameraPermission';
+import { IconButton } from '@/ui/components/IconButton';
+import { StatusPill } from '@/ui/components/StatusPill';
 import { TapToFocusLayer } from '@/ui/components/TapToFocusLayer';
-import { MIN_TOUCH_TARGET, radius, spacing, useTheme } from '@/ui/theme';
+import { SegmentedControl } from '@/ui/components/pickers/SegmentedControl';
+import { haptics } from '@/ui/haptics';
+import type { PhotoResult } from '@/ui/navigation';
+import { abandonResult, deliverResult } from '@/ui/routeResult';
+import { camera, space } from '@/ui/theme';
 
 type CaptureMode = 'single' | 'fast';
 
 /**
- * Single-item capture (issue #6).
+ * Photograph one thing (single) or many in a row (fast, Quick Snap) without
+ * waiting on anything (issue #6, spec §5.15).
  *
  * Permission is requested only once the user has chosen to take a photo, so the
  * system prompt always arrives with context. Every denial path keeps manual
  * entry one tap away — a camera problem must never block adding an item.
+ *
+ * The redesign changed the chrome only. The camera mechanics (the preview and
+ * tap-to-focus frame, continuous autofocus, the capture options, the fast
+ * pipeline's order and the replace to review) are frozen (capture §9); the
+ * chrome lives in `CameraChrome.tsx`.
+ *
+ * Opened with `request` (the Add sheet's photo), it is a single-photo camera
+ * that hands the stored photo back and closes, so the typed name is still
+ * there afterwards.
  */
 export default function CaptureScreen() {
   const {
     containerId,
     mode: initialMode,
     since,
+    request,
   } = useLocalSearchParams<{
     containerId: string;
     mode?: CaptureMode;
     /** Carried through "keep shooting" so a resumed session reviews as one. */
     since?: string;
+    /** Set by a screen waiting for one photo (`routeResult`). */
+    request?: string;
   }>();
   const router = useRouter();
-  const { colors } = useTheme();
+  const toast = useToast();
 
   const repos = useRepositories();
   const { invalidate } = useDatabase();
@@ -50,8 +85,11 @@ export default function CaptureScreen() {
 
   // Context-aware default: the drop zone is for clearing a shelf, a container
   // is usually one deliberate thing, so each entry point opens in the mode that
-  // matches the job rather than making you switch every time.
-  const [mode, setMode] = useState<CaptureMode>(initialMode === 'fast' ? 'fast' : 'single');
+  // matches the job rather than making you switch every time. A camera opened
+  // for one photo is always single.
+  const [mode, setMode] = useState<CaptureMode>(
+    initialMode === 'fast' && !request ? 'fast' : 'single',
+  );
   // Fast-mode tallies, kept apart on purpose. `captured` counts shutter presses
   // that produced a row, `completed` how many have finished the pipeline, and
   // `recognized` how many of those came back with a usable name — reporting
@@ -63,21 +101,76 @@ export default function CaptureScreen() {
   // Guards the camera hardware only. The rest of the pipeline deliberately
   // runs unguarded so the next shot never waits on the previous one.
   const shutterBusy = useRef(false);
+  // The same moment as `shutterBusy`, for drawing only: an ignored tap shows.
+  const [shooting, setShooting] = useState(false);
+  // The newest fast-mode photo, for the last-shot tile and the shutter flash.
+  const [lastShot, setLastShot] = useState<string | null>(null);
+  // Single mode: `processing` turns on only once the photo is back, so a quick
+  // second tap used to take two photos and replace twice (capture §13.7).
+  const takingRef = useRef(false);
+  // The library picker is open: a second tap would ask for another one, and
+  // its refusal read as "That photo could not be opened."
+  const pickingRef = useRef(false);
+  // The camera is on its way out (✕, Android back, Done, Type it instead) or
+  // gone. Leaving happens once, and a photo still being saved then neither
+  // navigates (it would replace the screen the person went back to, or the
+  // Add sheet that was waiting for it) nor stays on the phone (capture §13.8).
+  const closedRef = useRef(false);
   // Everything created from the first fast shutter press on belongs to this
   // session; the review screen selects by creation time because rows keep
   // landing after the camera has unmounted. Stamped in the handler, not during
   // render, so the component stays pure.
   const sessionStart = useRef<number | null>(since ? Number(since) : null);
 
+  // Where the photos go, for the "Into" pill. Not a reason to hold the camera
+  // up: the pill simply appears once this has loaded.
+  const into = useInventoryQuery<PlaceLike | null>(async () => {
+    if (containerId === DROP_ZONE_CONTAINER_ID) return null;
+    const container = await repos.containers.getById(containerId);
+    if (!container) return null;
+    const home = await repos.spaces.getById(container.spaceId);
+    if (!home) return null;
+    return {
+      containerId: container.id,
+      containerName: container.name,
+      containerShortCode: container.shortCode,
+      spaceId: home.id,
+      spaceName: home.name,
+      spaceColor: home.color,
+    };
+  }, `capture-into:${containerId}`);
+
+  // Closing without a photo answers the waiting screen with nothing.
+  useEffect(() => () => abandonResult(request), [request]);
+  useEffect(() => {
+    closedRef.current = false;
+    return () => {
+      closedRef.current = true;
+    };
+  }, []);
+
+  /** Over the camera as a notice; on the permission screen, where there is none, as a toast. */
+  function report(message: string) {
+    if (permission?.granted) setError(message);
+    else toast.show({ message, tone: 'error' });
+  }
+
   function continueManually() {
+    if (closedRef.current) return;
+    closedRef.current = true;
+    // The waiting screen is the typing: closing the camera is the way back to it.
+    if (request) {
+      router.back();
+      return;
+    }
     router.replace(`/item/new?containerId=${containerId}`);
   }
 
   async function handleCaptured(uri: string, source: 'camera' | 'library') {
+    // Closed while the shutter was still taking it: nothing to save it for.
+    if (closedRef.current) return;
     if (!hasRoomForPhoto()) {
-      setError(
-        'There is not enough free space to save a photo. Free some space, or continue without one.',
-      );
+      report(strings.capture.noRoom);
       return;
     }
 
@@ -87,6 +180,21 @@ export default function CaptureScreen() {
     try {
       const stored = await storeItemPhoto(uri);
       logEvent('photo_captured', { source, byteSize: stored.byteSize });
+
+      // Closed while the photo was being saved: nobody will use it now.
+      if (closedRef.current) {
+        deleteStoredPhotos([stored.uri, stored.thumbUri]);
+        return;
+      }
+      closedRef.current = true;
+
+      // Opened for one photo: hand it back and close. Nobody waiting any more
+      // (the opener has gone) falls through to a new item with this photo, so
+      // the photo is never thrown away.
+      if (request && deliverResult<PhotoResult>(request, stored)) {
+        router.back();
+        return;
+      }
 
       // Dimensions and size travel with the URI so the item row records what
       // was actually stored rather than re-reading the file later.
@@ -100,24 +208,25 @@ export default function CaptureScreen() {
       if (stored.byteSize !== null) params.set('photoBytes', String(stored.byteSize));
 
       router.replace(`/item/new?${params.toString()}`);
-    } catch (cause) {
+    } catch {
       logError('photo_capture_failed', { source });
+      // Nothing to say to someone who has already closed the camera.
+      if (closedRef.current) return;
       setProcessing(false);
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : 'That photo could not be processed. Try again, or continue without a photo.',
-      );
+      report(strings.capture.notProcessed);
     }
   }
 
   async function takePhoto() {
-    if (!cameraRef.current || processing) return;
+    if (!cameraRef.current || processing || takingRef.current) return;
+    takingRef.current = true;
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 1, skipProcessing: false });
       if (photo?.uri) await handleCaptured(photo.uri, 'camera');
     } catch {
-      setError('The camera did not return a photo. Try again, or continue without one.');
+      setError(strings.capture.noPhoto);
+    } finally {
+      takingRef.current = false;
     }
   }
 
@@ -134,27 +243,32 @@ export default function CaptureScreen() {
     // Before the photo exists, so every row this press creates sorts after it.
     sessionStart.current ??= Date.now();
     if (!hasRoomForPhoto()) {
-      setError(
-        'There is not enough free space to save a photo. Free some space, or continue without one.',
-      );
+      setError(strings.capture.noRoom);
       return;
     }
 
     shutterBusy.current = true;
+    setShooting(true);
     let uri: string | undefined;
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 1, skipProcessing: false });
       uri = photo?.uri;
     } catch {
-      setError('The camera did not return a photo. Try again, or continue without one.');
+      setError(strings.capture.noPhoto);
     } finally {
       shutterBusy.current = false;
+      setShooting(false);
     }
 
     if (!uri) return;
 
     setCaptured((count) => count + 1);
     setError(null);
+    // Feedback for a shot that landed: felt, seen in the flash and the
+    // last-shot tile. Fire-and-forget, after the await, so it never holds up
+    // the next shot.
+    haptics.tap();
+    setLastShot(uri);
 
     void captureFastItem({
       containerId,
@@ -185,11 +299,13 @@ export default function CaptureScreen() {
   }
 
   function finishFast() {
+    if (closedRef.current) return;
+    closedRef.current = true;
     invalidate();
     if (captured === 0) {
-      router.replace(
-        containerId === DROP_ZONE_CONTAINER_ID ? '/drop-zone' : `/container/${containerId}`,
-      );
+      // Back to wherever the camera was opened from (spec §2.5 rule 7).
+      // Replacing with `/drop-zone` would now stack a second tab shell.
+      router.back();
       return;
     }
     const params = new URLSearchParams({
@@ -201,101 +317,91 @@ export default function CaptureScreen() {
     router.replace(`/capture/review?${params.toString()}`);
   }
 
-  const pending = captured - completed;
-  const unnamed = completed - recognized;
-  const fastStatus =
-    pending > 0
-      ? strings.capture.identifying(pending)
-      : unnamed === 0
-        ? strings.capture.identified(recognized)
-        : recognized === 0
-          ? strings.capture.savedUnnamed(unnamed)
-          : strings.capture.identifiedPartly(recognized, unnamed);
+  /** ✕ and Android back: a fast set with shots always ends on its review (capture §13.6). */
+  function close() {
+    if (closedRef.current) return;
+    if (leaveCamera(mode, captured) === 'review') {
+      finishFast();
+      return;
+    }
+    // Once: a second tap during the dismissal would go back past the origin.
+    closedRef.current = true;
+    router.back();
+  }
+
+  // Android back behaves like ✕. The handler is refreshed after every render
+  // so it always sees the current mode and count.
+  const closeRef = useRef(close);
+  useEffect(() => {
+    closeRef.current = close;
+  });
+  useFocusEffect(
+    useCallback(() => {
+      const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+        closeRef.current();
+        return true;
+      });
+      return () => subscription.remove();
+    }, []),
+  );
 
   async function pickFromLibrary() {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 1,
-      allowsMultipleSelection: false,
-    });
+    if (processing || pickingRef.current) return;
+    pickingRef.current = true;
+    let result: ImagePicker.ImagePickerResult;
+    try {
+      result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 1,
+        allowsMultipleSelection: false,
+      });
+    } catch (cause) {
+      // The picker used to reject unhandled here (capture §13.15).
+      report(
+        isPermissionError(cause)
+          ? strings.permissions.libraryDeniedBody
+          : strings.capture.libraryFailed,
+      );
+      return;
+    } finally {
+      pickingRef.current = false;
+    }
 
     if (result.canceled) return;
     const asset = result.assets[0];
     if (asset) await handleCaptured(asset.uri, 'library');
   }
 
-  // Permission not yet resolved.
-  if (!permission) {
-    return (
-      <SafeAreaView style={[styles.fallback, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.primary} />
-      </SafeAreaView>
-    );
-  }
-
   // Rationale shown immediately before the first camera prompt (issue #12).
-  if (!permission.granted) {
-    const permanentlyDenied = !permission.canAskAgain;
-
+  // Black, with light status text, while the permission is still being read.
+  if (!permission?.granted) {
     return (
-      <SafeAreaView style={[styles.fallback, { backgroundColor: colors.background }]}>
-        <Text style={styles.glyph}>📸</Text>
-        <Text style={[styles.fallbackTitle, { color: colors.text }]} accessibilityRole="header">
-          {permanentlyDenied
-            ? strings.permissions.cameraDeniedTitle
-            : strings.permissions.cameraRationaleTitle}
-        </Text>
-        <Text style={[styles.fallbackBody, { color: colors.textMuted }]}>
-          {permanentlyDenied
-            ? strings.permissions.cameraDeniedBody
-            : strings.permissions.cameraRationaleBody}
-        </Text>
-
-        <View style={styles.fallbackActions}>
-          {permanentlyDenied ? (
-            <Button
-              label={strings.permissions.openSettings}
-              fullWidth
-              onPress={() => Linking.openSettings()}
-            />
-          ) : (
-            <Button
-              label={strings.permissions.grant}
-              fullWidth
-              onPress={async () => {
-                const next = await requestPermission();
-                logEvent('permission_result', {
-                  permission: 'camera',
-                  outcome: next.granted ? 'granted' : 'denied',
-                });
-              }}
-            />
-          )}
-          <Button
-            label="Choose from library instead"
-            variant="secondary"
-            fullWidth
-            onPress={pickFromLibrary}
-          />
-          <Button
-            label={strings.permissions.continueManually}
-            variant="ghost"
-            fullWidth
-            onPress={continueManually}
-          />
-          <Button
-            label={strings.common.cancel}
-            variant="ghost"
-            fullWidth
-            onPress={() => router.back()}
-          />
-        </View>
-      </SafeAreaView>
+      <>
+        {permission === null ? <StatusBar style="light" /> : null}
+        <CameraPermission
+          purpose="capture"
+          permission={permission}
+          requestPermission={requestPermission}
+          onManual={request ? undefined : continueManually}
+          onLibrary={() => void pickFromLibrary()}
+          onCancel={close}
+          closeTestID="capture-close"
+        />
+      </>
     );
   }
+
+  const fast = mode === 'fast';
+  // Once a set has a shot, it is finished with Done, never by switching mode.
+  const locked = fast && captured > 0;
+  const status = fastStatus({ captured, completed, recognized });
+  // "Type it instead" never lets a fast set skip its review.
+  const typeInstead = !request && !locked;
 
   return (
     <View style={styles.container}>
+      {/* The camera is black whatever the scheme: dark status text would vanish. */}
+      <StatusBar style="light" />
       <CameraView
         ref={cameraRef}
         style={StyleSheet.absoluteFill}
@@ -303,6 +409,8 @@ export default function CaptureScreen() {
         flash={flash}
         // Continuous AF. 'on' would lock after a single shot (issue #44).
         autofocus="off"
+        // A camera that cannot start used to leave a silent black screen (capture §13.13).
+        onMountError={() => setError(strings.capture.didNotStart)}
       />
       <TapToFocusLayer
         onFocus={(point) => {
@@ -310,154 +418,146 @@ export default function CaptureScreen() {
         }}
       />
 
-      {/* Corner guides, as the reference has: they tell you how much of the
-          frame the item should fill, which is what makes a photo recognisable
-          — framing is the one thing the person holding the phone controls. */}
-      <View style={styles.reticle} pointerEvents="none">
-        <View style={[styles.corner, styles.cornerTopLeft]} />
-        <View style={[styles.corner, styles.cornerTopRight]} />
-        <View style={[styles.corner, styles.cornerBottomLeft]} />
-        <View style={[styles.corner, styles.cornerBottomRight]} />
-      </View>
+      <Reticle />
+      <ShutterFlash trigger={lastShot} />
 
       <SafeAreaView style={styles.overlay} pointerEvents="box-none">
-        <View style={styles.topBar} pointerEvents="auto">
-          <Pressable
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel={strings.common.cancel}
-            style={styles.circleButton}
-          >
-            <Text style={styles.circleGlyph}>✕</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => setFlash((mode) => (mode === 'off' ? 'on' : 'off'))}
-            accessibilityRole="button"
-            accessibilityLabel={flash === 'off' ? 'Turn flash on' : 'Turn flash off'}
-            accessibilityState={{ selected: flash === 'on' }}
-            style={styles.circleButton}
-          >
-            <Text style={styles.circleGlyph}>{flash === 'off' ? '🔦' : '⚡'}</Text>
-          </Pressable>
+        <View style={styles.topRow} pointerEvents="box-none">
+          <IconButton
+            icon="close"
+            variant="camera"
+            accessibilityLabel={strings.capture.close}
+            onPress={close}
+            testID="capture-close"
+          />
+          <View style={styles.intoSlot} pointerEvents="box-none">
+            <IntoPill containerId={containerId} place={into.data} />
+          </View>
+          {/* The glyph shows the state the flash is in now, not the one a tap would choose. */}
+          <IconButton
+            icon={flash === 'on' ? 'flash' : 'flashOff'}
+            variant="camera"
+            selected={flash === 'on'}
+            accessibilityLabel={strings.capture.flash(flash === 'on')}
+            onPress={() => setFlash((current) => (current === 'off' ? 'on' : 'off'))}
+            testID="capture-flash"
+          />
         </View>
 
-        <View style={styles.bottomBar} pointerEvents="auto">
+        <View style={styles.bottomStack} pointerEvents="box-none">
           {error ? (
-            <View style={styles.errorBanner} accessibilityLiveRegion="assertive">
-              <Text style={styles.errorText}>{error}</Text>
-              <Pressable onPress={continueManually} accessibilityRole="button">
-                <Text style={styles.errorAction}>{strings.permissions.continueManually}</Text>
-              </Pressable>
-            </View>
-          ) : null}
-
-          {mode === 'fast' && captured > 0 ? (
-            <View style={styles.statusPill} accessibilityLiveRegion="polite">
-              <Text style={styles.statusText}>{fastStatus}</Text>
-            </View>
+            <CameraNotice
+              message={error}
+              live="assertive"
+              action={
+                typeInstead
+                  ? {
+                      label: strings.capture.manual,
+                      onPress: continueManually,
+                      testID: 'capture-error-manual',
+                    }
+                  : undefined
+              }
+              testID="capture-error"
+            />
           ) : null}
 
           {dropped > 0 ? (
-            <Text style={styles.dropped} accessibilityLiveRegion="polite">
-              {strings.capture.failedSome(dropped)}
-            </Text>
+            <CameraNotice
+              message={strings.capture.failedSome(dropped)}
+              live="polite"
+              testID="capture-dropped"
+            />
           ) : null}
 
-          <View
-            style={styles.modeRow}
-            accessibilityRole="radiogroup"
-            accessibilityLabel={strings.capture.modeLabel}
-          >
-            {(['single', 'fast'] as const).map((option) => {
-              const selected = option === mode;
-              return (
-                <Pressable
-                  key={option}
-                  onPress={() => setMode(option)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={
-                    option === 'single' ? strings.capture.modeSingle : strings.capture.modeFast
-                  }
-                  testID={`capture-mode-${option}`}
-                  style={[styles.modeChip, selected && styles.modeChipSelected]}
-                >
-                  <Text style={[styles.modeText, selected && styles.modeTextSelected]}>
-                    {option === 'single' ? strings.capture.modeSingle : strings.capture.modeFast}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          {fast && captured > 0 ? (
+            <View pointerEvents="none">
+              <StatusPill
+                icon={status.settled ? 'check' : undefined}
+                text={status.text}
+                live
+                testID="capture-status"
+              />
+            </View>
+          ) : null}
 
-          <View style={styles.shutterRow}>
-            {mode === 'single' ? (
-              <Pressable
-                onPress={pickFromLibrary}
-                accessibilityRole="button"
-                accessibilityLabel="Import from photo library"
-                style={styles.circleButton}
-                disabled={processing}
-              >
-                <Text style={styles.circleGlyph}>🖼️</Text>
-              </Pressable>
-            ) : (
-              <View style={styles.circleButton} />
-            )}
+          {request ? null : (
+            <View style={styles.modes}>
+              <SegmentedControl
+                tone="camera"
+                options={[
+                  {
+                    value: 'single',
+                    label: strings.capture.modeSingle,
+                    icon: 'camera',
+                    testID: 'capture-mode-single',
+                  },
+                  {
+                    value: 'fast',
+                    label: strings.capture.modeFast,
+                    icon: 'layers',
+                    testID: 'capture-mode-fast',
+                  },
+                ]}
+                value={mode}
+                onChange={setMode}
+                accessibilityLabel={strings.capture.modeLabel}
+                // Also while a single photo is being saved: its hand-over to the
+                // Add sheet would otherwise carry off a fast set begun meanwhile.
+                disabled={locked || processing}
+                accessibilityHint={locked ? strings.capture.finishSetFirst : undefined}
+              />
+            </View>
+          )}
 
-            <Pressable
-              onPress={mode === 'fast' ? takeFastPhoto : takePhoto}
-              accessibilityRole="button"
-              accessibilityLabel="Take photo"
-              accessibilityState={{
-                busy: mode === 'single' && processing,
-                disabled: mode === 'single' && processing,
-              }}
-              disabled={mode === 'single' && processing}
-              testID="capture-shutter"
-              style={styles.shutter}
-            >
-              {mode === 'single' && processing ? (
-                <ActivityIndicator color="#111" />
+          <View style={styles.shutterRow} pointerEvents="box-none">
+            <View style={[styles.side, styles.sideStart]} pointerEvents="box-none">
+              {fast ? (
+                <LastShot uri={lastShot} count={captured} />
               ) : (
-                <View style={styles.shutterInner} />
+                <IconButton
+                  icon="gallery"
+                  variant="camera"
+                  accessibilityLabel={strings.capture.library}
+                  onPress={() => void pickFromLibrary()}
+                  disabled={processing}
+                  testID="capture-library"
+                />
               )}
-            </Pressable>
+            </View>
 
-            {mode === 'fast' ? (
-              <Pressable
-                onPress={finishFast}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  captured > 0 ? strings.capture.doneCount(captured) : strings.capture.done
-                }
-                testID="capture-done"
-                style={[styles.doneButton, captured === 0 && styles.doneButtonIdle]}
-              >
-                <Text style={styles.doneText}>
-                  {captured > 0 ? strings.capture.doneCount(captured) : strings.capture.done}
-                </Text>
-              </Pressable>
-            ) : (
-              <Pressable
-                onPress={continueManually}
-                accessibilityRole="button"
-                accessibilityLabel={strings.permissions.continueManually}
-                style={styles.circleButton}
-              >
-                <Text style={styles.circleGlyph}>✍️</Text>
-              </Pressable>
-            )}
+            <Shutter
+              onPress={() => void (fast ? takeFastPhoto() : takePhoto())}
+              busy={!fast && processing}
+              dimmed={fast && shooting}
+            />
+
+            <View style={[styles.side, styles.sideEnd]} pointerEvents="box-none">
+              {fast ? (
+                <DoneButton count={captured} onPress={finishFast} />
+              ) : request ? (
+                <SideSpacer />
+              ) : (
+                <IconButton
+                  icon="keyboard"
+                  variant="camera"
+                  accessibilityLabel={strings.capture.manual}
+                  onPress={continueManually}
+                  testID="capture-manual"
+                />
+              )}
+            </View>
           </View>
 
-          <Text style={styles.hint}>
-            {mode === 'fast'
-              ? strings.capture.fastHint
-              : processing
-                ? strings.capture.saving
-                : strings.capture.singleHint}
-          </Text>
+          <View pointerEvents="none">
+            <AppText variant="caption" tone="camera" center style={styles.hint}>
+              {fast
+                ? strings.capture.fastHint
+                : processing
+                  ? strings.capture.saving
+                  : strings.capture.singleHint}
+            </AppText>
+          </View>
         </View>
       </SafeAreaView>
     </View>
@@ -467,201 +567,50 @@ export default function CaptureScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: camera.bg,
   },
   overlay: {
     flex: 1,
     justifyContent: 'space-between',
   },
-  reticle: {
-    position: 'absolute',
-    top: '22%',
-    bottom: '28%',
-    left: '10%',
-    right: '10%',
-  },
-  corner: {
-    position: 'absolute',
-    width: 40,
-    height: 40,
-    borderColor: 'rgba(255,255,255,0.85)',
-  },
-  cornerTopLeft: {
-    top: 0,
-    left: 0,
-    borderTopWidth: 3,
-    borderLeftWidth: 3,
-    borderTopLeftRadius: radius.md,
-  },
-  cornerTopRight: {
-    top: 0,
-    right: 0,
-    borderTopWidth: 3,
-    borderRightWidth: 3,
-    borderTopRightRadius: radius.md,
-  },
-  cornerBottomLeft: {
-    bottom: 0,
-    left: 0,
-    borderBottomWidth: 3,
-    borderLeftWidth: 3,
-    borderBottomLeftRadius: radius.md,
-  },
-  cornerBottomRight: {
-    bottom: 0,
-    right: 0,
-    borderBottomWidth: 3,
-    borderRightWidth: 3,
-    borderBottomRightRadius: radius.md,
-  },
-  topBar: {
+  topRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: spacing.lg,
+    alignItems: 'center',
+    gap: space.sm,
+    paddingHorizontal: space.sm,
+    paddingTop: space.sm,
   },
-  bottomBar: {
-    padding: spacing.lg,
-    gap: spacing.md,
+  intoSlot: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  bottomStack: {
+    paddingHorizontal: space.lg,
+    paddingBottom: space.md,
+    gap: space.md,
+  },
+  modes: {
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 320,
+    // 16 pt above the shutter row, so a thumb aiming for the shutter does not switch mode.
+    marginBottom: space.xs,
   },
   shutterRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
-  circleButton: {
-    width: MIN_TOUCH_TARGET,
-    height: MIN_TOUCH_TARGET,
-    borderRadius: radius.pill,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  // Equal sides keep the shutter centred whatever sits beside it.
+  side: {
+    flex: 1,
   },
-  circleGlyph: {
-    fontSize: 20,
-    color: '#FFF',
+  sideStart: {
+    alignItems: 'flex-start',
   },
-  shutter: {
-    width: 76,
-    height: 76,
-    borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  shutterInner: {
-    width: 62,
-    height: 62,
-    borderRadius: radius.pill,
-    backgroundColor: '#FFF',
-    borderWidth: 2,
-    borderColor: '#111',
+  sideEnd: {
+    alignItems: 'flex-end',
   },
   hint: {
-    color: '#FFF',
-    textAlign: 'center',
-    fontSize: 14,
-  },
-  modeRow: {
-    flexDirection: 'row',
-    alignSelf: 'center',
-    gap: spacing.xs,
-    padding: spacing.xs,
-    borderRadius: radius.pill,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-  },
-  modeChip: {
-    minHeight: MIN_TOUCH_TARGET - spacing.md,
-    paddingHorizontal: spacing.lg,
-    justifyContent: 'center',
-    borderRadius: radius.pill,
-  },
-  modeChipSelected: {
-    backgroundColor: 'rgba(255,255,255,0.16)',
-  },
-  modeText: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  modeTextSelected: {
-    color: '#FFF',
-    fontWeight: '700',
-  },
-  statusPill: {
-    alignSelf: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
-  statusText: {
-    color: '#FFF',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  dropped: {
-    color: '#FFC9BC',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  doneButton: {
-    minHeight: MIN_TOUCH_TARGET,
-    minWidth: 96,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.pill,
-    backgroundColor: '#FFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  doneButtonIdle: {
-    backgroundColor: 'rgba(255,255,255,0.55)',
-  },
-  doneText: {
-    color: '#111',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  errorBanner: {
-    backgroundColor: 'rgba(0,0,0,0.75)',
-    borderRadius: radius.md,
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  errorText: {
-    color: '#FFF',
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  errorAction: {
-    color: '#7FB0FF',
-    fontSize: 15,
-    fontWeight: '700',
-    minHeight: MIN_TOUCH_TARGET,
-    textAlignVertical: 'center',
-  },
-  fallback: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.xl,
-    gap: spacing.sm,
-  },
-  glyph: {
-    fontSize: 48,
-  },
-  fallbackTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  fallbackBody: {
-    fontSize: 15,
-    lineHeight: 21,
-    textAlign: 'center',
-  },
-  fallbackActions: {
-    alignSelf: 'stretch',
-    gap: spacing.sm,
-    marginTop: spacing.xl,
+    opacity: 0.85,
   },
 });

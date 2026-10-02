@@ -13,7 +13,8 @@ import { space } from '@/ui/theme';
 
 export interface SpaceRowProps {
   space: SpaceWithCounts;
-  onPress: (id: string) => void;
+  /** Absent for the space form's live preview, which is static and has no chevron. */
+  onPress?: (id: string) => void;
   /** The surface the row sits on, for the tile's tint. */
   surface?: 'sheet' | 'plaster';
   /** 56 on the Spaces tab, 48 in search results. */
@@ -30,9 +31,9 @@ export function SpaceRow({
   const counts = strings.entities.spaceCounts(item.containerCount, item.itemCount);
   return (
     <Row
-      onPress={() => onPress(item.id)}
+      onPress={onPress ? () => onPress(item.id) : undefined}
       leading={<SpaceTile icon={item.icon} color={item.color} size={tileSize} surface={surface} />}
-      chevron
+      chevron={Boolean(onPress)}
       accessibilityLabel={strings.rows.spaceA11y(item.name, counts)}
       testID={`space-row-${item.id}`}
     >

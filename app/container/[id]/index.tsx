@@ -1,321 +1,490 @@
-import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useMemo, useState, type ReactElement } from 'react';
+import { Animated, FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { ItemWithContext } from '@/db/types';
+import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
+import { useCollapsingTitle } from '@/hooks/useCollapsingTitle';
 import { useInventoryQuery } from '@/hooks/useInventoryQuery';
+import { useLayoutScale } from '@/hooks/useLayoutScale';
 import { strings } from '@/i18n/strings';
 import { useRepositories } from '@/providers/DatabaseProvider';
+import { spellCode } from '@/ui/a11y';
+import { rememberCategories } from '@/ui/categoryMemory';
+import { AppText } from '@/ui/components/AppText';
+import { Banner } from '@/ui/components/Banner';
+import { BottomBar } from '@/ui/components/BottomBar';
 import { Button } from '@/ui/components/Button';
 import { EmptyState } from '@/ui/components/EmptyState';
-import { SavedQuantityStepper } from '@/ui/components/SavedQuantityStepper';
-import { ErrorState, LoadingState, Screen } from '@/ui/components/Screen';
-import { CONTAINER_ICONS, MIN_TOUCH_TARGET, radius, spacing, useTheme } from '@/ui/theme';
+import { ErrorState } from '@/ui/components/ErrorState';
+import { Icon } from '@/ui/components/Icon';
+import { IconButton } from '@/ui/components/IconButton';
+import { ItemRow } from '@/ui/components/ItemRow';
+import { PressedOverlay, rippleFor, useFocusRing } from '@/ui/components/PressFeedback';
+import { ScreenFrame } from '@/ui/components/ScreenFrame';
+import { Section, SheetSeparator, sheetCell } from '@/ui/components/Sheet';
+import { Skeleton } from '@/ui/components/Skeleton';
+import { SpacePip } from '@/ui/components/SpacePip';
+import { Tape } from '@/ui/components/Tape';
+import { isFreshArrival, sortContents, titleOf, typeNameOf } from '@/ui/container/containerRules';
+import { motionMs, useReducedMotion } from '@/ui/motion';
+import { focusSearch, goToTab, openSpace } from '@/ui/navigation';
+import { needsRefreshBanner } from '@/ui/spaces/spaceSetup';
+import { usePullToRefresh } from '@/ui/spaces/usePullToRefresh';
+import { GUTTER, MIN_TOUCH_TARGET, ROW_GAP, TYPE_ICON, space, useTheme } from '@/ui/theme';
 
-function ItemCard({ item, onPress }: { item: ItemWithContext; onPress: () => void }) {
-  const { colors } = useTheme();
+/** How long a just-added row stays picked out before it starts to fade. */
+const ARRIVAL_HOLD_MS = 600;
+/** The fade itself (spec §5.7). */
+const ARRIVAL_FADE_MS = 1200;
 
+/** Stable for the memoised rows: they hand back the item's id. */
+function openItem(itemId: string) {
+  router.push(`/item/${itemId}`);
+}
+
+/**
+ * The drop zone is a real container row, but its screen is the Drop zone tab
+ * (B4, entities §15.1). An old link goes there, in an effect rather than with
+ * `<Redirect>`, which would stack a second tab shell (spec §2.5 rule 2).
+ */
+function ToDropZone() {
+  useEffect(() => {
+    goToTab('/drop-zone');
+  }, []);
+  return null;
+}
+
+/** Search and, once the container is known, Edit; icons instead of the old blue "Edit". */
+function HeaderActions({ containerId, title }: { containerId: string; title: string | null }) {
   return (
-    <View
-      style={[styles.itemCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+    <View style={styles.headerActions}>
+      <IconButton
+        icon="search"
+        accessibilityLabel={strings.a11y.searchHousehold}
+        accessibilityHint={strings.a11y.searchHint}
+        onPress={focusSearch}
+      />
+      {title !== null ? (
+        <IconButton
+          icon="edit"
+          accessibilityLabel={strings.container.edit(title)}
+          onPress={() => router.push(`/container/${containerId}/edit`)}
+          testID="container-edit"
+        />
+      ) : null}
+    </View>
+  );
+}
+
+interface CrumbSpace {
+  id: string;
+  name: string;
+  color: string;
+}
+
+/**
+ * "● Garage ›": the way back up to the space. It used to be plain text with
+ * the space's emoji, so the only way to the space was Back, and only when
+ * the container had been opened from there.
+ */
+function SpaceCrumb({ place }: { place: CrumbSpace }) {
+  const { colors } = useTheme();
+  const focus = useFocusRing();
+  return (
+    <Pressable
+      onPress={() => openSpace(place.id)}
+      onFocus={focus.onFocus}
+      onBlur={focus.onBlur}
+      accessibilityRole="link"
+      accessibilityLabel={strings.container.crumbA11y(place.name)}
+      android_ripple={rippleFor(colors)}
+      testID="container-space"
+      style={[styles.crumb, focus.ringStyle]}
     >
-      <Pressable
-        onPress={onPress}
-        accessibilityRole="button"
-        accessibilityLabel={item.name || strings.items.unnamed}
-        style={({ pressed }) => [styles.itemMain, { opacity: pressed ? 0.8 : 1 }]}
-      >
-        {item.photoUri ? (
-          <Image
-            source={{ uri: item.photoThumbUri ?? item.photoUri }}
-            style={styles.thumb}
-            accessibilityIgnoresInvertColors
-          />
-        ) : (
-          <View
-            style={[styles.thumb, styles.thumbPlaceholder, { backgroundColor: colors.surfaceAlt }]}
-          >
-            <Text style={styles.thumbGlyph}>🧾</Text>
-          </View>
-        )}
-        <View style={styles.itemBody}>
-          <Text
-            style={[
-              styles.itemTitle,
-              { color: item.name ? colors.text : colors.textMuted },
-              !item.name && styles.itemTitleUnnamed,
-            ]}
-            numberOfLines={2}
-          >
-            {item.name || strings.items.unnamed}
-          </Text>
-          {item.category ? (
-            <Text style={[styles.itemMeta, { color: colors.textMuted }]} numberOfLines={1}>
-              {item.category}
-            </Text>
-          ) : null}
-        </View>
-      </Pressable>
-      <SavedQuantityStepper key={item.id} item={item} compact />
+      {({ pressed }) => (
+        <>
+          <PressedOverlay pressed={pressed} radius={6} />
+          <SpacePip color={place.color} size={10} />
+          <AppText variant="label" tone="graphite" style={styles.crumbName}>
+            {place.name}
+          </AppText>
+          <Icon name="chevronRight" size={16} color={colors.graphite} />
+        </>
+      )}
+    </Pressable>
+  );
+}
+
+/**
+ * The selected fill and ink bar on a row that has just arrived from Add, so
+ * the eye finds it among the others; it fades out (at once under reduced
+ * motion). Decided once, when the row first appears.
+ */
+function ArrivalHighlight({ createdAt }: { createdAt: number }) {
+  const { colors } = useTheme();
+  const reduced = useReducedMotion();
+  const [fresh] = useState(() => isFreshArrival(createdAt, Date.now()));
+  const [opacity] = useState(() => new Animated.Value(1));
+  const [faded, setFaded] = useState(!fresh);
+
+  useEffect(() => {
+    if (!fresh) return;
+    const fade = Animated.timing(opacity, {
+      toValue: 0,
+      delay: ARRIVAL_HOLD_MS + (reduced ? ARRIVAL_FADE_MS : 0),
+      duration: motionMs(ARRIVAL_FADE_MS, reduced),
+      useNativeDriver: true,
+    });
+    fade.start(({ finished }) => {
+      if (finished) setFaded(true);
+    });
+    return () => fade.stop();
+  }, [fresh, opacity, reduced]);
+
+  if (faded) return null;
+  return (
+    <Animated.View
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[StyleSheet.absoluteFill, { opacity, backgroundColor: colors.selected }]}
+    >
+      <View style={[styles.arrivalBar, { backgroundColor: colors.ink }]} />
+    </Animated.View>
+  );
+}
+
+/** The rule between two rows of the sheet, inside the screen gutter. */
+function Separator() {
+  return (
+    <View style={styles.gutter}>
+      <SheetSeparator />
     </View>
   );
 }
 
 export default function ContainerScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const repos = useRepositories();
-  const router = useRouter();
-  const { colors } = useTheme();
+  if (id === DROP_ZONE_CONTAINER_ID) return <ToDropZone />;
+  return <ContainerDetail id={id} />;
+}
 
-  const container = useInventoryQuery(() => repos.containers.getWithCounts(id), `container:${id}`);
-  const items = useInventoryQuery(() => repos.items.listByContainer(id), `items-of:${id}`);
-  const space = useInventoryQuery(
-    async () => (container.data ? repos.spaces.getById(container.data.spaceId) : null),
-    `space:${container.data?.spaceId ?? 'none'}`,
+/**
+ * "What's in this box?": the answer when a label is scanned, and where
+ * things are counted and added.
+ *
+ * Its space is a link above the title, its code is the big tape from the box,
+ * and what is in it reads by name with a stepper on every row. Nothing shows
+ * until both the container and its contents have been read, so it never
+ * flashes "empty" on the way, and a failed read of the contents is said as
+ * such rather than as an empty box (entities §15.3).
+ */
+function ContainerDetail({ id }: { id: string }) {
+  const repos = useRepositories();
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { stacked } = useLayoutScale();
+
+  const containerQuery = useInventoryQuery(
+    () => repos.containers.getWithCounts(id),
+    `container:${id}`,
+  );
+  const itemsQuery = useInventoryQuery(() => repos.items.listByContainer(id), `items-of:${id}`);
+  const spaceId = containerQuery.data?.spaceId ?? null;
+  const spaceQuery = useInventoryQuery(
+    async () => (spaceId ? repos.spaces.getById(spaceId) : null),
+    `space:${spaceId ?? 'none'}`,
   );
 
-  if (container.loading && !container.data) {
-    return (
-      <Screen edges={['left', 'right']}>
-        <LoadingState />
-      </Screen>
-    );
+  const container = containerQuery.data;
+  const items = itemsQuery.data;
+  const sorted = useMemo(() => (items ? sortContents(items) : []), [items]);
+  const title = container ? titleOf(container) : '';
+  const { onScroll, onTitleLayout } = useCollapsingTitle(title);
+
+  // Category suggestions in the Add and Edit forms come from what has been seen.
+  useEffect(() => {
+    if (items) rememberCategories(items);
+  }, [items]);
+
+  function reloadAll() {
+    containerQuery.reload();
+    itemsQuery.reload();
+    spaceQuery.reload();
+  }
+  const refreshControl = usePullToRefresh(
+    containerQuery.loading || itemsQuery.loading || spaceQuery.loading,
+    reloadAll,
+  );
+
+  function addHere() {
+    router.push({ pathname: '/item/new', params: { containerId: id } });
+  }
+  function takePhoto() {
+    // A container is a single-item entry point (capture §10.2).
+    router.push({ pathname: '/capture', params: { containerId: id } });
   }
 
-  if (container.error || !container.data) {
-    return (
-      <Screen edges={['left', 'right']}>
+  const headerOptions = (
+    <Stack.Screen
+      options={{
+        headerRight: () => (
+          <HeaderActions containerId={id} title={container ? titleOf(container) : null} />
+        ),
+      }}
+    />
+  );
+
+  let blocking: ReactElement | null = null;
+  if (container === null) {
+    if (containerQuery.cause) {
+      blocking = (
+        <ErrorState cause={containerQuery.cause} subject="container" onRetry={reloadAll} />
+      );
+    } else if (containerQuery.loading) {
+      blocking = <LoadingDetail />;
+    } else {
+      // Read fine, but nothing there: deleted, probably on another phone.
+      blocking = (
         <ErrorState
-          message={container.error ?? 'That container no longer exists.'}
-          onRetry={container.reload}
+          cause={null}
+          subject="container"
+          secondary={{ label: strings.common.goToSpaces, onPress: () => goToTab('/spaces') }}
         />
-      </Screen>
+      );
+    }
+  } else if (items === null && !itemsQuery.cause) {
+    blocking = <LoadingDetail />;
+  }
+
+  if (container === null || blocking !== null) {
+    return (
+      <ScreenFrame kind="detail">
+        {headerOptions}
+        {blocking}
+      </ScreenFrame>
     );
   }
 
-  const data = container.data;
-  const title = data.name ?? data.shortCode;
-  const list = items.data ?? [];
+  // The space comes from its own read, or from any row, which carries it too.
+  const first = sorted[0];
+  const place: CrumbSpace | null = spaceQuery.data
+    ? { id: spaceQuery.data.id, name: spaceQuery.data.name, color: spaceQuery.data.color }
+    : first
+      ? { id: first.spaceId, name: first.spaceName, color: first.spaceColor }
+      : null;
+  const typeName = typeNameOf(container.visualType);
+  const count = items ? items.length : container.itemCount;
+  const linked = container.qrToken !== null;
+  const refreshFailed =
+    needsRefreshBanner(containerQuery.refreshFailed, containerQuery.cause) ||
+    needsRefreshBanner(itemsQuery.refreshFailed, itemsQuery.cause);
 
-  return (
-    <Screen edges={['left', 'right', 'bottom']}>
-      <Stack.Screen
-        options={{
-          title,
-          headerRight: () => (
-            <Pressable
-              onPress={() => router.push(`/container/${id}/edit`)}
-              accessibilityRole="button"
-              accessibilityLabel={`Edit ${title}`}
-              hitSlop={spacing.sm}
-              style={styles.headerButton}
-            >
-              <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '600' }}>
-                {strings.common.edit}
-              </Text>
-            </Pressable>
-          ),
-        }}
-      />
-
-      <FlatList
-        data={list}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        keyboardShouldPersistTaps="handled"
-        ListHeaderComponent={
-          <View
-            style={[styles.header, { backgroundColor: colors.surface, borderColor: colors.border }]}
-          >
-            <View style={styles.headerTop}>
-              <Text
-                style={styles.headerIcon}
-                accessibilityElementsHidden
-                importantForAccessibility="no"
-              >
-                {CONTAINER_ICONS[data.visualType] ?? CONTAINER_ICONS.other}
-              </Text>
-              <View style={styles.headerText}>
-                <Text style={[styles.headerCode, { color: colors.textMuted }]}>
-                  {space.data ? `${space.data.icon} ${space.data.name} · ` : ''}
-                  {data.shortCode}
-                </Text>
-                <Text style={[styles.headerCount, { color: colors.text }]}>
-                  {data.itemCount} item{data.itemCount === 1 ? '' : 's'}
-                </Text>
-              </View>
-            </View>
-
-            {/* Reserved QR slot the QR issue fills in (issue #5). */}
-            <Pressable
-              onPress={() => router.push(`/container/${id}/qr`)}
-              accessibilityRole="button"
-              accessibilityLabel={
-                data.qrToken ? strings.containers.qrBound : strings.containers.qrUnbound
-              }
-              accessibilityHint="Opens the QR label for this container"
-              style={[styles.qrRow, { borderColor: colors.border }]}
-            >
-              <Text style={styles.qrGlyph}>🏷️</Text>
-              <Text
-                style={[
-                  styles.qrLabel,
-                  { color: data.qrToken ? colors.success : colors.textMuted },
-                ]}
-              >
-                {data.qrToken ? strings.containers.qrBound : strings.containers.qrUnbound}
-              </Text>
-              <Text style={[styles.chevron, { color: colors.textMuted }]}>›</Text>
-            </Pressable>
-          </View>
-        }
-        renderItem={({ item }) => (
-          <ItemCard item={item} onPress={() => router.push(`/item/${item.id}`)} />
-        )}
-        ListEmptyComponent={
-          <EmptyState
-            icon="🧾"
-            title={strings.items.empty.title}
-            body={strings.items.empty.body}
-            actionLabel={strings.items.empty.photoAction}
-            onAction={() => router.push(`/capture?containerId=${id}`)}
-            secondaryActionLabel={strings.items.empty.manualAction}
-            onSecondaryAction={() => router.push(`/item/new?containerId=${id}`)}
-            testID="items-empty"
-          />
-        }
-      />
-
-      {/* Pinned, and inside the bottom safe area: as a list footer this sat
-          under the system navigation bar, so the main way into the capture
-          flow was partly unreachable. */}
-      {list.length > 0 ? (
+  const head = (
+    <View style={styles.head}>
+      {place ? (
+        <SpaceCrumb place={place} />
+      ) : spaceQuery.cause ? null : (
+        // Keeps the title from jumping down when the space arrives.
+        <View style={styles.crumbPlaceholder} />
+      )}
+      <AppText variant="title" onLayout={onTitleLayout}>
+        {title}
+      </AppText>
+      <AppText variant="meta" tone="graphite" style={styles.sub}>
+        {place
+          ? strings.container.sub(typeName, place.name, count)
+          : strings.container.subPlain(typeName, count)}
+      </AppText>
+      <View style={[styles.codeRow, stacked ? styles.codeRowStacked : null]}>
         <View
-          style={[
-            styles.actionBar,
-            { backgroundColor: colors.background, borderTopColor: colors.border },
-          ]}
+          accessible
+          accessibilityRole="text"
+          accessibilityLabel={strings.a11y.labelCodeTitle(spellCode(container.shortCode))}
         >
+          <Tape code={container.shortCode} size="l" />
+        </View>
+        <View>
           <Button
-            label={strings.items.empty.photoAction}
-            icon="📸"
-            fullWidth
-            onPress={() => router.push(`/capture?containerId=${id}`)}
-            testID="items-capture"
-          />
-          <Button
-            label={strings.items.empty.manualAction}
+            label={linked ? strings.container.qrLinked : strings.container.qrNone}
+            accessibilityLabel={linked ? strings.container.qrLinkedA11y : strings.container.qrNone}
+            icon="qr"
             variant="secondary"
-            fullWidth
-            onPress={() => router.push(`/item/new?containerId=${id}`)}
+            size="sm"
+            onPress={() => router.push(`/container/${id}/qr`)}
+            testID="container-qr"
+          />
+        </View>
+      </View>
+      {refreshFailed ? (
+        <View style={styles.banner}>
+          <Banner
+            tone="info"
+            message={strings.errors.refreshFailed}
+            action={{ label: strings.common.tryAgain, onPress: reloadAll }}
           />
         </View>
       ) : null}
-    </Screen>
+      {sorted.length > 0 ? (
+        <Section title={strings.container.inHere} count={sorted.length} />
+      ) : null}
+    </View>
+  );
+
+  const empty =
+    items === null ? (
+      <ErrorState cause={itemsQuery.cause} onRetry={itemsQuery.reload} />
+    ) : (
+      <EmptyState
+        icon={TYPE_ICON[container.visualType] ?? 'other'}
+        title={strings.container.empty.title(typeName)}
+        body={strings.container.empty.body}
+        action={{
+          label: strings.container.addHere,
+          icon: 'plus',
+          onPress: addHere,
+          testID: 'items-empty',
+        }}
+        secondary={{
+          label: strings.container.takePhoto,
+          icon: 'camera',
+          onPress: takePhoto,
+          testID: 'items-capture-empty',
+        }}
+      />
+    );
+
+  const hasBar = sorted.length > 0;
+
+  return (
+    <ScreenFrame
+      kind="detail"
+      bottomBar={
+        hasBar ? (
+          // One bar, 72 pt, instead of two stacked full-width buttons (≈ 130 pt):
+          // the camera as an icon, "Add here" as the primary under the thumb.
+          <BottomBar>
+            <View style={styles.barRow}>
+              <IconButton
+                icon="camera"
+                variant="outlined"
+                accessibilityLabel={strings.container.takePhotoA11y}
+                onPress={takePhoto}
+                testID="items-capture"
+              />
+              <Button
+                label={strings.container.addHere}
+                icon="plus"
+                onPress={addHere}
+                fullWidth
+                style={styles.barPrimary}
+                testID="items-add"
+              />
+            </View>
+          </BottomBar>
+        ) : null
+      }
+    >
+      {headerOptions}
+      <FlatList
+        data={sorted}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item, index }) => (
+          <View style={[styles.gutter, sheetCell(index, sorted.length, colors)]}>
+            <ArrivalHighlight createdAt={item.createdAt} />
+            <ItemRow item={item} line="detail" tool="stepper" onPress={openItem} />
+          </View>
+        )}
+        ItemSeparatorComponent={Separator}
+        ListHeaderComponent={head}
+        ListEmptyComponent={empty}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        refreshControl={refreshControl}
+        // Typing a count in a row's stepper must not be cut short by a tap
+        // elsewhere, nor hidden behind the number pad on a low row (iOS).
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+        // The bottom bar pads the home indicator itself; without it the list does.
+        contentContainerStyle={{ paddingBottom: space.xl + (hasBar ? 0 : insets.bottom) }}
+      />
+    </ScreenFrame>
+  );
+}
+
+function LoadingDetail() {
+  return (
+    <View style={styles.loading}>
+      <Skeleton variant="detail" />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  list: {
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
-  header: {
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    padding: spacing.md,
-    gap: spacing.md,
-    marginBottom: spacing.xs,
-  },
-  headerTop: {
+  headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
   },
-  headerIcon: {
-    fontSize: 32,
+  gutter: {
+    marginHorizontal: GUTTER,
   },
-  headerText: {
-    flex: 1,
-    gap: 2,
+  loading: {
+    padding: GUTTER,
   },
-  headerCode: {
-    fontSize: 14,
+  // No bottom padding: "In here" brings its own gap, and so does the empty state.
+  head: {
+    paddingHorizontal: GUTTER,
   },
-  headerCount: {
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  qrRow: {
+  crumb: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    borderTopWidth: 1,
-    paddingTop: spacing.md,
+    alignSelf: 'flex-start',
+    gap: space.xs + 2,
+    minHeight: MIN_TOUCH_TARGET,
+    // The text lines up with the gutter; the pressed fill reaches a little past it.
+    marginStart: -space.xs,
+    paddingHorizontal: space.xs,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  crumbName: {
+    flexShrink: 1,
+  },
+  crumbPlaceholder: {
     minHeight: MIN_TOUCH_TARGET,
   },
-  qrGlyph: {
-    fontSize: 18,
+  sub: {
+    marginTop: space.xxs,
   },
-  qrLabel: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
+  codeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.md,
+    marginTop: space.lg,
   },
-  chevron: {
-    fontSize: 24,
+  codeRowStacked: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
-  itemCard: {
+  banner: {
+    marginTop: space.lg,
+  },
+  arrivalBar: {
+    position: 'absolute',
+    start: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+  },
+  barRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.sm,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    minHeight: MIN_TOUCH_TARGET + spacing.md,
+    gap: ROW_GAP,
   },
-  itemMain: {
+  barPrimary: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    minHeight: MIN_TOUCH_TARGET,
-  },
-  thumb: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.md,
-  },
-  thumbPlaceholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  thumbGlyph: {
-    fontSize: 24,
-  },
-  itemBody: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
-  itemTitleUnnamed: {
-    fontStyle: 'italic',
-    fontWeight: '600',
-  },
-  itemTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  itemMeta: {
-    fontSize: 14,
-  },
-  actionBar: {
-    padding: spacing.lg,
-    gap: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  headerButton: {
-    minHeight: MIN_TOUCH_TARGET,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.sm,
   },
 });

@@ -1,203 +1,246 @@
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, View, type TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 
+import { useDelayedFlag } from '@/hooks/useDelayedFlag';
+import { useDirtyGuard } from '@/hooks/useDirtyGuard';
+import { useInventoryQuery } from '@/hooks/useInventoryQuery';
+import { useLayoutScale } from '@/hooks/useLayoutScale';
 import { strings } from '@/i18n/strings';
 import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
 import { logEvent } from '@/services/telemetry';
+import { AppText } from '@/ui/components/AppText';
+import { BottomBar } from '@/ui/components/BottomBar';
 import { Button } from '@/ui/components/Button';
-import { ChoiceRow, ColorRow } from '@/ui/components/PickerRow';
-import { Screen } from '@/ui/components/Screen';
-import { TextField } from '@/ui/components/TextField';
+import { PressedOverlay, rippleFor, useFocusRing } from '@/ui/components/PressFeedback';
+import { Section } from '@/ui/components/Sheet';
+import { SpaceTile } from '@/ui/components/SpaceTile';
+import { haptics } from '@/ui/haptics';
+import { delay } from '@/ui/motion';
+import { FormLayout, SaveNotice } from '@/ui/spaces/FormLayout';
+import { SpaceFields } from '@/ui/spaces/SpaceFields';
 import {
-  MIN_TOUCH_TARGET,
-  radius,
-  SPACE_COLORS,
-  SPACE_ICONS,
-  SPACE_PRESETS,
-  spacing,
-  useTheme,
-} from '@/ui/theme';
+  isNameTaken,
+  spaceValuesChanged,
+  takenSpaceNames,
+  type SpaceValues,
+} from '@/ui/spaces/spaceSetup';
+import { SPACE_COLORS, SPACE_ICONS, SPACE_PRESETS, radius, space, useTheme } from '@/ui/theme';
 
+type Preset = (typeof SPACE_PRESETS)[number];
+
+const DEFAULTS: SpaceValues = { name: '', icon: SPACE_ICONS[0], color: SPACE_COLORS[0] };
+
+/** A new space holds nothing yet; the preview says so. */
+const EMPTY_COUNTS = { containers: 0, items: 0 };
+
+interface PresetTileProps {
+  preset: Preset;
+  /** A space with this name exists already. */
+  taken: boolean;
+  /** This preset is being created. */
+  busy: boolean;
+  /** Another save is under way. */
+  disabled: boolean;
+  onPress: () => void;
+}
+
+/**
+ * One quick-add preset. A tap creates the space at once, zero typing being
+ * the point of a preset; one that already exists says so and stays put
+ * rather than making a second Garage (entities §1).
+ */
+function PresetTile({ preset, taken, busy, disabled, onPress }: PresetTileProps) {
+  const { colors } = useTheme();
+  const { stacked } = useLayoutScale();
+  const focus = useFocusRing();
+  const showSpinner = useDelayedFlag(busy, delay.spinner);
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onFocus={focus.onFocus}
+      onBlur={focus.onBlur}
+      disabled={taken || disabled}
+      accessibilityRole="button"
+      accessibilityLabel={
+        taken
+          ? strings.spaceForm.presetAddedA11y(preset.name)
+          : strings.spaceForm.presetA11y(preset.name)
+      }
+      accessibilityState={{ disabled: taken || disabled, busy }}
+      testID={`space-preset-${preset.name.toLowerCase()}`}
+      android_ripple={rippleFor(colors)}
+      style={[
+        styles.preset,
+        { flexBasis: stacked ? '100%' : '40%' },
+        { backgroundColor: colors.sheet, borderColor: colors.rule },
+        // A taken preset stays readable; only a wait dims the others.
+        disabled && !busy && !taken ? styles.dimmed : null,
+        focus.ringStyle,
+      ]}
+    >
+      {({ pressed }) => (
+        <>
+          <PressedOverlay pressed={pressed} radius={radius.card} />
+          <SpaceTile icon={preset.icon} color={preset.color} size={48} />
+          <View style={styles.presetText}>
+            <AppText variant="name">{preset.name}</AppText>
+            {taken ? (
+              <AppText variant="caption" tone="graphite">
+                {strings.spaceForm.alreadyAdded}
+              </AppText>
+            ) : null}
+          </View>
+          {showSpinner ? <ActivityIndicator color={colors.graphite} /> : null}
+        </>
+      )}
+    </Pressable>
+  );
+}
+
+/**
+ * New space: a preset in one tap, or a name, icon and colour of your own.
+ * Both end on the new space, replacing this sheet, because making a place
+ * means you want to fill it (spec §2.5 rule 5).
+ */
 export default function NewSpaceScreen() {
   const repos = useRepositories();
   const { invalidate } = useDatabase();
   const router = useRouter();
   const { colors } = useTheme();
+  const nameRef = useRef<TextInput>(null);
 
-  const [name, setName] = useState('');
-  const [icon, setIcon] = useState<string>(SPACE_ICONS[0]);
-  const [color, setColor] = useState<string>(SPACE_COLORS[0]);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [values, setValues] = useState<SpaceValues>(DEFAULTS);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [failure, setFailure] = useState<{ cause: unknown } | null>(null);
+  /** What is being created: a preset's name, or `custom` for the form. */
+  const [saving, setSaving] = useState<string | null>(null);
+  const savingRef = useRef(false);
 
-  async function create(space: { name: string; icon: string; color: string }) {
-    // Guards the preset tiles as well as the button: they all write, and a
-    // double tap would otherwise create two spaces.
-    if (saving) return;
+  // Existing names, so presets already added are shown as such. While this
+  // loads (or if it fails) every preset stays available.
+  const existing = useInventoryQuery(() => repos.spaces.listWithCounts(), 'spaces');
+  const taken = useMemo(() => takenSpaceNames(existing.data ?? []), [existing.data]);
 
-    setSaving(true);
+  useDirtyGuard(spaceValuesChanged(values, DEFAULTS), { saving: saving !== null });
+
+  async function create(input: SpaceValues, source: string) {
+    // One guard for the presets, the button and the return key: each of them
+    // writes, and a double tap would otherwise make two spaces. A ref, so two
+    // taps in the same frame cannot both pass it.
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(source);
+    setFailure(null);
     try {
-      const created = await repos.spaces.create(space);
+      const created = await repos.spaces.create({
+        name: input.name.trim(),
+        icon: input.icon,
+        color: input.color,
+      });
       logEvent('space_created');
       invalidate();
-      // Replace so Back from the space screen returns to the dashboard rather
-      // than reopening this form.
+      haptics.success();
+      // Replace, so Back from the new space returns to where this started.
       router.replace(`/space/${created.id}`);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'The space could not be saved.');
-      setSaving(false);
+      savingRef.current = false;
+      setSaving(null);
+      setFailure({ cause });
+      haptics.error();
     }
   }
 
-  function saveCustom() {
-    if (!name.trim()) {
-      setError(strings.spaces.nameRequired);
+  function createCustom() {
+    if (!values.name.trim()) {
+      setNameError(strings.spaceForm.nameRequired);
+      nameRef.current?.focus();
       return;
     }
-    void create({ name: name.trim(), icon, color });
+    void create(values, 'custom');
+  }
+
+  function change(next: SpaceValues) {
+    if (next.name !== values.name) setNameError(null);
+    setFailure(null);
+    setValues(next);
   }
 
   return (
-    <Screen edges={['left', 'right', 'bottom']}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-            {strings.spaces.quickAddLabel}
-          </Text>
-          <View style={styles.presets}>
-            {SPACE_PRESETS.map((preset) => (
-              <Pressable
-                key={preset.name}
-                onPress={() => void create(preset)}
-                disabled={saving}
-                accessibilityRole="button"
-                accessibilityLabel={preset.name}
-                accessibilityHint={strings.spaces.presetHint(preset.name)}
-                testID={`space-preset-${preset.name.toLowerCase()}`}
-                style={({ pressed }) => [
-                  styles.preset,
-                  {
-                    backgroundColor: colors.surfaceAlt,
-                    borderColor: colors.border,
-                    opacity: saving ? 0.5 : pressed ? 0.85 : 1,
-                  },
-                ]}
-              >
-                <Text
-                  style={styles.presetIcon}
-                  accessibilityElementsHidden
-                  importantForAccessibility="no"
-                >
-                  {preset.icon}
-                </Text>
-                <Text style={[styles.presetName, { color: colors.text }]} numberOfLines={1}>
-                  {preset.name}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-            {strings.spaces.customLabel}
-          </Text>
-
-          <TextField
-            label={strings.spaces.nameLabel}
-            placeholder={strings.spaces.namePlaceholder}
-            value={name}
-            onChangeText={(value) => {
-              setName(value);
-              if (error) setError(null);
-            }}
-            error={error}
-            required
-            returnKeyType="done"
-            onSubmitEditing={saveCustom}
-          />
-
-          <ChoiceRow
-            label={strings.spaces.iconLabel}
-            options={SPACE_ICONS.map((value) => ({ value, label: value }))}
-            value={icon}
-            onChange={setIcon}
-          />
-
-          <ColorRow
-            label={strings.spaces.colorLabel}
-            colors={SPACE_COLORS}
-            value={color}
-            onChange={setColor}
-          />
-        </View>
-
-        <View style={styles.actions}>
+    <FormLayout
+      notice={failure ? <SaveNotice cause={failure.cause} subject="space" /> : null}
+      bottomBar={
+        <BottomBar>
           <Button
-            label={strings.spaces.customAction}
-            onPress={saveCustom}
-            loading={saving}
-            disabled={!name.trim()}
+            label={strings.spaceForm.create}
+            onPress={createCustom}
+            loading={saving === 'custom'}
+            disabled={saving !== null && saving !== 'custom'}
             fullWidth
             testID="space-create-custom"
           />
-          <Button
-            label={strings.common.cancel}
-            onPress={() => router.back()}
-            variant="ghost"
-            fullWidth
-          />
+        </BottomBar>
+      }
+    >
+      <Section title={strings.spaceForm.quickAdd} first>
+        <View style={styles.presets}>
+          {SPACE_PRESETS.map((preset) => (
+            <PresetTile
+              key={preset.name}
+              preset={preset}
+              taken={isNameTaken(preset.name, taken)}
+              busy={saving === preset.name}
+              disabled={saving !== null}
+              onPress={() => void create({ ...preset }, preset.name)}
+            />
+          ))}
         </View>
-      </ScrollView>
-    </Screen>
+      </Section>
+
+      <View style={[styles.rule, { backgroundColor: colors.rule }]} />
+
+      <Section title={strings.spaceForm.yourOwn} first>
+        <SpaceFields
+          values={values}
+          onChange={change}
+          nameError={nameError}
+          onSubmit={createCustom}
+          nameRef={nameRef}
+          previewCounts={EMPTY_COUNTS}
+        />
+      </Section>
+    </FormLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    padding: spacing.lg,
-    gap: spacing.lg,
-  },
-  section: {
-    gap: spacing.md,
-  },
-  sectionLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
   presets: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
+    gap: space.sm,
   },
   preset: {
     flexGrow: 1,
-    flexBasis: '22%',
-    minHeight: MIN_TOUCH_TARGET + spacing.xl,
+    minHeight: 64,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radius.md,
+    gap: space.md,
+    paddingVertical: space.sm,
+    paddingHorizontal: space.md,
     borderWidth: 1,
+    borderRadius: radius.card,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
   },
-  presetIcon: {
-    fontSize: 28,
+  dimmed: {
+    opacity: 0.45,
   },
-  presetName: {
-    fontSize: 13,
-    fontWeight: '600',
+  presetText: {
+    flex: 1,
+    gap: space.xxs,
   },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-  },
-  actions: {
-    gap: spacing.sm,
+  rule: {
+    height: 1,
   },
 });

@@ -20,6 +20,8 @@ export interface SkeletonProps {
   variant: 'list' | 'rows' | 'detail' | 'options' | 'grid';
   rows?: number;
   thumb?: 56 | 76 | null;
+  /** What the hidden progress label says ("Opening that label…"); "Loading…" by default. */
+  label?: string;
 }
 
 function Block({
@@ -85,7 +87,12 @@ function SkeletonRows({
  * show it only while loading with nothing on screen yet (`loading && data ===
  * null`); with data on screen they keep it.
  */
-export function Skeleton({ variant, rows = 6, thumb = 56 }: SkeletonProps) {
+export function Skeleton({
+  variant,
+  rows = 6,
+  thumb = 56,
+  label = strings.a11y.loading,
+}: SkeletonProps) {
   const visible = useDelayedFlag(true, delay.skeleton);
   if (!visible) return null;
 
@@ -93,7 +100,7 @@ export function Skeleton({ variant, rows = 6, thumb = 56 }: SkeletonProps) {
     <View
       accessible
       accessibilityRole="progressbar"
-      accessibilityLabel={strings.a11y.loading}
+      accessibilityLabel={label}
       accessibilityLiveRegion="polite"
       style={styles.frame}
     >

@@ -56,6 +56,8 @@ export interface PlacePickerProps {
   allowNewContainer?: boolean;
   /** Default true only in `open`, where typing the code is the whole point. */
   autoFocusFilter?: boolean;
+  /** The filter's placeholder; `open` shows an example code instead of the general hint. */
+  placeholder?: string;
   /**
    * The option showing a spinner while `onPick` runs (the drop zone's is its
    * container id); the list is locked meanwhile.
@@ -115,6 +117,7 @@ export function PlacePicker({
   showDropZone = false,
   allowNewContainer = mode !== 'open',
   autoFocusFilter = mode === 'open',
+  placeholder = strings.picker.filter,
   busyId = null,
   notice,
   onPick,
@@ -245,7 +248,7 @@ export function PlacePicker({
         value={query}
         onChangeText={setQuery}
         size="regular"
-        placeholder={strings.picker.filter}
+        placeholder={placeholder}
         accessibilityLabel={strings.picker.filterA11y}
         autoFocus={autoFocusFilter}
         autoCapitalize={mode === 'open' ? 'characters' : 'none'}

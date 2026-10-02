@@ -31,8 +31,6 @@ export default function TabsLayout() {
         <Tabs.Screen name="spaces" options={{ title: strings.tabs.spaces }} />
         <Tabs.Screen name="scan" options={{ title: strings.tabs.scan }} />
         <Tabs.Screen name="drop-zone" options={{ title: strings.tabs.dropZone }} />
-        {/* Hidden until Home's own search replaces it (S1). */}
-        <Tabs.Screen name="search" options={{ href: null }} />
       </Tabs>
     </DropZoneProvider>
   );
