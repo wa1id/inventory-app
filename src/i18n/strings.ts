@@ -647,7 +647,7 @@ export const strings = {
     save: 'Save changes',
     saved: 'Changes saved.',
     conflict:
-      'Someone changed this item on another device while you were editing. Save again to keep your version, or cancel to see theirs.',
+      'Someone changed this item on another device while you were editing. Their changes are filled in below. Save again to keep yours as well, or cancel to keep only theirs.',
     notSaved: 'The changes were not saved. They are still here, so try again.',
   },
   move: {

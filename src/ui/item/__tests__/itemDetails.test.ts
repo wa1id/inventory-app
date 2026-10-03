@@ -6,6 +6,7 @@ import {
   detailsSeed,
   itemStamp,
   keepsUnnamed,
+  rebaseDetails,
 } from '@/ui/item/itemDetails';
 
 const item = {
@@ -47,6 +48,29 @@ describe('detailsDirty', () => {
 
   it('ignores the quantity, which this form does not edit', () => {
     expect(detailsDirty({ ...seed, quantity: '5' }, seed)).toBe(false);
+  });
+});
+
+describe('rebaseDetails', () => {
+  const seed = detailsSeed(item);
+  const theirs = detailsSeed({ ...item, notes: 'Charger in the bag', quantity: 3 });
+
+  it('keeps what was typed here and takes their change to a field left alone', () => {
+    expect(rebaseDetails({ ...seed, category: 'Power tools' }, seed, theirs)).toEqual({
+      ...theirs,
+      category: 'Power tools',
+    });
+  });
+
+  it('keeps what was typed when both changed the same field', () => {
+    const typed = { ...seed, notes: 'Battery is flat' };
+    expect(rebaseDetails(typed, seed, theirs).notes).toBe('Battery is flat');
+  });
+
+  it('counts only real changes as typed, as detailsDirty does', () => {
+    const respaced = { ...seed, name: ' Cordless drill ', tags: 'garage,power' };
+    const renamed = { ...theirs, name: 'Drill', tags: 'garage' };
+    expect(rebaseDetails(respaced, seed, renamed)).toEqual(renamed);
   });
 });
 

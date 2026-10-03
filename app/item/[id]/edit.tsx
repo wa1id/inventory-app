@@ -42,6 +42,7 @@ import {
   detailsDirty,
   detailsSeed,
   keepsUnnamed,
+  rebaseDetails,
   type DetailsBase,
 } from '@/ui/item/itemDetails';
 import { GUTTER, MIN_TOUCH_TARGET, space } from '@/ui/theme';
@@ -124,8 +125,9 @@ export default function EditItemScreen() {
 
   const [values, setValues] = useState<ItemFormValues>(EMPTY_ITEM_FORM);
   // Seeded once per id, during render, so a background re-read never
-  // overwrites typing. `base` is the version the save goes
-  // over: the one the form was seeded from, or theirs after a conflict.
+  // overwrites typing. `values` is what the form was filled from and `base`
+  // the version the save goes over: the item as first read, or theirs after
+  // a conflict.
   const [seed, setSeed] = useState<{
     id: string;
     values: ItemFormValues;
@@ -209,10 +211,14 @@ export default function EditItemScreen() {
       haptics.error();
       setGone(true);
     } else if (outcome.kind === 'conflict') {
-      // Someone else changed these details first: keep what was typed, save
-      // over their version next time, and say so.
+      // Someone else changed these details first: keep what was typed, fill
+      // in their change to every other field, save over their version next
+      // time, and say so.
       const theirs = outcome.base;
-      setSeed((current) => (current ? { ...current, base: theirs } : current));
+      setValues((current) => rebaseDetails(current, seed.values, theirs.values));
+      setSeed((current) =>
+        current ? { ...current, values: theirs.values, base: theirs } : current,
+      );
       haptics.warning();
       setProblem({ kind: 'conflict' });
     } else {

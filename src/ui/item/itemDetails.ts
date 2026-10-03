@@ -52,6 +52,25 @@ export function detailsDirty(values: ItemFormValues, seed: ItemFormValues): bool
 }
 
 /**
+ * The form after a conflict: a field changed here keeps what was typed, and
+ * every field left as it was takes their version. Saving again then keeps
+ * both changes, rather than writing the old value back over theirs.
+ */
+export function rebaseDetails(
+  values: ItemFormValues,
+  seed: ItemFormValues,
+  theirs: ItemFormValues,
+): ItemFormValues {
+  return {
+    name: values.name.trim() !== seed.name.trim() ? values.name : theirs.name,
+    category: values.category.trim() !== seed.category.trim() ? values.category : theirs.category,
+    tags: tagList(values.tags) !== tagList(seed.tags) ? values.tags : theirs.tags,
+    notes: values.notes.trim() !== seed.notes.trim() ? values.notes : theirs.notes,
+    quantity: theirs.quantity,
+  };
+}
+
+/**
  * The desk rule: an item that has no name yet (a Quick Snap photo) can have
  * its category, tags or notes saved while it stays unnamed. A name is only
  * required once someone types one, or of an item that already had one,
