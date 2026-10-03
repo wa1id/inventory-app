@@ -89,8 +89,8 @@ describe('luminance and contrast', () => {
 });
 
 describe('token contrast', () => {
-  // Opaque text pairs from the spec's measured table; translucent tokens are
-  // composited and measured in the design script instead.
+  // Opaque text pairs that must meet AA. Translucent tokens depend on what
+  // is behind them, so they are not checked here.
   const textPairs: [keyof ColorTokens, keyof ColorTokens][] = [
     ['ink', 'sheet'],
     ['ink', 'plaster'],

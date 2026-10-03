@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type Ref } from 'react';
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 import { AccessibilityInfo, Keyboard, Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { strings } from '@/i18n/strings';
@@ -13,7 +13,18 @@ import { attemptName } from '@/ui/item/itemDetails';
 import { radius, space, useTheme } from '@/ui/theme';
 import { maxScale } from '@/ui/typography';
 
+/** What the screen can ask of the field. */
+export interface NameItInlineHandle {
+  /**
+   * Saves a name typed but not saved; true once there is nothing left to
+   * save, false when saving it did not happen (the field says why).
+   */
+  commit(): Promise<boolean>;
+}
+
 export interface NameItInlineProps {
+  /** "File it…" commits through this before it moves the item. */
+  ref?: Ref<NameItInlineHandle>;
   /** The item as the screen last read it; each re-read brings its newer stamp. */
   item: { id: string; updatedAt: number };
   /**
@@ -53,6 +64,7 @@ function announce(message: string) {
  * ("Use “AA batteries”"), and "Save name" still saves what she typed.
  */
 export function NameItInline({
+  ref,
   item,
   incomingName,
   autoFocus,
@@ -113,13 +125,14 @@ export function NameItInline({
     announce(message);
   }
 
-  async function save() {
+  /** True once the name is saved; false when it was not (the field says why). */
+  async function save(): Promise<boolean> {
     const name = value.trim();
     if (!name) {
       showError(strings.forms.itemNameRequired);
-      return;
+      return false;
     }
-    if (savingRef.current) return;
+    if (savingRef.current) return false;
     savingRef.current = true;
     setSaving(true);
     setError(null);
@@ -135,7 +148,9 @@ export function NameItInline({
       logEvent('item_updated');
       finish(name);
       invalidate();
-    } else if (outcome.kind === 'namedMeanwhile') {
+      return true;
+    }
+    if (outcome.kind === 'namedMeanwhile') {
       // The typed name and the keyboard stay; the notice offers theirs.
       haptics.warning();
       setMeanwhile({ name: outcome.name, updatedAt: outcome.updatedAt });
@@ -151,7 +166,23 @@ export function NameItInline({
         kind === 'offline' ? strings.item.nameIt.failedOffline : strings.item.nameIt.failed,
       );
     }
+    return false;
   }
+
+  // "File it…" with a name typed but not saved saves it first, so the run
+  // never files it unnamed. Nothing typed is hers to file unnamed; the name
+  // it already has needs no write.
+  useImperativeHandle(ref, () => ({
+    commit: async () => {
+      const typed = value.trim();
+      if (typed === '') return true;
+      if (typed === theirs) {
+        finish(typed);
+        return true;
+      }
+      return save();
+    },
+  }));
 
   const thick = focused || error !== null;
 

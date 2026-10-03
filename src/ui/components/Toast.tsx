@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useLayoutScale } from '@/hooks/useLayoutScale';
 import { strings } from '@/i18n/strings';
+import { useConnection } from '@/providers/ConnectionProvider';
 import { useToastHostState, type ToastRecord } from '@/providers/ToastProvider';
 import { AppText } from '@/ui/components/AppText';
 import { RevokedLayer } from '@/ui/components/ConnectionBanner';
@@ -155,7 +156,6 @@ function ToastCard({ toast, leaving, onPause, onResume, onDismiss }: ToastCardPr
       {...pan.panHandlers}
       testID="toast"
       accessibilityRole={error ? 'alert' : undefined}
-      accessibilityLiveRegion={error ? 'assertive' : 'polite'}
       onTouchStart={onPause}
       onTouchEnd={onResume}
       onTouchCancel={onResume}
@@ -231,6 +231,8 @@ function ToastActionButton({
  * so a view after the stack is already on top.
  */
 export function OverlayHost() {
+  // While the removed-phone layer is up, the rest of the app is hidden from VoiceOver.
+  const revoked = useConnection().state === 'revoked';
   const content: ReactNode = (
     <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
       <ToastHost />
@@ -238,7 +240,15 @@ export function OverlayHost() {
     </View>
   );
 
-  return Platform.OS === 'ios' ? <FullWindowOverlay>{content}</FullWindowOverlay> : content;
+  return Platform.OS === 'ios' ? (
+    // Native default is modal: the overlay's window-level container would
+    // hide the whole app from VoiceOver, so it is modal only while revoked.
+    <FullWindowOverlay unstable_accessibilityContainerViewIsModal={revoked}>
+      {content}
+    </FullWindowOverlay>
+  ) : (
+    content
+  );
 }
 
 const styles = StyleSheet.create({

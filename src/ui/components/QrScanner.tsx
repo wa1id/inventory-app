@@ -22,7 +22,10 @@ export interface QrScannerProps {
   /**
    * Called once per scan with the raw code. Scanning stays paused afterwards
    * until the screen is focused again or `active` goes false and back to
-   * true, so one label held in view opens one container, not three.
+   * true, so one label held in view opens one container, not three. After
+   * coming back to the screen, the code handed over last is ignored until it
+   * has left the view, so Back from the container it opened does not open it
+   * again.
    */
   onScan: (raw: string) => void | Promise<void>;
   /** Type the code instead (permission screen and camera failure panel). */
@@ -46,6 +49,9 @@ export interface QrScannerProps {
 
 /** The reticle's side; its corners flash the camera accent when a code is read. */
 const RETICLE = 240;
+
+/** How long a label must be out of view after refocusing before the same label opens again. */
+const SAME_CODE_GAP = 1500;
 
 /**
  * The QR scanner shared by the Scan tab and sticker linking.
@@ -82,6 +88,11 @@ export function QrScanner({
   const [arming, setArming] = useState(0);
   const [scannedIn, setScannedIn] = useState(-1);
   const scannedRef = useRef(-1);
+  // The last code handed over, and, after refocusing, that code to ignore.
+  // Back from the container it opened, the same label is usually still under
+  // the camera; it is ignored until it has been out of view for a moment.
+  const handedRef = useRef<string | null>(null);
+  const ignoreRef = useRef<{ data: string; seen: number } | null>(null);
   const [wasActive, setWasActive] = useState(active);
   if (active !== wasActive) {
     setWasActive(active);
@@ -91,6 +102,8 @@ export function QrScanner({
   useFocusEffect(
     useCallback(() => {
       setArming((value) => value + 1);
+      // Focus only: "Scan again" re-activates and must accept the same code.
+      ignoreRef.current = handedRef.current ? { data: handedRef.current, seen: Date.now() } : null;
       return () => setTorch(false);
     }, []),
   );
@@ -98,8 +111,20 @@ export function QrScanner({
   const armed = scannedIn !== arming;
 
   async function handle(result: BarcodeScanningResult) {
+    const ignore = ignoreRef.current;
+    if (ignore) {
+      const now = Date.now();
+      // Still in view (seen within the gap): keep ignoring it. A different
+      // code, or the same one after it left the frame, ends the ignore.
+      if (ignore.data === result.data && now - ignore.seen < SAME_CODE_GAP) {
+        ignore.seen = now;
+        return;
+      }
+      ignoreRef.current = null;
+    }
     if (scannedRef.current === arming) return;
     scannedRef.current = arming;
+    handedRef.current = result.data;
     setScannedIn(arming);
     setLocked(true);
     try {

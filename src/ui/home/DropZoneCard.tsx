@@ -32,7 +32,7 @@ export interface DropZoneCardProps {
  *
  * The card itself is not pressable: its two buttons sit side by side, so
  * Quick Snap is never a button inside a button (the old card at
- * `app/(tabs)/index.tsx:112-142` hid it from VoiceOver). Shown only while
+ * `111b579:app/(tabs)/index.tsx:112-142` hid it from VoiceOver). Shown only while
  * something is waiting, so a first run is not led by an empty inbox.
  */
 export function DropZoneCard({ items, count, onSort, onQuickSnap }: DropZoneCardProps) {

@@ -37,7 +37,7 @@ import { GUTTER, radius, space, useTheme } from '@/ui/theme';
  * only key (`SyncProvider`). Laid out by state, one thing to do at a time:
  * turn it on or restore; write the code down; see that it is on.
  *
- * Fixes from the research: a failed backup is said plainly with "Try again"
+ * Failure cases: a failed backup is said plainly with "Try again"
  * instead of "Last backup: in progress…"; restoring asks before it
  * replaces what is on this phone; a restore that fails leaves backup off
  * rather than adopting the code (in `SyncProvider`). The code can be
@@ -124,8 +124,8 @@ function BackupOff({
       }
       // A failed first upload has still created the account, and backups will
       // keep trying under it, so its code is shown now as after any enable
-      // (the status card then carries the reason and "Try again"). It used to
-      // surface only behind "Show recovery code". No account means nothing
+      // (the status card then carries the reason and "Try again"), not only
+      // behind "Show recovery code". No account means nothing
       // was created (no database yet), so the reason shows here instead.
       const created = await loadAccount();
       if (created) onEnabled(created.recoveryCode);

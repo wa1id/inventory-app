@@ -6,8 +6,8 @@ import { spellCode, type PlaceLike } from '@/ui/a11y';
 /*
  * The decisions behind the capture, review and drop-zone screens, kept pure
  * (no React Native) so they are tested in Node. The camera mechanics they
- * report on are frozen; only what is said and where the person
- * lands is decided here.
+ * report on live in the capture screen; only what is said and where the
+ * person lands is decided here.
  */
 
 /** Fast-mode counters as the camera keeps them: shutter presses, finished pipelines, names. */
@@ -19,7 +19,7 @@ export interface FastTallies {
 
 /**
  * The fast-mode status pill. The counters stay separate on purpose
- * (`capture/index.tsx` before the redesign, L55-58): reporting completions as
+ * (`111b579:app/capture/index.tsx:55-58`): reporting completions as
  * identifications would claim work the recogniser did not do. `settled` is
  * false while photos are still being saved or identified.
  */
@@ -115,8 +115,7 @@ export function containerLabel(
  * "4 saved to the drop zone" / "4 saved to Tool chest". Until the first row
  * lands it says what is happening ("Saving 2 photos…"), never "0 saved", a
  * failure that has not happened. A container's name comes from its rows, so
- * otherwise there is no title rather than a wrong one (it used to say "the
- * drop zone").
+ * otherwise there is no title rather than a wrong one.
  */
 export function reviewTitle(
   summary: FastSessionSummary,

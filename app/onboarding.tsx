@@ -10,7 +10,7 @@ import { AppText } from '@/ui/components/AppText';
 import { Button } from '@/ui/components/Button';
 import { Icon, type IconName } from '@/ui/components/Icon';
 import { Mark } from '@/ui/components/Mark';
-import { JoinForm, type Joined } from '@/ui/household/JoinForm';
+import { JoinForm, type JoinDraft, type Joined } from '@/ui/household/JoinForm';
 import { GUTTER, space, useTheme } from '@/ui/theme';
 
 type Step = 'welcome' | 'join' | 'joined';
@@ -26,11 +26,10 @@ const MAX_WIDTH = 480;
  * from Settings › How it works).
  *
  * Joining comes first, because the usual new phone is a second one joining
- * the household with the owner beside it (flow 6.8: "Join your household",
- * the code, "Join household", "Start"). Using the phone on its own is one tap
- * and asks nothing. It no longer promises suggestions a build may not have or
- * offline use a joined phone does not get, and no longer sends a new
- * phone into creating its own first space on an empty local inventory.
+ * the household with the owner beside it. Using the phone on its own is one
+ * tap and asks nothing. It promises nothing a build may not have (photo
+ * suggestions) or a joined phone does not get (offline use), and does not
+ * send a new phone into creating a first space on an empty local inventory.
  */
 export default function OnboardingScreen() {
   const { colors } = useTheme();
@@ -39,6 +38,9 @@ export default function OnboardingScreen() {
   const { session } = useHousehold();
   const [step, setStep] = useState<Step>('welcome');
   const [householdName, setHouseholdName] = useState('');
+  // The code is 26 characters copied from the owner's phone; Back to Welcome
+  // unmounts the form, so what she typed is kept here.
+  const [joinDraft, setJoinDraft] = useState<JoinDraft | undefined>(undefined);
   const finishing = useRef(false);
 
   async function finish(outcome: 'completed' | 'skipped', stepNumber: number) {
@@ -85,6 +87,8 @@ export default function OnboardingScreen() {
         ) : step === 'join' ? (
           <JoinForm
             onJoined={joined}
+            initialDraft={joinDraft}
+            onDraftChange={setJoinDraft}
             // No header here: the form starts under the top safe-area inset,
             // which the keyboard avoidance has to know about or the
             // keyboard covers most of "Join household" on a notched phone.

@@ -33,7 +33,7 @@ function Body({ children }: { children: string }) {
  * build (`appConfig`: backup service, photo suggestions) and this phone
  * (joined to a household or not), so it never promises something untrue:
  * a joined phone's inventory and photos live on the home server, and changes
- * need the internet. The paired copy awaits the owner's sign-off.
+ * need the internet.
  */
 export default function PrivacyScreen() {
   const insets = useSafeAreaInsets();

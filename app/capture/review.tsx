@@ -36,11 +36,10 @@ import { ScreenFrame } from '@/ui/components/ScreenFrame';
 import { GutterSheetSeparator, sheetCell } from '@/ui/components/Sheet';
 import { Skeleton } from '@/ui/components/Skeleton';
 import { confirm } from '@/ui/confirm';
-import { describeError } from '@/ui/errors';
+import { describeError, needsRefreshBanner } from '@/ui/errors';
 import { haptics } from '@/ui/haptics';
 import { animateNextLayout } from '@/ui/motion';
 import { goToTab, openContainer } from '@/ui/navigation';
-import { needsRefreshBanner } from '@/ui/spaces/spaceSetup';
 import { usePullToRefresh } from '@/ui/spaces/usePullToRefresh';
 import { GUTTER, space, useTheme } from '@/ui/theme';
 

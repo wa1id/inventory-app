@@ -58,8 +58,8 @@ const TONE: Record<ButtonVariant, TextTone> = {
  *
  * Primary is solid ink, the only filled control on a screen. There is no
  * filled red button: destructive actions are quiet signal-coloured text at the
- * end of a screen and always lead to a confirm (the old white-on-coral danger
- * button measured 2.55:1). Labels wrap to two lines at large text and the
+ * end of a screen and always lead to a confirm (white on coral measures
+ * 2.55:1). Labels wrap to two lines at large text and the
  * button grows rather than clipping (issue #8).
  */
 export function Button({

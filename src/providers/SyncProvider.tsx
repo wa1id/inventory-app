@@ -184,9 +184,9 @@ export function SyncProvider({ children }: { children: ReactNode }) {
 
         if (result.status === 'failed') {
           // Restore is only offered while backup is off, so a code that did
-          // not restore must not become this phone's backup account: it
-          // used to stay adopted, and the screen claimed backup was on under
-          // a code with nothing behind it.
+          // not restore must not become this phone's backup account, or the
+          // screen would claim backup was on under a code with nothing
+          // behind it.
           await forgetAccount();
           setAccount(null);
           setStatus({ state: 'off' });

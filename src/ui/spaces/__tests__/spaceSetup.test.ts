@@ -1,13 +1,10 @@
-import { HouseholdHttpError } from '@/services/household/client';
 import {
   byContainerLabel,
   containerDeleteBody,
   containerLabel,
   containerValuesChanged,
   isNameTaken,
-  isOffline,
   labelsInSpace,
-  needsRefreshBanner,
   spaceDeleteBody,
   spaceValuesChanged,
   takenSpaceNames,
@@ -113,29 +110,5 @@ describe('containerValuesChanged', () => {
     expect(containerValuesChanged({ ...initial, name: '' }, initial)).toBe(true);
     expect(containerValuesChanged({ ...initial, visualType: 'box' }, initial)).toBe(true);
     expect(containerValuesChanged({ ...initial, spaceId: 'loft' }, initial)).toBe(true);
-  });
-});
-
-describe('needsRefreshBanner and isOffline', () => {
-  const offline = new HouseholdHttpError(0, 'offline');
-  const removed = new HouseholdHttpError(401, 'unauthorized');
-  const server = new HouseholdHttpError(500, 'http_500');
-
-  it('leaves offline and removed phones to their own banner and layer', () => {
-    expect(needsRefreshBanner(true, offline)).toBe(false);
-    expect(needsRefreshBanner(true, removed)).toBe(false);
-  });
-
-  it('explains any other failed refresh, and nothing when the refresh worked', () => {
-    expect(needsRefreshBanner(true, server)).toBe(true);
-    expect(needsRefreshBanner(true, new Error('disk I/O error'))).toBe(true);
-    expect(needsRefreshBanner(false, server)).toBe(false);
-  });
-
-  it('tells a connection failure from any other', () => {
-    expect(isOffline(offline)).toBe(true);
-    expect(isOffline(new HouseholdHttpError(530, 'http_530'))).toBe(true);
-    expect(isOffline(server)).toBe(false);
-    expect(isOffline(new Error('constraint failed'))).toBe(false);
   });
 });

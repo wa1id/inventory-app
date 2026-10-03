@@ -66,8 +66,8 @@ export function useSearch(query: string): SearchState {
   if (isFocused && seenRevision !== revision) {
     setSeenRevision(revision);
   }
-  // Bumped on focus and by `retry`. A plain counter, so "Try again" always
-  // changes something (the old retry re-set the same string and did nothing).
+  // Bumped on focus and by `retry`. A plain counter, so "Try again" re-runs
+  // the search even when the string is unchanged.
   const [nonce, setNonce] = useState(0);
   const run = `${seenRevision}|${nonce}`;
 

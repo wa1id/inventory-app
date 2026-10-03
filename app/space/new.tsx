@@ -22,6 +22,7 @@ import { BottomBar } from '@/ui/components/BottomBar';
 import { Button } from '@/ui/components/Button';
 import { PressedOverlay, rippleFor, useFocusRing } from '@/ui/components/PressFeedback';
 import { SpaceTile } from '@/ui/components/SpaceTile';
+import { isOffline } from '@/ui/errors';
 import { haptics } from '@/ui/haptics';
 import { delay } from '@/ui/motion';
 import type { NewSpaceResult } from '@/ui/navigation';
@@ -30,7 +31,6 @@ import { FormLayout, SaveNotice } from '@/ui/spaces/FormLayout';
 import { SpaceFields } from '@/ui/spaces/SpaceFields';
 import {
   isNameTaken,
-  isOffline,
   spaceValuesChanged,
   takenSpaceNames,
   type SpaceValues,

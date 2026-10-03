@@ -164,13 +164,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       const base = record.duration ?? (record.action ? delay.toastWithAction : delay.toast);
       startLife(shown.id, screenReaderRef.current ? base * 2 : base);
 
-      // Android reads the host's live region; iOS has to be told, queued so it
+      // Toasts mount as a fresh view, which TalkBack does not read as a
+      // live-region change, so both platforms are told; iOS queues it so it
       // does not cut off whatever VoiceOver is saying.
+      const spoken = record.action
+        ? `${record.message}, ${strings.a11y.availableAction(record.action.label)}`
+        : record.message;
       if (Platform.OS === 'ios') {
-        const spoken = record.action
-          ? `${record.message}, ${strings.a11y.availableAction(record.action.label)}`
-          : record.message;
         AccessibilityInfo.announceForAccessibilityWithOptions(spoken, { queue: true });
+      } else {
+        AccessibilityInfo.announceForAccessibility(spoken);
       }
     },
     [clearTimer, startLife],

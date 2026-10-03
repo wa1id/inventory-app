@@ -101,7 +101,7 @@ function ProblemBanner({ problem }: { problem: Problem }) {
 
 /**
  * Edit details: name, category, tags and notes, all on screen at
- * once (existing tags and notes used to hide behind "More details").
+ * once, so existing tags and notes are never hidden behind a disclosure.
  *
  * Quantity is not here: it saves itself on the item screen, and a seeded copy
  * in this form fought the stepper and conflicted with it. The

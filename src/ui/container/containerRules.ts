@@ -90,8 +90,7 @@ export type StickerPlan =
  * A new sticker links straight away unless the container already has a
  * label, whose old sticker would stop working. A sticker that opens another
  * container is moved only after saying which one loses it. Both are asked
- * as questions with the impact spelled out (the old title "Move this
- * label?" for a replacement was wrong).
+ * as questions with the impact spelled out.
  */
 export function planSticker(
   outcome: ScanOutcome,
@@ -177,7 +176,7 @@ export function labelFailureMessage(action: LabelAction, cause: unknown): string
 /**
  * What the share sheet carries besides the picture. Android cannot attach a
  * file through React Native's `Share`, so there the link itself goes too and
- * the label can still be opened from a message (as before the redesign).
+ * the label can still be opened from a message.
  */
 export function shareText(
   container: Named,

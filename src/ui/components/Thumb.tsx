@@ -18,7 +18,7 @@ export interface ThumbProps {
 
 /**
  * An item's photo, or the same `photo` placeholder whatever the container
- * type (the old 🧾/📦 mix said nothing). A photo that fails to load (a
+ * type: a per-type emoji would say nothing about the item. A photo that fails to load (a
  * missing file, a household photo that is not cached) leaves the placeholder.
  */
 export function Thumb({ uri, size, onPress, accessibilityLabel, testID }: ThumbProps) {

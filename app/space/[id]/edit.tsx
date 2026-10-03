@@ -17,12 +17,12 @@ import { ErrorState } from '@/ui/components/ErrorState';
 import { ScreenFrame } from '@/ui/components/ScreenFrame';
 import { Skeleton } from '@/ui/components/Skeleton';
 import { confirm } from '@/ui/confirm';
+import { isOffline } from '@/ui/errors';
 import { haptics } from '@/ui/haptics';
 import { goToTab } from '@/ui/navigation';
 import { DropZoneLocked, FormLayout, SaveNotice } from '@/ui/spaces/FormLayout';
 import { SpaceFields } from '@/ui/spaces/SpaceFields';
 import {
-  isOffline,
   labelsInSpace,
   spaceDeleteBody,
   spaceValuesChanged,
@@ -40,9 +40,9 @@ export default function EditSpaceScreen() {
  * Rename, re-icon or recolour a space, or delete it with everything in it.
  *
  * Save is the primary action in the bottom bar; Delete is quiet red text at
- * the end of the form, behind a confirm that spells out what goes with it.
- * They used to be equal-weight neighbours. The sheet's
- * Cancel comes from the root layout.
+ * the end of the form, behind a confirm that spells out what goes with it,
+ * so the two never sit side by side as equals. The sheet's Cancel comes from
+ * the root layout.
  */
 function EditSpace({ id }: { id: string }) {
   const repos = useRepositories();

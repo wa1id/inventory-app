@@ -66,7 +66,7 @@ function newer(a: ItemWithContext | null, b: ItemWithContext | null): ItemWithCo
  * person stays where they were instead of being sent into the destination
  * container. A failure keeps the sheet open with a notice and writes
  * nothing more: an item deleted elsewhere is said to be gone (the household
- * answers `null`, which used to read as success), and an item another phone
+ * answers `null`, which is never read as success), and an item another phone
  * moved first shows where it is now, with "Here now" following it.
  */
 export function useMove({ item, request, filing }: UseMoveOptions): MoveState {

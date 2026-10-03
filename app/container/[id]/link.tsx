@@ -91,9 +91,8 @@ function Panel({ tone, title, message, action }: PanelProps) {
  * and it is linked, with a question first only when something would stop
  * working.
  *
- * It replaces the old round trip through the Scan tab with a `bindTo` param,
- * which stacked a second tab shell; this is a camera over
- * the QR screen that closes back to it with a toast.
+ * A camera over the QR screen that closes back to it with a toast, rather
+ * than a trip through the Scan tab, which would stack a second tab shell.
  */
 export default function LinkStickerScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

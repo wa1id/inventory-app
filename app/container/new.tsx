@@ -18,11 +18,12 @@ import { ScreenFrame } from '@/ui/components/ScreenFrame';
 import { SpacePip } from '@/ui/components/SpacePip';
 import { TextField } from '@/ui/components/TextField';
 import { TypeGrid } from '@/ui/components/pickers/TypeGrid';
+import { isOffline } from '@/ui/errors';
 import { haptics } from '@/ui/haptics';
 import type { NewContainerResult } from '@/ui/navigation';
 import { abandonResult, deliverResult } from '@/ui/routeResult';
 import { DropZoneLocked, FormLayout, SaveNotice } from '@/ui/spaces/FormLayout';
-import { containerLabel, isOffline } from '@/ui/spaces/spaceSetup';
+import { containerLabel } from '@/ui/spaces/spaceSetup';
 import { space } from '@/ui/theme';
 
 const DEFAULT_TYPE: ContainerVisualType = 'box';
@@ -163,7 +164,7 @@ function NewContainer({ spaceId, request }: { spaceId: string; request: string |
         value={name}
         onChangeText={(next) => {
           setName(next);
-          // Typing clears a failed save's notice; it used to stay forever.
+          // Typing clears a failed save's notice.
           setFailure(null);
         }}
         returnKeyType="done"

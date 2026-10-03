@@ -48,8 +48,8 @@ function Message({ title, body, action }: { title: string; body?: string; action
 }
 
 /**
- * The item's photo, full screen, opened from the thumbnail on
- * the item screen now that the photo is no longer a 260 pt banner there.
+ * The item's photo, full screen, opened from the thumbnail on the item
+ * screen, which shows it small so where the item is comes first.
  *
  * iOS zooms natively: the picture sits in a scroll view that pinches up to
  * 4×. Android's scroll view cannot zoom, and there is no gesture library in

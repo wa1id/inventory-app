@@ -27,9 +27,9 @@ import { Skeleton } from '@/ui/components/Skeleton';
 import { SpacePip } from '@/ui/components/SpacePip';
 import { Tape } from '@/ui/components/Tape';
 import { isFreshArrival, sortContents, titleOf, typeNameOf } from '@/ui/container/containerRules';
+import { needsRefreshBanner } from '@/ui/errors';
 import { motionMs, useReducedMotion } from '@/ui/motion';
 import { goToTab, openSpace } from '@/ui/navigation';
-import { needsRefreshBanner } from '@/ui/spaces/spaceSetup';
 import { usePullToRefresh } from '@/ui/spaces/usePullToRefresh';
 import { GUTTER, MIN_TOUCH_TARGET, ROW_GAP, TYPE_ICON, space, useTheme } from '@/ui/theme';
 
@@ -55,7 +55,7 @@ function ToDropZone() {
   return null;
 }
 
-/** Search and, once the container is known, Edit; icons instead of the old blue "Edit". */
+/** Search and, once the container is known, Edit, as icons. */
 function HeaderActions({ containerId, title }: { containerId: string; title: string | null }) {
   return (
     <View style={styles.headerActions}>
@@ -79,9 +79,8 @@ interface CrumbSpace {
 }
 
 /**
- * "● Garage ›": the way back up to the space. It used to be plain text with
- * the space's emoji, so the only way to the space was Back, and only when
- * the container had been opened from there.
+ * "● Garage ›": the way back up to the space, a link rather than plain text,
+ * so the space is one tap away however the container was opened.
  */
 function SpaceCrumb({ place }: { place: CrumbSpace }) {
   const { colors } = useTheme();

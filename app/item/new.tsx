@@ -81,6 +81,7 @@ import { duration, easing, useReducedMotion } from '@/ui/motion';
 import type { PhotoResult } from '@/ui/navigation';
 import { joinPlaceOptions } from '@/ui/placeMatch';
 import { openForResult } from '@/ui/routeResult';
+import { SaveNotice } from '@/ui/spaces/FormLayout';
 import { GUTTER, MIN_TOUCH_TARGET, space } from '@/ui/theme';
 
 /** Longest the sheet's slide-up is waited for before the name field is focused anyway. */
@@ -115,22 +116,6 @@ function AddCancel({ onPress }: { onPress: () => void }) {
     >
       <AppText variant="body">{strings.common.cancel}</AppText>
     </Pressable>
-  );
-}
-
-/** Why the last save did not happen, in plain words (it used to be the raw message). */
-function SaveProblem({ cause }: { cause: unknown }) {
-  // A 404 here means the container went, not the item.
-  const described = describeError(cause, 'save', 'container');
-  return (
-    <Banner
-      tone="warning"
-      // A failed local write has no "could not be read" title; its body says it all.
-      title={described.kind === 'local' ? undefined : described.title}
-      message={described.body}
-      live="assertive"
-      testID="add-save-problem"
-    />
   );
 }
 
@@ -460,7 +445,7 @@ export default function AddItemScreen() {
         cancelLabel: strings.forms.keepEditing,
       });
       if (!discard) return;
-      // Cancelling after a capture used to leave the photo on the phone.
+      // Cancelling after a capture deletes the photo so it is not left on the phone.
       recognitionRef.current = null;
       deleteStoredPhotos(photoFiles(photo));
     }
@@ -657,7 +642,8 @@ export default function AddItemScreen() {
           {/* Above the fields, so it is seen whatever was scrolled to. */}
           {problem ? (
             <View style={styles.notice}>
-              <SaveProblem cause={problem.cause} />
+              {/* A 404 here means the container went, not the item. */}
+              <SaveNotice cause={problem.cause} subject="container" testID="add-save-problem" />
             </View>
           ) : null}
           <ScrollView

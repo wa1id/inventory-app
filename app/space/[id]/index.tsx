@@ -20,8 +20,9 @@ import { ScreenFrame, SearchButton } from '@/ui/components/ScreenFrame';
 import { GutterSheetSeparator, sheetCell } from '@/ui/components/Sheet';
 import { Skeleton } from '@/ui/components/Skeleton';
 import { SpaceTile } from '@/ui/components/SpaceTile';
+import { needsRefreshBanner } from '@/ui/errors';
 import { goToTab, openContainer } from '@/ui/navigation';
-import { byContainerLabel, needsRefreshBanner } from '@/ui/spaces/spaceSetup';
+import { byContainerLabel } from '@/ui/spaces/spaceSetup';
 import { usePullToRefresh } from '@/ui/spaces/usePullToRefresh';
 import { GUTTER, space, useTheme } from '@/ui/theme';
 
@@ -37,7 +38,7 @@ function ToDropZone() {
   return null;
 }
 
-/** Search and, once the space is known, Edit; icons instead of the old blue "Edit" text. */
+/** Search and, once the space is known, Edit, as icons. */
 function HeaderActions({ spaceId, name }: { spaceId: string; name: string | null }) {
   const router = useRouter();
   return (

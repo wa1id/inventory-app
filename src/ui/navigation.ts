@@ -55,8 +55,9 @@ export function openQuickSnap(): void {
 
 /*
  * What routes opened with a `request` param deliver through `routeResult`.
- * Producers and consumers live in different packages, so the shapes are
- * fixed here.
+ * The screen that opens a route and the route that answers live in different
+ * files that never import each other, so the shapes are fixed here where
+ * both can import them.
  */
 
 /** `/item/[id]/move?request=`: the item moved (or filed) from one container to another. */

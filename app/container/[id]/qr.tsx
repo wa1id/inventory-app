@@ -31,9 +31,9 @@ import {
   type WrittenLabel,
 } from '@/ui/container/containerRules';
 import { writeLabelPicture, type QrSvg } from '@/ui/container/labelImage';
+import { needsRefreshBanner } from '@/ui/errors';
 import { haptics } from '@/ui/haptics';
 import { goToTab } from '@/ui/navigation';
-import { needsRefreshBanner } from '@/ui/spaces/spaceSetup';
 import { GUTTER, OPTION_MIN, space, useTheme } from '@/ui/theme';
 
 type Busy = LabelAction | 'share';

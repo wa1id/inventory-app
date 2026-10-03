@@ -50,7 +50,7 @@ const RESUME_REFRESH_MS = 5_000;
  * Calm on purpose: a failure first makes the state `unsure`, and only after
  * 2.5 s without a success does it become `offline`, so brief blips never show
  * a banner. While offline it asks the unauthenticated health endpoint every
- * 10 s, and the first answer refreshes everything. A 401 means this phone was
+ * 10 s. The first success after any failure refreshes everything. A 401 means this phone was
  * removed on another phone; that sticks until the session changes. Coming back
  * to the app re-reads lists, so changes made on the other phone show up (#47).
  */
@@ -86,6 +86,7 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
     // before React re-renders, so the rendered state would be a step behind.
     let current: PairedState = stateRef.current === 'local' ? 'online' : stateRef.current;
     let offlineTimer: ReturnType<typeof setTimeout> | null = null;
+    let lastRecovery = 0;
     const set = (next: PairedState) => {
       if (current === 'revoked' || current === next) return;
       current = next;
@@ -106,10 +107,16 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
       }
       if (reachability === 'ok') {
         cancelTimer();
-        const wasOffline = current === 'offline';
+        // Whatever failed since the last success (a blip that never became
+        // "offline" included) is read again now that it can be; at most every
+        // few seconds, so one endpoint that keeps failing cannot loop it.
+        const recovering = current !== 'online';
         set('online');
-        // Whatever failed while offline is read again now that it can be.
-        if (wasOffline && current === 'online') invalidate();
+        const now = Date.now();
+        if (recovering && current === 'online' && now - lastRecovery >= RESUME_REFRESH_MS) {
+          lastRecovery = now;
+          invalidate();
+        }
         return;
       }
       if (current !== 'online' || offlineTimer) return;

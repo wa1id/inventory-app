@@ -48,10 +48,10 @@ type CaptureMode = 'single' | 'fast';
  * system prompt always arrives with context. Every denial path keeps manual
  * entry one tap away — a camera problem must never block adding an item.
  *
- * The redesign changed the chrome only. The camera mechanics (the preview and
- * tap-to-focus frame, continuous autofocus, the capture options, the fast
- * pipeline's order and the replace to review) are frozen; the
- * chrome lives in `CameraChrome.tsx`.
+ * The camera mechanics (the preview and tap-to-focus frame, continuous
+ * autofocus, the capture options, the fast pipeline's order and the replace
+ * to review) are tuned for capture speed and reliability; change them
+ * deliberately. The chrome lives in `CameraChrome.tsx`.
  *
  * Opened with `request` (the Add sheet's photo), it is a single-photo camera
  * that hands the stored photo back and closes, so the typed name is still
@@ -105,8 +105,8 @@ export default function CaptureScreen() {
   const [shooting, setShooting] = useState(false);
   // The newest fast-mode photo, for the last-shot tile and the shutter flash.
   const [lastShot, setLastShot] = useState<string | null>(null);
-  // Single mode: `processing` turns on only once the photo is back, so a quick
-  // second tap used to take two photos and replace twice.
+  // Single mode: `processing` turns on only once the photo is back, so this
+  // guard stops a quick second tap from taking two photos and replacing twice.
   const takingRef = useRef(false);
   // The library picker is open: a second tap would ask for another one, and
   // its refusal read as "That photo could not be opened."
@@ -356,7 +356,7 @@ export default function CaptureScreen() {
         allowsMultipleSelection: false,
       });
     } catch (cause) {
-      // The picker used to reject unhandled here.
+      // Caught so a failing picker never rejects unhandled.
       report(
         isPermissionError(cause)
           ? strings.permissions.libraryDeniedBody
@@ -409,7 +409,7 @@ export default function CaptureScreen() {
         flash={flash}
         // Continuous AF. 'on' would lock after a single shot (issue #44).
         autofocus="off"
-        // A camera that cannot start used to leave a silent black screen.
+        // A camera that cannot start shows an error, never a silent black screen.
         onMountError={() => setError(strings.capture.didNotStart)}
       />
       <TapToFocusLayer

@@ -27,7 +27,7 @@ function sheetTitle(name: string, filing: boolean): string {
  * Opened from the item screen ("Move…", "File it…") and from the Drop zone's
  * "File…", usually with a `request` that the opener awaits; the toast with
  * Undo comes from here either way, and the sheet always closes back to where
- * it was opened (it used to replace itself with the destination container).
+ * it was opened, never replacing itself with the destination container.
  * `filing=1` marks a filing run from the item screen, which goes on to the
  * next waiting item; the sheet reads the drop zone for it once the item is
  * filed, so the toast says "Everything is filed." only when it is.

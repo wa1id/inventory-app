@@ -912,7 +912,6 @@ export const strings = {
     importConfirmBody:
       'Its spaces, containers, items and photos are added to the household inventory. Do this before adding or changing things on this phone, so nothing newer is overwritten.',
     importConfirm: 'Copy',
-    copying: 'Copying…',
     copied: (items: number, photos: number) =>
       `Copied ${plural(items, 'item', 'items')} and ${plural(photos, 'photo', 'photos')} into the household.`,
     leave: 'Leave the household…',

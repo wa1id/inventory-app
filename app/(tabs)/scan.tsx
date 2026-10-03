@@ -14,6 +14,7 @@ import type { ParamListBase } from 'expo-router/react-navigation';
 
 import { useDelayedFlag } from '@/hooks/useDelayedFlag';
 import { strings } from '@/i18n/strings';
+import { useConnection } from '@/providers/ConnectionProvider';
 import { useRepositories } from '@/providers/DatabaseProvider';
 import type { ScanOutcome } from '@/repositories/qr';
 import { logError, logEvent } from '@/services/telemetry';
@@ -157,6 +158,8 @@ export default function ScanScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<ParamListBase>>();
   const [phase, setPhase] = useState<Phase>('camera');
   const [result, setResult] = useState<Result>({ kind: 'idle' });
+  // The removed-phone layer is an overlay, not a screen, so the tab stays focused under it.
+  const revoked = useConnection().state === 'revoked';
   const showOpening = useDelayedFlag(result.kind === 'opening', delay.skeleton);
 
   // Numbers each lookup, so one that finishes after the tab was left (or a
@@ -330,8 +333,9 @@ export default function ScanScreen() {
   return (
     <ScreenFrame kind="camera" testID="scan-camera">
       <QrScanner
-        // Off while a notice waits for an answer; "Scan again" turns it back on, re-armed.
-        active={result.kind === 'idle' || result.kind === 'opening'}
+        // Off while a notice waits for an answer ("Scan again" turns it back
+        // on, re-armed), and under the removed-phone layer.
+        active={!revoked && (result.kind === 'idle' || result.kind === 'opening')}
         title={strings.scan.title}
         onScan={open}
         onManual={typeCode}

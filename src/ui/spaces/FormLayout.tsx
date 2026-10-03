@@ -21,8 +21,8 @@ export interface FormLayoutProps {
 /**
  * The frame of the space and container sheets: fields scroll,
  * the primary action stays in a bar at the bottom, and the keyboard pushes
- * that bar up rather than covering it. Before the redesign nothing in the app
- * avoided the keyboard, so Save sat under it on iOS.
+ * that bar up rather than covering it. Without this, Save sits under the
+ * keyboard on iOS.
  */
 export function FormLayout({ notice, children, bottomBar }: FormLayoutProps) {
   const keyboard = useSheetKeyboardOffset();
@@ -54,13 +54,14 @@ export interface SaveNoticeProps {
   cause: unknown;
   subject: ErrorSubject;
   action?: BannerAction;
+  testID?: string;
 }
 
 /**
- * Why a save did not happen, in plain words: the raw message used to be
- * written into the name field's error slot. What was typed stays in the form.
+ * Why a save did not happen, in plain words, never the raw message. What
+ * was typed stays in the form.
  */
-export function SaveNotice({ cause, subject, action }: SaveNoticeProps) {
+export function SaveNotice({ cause, subject, action, testID }: SaveNoticeProps) {
   const described = describeError(cause, 'save', subject);
   return (
     <Banner
@@ -71,6 +72,7 @@ export function SaveNotice({ cause, subject, action }: SaveNoticeProps) {
       message={described.body}
       action={action}
       live="assertive"
+      testID={testID}
     />
   );
 }

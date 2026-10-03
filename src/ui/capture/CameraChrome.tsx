@@ -44,7 +44,7 @@ const SIDE_SLOT = MIN_TOUCH_TARGET;
 /**
  * Corner guides: they show how much of the frame the item should fill, which
  * is what makes a photo recognisable. Framing guidance only; the photo is not
- * cropped to it. Geometry unchanged from before the redesign.
+ * cropped to it.
  */
 export function Reticle() {
   return (

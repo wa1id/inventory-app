@@ -4,13 +4,11 @@ import { Keyboard, Platform, type KeyboardEvent } from 'react-native';
 import { animateWithKeyboard } from '@/ui/motion';
 
 /**
- * The software keyboard's height and visibility, from keyboard events.
+ * Whether the software keyboard is up, from keyboard events.
  *
  * `BottomBar` reads `visible` to drop the home-indicator inset on both
  * platforms; `TabBar` reads it to hide itself on Android only, so it passes
- * `enabled: false` on iOS. `height` is a fallback for wherever
- * `KeyboardAvoidingView` still misbehaves (sheets measure their offset with
- * `useSheetKeyboardOffset`): a bottom bar can lift itself by it.
+ * `enabled: false` on iOS.
  *
  * iOS reports before the keyboard moves, so each subscribed caller schedules
  * a global layout animation on the keyboard's curve (none under reduced
@@ -19,21 +17,20 @@ import { animateWithKeyboard } from '@/ui/motion';
  * reports afterwards.
  */
 export function useKeyboardInset({ enabled = true }: { enabled?: boolean } = {}): {
-  height: number;
   visible: boolean;
 } {
-  const [state, setState] = useState({ height: 0, visible: false });
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     if (!enabled) return;
     const ios = Platform.OS === 'ios';
     const show = (event: KeyboardEvent) => {
       if (ios) animateWithKeyboard(event);
-      setState({ height: event.endCoordinates.height, visible: true });
+      setVisible(true);
     };
     const hide = (event: KeyboardEvent) => {
       if (ios) animateWithKeyboard(event);
-      setState({ height: 0, visible: false });
+      setVisible(false);
     };
     const subscriptions = [
       Keyboard.addListener(ios ? 'keyboardWillShow' : 'keyboardDidShow', show),
@@ -42,5 +39,5 @@ export function useKeyboardInset({ enabled = true }: { enabled?: boolean } = {})
     return () => subscriptions.forEach((subscription) => subscription.remove());
   }, [enabled]);
 
-  return state;
+  return { visible };
 }

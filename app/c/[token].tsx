@@ -34,7 +34,7 @@ type Resolution = { request: string } & ({ outcome: ScanOutcome } | { cause: unk
  * label replaces this screen with its container (the root layout's anchor
  * puts Home underneath on a cold start). A label this app made but never
  * linked is linked here, to a container picked from the grouped list, so the
- * token is never lost (the old screen sent people back to rescan it). A
+ * token is never lost and she is not sent back to rescan it. A
  * failed lookup offers "Try again" instead of "Opening…" for ever.
  *
  * The lookup is a one-shot read that ends in navigation, so it is not a

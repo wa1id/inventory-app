@@ -25,7 +25,7 @@ import { ChoiceList } from '@/ui/components/pickers/ChoiceList';
 import { TypeGrid } from '@/ui/components/pickers/TypeGrid';
 import { spellCode } from '@/ui/a11y';
 import { confirm } from '@/ui/confirm';
-import { describeError } from '@/ui/errors';
+import { describeError, isOffline } from '@/ui/errors';
 import { haptics } from '@/ui/haptics';
 import { goToTab } from '@/ui/navigation';
 import { DropZoneLocked, FormLayout, SaveNotice } from '@/ui/spaces/FormLayout';
@@ -33,7 +33,6 @@ import {
   containerDeleteBody,
   containerLabel,
   containerValuesChanged,
-  isOffline,
 } from '@/ui/spaces/spaceSetup';
 import { GUTTER, space, useTheme } from '@/ui/theme';
 

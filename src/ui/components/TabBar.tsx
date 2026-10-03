@@ -39,7 +39,7 @@ const SLOT_MAX_WIDTH = 120;
  * and the only filled control in the bar. A press opens the Add sheet; a long
  * press goes straight to Quick Snap. The Drop zone tab carries a tape badge
  * with the number of items waiting: tape yellow, not red, because waiting is
- * not an alarm. Routes without a slot (the old Search tab) are not shown.
+ * not an alarm. The bar draws `SLOTS`, so a route without a slot is not shown.
  */
 export function TabBar({ state, navigation, insets }: BottomTabBarProps) {
   const { colors } = useTheme();

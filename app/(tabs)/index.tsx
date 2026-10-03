@@ -22,7 +22,7 @@ import { useInventoryQuery } from '@/hooks/useInventoryQuery';
 import { inlineIconSize, useLayoutScale } from '@/hooks/useLayoutScale';
 import { useSearch } from '@/hooks/useSearch';
 import { strings } from '@/i18n/strings';
-import { useConnection } from '@/providers/ConnectionProvider';
+import { useConnection, type ConnectionState } from '@/providers/ConnectionProvider';
 import { useRepositories } from '@/providers/DatabaseProvider';
 import { useDropZone } from '@/providers/DropZoneProvider';
 import { useHousehold } from '@/providers/HouseholdProvider';
@@ -68,12 +68,13 @@ const FULLY_VISIBLE = { itemVisiblePercentThreshold: 100 };
 
 /**
  * A failure the screen does not need to explain itself: the connection
- * banner covers the home server being unreachable, and the removed-phone
- * layer covers a phone that is no longer in the household.
+ * banner covers the home server being unreachable (only while the state says
+ * so; a blip that recovered leaves no banner, so the screen offers its own
+ * Try again), and the removed-phone layer covers a removed phone.
  */
-function explainedElsewhere(cause: unknown): boolean {
+function explainedElsewhere(cause: unknown, state: ConnectionState): boolean {
   const { kind } = describeError(cause);
-  return kind === 'offline' || kind === 'revoked';
+  return kind === 'revoked' || (kind === 'offline' && state !== 'online');
 }
 
 // Opening a result puts the keyboard away; the query stays for the way back.
@@ -106,7 +107,7 @@ function openPlace(hit: LocationSearchResult) {
  * Results replace the overview in place; the item rows carry where each
  * thing is and a quantity chip, so most searches end without opening
  * anything (#1, #14, `111b579`). Search used to be its own tab with a 14 px
- * location chip (`search.tsx:373-385`); it lives here now.
+ * location chip (`111b579:app/(tabs)/search.tsx:373-385`); it lives here now.
  */
 export default function HomeScreen() {
   const repos = useRepositories();
@@ -211,6 +212,9 @@ export default function HomeScreen() {
   );
 
   const toggleExpand = useCallback((id: string) => {
+    // The stepper opens under the row; with the keyboard up it would open
+    // behind it, where the reveal scroll cannot see it (as openItem does).
+    Keyboard.dismiss();
     revealId.current = id;
     setExpandedId((current) => (current === id ? null : id));
   }, []);
@@ -370,7 +374,7 @@ export default function HomeScreen() {
     }
     return resultEntries(
       search.results,
-      search.cause !== null && !explainedElsewhere(search.cause),
+      search.cause !== null && !explainedElsewhere(search.cause, connection.state),
     );
   })();
 
@@ -387,7 +391,10 @@ export default function HomeScreen() {
             { cause: spaces.cause, shown: spaces.data !== null },
             { cause: recent.cause, shown: recentRows !== null },
             { cause: dropZone.cause, shown: dropZone.count > 0 },
-          ].some(({ cause, shown }) => cause !== null && shown && !explainedElsewhere(cause)),
+          ].some(
+            ({ cause, shown }) =>
+              cause !== null && shown && !explainedElsewhere(cause, connection.state),
+          ),
           dropZoneCount: dropZone.count,
           body: idleBody,
         })),
@@ -462,7 +469,7 @@ export default function HomeScreen() {
         const cause = recent.cause ?? spaces.cause;
         // The connection banner already says the home server is not answering
         // and offers the one "Try again"; the list fills in once it answers.
-        if (explainedElsewhere(cause)) {
+        if (explainedElsewhere(cause, connection.state)) {
           return (
             <View style={[styles.gutter, styles.block]} testID="home-waiting">
               <AppText variant="body" tone="graphite">

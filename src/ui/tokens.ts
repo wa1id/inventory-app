@@ -50,7 +50,7 @@ export const lightColors = {
   toastAction: '#FFD23F',
   /** Leading bar on error toasts; the toast is inverted, so it borrows dark's signal. */
   toastSignal: '#FF9573',
-  /** Reserved for desk parity; no v1 surface uses a scrim. */
+  /** Kept so both themes have the same token set; nothing uses it yet. */
   scrim: 'rgba(20,24,22,0.42)',
   /** Toasts and the photo viewer's close button only. */
   shadowFloat: '0 18px 40px rgba(20,26,22,0.20), 0 2px 8px rgba(20,26,22,0.08)',

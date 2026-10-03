@@ -34,11 +34,11 @@ import { Sheet } from '@/ui/components/Sheet';
 import { Skeleton } from '@/ui/components/Skeleton';
 import { Thumb } from '@/ui/components/Thumb';
 import { confirm } from '@/ui/confirm';
-import { describeError } from '@/ui/errors';
+import { describeError, needsRefreshBanner } from '@/ui/errors';
 import { haptics } from '@/ui/haptics';
 import { itemStamp } from '@/ui/item/itemDetails';
 import { nextInRun } from '@/ui/item/moveFlow';
-import { NameItInline } from '@/ui/item/NameItInline';
+import { NameItInline, type NameItInlineHandle } from '@/ui/item/NameItInline';
 import { WhereCard } from '@/ui/item/WhereCard';
 import { goToTab, type MoveResult } from '@/ui/navigation';
 import { openForResult } from '@/ui/routeResult';
@@ -62,13 +62,6 @@ function RunProgress({ label }: { label: string }) {
 /** Moves VoiceOver or TalkBack focus to a control; the web has no such call. */
 function focusForScreenReader(target: View | null) {
   if (target && Platform.OS !== 'web') AccessibilityInfo.sendAccessibilityEvent(target, 'focus');
-}
-
-/** A failed refresh with the item still on screen; the connection banner covers offline. */
-function needsRefreshBanner(refreshFailed: boolean, cause: unknown): boolean {
-  if (!refreshFailed) return false;
-  const { kind } = describeError(cause);
-  return kind !== 'offline' && kind !== 'revoked';
 }
 
 /**
@@ -132,6 +125,7 @@ export default function ItemScreen() {
   const titleRef = useRef<View>(null);
   const fileRef = useRef<View>(null);
   const editRef = useRef<View>(null);
+  const nameRef = useRef<NameItInlineHandle>(null);
   const focusAfterNameRef = useRef(false);
   const focusedTitleRef = useRef(false);
 
@@ -190,6 +184,9 @@ export default function ItemScreen() {
     // The drop zone as it was before this move keeps the run in its order.
     const before = waitingIds;
     try {
+      // A name typed but not saved goes with it; if saving fails, the field
+      // says why and nothing moves.
+      if (naming && nameRef.current && !(await nameRef.current.commit())) return;
       const result = await openForResult<MoveResult>((request) =>
         router.push({
           pathname: '/item/[id]/move',
@@ -340,6 +337,7 @@ export default function ItemScreen() {
             {naming ? (
               <NameItInline
                 key={id}
+                ref={nameRef}
                 item={item}
                 incomingName={stored?.name ?? ''}
                 autoFocus={filing && arrived}

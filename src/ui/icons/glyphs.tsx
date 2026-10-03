@@ -108,7 +108,7 @@ export const GLYPHS = {
     </>
   ),
 
-  // New glyphs in the desk's style (spec Appendix B).
+  // Glyphs added for the redesign, drawn in the same style as the ones above.
   spaces: (
     <>
       <Rect x="3.5" y="4.5" width="17" height="15" rx="2" />

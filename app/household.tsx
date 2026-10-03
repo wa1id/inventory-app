@@ -151,7 +151,7 @@ function Paired({ session }: { session: HouseholdSession }) {
       haptics.success();
       toast.show({ message: strings.household.copied(result.items, result.photosUploaded) });
     } catch (cause) {
-      // Never the raw message: it used to show codes like `http_500`.
+      // Never the raw message (codes like `http_500`).
       logError('household_import_failed', {
         errorClass: cause instanceof Error ? cause.name : 'unknown',
       });
@@ -247,7 +247,8 @@ function Paired({ session }: { session: HouseholdSession }) {
               tone="info"
               message={strings.household.importNotice(offer.spaces, offer.items)}
               action={{
-                label: importing ? strings.household.copying : strings.household.importAction,
+                // Busy keeps the label, as every button does, and adds a spinner.
+                label: strings.household.importAction,
                 onPress: () => void copyIn(),
                 loading: importing,
                 testID: 'household-import',

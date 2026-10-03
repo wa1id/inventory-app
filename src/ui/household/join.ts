@@ -33,7 +33,7 @@ export interface JoinErrors {
 
 /**
  * Checked on press, not while typing, so a half-typed code is never an error.
- * Stricter than the old "8 characters and a name" rule (`household.tsx:154`):
+ * Stricter than the old "8 characters and a name" rule (`111b579:app/household.tsx:154`):
  * a code of the wrong length cannot be right, and saying how long it is saves
  * a round trip to the home server and a vaguer refusal.
  */
@@ -55,7 +55,7 @@ const GENERIC_NAMES = new Set(['iphone', 'ipad', 'android']);
 /**
  * The name to prefill: the phone's own name ("Anna’s iPhone") when it has a
  * real one, otherwise nothing, so the field asks for one instead of
- * suggesting "This phone" (the old default, which every phone then shared).
+ * suggesting "This phone", a name every phone would then share.
  */
 export function suggestedPhoneName(deviceName: string | null | undefined): string {
   const name = (deviceName ?? '').trim();

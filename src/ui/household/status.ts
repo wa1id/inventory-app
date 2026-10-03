@@ -17,7 +17,7 @@ export interface Summary {
 /**
  * The value on Settings' backup row. It says "Off" rather than nothing when
  * backup is disabled: an inventory that exists only on one phone is a fact
- * worth seeing without opening a submenu (`settings.tsx:35-39`).
+ * worth seeing without opening a submenu (`111b579:app/settings.tsx:35-39`).
  */
 export function backupSummary(status: SyncStatus): Summary {
   const copy = strings.settings.backupSummary;
@@ -47,7 +47,7 @@ export function showBackupRow(paired: boolean, status: SyncStatus): boolean {
   return status.state !== 'off' && status.state !== 'unavailable';
 }
 
-/** Plain words for every way a backup or restore can fail (was `describe()`, `backup.tsx:13-36`). */
+/** Plain words for every way a backup or restore can fail (was `describe()`, `111b579:app/backup.tsx:13-36`). */
 export function backupReason(reason: SyncFailureReason | 'malformed'): string {
   const copy = strings.backup.reasons;
   switch (reason) {

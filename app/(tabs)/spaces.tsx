@@ -18,8 +18,8 @@ import { Row } from '@/ui/components/Row';
 import { ScreenFrame, SearchButton, TabRootHeader } from '@/ui/components/ScreenFrame';
 import { GutterSheetSeparator, sheetCell } from '@/ui/components/Sheet';
 import { Skeleton } from '@/ui/components/Skeleton';
+import { needsRefreshBanner } from '@/ui/errors';
 import { openSpace } from '@/ui/navigation';
-import { needsRefreshBanner } from '@/ui/spaces/spaceSetup';
 import { usePullToRefresh } from '@/ui/spaces/usePullToRefresh';
 import { GUTTER, OPTION_MIN, THUMB, space, useTheme } from '@/ui/theme';
 

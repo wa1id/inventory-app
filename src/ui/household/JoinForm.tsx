@@ -42,6 +42,12 @@ export interface Joined {
   hasImportOffer: boolean;
 }
 
+/** What she has typed so far, kept by a caller that may unmount the form (onboarding's Back). */
+export interface JoinDraft {
+  code: string;
+  name: string;
+}
+
 export interface JoinFormProps {
   /** Above the fields: the heading on Household, Back and the heading in onboarding. */
   header?: ReactNode;
@@ -53,6 +59,10 @@ export interface JoinFormProps {
    * default; onboarding, which has no header, passes its top safe-area inset.
    */
   keyboardVerticalOffset?: number;
+  /** Restores the code and name after the form was unmounted, so Back does not cost her the code. */
+  initialDraft?: JoinDraft;
+  /** Called on every edit, so the caller can pass the draft back as `initialDraft`. */
+  onDraftChange?: (draft: JoinDraft) => void;
 }
 
 /**
@@ -67,13 +77,21 @@ export interface JoinFormProps {
  * write is mirrored into the local database and counting afterwards would
  * offer to copy the household's own data back into it.
  */
-export function JoinForm({ header, onJoined, keyboardVerticalOffset }: JoinFormProps) {
+export function JoinForm({
+  header,
+  onJoined,
+  keyboardVerticalOffset,
+  initialDraft,
+  onDraftChange,
+}: JoinFormProps) {
   const { state, invalidate } = useDatabase();
   const household = useHousehold();
   const headerHeight = useHeaderHeight();
 
-  const [code, setCode] = useState('');
-  const [name, setName] = useState(() => suggestedPhoneName(Constants.deviceName));
+  const [code, setCode] = useState(() => initialDraft?.code ?? '');
+  const [name, setName] = useState(
+    () => initialDraft?.name ?? suggestedPhoneName(Constants.deviceName),
+  );
   const [errors, setErrors] = useState<JoinErrors>({});
   const [failure, setFailure] = useState<'offline' | 'other' | null>(null);
   const [busy, setBusy] = useState(false);
@@ -152,6 +170,7 @@ export function JoinForm({ header, onJoined, keyboardVerticalOffset }: JoinFormP
           length={CODE_LENGTH}
           onChangeValue={(next) => {
             setCode(next);
+            onDraftChange?.({ code: next, name });
             setErrors((current) => ({ ...current, code: undefined }));
             setFailure(null);
           }}
@@ -165,6 +184,7 @@ export function JoinForm({ header, onJoined, keyboardVerticalOffset }: JoinFormP
           value={name}
           onChangeText={(next) => {
             setName(next);
+            onDraftChange?.({ code, name: next });
             setErrors((current) => ({ ...current, name: undefined }));
           }}
           error={errors.name}

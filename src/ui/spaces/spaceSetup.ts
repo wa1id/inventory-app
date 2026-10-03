@@ -1,5 +1,4 @@
 import { strings } from '@/i18n/strings';
-import { describeError } from '@/ui/errors';
 
 /**
  * The rules behind the Spaces tab and the space and container forms, kept
@@ -105,21 +104,4 @@ export function containerValuesChanged(values: ContainerValues, initial: Contain
     values.visualType !== initial.visualType ||
     values.spaceId !== initial.spaceId
   );
-}
-
-/**
- * A refresh that failed while data stayed on screen gets its own "could not
- * be refreshed" banner, except when the reason already has one: the
- * connection banner explains an unreachable home server, and the
- * removed-phone layer covers a revoked one.
- */
-export function needsRefreshBanner(refreshFailed: boolean, cause: unknown): boolean {
-  if (!refreshFailed) return false;
-  const { kind } = describeError(cause);
-  return kind !== 'offline' && kind !== 'revoked';
-}
-
-/** Whether a failed write was the connection, for "Check the connection" wording. */
-export function isOffline(cause: unknown): boolean {
-  return describeError(cause, 'save').kind === 'offline';
 }

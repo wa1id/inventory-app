@@ -18,10 +18,10 @@ import { ItemRow } from '@/ui/components/ItemRow';
 import { ScreenFrame, SearchButton, TabRootHeader } from '@/ui/components/ScreenFrame';
 import { GutterSheetSeparator, sheetCell } from '@/ui/components/Sheet';
 import { Skeleton } from '@/ui/components/Skeleton';
+import { needsRefreshBanner } from '@/ui/errors';
 import { animateNextLayout } from '@/ui/motion';
 import { openQuickSnap, type MoveResult } from '@/ui/navigation';
 import { openForResult } from '@/ui/routeResult';
-import { needsRefreshBanner } from '@/ui/spaces/spaceSetup';
 import { usePullToRefresh } from '@/ui/spaces/usePullToRefresh';
 import { GUTTER, space, useTheme } from '@/ui/theme';
 
