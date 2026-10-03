@@ -1,93 +1,253 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Alert } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import {
+  Animated,
+  BackHandler,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  type TextInput,
+} from 'react-native';
+import {
+  Stack,
+  useLocalSearchParams,
+  useNavigation,
+  useRouter,
+  type NativeStackNavigationProp,
+} from 'expo-router';
+import { usePreventRemove, type ParamListBase } from 'expo-router/react-navigation';
 
+import { parseQuantityInput } from '@/core/quantity';
 import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
+import type { Item } from '@/db/types';
 import { useInventoryQuery } from '@/hooks/useInventoryQuery';
+import { useRecentPlaces } from '@/hooks/useRecentPlaces';
+import { useSheetKeyboardOffset } from '@/hooks/useSheetKeyboardOffset';
 import { strings } from '@/i18n/strings';
+import { useConnection } from '@/providers/ConnectionProvider';
 import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
-import { ConflictError, HouseholdHttpError } from '@/services/household/client';
+import { useToast } from '@/providers/ToastProvider';
 import { recognizeItem } from '@/services/ai/recognition';
 import { deleteStoredPhotos } from '@/services/capture/imageStore';
-import { logEvent } from '@/services/telemetry';
+import { rememberPlace } from '@/services/places/recentPlaces';
+import { logError, logEvent } from '@/services/telemetry';
+import { clearDraft, discardStaleDraft, keepDraft, restorableDraft } from '@/ui/add/addDraft';
+import {
+  containerTitle,
+  entryId,
+  formHasContent,
+  hasDetails,
+  initialAddState,
+  photoFiles,
+  photoFromStored,
+  resolvePlace,
+  saveA11yLabel,
+  savedMessage,
+  whereEntries,
+  type AddPhoto,
+  type WhereEntry,
+} from '@/ui/add/addSheet';
+import { WhereList } from '@/ui/add/WhereList';
+import { recordCategory } from '@/ui/categoryMemory';
+import { AppText } from '@/ui/components/AppText';
+import { Banner } from '@/ui/components/Banner';
+import { BottomBar } from '@/ui/components/BottomBar';
+import { Button } from '@/ui/components/Button';
+import { IconButton } from '@/ui/components/IconButton';
 import {
   EMPTY_ITEM_FORM,
-  ItemForm,
+  ItemDetailsFields,
   applySuggestion,
   validateItemForm,
-  type ItemFormErrors,
   type ItemFormValues,
 } from '@/ui/components/ItemForm';
-import { Button } from '@/ui/components/Button';
-import { Screen } from '@/ui/components/Screen';
+import { PlacePicker, type PickedPlace, type PlaceOption } from '@/ui/components/PlacePicker';
+import { QuantityStepper } from '@/ui/components/QuantityStepper';
+import { ScreenFrame } from '@/ui/components/ScreenFrame';
 import {
   SuggestionBanner,
   staleSuggestionName,
   type SuggestionState,
 } from '@/ui/components/SuggestionBanner';
+import { TextField } from '@/ui/components/TextField';
+import { Thumb } from '@/ui/components/Thumb';
+import { confirm, showActionSheet } from '@/ui/confirm';
+import { describeError } from '@/ui/errors';
+import { haptics } from '@/ui/haptics';
+import { duration, easing, useReducedMotion } from '@/ui/motion';
+import type { PhotoResult } from '@/ui/navigation';
+import { joinPlaceOptions } from '@/ui/placeMatch';
+import { openForResult } from '@/ui/routeResult';
+import { SaveNotice } from '@/ui/spaces/FormLayout';
+import { GUTTER, MIN_TOUCH_TARGET, space } from '@/ui/theme';
 
-/** Route params arrive as strings; anything unusable becomes undefined. */
-function toPositiveInt(value: string | undefined): number | undefined {
-  if (!value) return undefined;
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+/** Longest the sheet's slide-up is waited for before the name field is focused anyway. */
+const ARRIVAL_FALLBACK_MS = 700;
+
+type Step = 'form' | 'place';
+
+/**
+ * The sheet's top-left, as on every sheet: "Cancel" on iOS, a close icon on
+ * Android. Unlike a swipe-down or Back, which keep the draft, it asks before
+ * throwing away what was typed.
+ */
+function AddCancel({ onPress }: { onPress: () => void }) {
+  if (Platform.OS === 'android') {
+    return (
+      <IconButton
+        icon="close"
+        accessibilityLabel={strings.common.close}
+        onPress={onPress}
+        testID="add-cancel"
+      />
+    );
+  }
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={strings.common.cancel}
+      hitSlop={space.sm}
+      testID="add-cancel"
+      style={({ pressed }) => [styles.cancel, { opacity: pressed ? 0.6 : 1 }]}
+    >
+      <AppText variant="body">{strings.common.cancel}</AppText>
+    </Pressable>
+  );
 }
 
 /**
- * Review-and-save screen for a new item.
+ * Add an item: a name is enough. The place defaults to the drop
+ * zone, the container it was opened from and the last few places are one tap
+ * each, and "Somewhere else…" swaps the sheet to the full place picker. The
+ * keyboard's return key saves, so "add AA batteries somewhere" is Add, type,
+ * return. Before this, adding needed a container first and Save sat
+ * under the keyboard.
  *
- * Reached two ways: straight from a container ("add without a photo") or after
- * capture with a `photoUri`. When a photo is present, recognition runs in the
- * background and merely prefills the same controls — the user can type over it
- * at any point, and a failure never blocks saving (issues #7, #13).
+ * A photo is optional. When there is one, recognition runs in the background
+ * and only fills blanks; it never blocks saving and never overwrites typing
+ * (issues #7, #13).
+ *
+ * Nothing typed is lost to a stray swipe: the sheet keeps a draft (`addDraft`)
+ * that the next plain open of Add restores. The draft owns the photo until the
+ * item is saved, so a photo nobody kept is deleted, never left behind.
  */
-export default function NewItemScreen() {
-  const { containerId, photoUri, photoThumbUri, photoWidth, photoHeight, photoBytes } =
-    useLocalSearchParams<{
-      containerId: string;
-      photoUri?: string;
-      photoThumbUri?: string;
-      photoWidth?: string;
-      photoHeight?: string;
-      photoBytes?: string;
-    }>();
+export default function AddItemScreen() {
+  const params = useLocalSearchParams<{
+    containerId?: string;
+    name?: string;
+    photoUri?: string;
+    photoThumbUri?: string;
+    photoWidth?: string;
+    photoHeight?: string;
+    photoBytes?: string;
+  }>();
   const repos = useRepositories();
   const { invalidate } = useDatabase();
   const router = useRouter();
+  const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
+  const toast = useToast();
+  const keyboard = useSheetKeyboardOffset();
+  const reduceMotion = useReducedMotion();
+  // Which sheet wrote the draft: only this one may clear it.
+  const owner = useId();
 
-  const [values, setValues] = useState<ItemFormValues>(EMPTY_ITEM_FORM);
-  const [errors, setErrors] = useState<ItemFormErrors>({});
-  const [saving, setSaving] = useState(false);
-  const [suggestion, setSuggestion] = useState<SuggestionState>(
-    photoUri ? { status: 'running' } : { status: 'idle' },
+  const [initial] = useState(() =>
+    initialAddState(params, restorableDraft(Date.now()), EMPTY_ITEM_FORM),
   );
-  const [photo, setPhoto] = useState<string | null>(photoUri ?? null);
+  const [values, setValues] = useState<ItemFormValues>(initial.values);
+  const [placeId, setPlaceId] = useState(initial.placeId);
+  const [picked, setPicked] = useState<PlaceOption | null>(initial.picked);
+  const [photo, setPhoto] = useState<AddPhoto | null>(initial.photo);
+  const [suggestion, setSuggestion] = useState<SuggestionState>(initial.suggestion);
+  const [showMore, setShowMore] = useState(initial.showMore);
+  // The details as they were when "More details" was closed over them; a
+  // suggestion that changes them opens it again (AI changes are never hidden).
+  const [collapsedAt, setCollapsedAt] = useState<string | null>(null);
+  const [restored, setRestored] = useState(initial.restored);
+  const [step, setStep] = useState<Step>('form');
+  const [saving, setSaving] = useState<'save' | 'another' | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [problem, setProblem] = useState<{ cause: unknown } | null>(null);
+  // "Saved. Add the next one." under the name, until the next name is typed.
+  const [savedNext, setSavedNext] = useState(false);
+  const [fade] = useState(() => new Animated.Value(1));
 
-  const { data: container } = useInventoryQuery(
-    () => repos.containers.getWithCounts(containerId),
-    `container:${containerId}`,
+  const savingRef = useRef(false);
+  // The camera is open for this sheet: a second tap must not stack another.
+  const cameraOpenRef = useRef(false);
+  // The photo recognition is running for; an answer about another one is dropped.
+  const recognitionRef = useRef<string | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  const nameRef = useRef<TextInput>(null);
+
+  // Every container with its space, for the recent places, the one the sheet
+  // was opened for and the toast. Containers only: no photos are fetched.
+  const recentIds = useRecentPlaces();
+  const places = useInventoryQuery(async () => {
+    const [containers, spaces] = await Promise.all([
+      repos.containers.listAllWithSpace(),
+      repos.spaces.listWithCounts(),
+    ]);
+    return joinPlaceOptions(containers, spaces);
+  }, 'add-places');
+  const options = useMemo(
+    () => (places.data ? new Map(places.data.map((option) => [option.id, option])) : null),
+    [places.data],
   );
-  const { data: space } = useInventoryQuery(
-    async () => (container ? repos.spaces.getById(container.spaceId) : null),
-    `space:${container?.spaceId ?? 'none'}`,
-  );
+
+  const paramId =
+    params.containerId && params.containerId !== DROP_ZONE_CONTAINER_ID ? params.containerId : null;
+  const paramOption = paramId ? (options?.get(paramId) ?? null) : null;
+  const place = resolvePlace(placeId, options, picked);
+  const entries = whereEntries({
+    param: paramOption,
+    recentIds,
+    options: options ?? new Map(),
+    selectedId: place.id,
+    picked,
+  });
+
+  const typedName = values.name.trim();
+  const hasContent = formHasContent(values, photo, EMPTY_ITEM_FORM);
+  const staleName = staleSuggestionName(suggestion, typedName);
+  const detailsKey = [values.category, values.tags, values.notes].join('\u0000');
+  const detailsShown = showMore || (hasDetails(values) && detailsKey !== collapsedAt);
+
+  // A plain open that found no fresh draft throws away a stale one, photo and all.
+  useEffect(() => {
+    if (!initial.restored) discardStaleDraft(Date.now());
+  }, [initial.restored]);
+
+  // The draft follows every change, so a swipe-down or Back keeps it.
+  useEffect(() => {
+    keepDraft(
+      owner,
+      hasContent
+        ? { values, placeId, picked, photo, suggestion, showMore, savedAt: Date.now() }
+        : null,
+    );
+  }, [hasContent, owner, photo, picked, placeId, showMore, suggestion, values]);
 
   /**
-   * Sets only terminal states. `running` is established by the initial state
-   * (photo present) or by the retry handler, so the kick-off effect never
-   * writes state synchronously.
+   * Sets only terminal states; `running` and `refreshing` are set by whoever
+   * starts it.
    *
-   * @param nameHint The name the user typed over ours; asks the backend to
-   *   describe *that* item instead of repeating its own identification.
+   * @param nameHint The name the user typed; asks the backend to describe
+   *   *that* item instead of repeating its own identification.
    * @param overwrite Replace the supporting fields rather than filling the
    *   blanks. Only for an explicit "update the other details": those fields
-   *   were derived from an identification the user has since rejected, so
-   *   keeping them would file the item under the wrong category and tags.
-   *   A hint alone never implies this — a retry can be name-anchored without
-   *   being allowed to discard what the user typed.
+   *   were derived from an identification the user has since rejected. A hint
+   *   alone never implies this — a retry can be name-anchored without being
+   *   allowed to discard what the user typed.
    */
   const runRecognition = useCallback(async (uri: string, nameHint?: string, overwrite = false) => {
+    recognitionRef.current = uri;
     const result = await recognizeItem({ imageUri: uri, nameHint });
+    if (recognitionRef.current !== uri) return;
 
     if (result.status === 'failed') {
       setSuggestion({ status: 'failed', reason: result.reason });
@@ -113,143 +273,595 @@ export default function NewItemScreen() {
   }, []);
 
   useEffect(() => {
-    // Kicking off an async request on mount is what effects are for. The rule
+    // Kicking off an async request on arrival is what effects are for. The rule
     // flags this because `runRecognition` transitively calls setState, but it
     // only does so after awaiting the network call — never synchronously in
-    // this effect body, so no cascading render occurs.
+    // this effect body, so no cascading render occurs. A restored draft whose
+    // recognition was cut off starts again, anchored to the typed name.
+    const arrived = initial.recognize ? initial.photo : null;
+    if (!arrived) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (photo) void runRecognition(photo);
-  }, [photo, runRecognition]);
+    void runRecognition(arrived.uri, initial.values.name.trim() || undefined);
+  }, [initial, runRecognition]);
 
-  const typedName = values.name.trim();
-  /** Set once the title no longer matches what the other fields describe. */
-  const staleName = staleSuggestionName(suggestion, typedName);
+  // The cursor waits in "What is it?" once the sheet is up (focusing during the
+  // slide makes the keyboard fight it). Not with a photo: the suggestion may
+  // name it.
+  const focusOnArrival = initial.photo === null;
+  useEffect(() => {
+    if (!focusOnArrival) return;
+    let done = false;
+    const focus = () => {
+      if (done) return;
+      done = true;
+      // Not if the camera or the place picker's form is already on top: the
+      // keyboard would come up behind it.
+      if (navigation.isFocused()) nameRef.current?.focus();
+    };
+    const unsubscribe = navigation.addListener('transitionEnd', (event) => {
+      if (!event.data.closing) focus();
+    });
+    const timer = setTimeout(focus, ARRIVAL_FALLBACK_MS);
+    return () => {
+      done = true;
+      unsubscribe();
+      clearTimeout(timer);
+    };
+  }, [focusOnArrival, navigation]);
 
-  function refreshFromName(uri: string, hint: string) {
-    setSuggestion({ status: 'refreshing' });
-    void runRecognition(uri, hint, true);
-  }
-
-  /**
-   * @param andAnother Return straight to the camera instead of the saved item.
-   *   Adding things off a shelf is a run, not a single errand, so the common
-   *   case should not cost a trip back through the container screen.
-   */
-  async function save(andAnother = false) {
-    const { errors: nextErrors, parsed } = validateItemForm(values);
-    setErrors(nextErrors);
-    if (!parsed) return;
-
-    setSaving(true);
-    try {
-      const item = await repos.items.create({
-        containerId,
-        ...parsed,
-        photo: photo
-          ? {
-              uri: photo,
-              thumbUri: photoThumbUri,
-              width: toPositiveInt(photoWidth),
-              height: toPositiveInt(photoHeight),
-              byteSize: toPositiveInt(photoBytes),
-            }
-          : null,
-      });
-
-      logEvent('item_created', {
-        hasPhoto: Boolean(photo),
-        suggestionAccepted: suggestion.status === 'applied' || suggestion.status === 'refreshed',
-        hinted: suggestion.status === 'refreshed',
-      });
-      invalidate();
-      // `replace`, not `push`: the saved form must not sit in the back stack,
-      // so Back from the camera lands on the container either way.
-      if (andAnother) router.replace(`/capture?containerId=${containerId}`);
-      else router.dismissTo(`/item/${item.id}`);
-    } catch (cause) {
-      setSaving(false);
-      Alert.alert(
-        'Could not save',
-        cause instanceof ConflictError
-          ? strings.household.conflict
-          : cause instanceof HouseholdHttpError &&
-              (cause.code === 'offline' || cause.code === 'timeout')
-            ? strings.household.offline
-            : cause instanceof Error
-              ? cause.message
-              : 'The item could not be saved. Your details are still here.',
-      );
+  /** Between the form and the place picker: a short cross-fade, none with reduced motion. */
+  function showStep(next: Step) {
+    if (next === 'place') Keyboard.dismiss();
+    if (!reduceMotion) fade.setValue(0);
+    setStep(next);
+    if (!reduceMotion) {
+      Animated.timing(fade, {
+        toValue: 1,
+        duration: duration.stepSwap,
+        easing: easing.out,
+        useNativeDriver: true,
+      }).start();
     }
   }
 
-  function discardPhoto() {
-    if (!photo) return;
-    const uri = photo;
-    setPhoto(null);
-    setSuggestion({ status: 'idle' });
-    // The photo was written to app storage during capture; drop the file since
-    // it is not referenced by any item row.
-    deleteStoredPhotos([uri]);
+  // Back, a swipe-down or Android back in the place step return to the form
+  // without changing the place. Not while the removed-phone layer is up: it
+  // closes every sheet, and there is nothing to go back to.
+  const revoked = useConnection().state === 'revoked';
+  usePreventRemove(step === 'place' && !revoked, () => showStep('form'));
+
+  // While saving, the sheet stays put (iOS: `gestureEnabled` below). A sheet
+  // closed mid-save would leave its draft for the next Add to restore while
+  // the item already owns the photo, and the save's own Back would then pop
+  // whatever was underneath.
+  useEffect(() => {
+    if (saving === null) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => subscription.remove();
+  }, [saving]);
+
+  function edit(next: ItemFormValues) {
+    setValues(next);
+    if (nameError && next.name.trim()) setNameError(null);
+    if (savedNext && next.name.trim()) setSavedNext(false);
   }
 
-  const locationLabel = container
-    ? containerId === DROP_ZONE_CONTAINER_ID
-      ? strings.dropZone.title
-      : `${space ? `${space.name} > ` : ''}${container.name ?? container.shortCode}`
-    : undefined;
+  function choose(entry: WhereEntry) {
+    haptics.choice();
+    setPlaceId(entryId(entry));
+  }
+
+  function pickPlace(chosen: PickedPlace) {
+    if (chosen.kind === 'dropZone') {
+      setPlaceId(DROP_ZONE_CONTAINER_ID);
+    } else {
+      setPlaceId(chosen.option.id);
+      setPicked(chosen.option);
+    }
+    showStep('form');
+  }
+
+  function toggleDetails() {
+    if (detailsShown) {
+      setShowMore(false);
+      setCollapsedAt(detailsKey);
+    } else {
+      setShowMore(true);
+    }
+  }
+
+  /** Deletes the photo's files (both) and forgets it. */
+  function dropPhoto() {
+    recognitionRef.current = null;
+    deleteStoredPhotos(photoFiles(photo));
+    setPhoto(null);
+    setSuggestion({ status: 'idle' });
+  }
+
+  /**
+   * Single-mode camera; the photo comes back through `routeResult` (the
+   * capture screen's `request` param).
+   */
+  async function takePhoto() {
+    if (savingRef.current || cameraOpenRef.current) return;
+    cameraOpenRef.current = true;
+    Keyboard.dismiss();
+    let taken: PhotoResult | undefined;
+    try {
+      taken = await openForResult<PhotoResult>((request) =>
+        router.push({
+          pathname: '/capture',
+          params: { containerId: place.id, mode: 'single', request },
+        }),
+      );
+    } finally {
+      cameraOpenRef.current = false;
+    }
+    if (!taken) return;
+    const next = photoFromStored(taken);
+    setPhoto(next);
+    setSuggestion({ status: 'running' });
+    void runRecognition(next.uri, typedName || undefined);
+  }
+
+  function photoOptions() {
+    if (savingRef.current) return;
+    showActionSheet({
+      options: [
+        {
+          label: strings.add.retake,
+          onPress: () => {
+            dropPhoto();
+            void takePhoto();
+          },
+        },
+        { label: strings.add.removePhoto, destructive: true, onPress: dropPhoto },
+      ],
+    });
+  }
+
+  /** The draft notice's "Clear": its photo goes too. */
+  function clearRestored() {
+    if (savingRef.current) return;
+    dropPhoto();
+    setValues(EMPTY_ITEM_FORM);
+    setPlaceId(DROP_ZONE_CONTAINER_ID);
+    setPicked(null);
+    setShowMore(false);
+    setCollapsedAt(null);
+    setRestored(false);
+    setNameError(null);
+    setProblem(null);
+    nameRef.current?.focus();
+  }
+
+  async function cancel() {
+    if (savingRef.current) return;
+    if (hasContent) {
+      const discard = await confirm({
+        title: strings.add.discardTitle,
+        body: strings.add.discardBody,
+        confirmLabel: strings.forms.discard,
+        cancelLabel: strings.forms.keepEditing,
+      });
+      if (!discard) return;
+      // Cancelling after a capture deletes the photo so it is not left on the phone.
+      recognitionRef.current = null;
+      deleteStoredPhotos(photoFiles(photo));
+    }
+    clearDraft(owner);
+    router.back();
+  }
+
+  function snapSeveral() {
+    if (savingRef.current) return;
+    Keyboard.dismiss();
+    // What was typed stays in the draft for the next Add.
+    router.replace({ pathname: '/capture', params: { containerId: place.id, mode: 'fast' } });
+  }
+
+  /** After "Save and add another" without a photo: same place, empty form, cursor back in the name. */
+  function startNext() {
+    setValues(EMPTY_ITEM_FORM);
+    setSuggestion({ status: 'idle' });
+    setShowMore(false);
+    setCollapsedAt(null);
+    setRestored(false);
+    scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion });
+    nameRef.current?.focus();
+  }
+
+  /** Undo from the toast: the item goes again, and so does its photo. */
+  async function undoAdd(itemId: string, addedPhoto: AddPhoto | null) {
+    try {
+      const result = await repos.items.delete(itemId);
+      // Paired, the household reports its own copies; the files this phone
+      // took are removed here as well.
+      deleteStoredPhotos([...result.orphanedPhotoUris, ...photoFiles(addedPhoto)]);
+      logEvent('item_deleted');
+      invalidate();
+      haptics.undo();
+      toast.show({ message: strings.add.removedAgain });
+    } catch (cause) {
+      const kind = describeError(cause, 'delete', 'item').kind;
+      logError('item_delete_failed', { errorClass: kind });
+      haptics.error();
+      toast.show({ message: strings.add.undoFailed(kind === 'offline'), tone: 'error' });
+    }
+  }
+
+  /**
+   * @param andAnother Stay for the next one. Adding things off a shelf is a
+   *   run, not a single errand (`5dc203e`): with a photo the camera opens
+   *   again for the same place; typed, the form empties and keeps the place.
+   */
+  async function save(andAnother: boolean) {
+    if (savingRef.current) return;
+    const { errors, parsed } = validateItemForm(values);
+    if (!parsed) {
+      if (errors.name) {
+        setNameError(strings.add.nameRequired);
+        nameRef.current?.focus();
+      }
+      return;
+    }
+
+    const target = place;
+    const addedPhoto = photo;
+    savingRef.current = true;
+    setSaving(andAnother ? 'another' : 'save');
+    setProblem(null);
+    setSavedNext(false);
+    let item: Item;
+    try {
+      // Item, photo and tags in one write (`items.ts` create is atomic).
+      item = await repos.items.create({
+        containerId: target.id,
+        ...parsed,
+        photo: addedPhoto,
+      });
+    } catch (cause) {
+      const described = describeError(cause, 'save', 'container');
+      logError('item_create_failed', { errorClass: described.kind });
+      haptics.error();
+      savingRef.current = false;
+      setSaving(null);
+      // Normally the banner; a sheet closed under the save (the removed-phone
+      // layer) still says it did not happen, and the draft keeps the typing.
+      if (navigation.isFocused()) setProblem({ cause });
+      else toast.show({ message: described.body, tone: 'error' });
+      return;
+    }
+
+    // Only the write is guarded above: once it is done, nothing below may
+    // report "not saved".
+    logEvent('item_created', {
+      hasPhoto: addedPhoto !== null,
+      suggestionAccepted: suggestion.status === 'applied' || suggestion.status === 'refreshed',
+      hinted: suggestion.status === 'refreshed',
+    });
+    // The item owns the photo now.
+    clearDraft(owner);
+    invalidate();
+    haptics.success();
+    void rememberPlace(target.id);
+    recordCategory(parsed.category);
+
+    const here = navigation.isFocused();
+    if (andAnother && !addedPhoto && here) {
+      // Typed: stay for the next one. Only this path re-arms Save; the others
+      // leave the sheet, and a second tap or return while it slides away would
+      // otherwise add the item twice.
+      savingRef.current = false;
+      setSaving(null);
+      startNext();
+      // Said in the sheet, not as a toast: the name field has the keyboard up
+      // again, and a toast sits at the bottom of the screen, behind it.
+      // Feedback inside a modal sheet stays inline; a toast is shown only
+      // after the sheet closes.
+      setSavedNext(true);
+      return;
+    }
+    if (andAnother && addedPhoto && here) {
+      // `replace`: the saved form must not sit under the camera.
+      router.replace({ pathname: '/capture', params: { containerId: target.id } });
+      return;
+    }
+
+    // Back to wherever Add was opened from; the toast says where it went.
+    if (here) router.back();
+    // The toast runs its action once, even if Undo is tapped again as it fades.
+    toast.show({
+      message: savedMessage(target),
+      action: {
+        label: strings.common.undo,
+        accessibilityLabel: strings.add.undoA11y(parsed.name),
+        onPress: () => void undoAdd(item.id, addedPhoto),
+      },
+    });
+  }
+
+  const title =
+    step === 'place'
+      ? strings.add.placeTitle
+      : paramOption
+        ? strings.add.titleTo(containerTitle(paramOption))
+        : strings.add.title;
+
+  const header = (
+    <Stack.Screen
+      options={{
+        title,
+        // A swipe-down keeps the draft, except mid-save (see the back handler).
+        gestureEnabled: saving === null,
+        headerLeft: () =>
+          step === 'place' ? (
+            <Button
+              label={strings.add.back}
+              icon="back"
+              variant="quiet"
+              size="sm"
+              onPress={() => showStep('form')}
+              testID="add-back"
+            />
+          ) : (
+            <AddCancel onPress={() => void cancel()} />
+          ),
+      }}
+    />
+  );
+
+  if (step === 'place') {
+    return (
+      <ScreenFrame kind="modal">
+        {header}
+        <Animated.View style={[styles.fill, { opacity: fade }]}>
+          <PlacePicker
+            mode="choose"
+            showDropZone
+            selectedContainerId={place.id}
+            onPick={pickPlace}
+          />
+        </Animated.View>
+      </ScreenFrame>
+    );
+  }
+
+  const quantity = parseQuantityInput(values.quantity) ?? 1;
 
   return (
-    <Screen edges={['left', 'right', 'bottom']}>
-      <ItemForm
-        values={values}
-        onChange={(next) => {
-          setValues(next);
-          if (Object.keys(errors).length > 0) setErrors({});
-        }}
-        errors={errors}
-        photoUri={photo}
-        onRemovePhoto={photo ? discardPhoto : undefined}
-        locationLabel={locationLabel}
-        suggestionBanner={
-          <SuggestionBanner
-            state={staleName ? { status: 'stale', forName: staleName } : suggestion}
-            onRetry={
-              photo
-                ? () => {
-                    setSuggestion({ status: 'running' });
-                    // A name typed before the retry anchors it: there is no
-                    // reason to ask the photo alone when the user has already
-                    // said what the thing is.
-                    void runRecognition(photo, typedName || undefined);
-                  }
-                : undefined
-            }
-            onRefresh={photo && staleName ? () => refreshFromName(photo, staleName) : undefined}
-          />
-        }
-        onSubmit={() => void save()}
-        submitLabel={strings.items.save}
-        saving={saving}
-        footer={
-          <>
+    <ScreenFrame kind="modal">
+      {header}
+      {/* Measured for the keyboard: the form fills it from the top. */}
+      <Animated.View onLayout={keyboard.onLayout} style={[styles.fill, { opacity: fade }]}>
+        <KeyboardAvoidingView
+          behavior="padding"
+          keyboardVerticalOffset={keyboard.keyboardVerticalOffset}
+          style={styles.fill}
+        >
+          {/* Above the fields, so it is seen whatever was scrolled to. */}
+          {problem ? (
+            <View style={styles.notice}>
+              {/* A 404 here means the container went, not the item. */}
+              <SaveNotice cause={problem.cause} subject="container" testID="add-save-problem" />
+            </View>
+          ) : null}
+          <ScrollView
+            ref={scrollRef}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.content}
+            style={styles.fill}
+          >
+            {restored ? (
+              <Banner
+                tone="info"
+                message={strings.add.draft}
+                action={{
+                  label: strings.add.clearDraft,
+                  onPress: clearRestored,
+                  testID: 'add-draft-clear',
+                }}
+                testID="add-draft"
+              />
+            ) : null}
+
+            <TextField
+              label={strings.add.nameLabel}
+              accessibilityLabel={strings.add.nameA11y}
+              placeholder={strings.add.namePlaceholder}
+              value={values.name}
+              onChangeText={(name) => edit({ ...values, name })}
+              error={nameError}
+              autoCapitalize="sentences"
+              // Return saves; the keyboard stays up while it does, and if it did not.
+              returnKeyType="done"
+              submitBehavior="submit"
+              onSubmitEditing={() => void save(false)}
+              inputRef={nameRef}
+              testID="item-name"
+              trailing={
+                photo ? (
+                  <Thumb
+                    uri={photo.thumbUri ?? photo.uri}
+                    // Inset from the field's border rather than filling it.
+                    size={40}
+                    onPress={photoOptions}
+                    accessibilityLabel={strings.add.photoOptions}
+                    testID="item-photo-options"
+                  />
+                ) : (
+                  <IconButton
+                    icon="camera"
+                    accessibilityLabel={strings.add.addPhoto}
+                    onPress={() => void takePhoto()}
+                    testID="item-photo-take"
+                  />
+                )
+              }
+            />
+
+            {/* Under the field, so the field itself does not move while typing. */}
+            {savedNext ? (
+              <Banner
+                tone="info"
+                icon="check"
+                message={strings.add.savedNext}
+                testID="add-saved-next"
+              />
+            ) : null}
+
+            {photo ? (
+              <SuggestionBanner
+                state={staleName ? { status: 'stale', forName: staleName } : suggestion}
+                onRetry={() => {
+                  setSuggestion({ status: 'running' });
+                  // A name typed before the retry anchors it: there is no
+                  // reason to ask the photo alone when the user has already
+                  // said what the thing is.
+                  void runRecognition(photo.uri, typedName || undefined);
+                }}
+                onRefresh={
+                  staleName
+                    ? () => {
+                        setSuggestion({ status: 'refreshing' });
+                        void runRecognition(photo.uri, staleName, true);
+                      }
+                    : undefined
+                }
+              />
+            ) : null}
+
+            <View style={styles.group}>
+              <AppText variant="label">{strings.add.where}</AppText>
+              {/* Never a silent short list: without the read, the
+                  container it was opened for and the recent places are missing. */}
+              {places.cause !== null && places.data === null ? (
+                <Banner
+                  tone="info"
+                  message={strings.add.placesFailed}
+                  action={{
+                    label: strings.common.tryAgain,
+                    onPress: places.reload,
+                    testID: 'add-places-retry',
+                  }}
+                />
+              ) : null}
+              <WhereList
+                entries={entries}
+                selectedId={place.id}
+                onSelect={choose}
+                onMore={() => {
+                  if (!savingRef.current) showStep('place');
+                }}
+              />
+            </View>
+
+            <View style={styles.howMany}>
+              <AppText variant="label" style={styles.howManyLabel}>
+                {strings.add.howMany}
+              </AppText>
+              <QuantityStepper
+                size="compact"
+                value={quantity}
+                // From the latest values: a hold-repeat keeps calling the
+                // handler it started with, and a suggestion landing meanwhile
+                // must not be undone by it.
+                onChange={(next) =>
+                  setValues((current) => ({ ...current, quantity: String(next) }))
+                }
+                itemName={typedName || undefined}
+                // Save sits outside the scroll view, so tapping it does not
+                // leave the number: a typed count is taken as it is typed.
+                commitWhileTyping
+              />
+            </View>
+
+            {/* The two quiet links sit together, their glyphs on the form's
+                edge; opened, the details keep the form's spacing below them. */}
+            <View style={detailsShown ? styles.linksOpen : styles.links}>
+              <View style={styles.group}>
+                <Button
+                  label={strings.forms.moreDetails}
+                  accessibilityLabel={strings.forms.moreDetailsA11y(detailsShown)}
+                  icon={detailsShown ? 'chevronDown' : 'chevronRight'}
+                  variant="quiet"
+                  flush
+                  onPress={toggleDetails}
+                  testID="item-more-details"
+                />
+                {detailsShown ? <ItemDetailsFields values={values} onChange={edit} /> : null}
+              </View>
+
+              <Button
+                label={strings.add.snapSeveral}
+                icon="layers"
+                variant="quiet"
+                flush
+                onPress={snapSeveral}
+                testID="item-snap-several"
+              />
+            </View>
+          </ScrollView>
+          <BottomBar primaryFit>
             <Button
-              label={strings.items.saveAndAdd}
-              icon="📸"
+              label={strings.add.saveAndAnother}
               variant="secondary"
               fullWidth
-              disabled={saving}
+              loading={saving === 'another'}
+              disabled={saving === 'save'}
               onPress={() => void save(true)}
               testID="item-save-and-add"
             />
             <Button
-              label={strings.common.cancel}
-              variant="ghost"
+              label={strings.add.save}
+              accessibilityLabel={saveA11yLabel(place)}
               fullWidth
-              onPress={() => router.back()}
+              loading={saving === 'save'}
+              disabled={saving === 'another'}
+              onPress={() => void save(false)}
+              testID="item-save"
             />
-          </>
-        }
-      />
-    </Screen>
+          </BottomBar>
+        </KeyboardAvoidingView>
+      </Animated.View>
+    </ScreenFrame>
   );
 }
+
+const styles = StyleSheet.create({
+  fill: {
+    flex: 1,
+  },
+  notice: {
+    paddingHorizontal: GUTTER,
+    paddingTop: space.md,
+  },
+  content: {
+    padding: GUTTER,
+    paddingBottom: space.xl,
+    gap: space.xl,
+  },
+  group: {
+    gap: space.sm,
+  },
+  links: {
+    gap: space.xs,
+  },
+  linksOpen: {
+    gap: space.xl,
+  },
+  howMany: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.sm,
+  },
+  howManyLabel: {
+    flexShrink: 1,
+  },
+  cancel: {
+    minHeight: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
+  },
+});

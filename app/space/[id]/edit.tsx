@@ -1,170 +1,283 @@
-import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRef, useState } from 'react';
+import { StyleSheet, View, type TextInput } from 'react-native';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 
+import { DROP_ZONE_SPACE_ID } from '@/db/constants';
+import type { Space } from '@/db/types';
+import { useDirtyGuard } from '@/hooks/useDirtyGuard';
 import { useInventoryQuery } from '@/hooks/useInventoryQuery';
 import { strings } from '@/i18n/strings';
 import { useDatabase, useRepositories } from '@/providers/DatabaseProvider';
+import { useToast } from '@/providers/ToastProvider';
 import { deleteStoredPhotos } from '@/services/capture/imageStore';
 import { logEvent } from '@/services/telemetry';
+import { BottomBar } from '@/ui/components/BottomBar';
 import { Button } from '@/ui/components/Button';
-import { ChoiceRow, ColorRow } from '@/ui/components/PickerRow';
-import { ErrorState, LoadingState, Screen } from '@/ui/components/Screen';
-import { TextField } from '@/ui/components/TextField';
-import { SPACE_COLORS, SPACE_ICONS, spacing } from '@/ui/theme';
+import { ErrorState } from '@/ui/components/ErrorState';
+import { ScreenFrame } from '@/ui/components/ScreenFrame';
+import { Skeleton } from '@/ui/components/Skeleton';
+import { confirm } from '@/ui/confirm';
+import { isOffline } from '@/ui/errors';
+import { haptics } from '@/ui/haptics';
+import { goToTab } from '@/ui/navigation';
+import { DropZoneLocked, FormLayout, SaveNotice } from '@/ui/spaces/FormLayout';
+import { SpaceFields } from '@/ui/spaces/SpaceFields';
+import {
+  labelsInSpace,
+  spaceDeleteBody,
+  spaceValuesChanged,
+  type SpaceValues,
+} from '@/ui/spaces/spaceSetup';
+import { GUTTER, space, useTheme } from '@/ui/theme';
 
 export default function EditSpaceScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  if (id === DROP_ZONE_SPACE_ID) return <DropZoneLocked />;
+  return <EditSpace id={id} />;
+}
+
+/**
+ * Rename, re-icon or recolour a space, or delete it with everything in it.
+ *
+ * Save is the primary action in the bottom bar; Delete is quiet red text at
+ * the end of the form, behind a confirm that spells out what goes with it,
+ * so the two never sit side by side as equals. The sheet's Cancel comes from
+ * the root layout.
+ */
+function EditSpace({ id }: { id: string }) {
   const repos = useRepositories();
   const { invalidate } = useDatabase();
   const router = useRouter();
+  const navigation = useNavigation();
+  const toast = useToast();
+  const { colors } = useTheme();
+  const nameRef = useRef<TextInput>(null);
 
-  const {
-    data: space,
-    loading,
-    error,
-    reload,
-  } = useInventoryQuery(() => repos.spaces.getById(id), `space:${id}`);
+  const spaceQuery = useInventoryQuery(() => repos.spaces.getById(id), `space:${id}`);
+  // Only for the preview row's counts; `getById` has none.
+  const countsQuery = useInventoryQuery(() => repos.spaces.listWithCounts(), 'spaces');
+  const stored = spaceQuery.data;
 
-  const [name, setName] = useState('');
-  const [icon, setIcon] = useState<string>(SPACE_ICONS[0]);
-  const [color, setColor] = useState<string>(SPACE_COLORS[0]);
-  const [validation, setValidation] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [values, setValues] = useState<SpaceValues>({ name: '', icon: '', color: '' });
+  const [nameError, setNameError] = useState<string | null>(null);
+  /** A failed save; a `null` cause means the space was deleted elsewhere. */
+  const [failure, setFailure] = useState<{ cause: unknown } | null>(null);
+  const [busy, setBusy] = useState<'save' | 'delete' | null>(null);
+  const busyRef = useRef(false);
 
-  // Seed the form from the loaded record exactly once, during render rather
-  // than in an effect: React documents this as the way to adjust state when
-  // inputs change, and it avoids the extra render pass an effect would cost.
-  const [seededId, setSeededId] = useState<string | null>(null);
-  if (space && seededId !== space.id) {
-    setSeededId(space.id);
-    setName(space.name);
-    setIcon(space.icon);
-    setColor(space.color);
+  // Seed the form from the loaded record once per id, during render rather
+  // than in an effect, so a background refetch never overwrites typing.
+  const [seed, setSeed] = useState<{ id: string; values: SpaceValues } | null>(null);
+  if (stored && seed?.id !== stored.id) {
+    const initial = { name: stored.name, icon: stored.icon, color: stored.color };
+    setSeed({ id: stored.id, values: initial });
+    setValues(initial);
+  }
+
+  const gone = failure !== null && failure.cause === null;
+  const dirty =
+    stored !== null && seed !== null && !gone && spaceValuesChanged(values, seed.values);
+  useDirtyGuard(dirty, { saving: busy !== null });
+
+  function release() {
+    busyRef.current = false;
+    setBusy(null);
   }
 
   async function save() {
-    if (!name.trim()) {
-      setValidation(strings.spaces.nameRequired);
+    if (busyRef.current) return;
+    if (!values.name.trim()) {
+      setNameError(strings.spaceForm.nameRequired);
+      nameRef.current?.focus();
       return;
     }
-
-    setSaving(true);
+    busyRef.current = true;
+    setBusy('save');
+    setFailure(null);
     try {
-      await repos.spaces.update(id, { name, icon, color });
+      const updated = await repos.spaces.update(id, { ...values, name: values.name.trim() });
+      if (!updated) {
+        // Deleted on another phone while this was open: never a fake success.
+        fail(null);
+        return;
+      }
       logEvent('space_updated');
       invalidate();
-      router.back();
+      // Only from the front: the header Cancel can close the sheet mid-save
+      // (swipe-down and Android back wait for it), and going back again would
+      // pop the space screen under it.
+      if (navigation.isFocused()) router.back();
+      // An edit closes and says so, like every other form.
+      toast.show({ message: strings.spaceForm.saved });
     } catch (cause) {
-      setValidation(cause instanceof Error ? cause.message : 'The space could not be saved.');
-      setSaving(false);
+      fail(cause);
     }
+  }
+
+  /** A save that did not happen: the banner, or a toast once the sheet has closed. */
+  function fail(cause: unknown) {
+    release();
+    haptics.error();
+    if (navigation.isFocused()) {
+      setFailure({ cause });
+      return;
+    }
+    const name = stored?.name ?? values.name;
+    toast.show({
+      tone: 'error',
+      message:
+        cause === null
+          ? strings.spaceForm.alreadyDeleted(name)
+          : strings.spaceForm.notSaved(name, isOffline(cause)),
+    });
   }
 
   /**
    * Deleting a space takes its containers and items with it, so the confirm
-   * dialog spells out exactly what is lost (issue #4).
+   * says exactly what is lost, QR labels included (issue #4). Every step can
+   * fail over the network, so all of it is caught and told.
    */
-  async function confirmDelete() {
-    const impact = await repos.spaces.deletionImpact(id);
-    const detail =
-      impact.containerCount === 0 && impact.itemCount === 0
-        ? 'This space is empty.'
-        : `This also deletes ${impact.containerCount} container${
-            impact.containerCount === 1 ? '' : 's'
-          } and ${impact.itemCount} item${impact.itemCount === 1 ? '' : 's'}${
-            impact.qrBindingCount > 0
-              ? `, and unlinks ${impact.qrBindingCount} QR label${
-                  impact.qrBindingCount === 1 ? '' : 's'
-                }`
-              : ''
-          }. This cannot be undone.`;
-
-    Alert.alert(strings.spaces.deleteTitle, detail, [
-      { text: strings.common.cancel, style: 'cancel' },
-      {
-        text: strings.common.delete,
-        style: 'destructive',
-        onPress: async () => {
-          const result = await repos.spaces.delete(id);
-          deleteStoredPhotos(result.orphanedPhotoUris);
-          logEvent('space_deleted', {
-            containerCount: impact.containerCount,
-            itemCount: impact.itemCount,
-          });
-          invalidate();
-          router.dismissTo('/');
-        },
-      },
-    ]);
+  async function deleteSpace(current: Space) {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setBusy('delete');
+    try {
+      const [impact, containers] = await Promise.all([
+        repos.spaces.deletionImpact(id),
+        repos.containers.listBySpace(id),
+      ]);
+      const labels = labelsInSpace(impact.qrBindingCount, containers);
+      const confirmed = await confirm({
+        title: strings.spaceForm.deleteTitle(current.name),
+        body: spaceDeleteBody(impact, labels),
+        confirmLabel: strings.common.delete,
+      });
+      if (!confirmed) {
+        release();
+        return;
+      }
+      const result = await repos.spaces.delete(id);
+      // Nothing deleted means another phone deleted it first (the HTTP delete
+      // answers a 404 that way): it is gone either way, but this phone did
+      // not do it, so it is neither counted nor claimed.
+      if (result.deleted) {
+        deleteStoredPhotos(result.orphanedPhotoUris);
+        logEvent('space_deleted', {
+          containerCount: impact.containerCount,
+          itemCount: impact.itemCount,
+        });
+      }
+      invalidate();
+      goToTab('/spaces');
+      toast.show({
+        message: result.deleted
+          ? strings.spaceForm.deleted(current.name)
+          : strings.spaceForm.alreadyDeleted(current.name),
+      });
+    } catch (cause) {
+      release();
+      haptics.error();
+      toast.show({
+        tone: 'error',
+        message: strings.spaceForm.deleteFailed(current.name, isOffline(cause)),
+      });
+    }
   }
 
-  if (loading && !space) {
+  function change(next: SpaceValues) {
+    if (next.name !== values.name) setNameError(null);
+    if (!gone) setFailure(null);
+    setValues(next);
+  }
+
+  if (stored === null) {
     return (
-      <Screen>
-        <LoadingState />
-      </Screen>
+      <ScreenFrame kind="modal">
+        {spaceQuery.cause ? (
+          <ErrorState cause={spaceQuery.cause} subject="space" onRetry={spaceQuery.reload} />
+        ) : spaceQuery.loading ? (
+          <View style={styles.skeleton}>
+            <Skeleton variant="rows" rows={3} thumb={null} />
+          </View>
+        ) : (
+          <ErrorState
+            cause={null}
+            subject="space"
+            secondary={{ label: strings.common.goToSpaces, onPress: () => goToTab('/spaces') }}
+          />
+        )}
+      </ScreenFrame>
     );
   }
 
-  if (error || !space) {
-    return (
-      <Screen>
-        <ErrorState message={error ?? 'That space no longer exists.'} onRetry={reload} />
-      </Screen>
-    );
-  }
+  const counts = countsQuery.data?.find((entry) => entry.id === id);
 
   return (
-    <Screen edges={['left', 'right', 'bottom']}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <TextField
-          label={strings.spaces.nameLabel}
-          value={name}
-          onChangeText={(value) => {
-            setName(value);
-            if (validation) setValidation(null);
-          }}
-          error={validation}
-          required
-        />
-
-        <ChoiceRow
-          label={strings.spaces.iconLabel}
-          options={SPACE_ICONS.map((value) => ({ value, label: value }))}
-          value={icon}
-          onChange={setIcon}
-        />
-
-        <ColorRow
-          label={strings.spaces.colorLabel}
-          colors={SPACE_COLORS}
-          value={color}
-          onChange={setColor}
-        />
-
-        <View style={styles.actions}>
-          <Button label={strings.common.save} onPress={save} loading={saving} fullWidth />
-          <Button
-            label="Delete space"
-            onPress={confirmDelete}
-            variant="danger"
-            fullWidth
-            accessibilityHint="Deletes this space and everything inside it"
+    <FormLayout
+      notice={
+        failure ? (
+          <SaveNotice
+            cause={failure.cause}
+            subject="space"
+            action={
+              gone
+                ? { label: strings.common.goToSpaces, onPress: () => goToTab('/spaces') }
+                : undefined
+            }
           />
-        </View>
-      </ScrollView>
-    </Screen>
+        ) : null
+      }
+      bottomBar={
+        <BottomBar>
+          <Button
+            label={strings.spaceForm.save}
+            onPress={() => void save()}
+            loading={busy === 'save'}
+            disabled={busy === 'delete' || gone}
+            fullWidth
+            testID="space-save"
+          />
+        </BottomBar>
+      }
+    >
+      <SpaceFields
+        values={values}
+        onChange={change}
+        nameError={nameError}
+        onSubmit={() => void save()}
+        nameRef={nameRef}
+        previewMeta={
+          counts ? strings.entities.spaceCounts(counts.containerCount, counts.itemCount) : null
+        }
+        previewFallbackName={stored.name}
+      />
+
+      <View style={[styles.danger, { borderTopColor: colors.rule }]}>
+        <Button
+          label={strings.spaceForm.delete}
+          icon="trash"
+          variant="destructive"
+          flush
+          onPress={() => void deleteSpace(stored)}
+          loading={busy === 'delete'}
+          disabled={busy === 'save' || gone}
+          accessibilityHint={strings.spaceForm.deleteHint}
+          testID="space-delete"
+        />
+      </View>
+    </FormLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    padding: spacing.lg,
-    gap: spacing.xl,
+  skeleton: {
+    padding: GUTTER,
   },
-  actions: {
-    gap: spacing.sm,
-    marginTop: spacing.md,
+  // With the form's 16 pt gap, 40 pt above the rule: Delete is never a
+  // neighbour of Save.
+  danger: {
+    marginTop: space.xl,
+    paddingTop: space.lg,
+    borderTopWidth: 1,
   },
 });

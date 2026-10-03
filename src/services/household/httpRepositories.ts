@@ -98,8 +98,26 @@ export function createHttpRepositories(
     };
   }
 
+  /**
+   * List rows only ever show the thumbnail (`4fa33a6`), so lists fetch just
+   * that and leave `photoUri` as the server sent it: downloading every full
+   * 1400 px photo made her first loads slow. A row whose thumbnail cannot be
+   * fetched shows the placeholder; the item screen (`getById`) fetches both.
+   */
+  async function hydrateThumb(item: ItemWithContext): Promise<ItemWithContext> {
+    if (!item.photoId) return item;
+    if (item.photoThumbUri?.startsWith('file:')) return item;
+    const thumb = await resolveHouseholdPhoto({
+      session,
+      photoId: item.photoId,
+      kind: 'thumb',
+      fetchImpl,
+    });
+    return { ...item, photoThumbUri: thumb ?? item.photoThumbUri };
+  }
+
   async function hydrateItems(items: ItemWithContext[]): Promise<ItemWithContext[]> {
-    return Promise.all(items.map((item) => hydrateItem(item)));
+    return Promise.all(items.map((item) => hydrateThumb(item)));
   }
 
   return {

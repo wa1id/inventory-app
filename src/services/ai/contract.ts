@@ -114,16 +114,3 @@ export function parseRecognitionResponse(body: unknown): RecognitionResult {
     },
   };
 }
-
-/** User-facing explanation for each failure class; all lead to manual entry. */
-export const FAILURE_MESSAGES: Record<RecognitionFailureReason, string> = {
-  not_configured: 'Photo suggestions are not set up in this build. Add the details yourself.',
-  offline: 'No connection, so suggestions are unavailable. You can still fill in the details.',
-  timeout: 'Suggestions took too long. You can retry or add the details yourself.',
-  rate_limited: 'Too many requests right now. Try again shortly or add the details yourself.',
-  server_error: 'Suggestions are unavailable right now. You can retry or type the details.',
-  malformed_response: 'That suggestion could not be read. Please add the details yourself.',
-  unsupported_version: 'This app version cannot read the suggestion service. Update the app.',
-  low_confidence: "The photo wasn't clear enough for a confident guess. Add the details yourself.",
-  unrecognized: "We couldn't identify that item. Add the details yourself.",
-};

@@ -1,5 +1,34 @@
 import { useColorScheme } from 'react-native';
 
+import type { ContainerVisualType } from '@/db/types';
+import { contrast } from '@/ui/color';
+import type { IconName } from '@/ui/icons/glyphs';
+import { darkColors, lightColors, type ColorTokens } from '@/ui/tokens';
+
+export {
+  BOTTOM_BAR_PADDING,
+  CONTENT_MAX_WIDTH,
+  GUTTER,
+  NARROW_WIDTH,
+  OPTION_MIN,
+  ROW_GAP,
+  ROW_MIN,
+  ROW_MIN_PHOTO,
+  ROW_PADDING,
+  STACK_FONT_SCALE,
+  TAB_BAR_CONTENT,
+  THUMB,
+  THUMB_DETAIL,
+  THUMB_PHOTO,
+  THUMB_SMALL,
+  camera,
+  fixed,
+  radius,
+  shadowFloat,
+  space,
+  type ColorTokens,
+} from '@/ui/tokens';
+
 /**
  * Palette options offered when creating a space.
  *
@@ -35,23 +64,6 @@ export const SPACE_PRESETS = [
 const ON_LIGHT = '#12161C';
 const ON_DARK = '#FFFFFF';
 
-/** WCAG relative luminance of a hex colour. */
-function luminance(hex: string): number {
-  const value = hex.replace('#', '');
-  const full =
-    value.length === 3
-      ? value
-          .split('')
-          .map((c) => c + c)
-          .join('')
-      : value;
-  const channel = (offset: number) => {
-    const srgb = parseInt(full.slice(offset, offset + 2), 16) / 255;
-    return srgb <= 0.03928 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
-  };
-  return 0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4);
-}
-
 /**
  * Readable foreground for an arbitrary space colour.
  *
@@ -64,76 +76,26 @@ function luminance(hex: string): number {
  * failing and passing AA (issue #8).
  */
 export function onColor(hex: string): typeof ON_DARK | typeof ON_LIGHT {
-  const background = luminance(hex);
-  const ratio = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
-
-  return ratio(luminance(ON_DARK), background) >= ratio(luminance(ON_LIGHT), background)
-    ? ON_DARK
-    : ON_LIGHT;
+  return contrast(ON_DARK, hex) >= contrast(ON_LIGHT, hex) ? ON_DARK : ON_LIGHT;
 }
 
-export const CONTAINER_ICONS: Record<string, string> = {
-  box: '📦',
-  drawer: '🗄️',
-  shelf: '🗂️',
-  cabinet: '🚪',
-  bin: '🗑️',
-  bag: '👜',
-  crate: '🧰',
-  other: '📥',
-};
+/**
+ * Container types are line icons of the same name. Typed as a plain record so
+ * a stored type this build does not know falls back with `?? 'other'`.
+ */
+export const TYPE_ICON: Record<string, IconName> = {
+  box: 'box',
+  drawer: 'drawer',
+  shelf: 'shelf',
+  cabinet: 'cabinet',
+  bin: 'bin',
+  bag: 'bag',
+  crate: 'crate',
+  other: 'other',
+} satisfies Record<ContainerVisualType, IconName>;
 
-const light = {
-  background: '#F6F7F9',
-  surface: '#FFFFFF',
-  surfaceAlt: '#EEF1F5',
-  border: '#DDE2E9',
-  text: '#12161C',
-  textMuted: '#5A6675',
-  primary: '#2F6FED',
-  primaryText: '#FFFFFF',
-  danger: '#C7351B',
-  dangerSurface: '#FDECE8',
-  success: '#1F8A4C',
-  warning: '#8A5A00',
-  warningSurface: '#FFF6E0',
-  overlay: 'rgba(0,0,0,0.5)',
-};
-
-const dark: typeof light = {
-  background: '#0F1115',
-  surface: '#181C23',
-  surfaceAlt: '#222831',
-  border: '#2C333D',
-  text: '#F2F4F7',
-  textMuted: '#9AA6B5',
-  primary: '#6699FF',
-  primaryText: '#0B1220',
-  danger: '#FF7A66',
-  dangerSurface: '#3A1D18',
-  success: '#5BD08A',
-  warning: '#E8B44A',
-  warningSurface: '#3A2E14',
-  overlay: 'rgba(0,0,0,0.6)',
-};
-
-export type ThemeColors = typeof light;
-
-export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
-  xxl: 32,
-} as const;
-
-export const radius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  pill: 999,
-} as const;
+/** The colours `useTheme()` returns: the desk's tokens for one scheme. */
+export type ThemeColors = ColorTokens;
 
 /**
  * Minimum interactive size.
@@ -143,8 +105,13 @@ export const radius = {
  */
 export const MIN_TOUCH_TARGET = 48;
 
+/**
+ * Colours for the current scheme.
+ *
+ * Follows the system setting; there is no in-app override.
+ */
 export function useTheme(): { colors: ThemeColors; isDark: boolean } {
   const scheme = useColorScheme();
   const isDark = scheme === 'dark';
-  return { colors: isDark ? dark : light, isDark };
+  return { colors: isDark ? darkColors : lightColors, isDark };
 }

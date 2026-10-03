@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { strings } from '@/i18n/strings';
+import { camera } from '@/ui/theme';
 
 export const FOCUS_SPOT_SIZE = 72;
 const FOCUS_SPOT_MS = 700;
@@ -61,7 +62,7 @@ const styles = StyleSheet.create({
     width: FOCUS_SPOT_SIZE,
     height: FOCUS_SPOT_SIZE,
     borderWidth: 2,
-    borderColor: '#FFE566',
+    borderColor: camera.accent,
     borderRadius: 4,
     backgroundColor: 'transparent',
   },

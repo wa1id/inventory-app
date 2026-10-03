@@ -1,4 +1,5 @@
 import { newId, newQrToken } from '@/core/id';
+import { DROP_ZONE_CONTAINER_ID } from '@/db/constants';
 import type { Container, QrBinding, SqlDatabase } from '@/db/types';
 
 interface QrBindingRow {
@@ -114,6 +115,8 @@ export function createQrRepository(db: SqlDatabase) {
      * containers.
      */
     async bind(token: string, containerId: string): Promise<QrBinding> {
+      // The drop zone is a tab, not a box with a sticker on it.
+      if (containerId === DROP_ZONE_CONTAINER_ID) throw new Error('system_record');
       const now = Date.now();
       const binding: QrBinding = {
         id: newId(),
