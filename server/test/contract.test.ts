@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { toExtraction } from '../src/adapters/mimoVision.js';
 import { AUTH_HEADER, checkAuth } from '../src/auth.js';
 import { CONTRACT_VERSION, parseRequest, statusForAdapterError } from '../src/contract.js';
 import { USER_PROMPT, toRawSuggestion, userPrompt } from '../src/prompt.js';
@@ -162,66 +161,6 @@ test('normalization clamps confidence and cleans fields', () => {
   assert.equal(raw.category, null, 'whitespace-only category becomes null');
   assert.deepEqual(raw.tags, ['dewalt', 'drill'], 'lowercased, deduped, over-long dropped');
   assert.equal(raw.confidence, 1, 'confidence clamped into 0..1');
-});
-
-// MiMo answers HTTP 200 with a partial object rather than the schema it was
-// given. These are the two shapes observed against the live API; both must
-// survive, because the strict schema throws on either.
-test('MiMo: a bare identified=false stays an honest "could not tell"', () => {
-  const extraction = toExtraction({ identified: false });
-
-  assert.equal(extraction.identified, false);
-  assert.equal(extraction.name, null);
-  assert.deepEqual(extraction.tags, []);
-  assert.equal(extraction.confidence, 0);
-});
-
-test('MiMo: an omitted identified is inferred from the name', () => {
-  const extraction = toExtraction({
-    name: 'Cordless drill',
-    category: 'Power Tools',
-    tags: ['drill'],
-    confidence: 0.95,
-  });
-
-  assert.equal(extraction.identified, true, 'a usable name is an identification');
-  assert.equal(extraction.name, 'Cordless drill');
-  assert.equal(extraction.confidence, 0.95);
-});
-
-test('MiMo: a blank name is not an identification', () => {
-  assert.equal(toExtraction({ name: '   ' }).identified, false);
-  assert.equal(toExtraction({}).identified, false);
-});
-
-// MiMo routinely omits `name`; on a hinted turn that must not read as "could
-// not identify it", because the name came from the user, not the model.
-test('MiMo: a hinted answer with no echoed name is still an identification', () => {
-  const extraction = toExtraction({ category: 'Power Tools', confidence: 0.7 }, 'Angle grinder');
-
-  assert.equal(extraction.identified, true);
-  assert.equal(
-    toExtraction({ category: 'Power Tools' }).identified,
-    false,
-    'unhinted is unchanged',
-  );
-});
-
-test('MiMo: an explicit identified=false survives a hint', () => {
-  assert.equal(toExtraction({ identified: false }, 'Angle grinder').identified, false);
-});
-
-test('MiMo: an omitted confidence is never invented', () => {
-  const extraction = toExtraction({ name: 'Drill' });
-  assert.equal(extraction.confidence, 0, 'scores zero so the contract filters it out');
-});
-
-test('MiMo: omitted fields survive the trip to normalization', () => {
-  const raw = toRawSuggestion(toExtraction({ identified: true, name: 'Drill' }));
-
-  assert.equal(raw.name, 'Drill');
-  assert.equal(raw.category, null);
-  assert.deepEqual(raw.tags, []);
 });
 
 test('registry resolves, caches, and rejects unknown ids', () => {

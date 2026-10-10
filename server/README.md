@@ -17,8 +17,7 @@ src/port.ts             VisionAdapter interface    │  depends only on the port
 src/prompt.ts           shared prompt + schema     │
 src/registry.ts         id → adapter               │
 src/adapters/
-  gatewayVision.ts      one adapter, many models  ─┐  depends on a vendor SDK
-  mimoVision.ts         Xiaomi MiMo, direct API   ─┘
+  anthropicVision.ts    Claude, direct API        ─── depends on a vendor SDK
   index.ts              registrations
 ```
 
@@ -41,62 +40,47 @@ quality. An adapter's only jobs are transport and error classification.
 One line in `src/adapters/index.ts`:
 
 ```ts
-registerAdapter('gpt-mini', () =>
-  createGatewayVisionAdapter({
-    id: 'gpt-mini',
-    label: 'GPT-4.1 mini',
-    model: 'openai/gpt-4.1-mini',
+registerAdapter('claude-opus', () =>
+  createAnthropicVisionAdapter({
+    id: 'claude-opus',
+    label: 'Claude Opus 5.5',
+    model: 'claude-opus-5-5',
   }),
 );
 ```
 
-The AI Gateway fronts every major provider, so a different model is a different
-string. Verify ids against the live list — ids recalled from memory are
-routinely stale:
+A different Claude model is a different id. Verify ids against the live list —
+ids recalled from memory are routinely stale:
 
 ```bash
-curl -s https://ai-gateway.vercel.sh/v1/models | jq -r '.data[].id'
+curl -s https://api.anthropic.com/v1/models \
+  -H "x-api-key: $ANTHROPIC_API_KEY" -H "anthropic-version: 2023-06-01" \
+  | jq -r '.data[].id'
 ```
 
-## Adding a provider the gateway does not front
-
-Self-hosted model, a vendor with no gateway support, or one whose SDK you need
-directly:
+## Adding another provider
 
 1. Write `src/adapters/<name>.ts` exporting something that satisfies
-   `VisionAdapter` — use `gatewayVision.ts` as the shape.
+   `VisionAdapter` — use `anthropicVision.ts` as the shape.
 2. Classify that provider's failures into `timeout` / `rate_limited` /
    `upstream`.
 3. Add one `registerAdapter` line.
 
 Nothing else changes: not the HTTP layer, not the contract, not the client.
 
-`mimoVision.ts` is the worked example. Xiaomi MiMo is not on the gateway, and
-although its API is OpenAI-shaped, only the _transport_ is:
-
-- **Tool calls are unusable.** The model writes `<tool_call>…</tool_call>` into
-  the message content and returns `tool_calls: null`. Structured output has to
-  go through JSON mode.
-- **`strict: true` on the JSON schema is accepted and ignored.** A photo it
-  cannot name comes back as `{"identified": false}` with every other field
-  missing, HTTP 200. Validating that against the shared schema throws, which
-  would have reported an honest "could not tell" as a provider failure — the
-  user would read "suggestions are unavailable" instead of being sent to manual
-  entry. The adapter parses loosely and fills the gaps itself.
-
-That is the pattern to copy: absorb a provider's quirks inside its adapter, and
-hand the rest of the service the same shape every other provider hands it.
+Absorb a provider's quirks inside its adapter — a schema it does not enforce, a
+"could not tell" it signals differently — and hand the rest of the service the
+same shape every other provider hands it.
 
 ## Choosing which model answers
 
 | Where          | How                                                   |
 | -------------- | ----------------------------------------------------- |
-| Per deployment | `RECOGNITION_ADAPTER` env var (default `mimo`)        |
-| Per request    | `"adapter": "<id>"` in the request body, for A/B runs |
+| Per deployment | `RECOGNITION_ADAPTER` env var (default `claude-haiku`) |
+| Per request    | `"adapter": "<id>"` in the request body, for A/B runs  |
 
-The gateway adapters authenticate via Vercel OIDC and need no key. `mimo` is
-called directly, so **any deployment serving it needs `MIMO_API_KEY` set** —
-without it every request answers 502 (immediately, without spending a call).
+Every adapter calls the Anthropic API directly, so **every deployment needs
+`ANTHROPIC_API_KEY` set** — without it every request answers 502.
 `GET /api/adapters` keeps working either way, so it stays usable for diagnosis.
 
 Unknown ids are rejected rather than silently falling back — quietly serving a
@@ -158,14 +142,13 @@ a redeploy actually changed the model. Exposes no secrets.
 
 ```bash
 npm install
-npx vercel env pull .env.local   # writes VERCEL_OIDC_TOKEN for gateway auth
-echo "MIMO_API_KEY=sk-..." >> .env.local   # only for the mimo adapter
+echo "ANTHROPIC_API_KEY=sk-ant-..." >> .env.local
 npm run typecheck
 npm test                         # contract, registry, and normalization
 ```
 
 `npm test` covers everything except the provider call itself; hitting a real
-model needs gateway credit or a MiMo key.
+model needs an Anthropic key.
 
 ## Privacy
 

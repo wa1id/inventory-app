@@ -1,53 +1,30 @@
 import { registerAdapter } from '../registry.js';
-import { createGatewayVisionAdapter } from './gatewayVision.js';
-import { createMimoVisionAdapter } from './mimoVision.js';
+import { createAnthropicVisionAdapter } from './anthropicVision.js';
 
 /**
  * Adapter registrations — the plug-in point.
  *
- * ADDING A MODEL: one line here. The gateway fronts every major provider, so a
- * different model is a different string.
+ * ADDING A CLAUDE MODEL: one line here; a different model is a different id.
+ * Take ids from `GET https://api.anthropic.com/v1/models` — ids from memory are
+ * frequently stale.
  *
- * ADDING A PROVIDER THE GATEWAY DOES NOT FRONT: write a module satisfying
- * `VisionAdapter` (see `./gatewayVision.ts` for the shape), import it, and add
- * one `registerAdapter` line. No other file changes.
- *
- * Model ids verified against `GET https://ai-gateway.vercel.sh/v1/models`.
- * Re-check that list before adding one — ids from memory are frequently stale.
+ * ADDING ANOTHER PROVIDER: write a module satisfying `VisionAdapter` (see
+ * `./anthropicVision.ts` for the shape), import it, and add one
+ * `registerAdapter` line. No other file changes.
  */
 registerAdapter('claude-haiku', () =>
-  createGatewayVisionAdapter({
+  createAnthropicVisionAdapter({
     id: 'claude-haiku',
-    label: 'Claude Haiku 4.5 (cheapest vision tier)',
-    model: 'anthropic/claude-haiku-4.5',
+    label: 'Claude Haiku 5.5 (cheapest vision tier)',
+    model: 'claude-haiku-5-5',
   }),
 );
 
 registerAdapter('claude-sonnet', () =>
-  createGatewayVisionAdapter({
+  createAnthropicVisionAdapter({
     id: 'claude-sonnet',
-    label: 'Claude Sonnet 5 (higher accuracy, ~3x input cost)',
-    model: 'anthropic/claude-sonnet-5',
-  }),
-);
-
-registerAdapter('gemini-flash', () =>
-  createGatewayVisionAdapter({
-    id: 'gemini-flash',
-    label: 'Gemini 2.5 Flash (cross-vendor comparison)',
-    model: 'google/gemini-2.5-flash',
-  }),
-);
-
-/**
- * Xiaomi MiMo is not fronted by the gateway, so it needs its own adapter
- * module — the second case described above, not a registration line.
- */
-registerAdapter('mimo', () =>
-  createMimoVisionAdapter({
-    id: 'mimo',
-    label: 'Xiaomi MiMo v2.5 (direct API, needs MIMO_API_KEY)',
-    model: 'mimo-v2.5',
+    label: 'Claude Sonnet 5 (higher accuracy, ~20x input cost)',
+    model: 'claude-sonnet-5',
   }),
 );
 
@@ -55,7 +32,6 @@ registerAdapter('mimo', () =>
  * Default when the request does not name one. Overridable per deployment so
  * switching models is a redeploy, not a code change.
  *
- * A deployment defaulting to `mimo` must have `MIMO_API_KEY` set; the gateway
- * adapters authenticate via Vercel OIDC and need no key.
+ * Every adapter needs `ANTHROPIC_API_KEY` set on the deployment.
  */
-export const DEFAULT_ADAPTER_ID = process.env.RECOGNITION_ADAPTER?.trim() || 'mimo';
+export const DEFAULT_ADAPTER_ID = process.env.RECOGNITION_ADAPTER?.trim() || 'claude-haiku';

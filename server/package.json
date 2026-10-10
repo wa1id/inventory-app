@@ -11,8 +11,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@ai-sdk/openai-compatible": "^3.0.14",
-    "ai": "^7.0.37",
+    "@anthropic-ai/sdk": "^0.133.0",
     "zod": "^4.4.3"
   },
   "private": true,
