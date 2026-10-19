@@ -11,7 +11,10 @@ struct StringsParityTests {
     static func expectParity(_ entry: StringsFixture.Entry) throws {
         for testCase in entry.cases {
             let actual = try callStringsAccessor(entry.path, testCase.args)
-            #expect(actual == testCase.expected, "\(entry.path)(\(testCase.args.map(\.description).joined(separator: ", ")))")
+            #expect(
+                sameText(actual, testCase.expected),
+                "\(entry.path)(\(testCase.args.map(\.description).joined(separator: ", "))) gave \(String(reflecting: actual)), strings.ts gives \(String(reflecting: testCase.expected))"
+            )
         }
     }
 
@@ -24,7 +27,7 @@ struct StringsParityTests {
                 try expectParity(entry)
             }
             for vector in fixture.format.ago {
-                #expect(Format.ago(vector.ms, now: vector.now) == vector.expected, "ago(\(vector.ms), now: \(vector.now))")
+                #expect(sameText(Format.ago(vector.ms, now: vector.now), vector.expected), "ago(\(vector.ms), now: \(vector.now))")
             }
         }
         return log.keys
@@ -152,6 +155,16 @@ struct L10nTests {
         #expect(L10n.Suggestions.FailedBody["rate_limited"] == L10n.Suggestions.FailedBody.rate_limited)
         // é precomposed and decomposed are equal to Swift's ==, not to JS ===.
         #expect(L10nRuntime.same("\u{00E9}", "e\u{0301}") == false)
+    }
+
+    /// Foundation wraps right-to-left arguments in U+2068…U+2069 when it formats
+    /// with a locale (on iOS, the other arguments too); JS template literals never do.
+    @Test("right-to-left names come through without bidi isolates")
+    func rightToLeftNamesAreNotIsolated() {
+        #expect(sameText(L10n.A11y.inSpace(space: "שלום", spelled: "B O X"), "In שלום, label B O X"))
+        #expect(sameText(L10n.Container.sub(type: "مرحبا", items: 2), "مرحبا · 2 items"))
+        #expect(sameText(L10n.Qr.shareMessage(label: "מחסן", code: "BOX-7K2M"), "מחסן (BOX-7K2M)"))
+        #expect(sameText(L10n.Search.total(name: "סוללות", count: 14, places: 2), "“סוללות”: ×14 in 2 places"))
     }
 
     @Test("counts are never grouped, whatever the locale")

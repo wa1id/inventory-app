@@ -114,29 +114,30 @@ struct FormatVectorTests {
     @Test("plural matches format.ts")
     func plural() {
         for v in Self.vectors.plural {
-            #expect(Format.plural(v.count, v.one, v.other) == v.expected)
+            #expect(sameText(Format.plural(v.count, v.one, v.other), v.expected), "plural(\(v.count))")
         }
     }
 
     @Test("sentenceList matches format.ts")
     func sentenceList() {
         for v in Self.vectors.sentenceList {
-            #expect(Format.sentenceList(v.parts) == v.expected, "\(v.parts)")
+            #expect(sameText(Format.sentenceList(v.parts), v.expected), "\(v.parts)")
         }
     }
 
     @Test("ago matches format.ts")
     func ago() {
         for v in Self.vectors.ago {
-            #expect(Format.ago(v.ms, now: v.now) == v.expected, "ago(\(v.ms), now: \(v.now))")
+            #expect(sameText(Format.ago(v.ms, now: v.now), v.expected), "ago(\(v.ms), now: \(v.now))")
         }
     }
 
-    @Test("longDate matches Intl.DateTimeFormat('en-GB')")
+    @Test("longDate matches Intl.DateTimeFormat('en-GB') in every time zone")
     func longDate() throws {
         for v in Self.vectors.longDate {
             let zone = try #require(TimeZone(identifier: v.timeZone))
-            #expect(Format.longDate(v.ms, timeZone: zone) == v.expected, "longDate(\(v.ms))")
+            let actual = Format.longDate(v.ms, timeZone: zone)
+            #expect(sameText(actual, v.expected), "longDate(\(v.ms)) in \(v.timeZone) gave \(actual)")
         }
     }
 }

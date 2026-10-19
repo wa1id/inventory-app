@@ -114,6 +114,17 @@ struct StringsFixture: Decodable, Sendable {
     }()
 }
 
+/// JS `===` on strings: the same code points in the same order. Swift `==` also
+/// accepts canonically equivalent strings ("é" and "e\u{301}"), which would hide a
+/// normalisation the TS never does.
+func sameText(_ a: String?, _ b: String?) -> Bool {
+    switch (a, b) {
+    case (nil, nil): true
+    case let (a?, b?): a.unicodeScalars.elementsEqual(b.unicodeScalars)
+    default: false
+    }
+}
+
 /// A bundle with no Localizable table: the test target's own, which holds only
 /// Fixtures. Every lookup in it misses, so the English fallback answers.
 enum NoCatalog {
