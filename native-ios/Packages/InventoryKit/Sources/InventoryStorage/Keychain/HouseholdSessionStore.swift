@@ -55,6 +55,18 @@ public struct StoredHouseholdSession: Sendable, Equatable, Hashable {
     }
 }
 
+extension StoredHouseholdSession: CustomStringConvertible, CustomDebugStringConvertible, CustomReflectable {
+    /// Leaves the device token out of `print`, `dump`, string interpolation and logs, like
+    /// `HouseholdPairing` and `HouseholdClient` do.
+    public var description: String {
+        "HouseholdSession(origin: \(origin), deviceId: \(deviceId), householdName: \(householdName))"
+    }
+    public var debugDescription: String { description }
+    public var customMirror: Mirror {
+        Mirror(self, children: ["origin": origin, "deviceId": deviceId, "deviceName": deviceName, "householdName": householdName])
+    }
+}
+
 /// Reads and writes the household session item with RN's error handling.
 public struct HouseholdSessionStore: Sendable {
     private let keychain: any KeychainStore

@@ -1,0 +1,1380 @@
+{
+ "seeds": {
+  "clockStart": 1770000000000,
+  "clockStep": 7,
+  "idPrefix": "shadow-id-"
+ },
+ "steps": [
+  {
+   "op": "sql",
+   "sql": "UPDATE spaces SET created_at = 0, updated_at = 0 WHERE kind = 'system'"
+  },
+  {
+   "op": "sql",
+   "sql": "UPDATE containers SET created_at = 0, updated_at = 0 WHERE kind = 'system'"
+  },
+  {
+   "op": "sql",
+   "sql": "INSERT INTO spaces (id, name, icon, color, created_at, updated_at) VALUES ('local-space', 'Attic', '📦', '#E4572E', 1, 1)"
+  },
+  {
+   "op": "sql",
+   "sql": "INSERT INTO containers (id, space_id, name, visual_type, short_code, created_at, updated_at) VALUES ('local-box', 'local-space', 'Old box', 'drawer', 'BOX-AAAA', 2, 2)"
+  },
+  {
+   "op": "sql",
+   "sql": "INSERT INTO items (id, container_id, name, category, quantity, notes, created_at, updated_at, search_text) VALUES ('local-item', 'local-box', 'Lamp', NULL, 1, NULL, 3, 3, 'lamp')"
+  },
+  {
+   "op": "sql",
+   "sql": "INSERT INTO tags (id, name, normalized_name, created_at) VALUES ('tag-power', 'Power', 'power', 4), ('tag-cafe', 'Café', 'cafe', 4)"
+  },
+  {
+   "op": "sql",
+   "sql": "INSERT INTO qr_bindings (id, token, container_id, created_at, updated_at) VALUES ('local-qr', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'local-box', 5, 5)"
+  },
+  {
+   "op": "dump",
+   "tables": {
+    "spaces": [
+     {
+      "id": "drop-zone-space",
+      "name": "Drop zone",
+      "icon": "📥",
+      "color": "#0F9BB0",
+      "created_at": 0,
+      "updated_at": 0,
+      "kind": "system"
+     },
+     {
+      "id": "local-space",
+      "name": "Attic",
+      "icon": "📦",
+      "color": "#E4572E",
+      "created_at": 1,
+      "updated_at": 1,
+      "kind": "normal"
+     }
+    ],
+    "containers": [
+     {
+      "id": "drop-zone",
+      "space_id": "drop-zone-space",
+      "name": "Drop zone",
+      "visual_type": "other",
+      "short_code": "DROP-ZONE",
+      "created_at": 0,
+      "updated_at": 0,
+      "kind": "system"
+     },
+     {
+      "id": "local-box",
+      "space_id": "local-space",
+      "name": "Old box",
+      "visual_type": "drawer",
+      "short_code": "BOX-AAAA",
+      "created_at": 2,
+      "updated_at": 2,
+      "kind": "normal"
+     }
+    ],
+    "items": [
+     {
+      "id": "local-item",
+      "container_id": "local-box",
+      "name": "Lamp",
+      "category": null,
+      "quantity": 1,
+      "notes": null,
+      "created_at": 3,
+      "updated_at": 3,
+      "search_text": "lamp"
+     }
+    ],
+    "item_photos": [],
+    "tags": [
+     {
+      "id": "tag-power",
+      "name": "Power",
+      "normalized_name": "power",
+      "created_at": 4
+     },
+     {
+      "id": "tag-cafe",
+      "name": "Café",
+      "normalized_name": "cafe",
+      "created_at": 4
+     }
+    ],
+    "item_tags": [],
+    "qr_bindings": [
+     {
+      "id": "local-qr",
+      "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "container_id": "local-box",
+      "created_at": 5,
+      "updated_at": 5
+     }
+    ],
+    "sync_deletions": []
+   }
+  },
+  {
+   "op": "spaces.create",
+   "input": {
+    "name": "Garage",
+    "icon": "🚗",
+    "color": "#5B8DEF"
+   },
+   "reply": {
+    "id": "s1",
+    "name": "Garage",
+    "icon": "🚗",
+    "color": "#5B8DEF",
+    "createdAt": 100,
+    "updatedAt": 100
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "spaces.update",
+   "id": "s1",
+   "input": {
+    "name": " Garage 2 "
+   },
+   "reply": {
+    "id": "s1",
+    "name": " Garage 2 ",
+    "icon": "🚗",
+    "color": "#5B8DEF",
+    "createdAt": 150,
+    "updatedAt": 200
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "spaces.update",
+   "id": "local-space",
+   "input": {
+    "icon": "🏠"
+   },
+   "reply": {
+    "id": "local-space",
+    "name": "Attic",
+    "icon": "🏠",
+    "color": "#E4572E",
+    "createdAt": 999,
+    "updatedAt": 210
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "spaces.update",
+   "id": "remote-space",
+   "input": {
+    "name": "Shed"
+   },
+   "reply": {
+    "id": "remote-space",
+    "name": "Shed",
+    "icon": "",
+    "color": "",
+    "createdAt": 220,
+    "updatedAt": 220
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "spaces.update",
+   "id": "gone",
+   "input": {
+    "name": "x"
+   },
+   "reply": null,
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "spaces.create",
+   "input": {
+    "name": "Nope",
+    "icon": "",
+    "color": ""
+   },
+   "remoteFails": true,
+   "outcome": "error",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "containers.create",
+   "input": {
+    "spaceId": "s1",
+    "visualType": "box"
+   },
+   "reply": {
+    "id": "c1",
+    "spaceId": "s1",
+    "name": null,
+    "visualType": "box",
+    "shortCode": "BOX-1111",
+    "createdAt": 300,
+    "updatedAt": 300
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "containers.update",
+   "id": "c1",
+   "input": {
+    "name": "Shelf",
+    "visualType": "shelf"
+   },
+   "reply": {
+    "id": "c1",
+    "spaceId": "s1",
+    "name": "Shelf",
+    "visualType": "shelf",
+    "shortCode": "SHF-2222",
+    "createdAt": 999,
+    "updatedAt": 310
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "containers.create",
+   "input": {
+    "spaceId": "s1",
+    "visualType": "box",
+    "name": "Clash"
+   },
+   "reply": {
+    "id": "c-clash",
+    "spaceId": "s1",
+    "name": "Clash",
+    "visualType": "box",
+    "shortCode": "BOX-AAAA",
+    "createdAt": 320,
+    "updatedAt": 320
+   },
+   "outcome": "ok",
+   "shadowFailed": true,
+   "events": [
+    "household_shadow_failed"
+   ]
+  },
+  {
+   "op": "containers.create",
+   "input": {
+    "spaceId": "elsewhere",
+    "visualType": "bin"
+   },
+   "reply": {
+    "id": "c-orphan",
+    "spaceId": "elsewhere",
+    "name": null,
+    "visualType": "bin",
+    "shortCode": "BIN-3333",
+    "createdAt": 330,
+    "updatedAt": 330
+   },
+   "outcome": "ok",
+   "shadowFailed": true,
+   "events": [
+    "household_shadow_failed"
+   ]
+  },
+  {
+   "op": "containers.update",
+   "id": "local-box",
+   "input": {
+    "spaceId": "s1"
+   },
+   "reply": {
+    "id": "local-box",
+    "spaceId": "s1",
+    "name": "Old box",
+    "visualType": "Trunk",
+    "shortCode": "BOX-AAAA",
+    "createdAt": 2,
+    "updatedAt": 340
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "containers.update",
+   "id": "gone",
+   "input": {
+    "name": null
+   },
+   "reply": null,
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "dump",
+   "tables": {
+    "spaces": [
+     {
+      "id": "drop-zone-space",
+      "name": "Drop zone",
+      "icon": "📥",
+      "color": "#0F9BB0",
+      "created_at": 0,
+      "updated_at": 0,
+      "kind": "system"
+     },
+     {
+      "id": "local-space",
+      "name": "Attic",
+      "icon": "🏠",
+      "color": "#E4572E",
+      "created_at": 1,
+      "updated_at": 210,
+      "kind": "normal"
+     },
+     {
+      "id": "s1",
+      "name": " Garage 2 ",
+      "icon": "🚗",
+      "color": "#5B8DEF",
+      "created_at": 100,
+      "updated_at": 200,
+      "kind": "normal"
+     },
+     {
+      "id": "remote-space",
+      "name": "Shed",
+      "icon": "",
+      "color": "",
+      "created_at": 220,
+      "updated_at": 220,
+      "kind": "normal"
+     }
+    ],
+    "containers": [
+     {
+      "id": "drop-zone",
+      "space_id": "drop-zone-space",
+      "name": "Drop zone",
+      "visual_type": "other",
+      "short_code": "DROP-ZONE",
+      "created_at": 0,
+      "updated_at": 0,
+      "kind": "system"
+     },
+     {
+      "id": "local-box",
+      "space_id": "s1",
+      "name": "Old box",
+      "visual_type": "Trunk",
+      "short_code": "BOX-AAAA",
+      "created_at": 2,
+      "updated_at": 340,
+      "kind": "normal"
+     },
+     {
+      "id": "c1",
+      "space_id": "s1",
+      "name": "Shelf",
+      "visual_type": "shelf",
+      "short_code": "SHF-2222",
+      "created_at": 300,
+      "updated_at": 310,
+      "kind": "normal"
+     }
+    ],
+    "items": [
+     {
+      "id": "local-item",
+      "container_id": "local-box",
+      "name": "Lamp",
+      "category": null,
+      "quantity": 1,
+      "notes": null,
+      "created_at": 3,
+      "updated_at": 3,
+      "search_text": "lamp"
+     }
+    ],
+    "item_photos": [],
+    "tags": [
+     {
+      "id": "tag-power",
+      "name": "Power",
+      "normalized_name": "power",
+      "created_at": 4
+     },
+     {
+      "id": "tag-cafe",
+      "name": "Café",
+      "normalized_name": "cafe",
+      "created_at": 4
+     }
+    ],
+    "item_tags": [],
+    "qr_bindings": [
+     {
+      "id": "local-qr",
+      "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "container_id": "local-box",
+      "created_at": 5,
+      "updated_at": 5
+     }
+    ],
+    "sync_deletions": []
+   }
+  },
+  {
+   "op": "items.create",
+   "input": {
+    "containerId": "c1",
+    "name": "Drill"
+   },
+   "reply": {
+    "id": "i1",
+    "containerId": "c1",
+    "name": "  Cordless Drill ",
+    "category": " Power Tools ",
+    "quantity": 2,
+    "notes": "Charger",
+    "createdAt": 400,
+    "updatedAt": 400,
+    "photoId": "p1",
+    "photoUri": "r2:household/primary/photos/p1.webp",
+    "photoThumbUri": "r2:household/primary/photos/p1-thumb.webp",
+    "tags": [
+     "  Power ",
+     "POWER",
+     "Café",
+     "",
+     "   ",
+     "İstanbul",
+     "ΣΑΣ",
+     "power"
+    ],
+    "spaceId": "s1",
+    "spaceName": "Garage",
+    "spaceIcon": "🚗",
+    "spaceColor": "#5B8DEF",
+    "containerName": "Shelf",
+    "containerShortCode": "SHF-2222"
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "items.create",
+   "input": {
+    "containerId": "drop-zone"
+   },
+   "reply": {
+    "id": "i2",
+    "containerId": "drop-zone",
+    "name": "",
+    "category": null,
+    "quantity": 1,
+    "notes": null,
+    "createdAt": 410,
+    "updatedAt": 411,
+    "photoId": null,
+    "photoUri": null,
+    "photoThumbUri": null,
+    "tags": [
+     "Power"
+    ],
+    "spaceId": "drop-zone-space",
+    "spaceName": "Drop zone",
+    "spaceIcon": "📥",
+    "spaceColor": "#0F9BB0",
+    "containerName": null,
+    "containerShortCode": ""
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "items.create",
+   "input": {
+    "containerId": "remote-box",
+    "name": "Saw"
+   },
+   "reply": {
+    "id": "i3",
+    "containerId": "remote-box",
+    "name": "Saw",
+    "category": "ΟΔΟΣ",
+    "quantity": 1,
+    "notes": null,
+    "createdAt": 412,
+    "updatedAt": 412,
+    "photoId": "p3",
+    "photoUri": null,
+    "photoThumbUri": null,
+    "tags": [],
+    "spaceId": "far-space",
+    "spaceName": "Workshop",
+    "spaceIcon": "🔧",
+    "spaceColor": "#123456",
+    "containerName": "Rack",
+    "containerShortCode": "RCK-4444"
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "items.create",
+   "input": {
+    "containerId": "c1",
+    "name": "Bits"
+   },
+   "reply": {
+    "id": "i4",
+    "containerId": "c1",
+    "name": "Bits",
+    "category": null,
+    "quantity": 1,
+    "notes": null,
+    "createdAt": 413,
+    "updatedAt": 413,
+    "photoId": "p1",
+    "photoUri": "r2:household/primary/photos/p1-again.webp",
+    "photoThumbUri": null,
+    "tags": [],
+    "spaceId": "s1",
+    "spaceName": "Garage",
+    "spaceIcon": "🚗",
+    "spaceColor": "#5B8DEF",
+    "containerName": "Shelf",
+    "containerShortCode": "SHF-2222"
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "items.update",
+   "id": "i1",
+   "input": {
+    "name": "Cordless ΟΔΟΣ",
+    "quantity": 0
+   },
+   "reply": {
+    "id": "i1",
+    "containerId": "c1",
+    "name": "  Cordless ΟΔΟΣ ",
+    "category": null,
+    "quantity": 0,
+    "notes": "n",
+    "createdAt": 999,
+    "updatedAt": 420
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "items.update",
+   "id": "local-item",
+   "input": {
+    "containerId": "c1"
+   },
+   "reply": {
+    "id": "local-item",
+    "containerId": "c1",
+    "name": "Lamp",
+    "category": "Light",
+    "quantity": 1,
+    "notes": null,
+    "createdAt": 3,
+    "updatedAt": 430
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "items.update",
+   "id": "i1",
+   "input": {
+    "containerId": "elsewhere"
+   },
+   "reply": {
+    "id": "i1",
+    "containerId": "elsewhere",
+    "name": "x",
+    "category": null,
+    "quantity": 1,
+    "notes": null,
+    "createdAt": 400,
+    "updatedAt": 440
+   },
+   "outcome": "ok",
+   "shadowFailed": true,
+   "events": [
+    "household_shadow_failed"
+   ]
+  },
+  {
+   "op": "items.update",
+   "id": "gone",
+   "input": {
+    "quantity": 3
+   },
+   "reply": null,
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "items.update",
+   "id": "i1",
+   "input": {
+    "name": "Late",
+    "expectedUpdatedAt": 1
+   },
+   "remoteFails": true,
+   "outcome": "error",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "dump",
+   "tables": {
+    "spaces": [
+     {
+      "id": "drop-zone-space",
+      "name": "Drop zone",
+      "icon": "📥",
+      "color": "#0F9BB0",
+      "created_at": 0,
+      "updated_at": 411,
+      "kind": "system"
+     },
+     {
+      "id": "local-space",
+      "name": "Attic",
+      "icon": "🏠",
+      "color": "#E4572E",
+      "created_at": 1,
+      "updated_at": 210,
+      "kind": "normal"
+     },
+     {
+      "id": "s1",
+      "name": "Garage",
+      "icon": "🚗",
+      "color": "#5B8DEF",
+      "created_at": 100,
+      "updated_at": 413,
+      "kind": "normal"
+     },
+     {
+      "id": "remote-space",
+      "name": "Shed",
+      "icon": "",
+      "color": "",
+      "created_at": 220,
+      "updated_at": 220,
+      "kind": "normal"
+     },
+     {
+      "id": "far-space",
+      "name": "Workshop",
+      "icon": "🔧",
+      "color": "#123456",
+      "created_at": 412,
+      "updated_at": 412,
+      "kind": "normal"
+     }
+    ],
+    "containers": [
+     {
+      "id": "drop-zone",
+      "space_id": "drop-zone-space",
+      "name": null,
+      "visual_type": "box",
+      "short_code": "CTR-DROP",
+      "created_at": 0,
+      "updated_at": 411,
+      "kind": "system"
+     },
+     {
+      "id": "local-box",
+      "space_id": "s1",
+      "name": "Old box",
+      "visual_type": "Trunk",
+      "short_code": "BOX-AAAA",
+      "created_at": 2,
+      "updated_at": 340,
+      "kind": "normal"
+     },
+     {
+      "id": "c1",
+      "space_id": "s1",
+      "name": "Shelf",
+      "visual_type": "box",
+      "short_code": "SHF-2222",
+      "created_at": 300,
+      "updated_at": 413,
+      "kind": "normal"
+     },
+     {
+      "id": "remote-box",
+      "space_id": "far-space",
+      "name": "Rack",
+      "visual_type": "box",
+      "short_code": "RCK-4444",
+      "created_at": 412,
+      "updated_at": 412,
+      "kind": "normal"
+     }
+    ],
+    "items": [
+     {
+      "id": "local-item",
+      "container_id": "c1",
+      "name": "Lamp",
+      "category": "Light",
+      "quantity": 1,
+      "notes": null,
+      "created_at": 3,
+      "updated_at": 430,
+      "search_text": "lamp light"
+     },
+     {
+      "id": "i1",
+      "container_id": "c1",
+      "name": "  Cordless ΟΔΟΣ ",
+      "category": null,
+      "quantity": 0,
+      "notes": "n",
+      "created_at": 400,
+      "updated_at": 420,
+      "search_text": "cordless οδος"
+     },
+     {
+      "id": "i2",
+      "container_id": "drop-zone",
+      "name": "",
+      "category": null,
+      "quantity": 1,
+      "notes": null,
+      "created_at": 410,
+      "updated_at": 411,
+      "search_text": ""
+     },
+     {
+      "id": "i3",
+      "container_id": "remote-box",
+      "name": "Saw",
+      "category": "ΟΔΟΣ",
+      "quantity": 1,
+      "notes": null,
+      "created_at": 412,
+      "updated_at": 412,
+      "search_text": "saw οδος"
+     },
+     {
+      "id": "i4",
+      "container_id": "c1",
+      "name": "Bits",
+      "category": null,
+      "quantity": 1,
+      "notes": null,
+      "created_at": 413,
+      "updated_at": 413,
+      "search_text": "bits"
+     }
+    ],
+    "item_photos": [
+     {
+      "id": "p1",
+      "item_id": "i1",
+      "uri": "r2:household/primary/photos/p1-again.webp",
+      "width": null,
+      "height": null,
+      "byte_size": null,
+      "created_at": 400,
+      "remote_synced_at": 1770000000035,
+      "thumb_uri": null
+     }
+    ],
+    "tags": [
+     {
+      "id": "tag-power",
+      "name": "Power",
+      "normalized_name": "power",
+      "created_at": 4
+     },
+     {
+      "id": "tag-cafe",
+      "name": "Café",
+      "normalized_name": "cafe",
+      "created_at": 4
+     },
+     {
+      "id": "shadow-id-1",
+      "name": "Café",
+      "normalized_name": "café",
+      "created_at": 1770000000014
+     },
+     {
+      "id": "shadow-id-2",
+      "name": "İstanbul",
+      "normalized_name": "i̇stanbul",
+      "created_at": 1770000000021
+     },
+     {
+      "id": "shadow-id-3",
+      "name": "ΣΑΣ",
+      "normalized_name": "σας",
+      "created_at": 1770000000028
+     }
+    ],
+    "item_tags": [
+     {
+      "item_id": "i1",
+      "tag_id": "tag-power"
+     },
+     {
+      "item_id": "i1",
+      "tag_id": "shadow-id-1"
+     },
+     {
+      "item_id": "i1",
+      "tag_id": "shadow-id-2"
+     },
+     {
+      "item_id": "i1",
+      "tag_id": "shadow-id-3"
+     },
+     {
+      "item_id": "i2",
+      "tag_id": "tag-power"
+     }
+    ],
+    "qr_bindings": [
+     {
+      "id": "local-qr",
+      "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "container_id": "local-box",
+      "created_at": 5,
+      "updated_at": 5
+     }
+    ],
+    "sync_deletions": []
+   }
+  },
+  {
+   "op": "qr.createAndBind",
+   "containerId": "c1",
+   "reply": {
+    "id": "q1",
+    "token": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "containerId": "c1",
+    "createdAt": 500,
+    "updatedAt": 500
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "qr.bind",
+   "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "containerId": "c1",
+   "reply": {
+    "id": "q2",
+    "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "containerId": "c1",
+    "createdAt": 510,
+    "updatedAt": 510
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "qr.unbind",
+   "containerId": "local-box",
+   "reply": false,
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "qr.createAndBind",
+   "containerId": "local-box",
+   "reply": {
+    "id": "q3",
+    "token": "cccccccccccccccccccccccccccccccc",
+    "containerId": "local-box",
+    "createdAt": 520,
+    "updatedAt": 520
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "qr.unbind",
+   "containerId": "c1",
+   "reply": true,
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "dump",
+   "tables": {
+    "spaces": [
+     {
+      "id": "drop-zone-space",
+      "name": "Drop zone",
+      "icon": "📥",
+      "color": "#0F9BB0",
+      "created_at": 0,
+      "updated_at": 411,
+      "kind": "system"
+     },
+     {
+      "id": "local-space",
+      "name": "Attic",
+      "icon": "🏠",
+      "color": "#E4572E",
+      "created_at": 1,
+      "updated_at": 210,
+      "kind": "normal"
+     },
+     {
+      "id": "s1",
+      "name": "Garage",
+      "icon": "🚗",
+      "color": "#5B8DEF",
+      "created_at": 100,
+      "updated_at": 413,
+      "kind": "normal"
+     },
+     {
+      "id": "remote-space",
+      "name": "Shed",
+      "icon": "",
+      "color": "",
+      "created_at": 220,
+      "updated_at": 220,
+      "kind": "normal"
+     },
+     {
+      "id": "far-space",
+      "name": "Workshop",
+      "icon": "🔧",
+      "color": "#123456",
+      "created_at": 412,
+      "updated_at": 412,
+      "kind": "normal"
+     }
+    ],
+    "containers": [
+     {
+      "id": "drop-zone",
+      "space_id": "drop-zone-space",
+      "name": null,
+      "visual_type": "box",
+      "short_code": "CTR-DROP",
+      "created_at": 0,
+      "updated_at": 411,
+      "kind": "system"
+     },
+     {
+      "id": "local-box",
+      "space_id": "s1",
+      "name": "Old box",
+      "visual_type": "Trunk",
+      "short_code": "BOX-AAAA",
+      "created_at": 2,
+      "updated_at": 340,
+      "kind": "normal"
+     },
+     {
+      "id": "c1",
+      "space_id": "s1",
+      "name": "Shelf",
+      "visual_type": "box",
+      "short_code": "SHF-2222",
+      "created_at": 300,
+      "updated_at": 413,
+      "kind": "normal"
+     },
+     {
+      "id": "remote-box",
+      "space_id": "far-space",
+      "name": "Rack",
+      "visual_type": "box",
+      "short_code": "RCK-4444",
+      "created_at": 412,
+      "updated_at": 412,
+      "kind": "normal"
+     }
+    ],
+    "items": [
+     {
+      "id": "local-item",
+      "container_id": "c1",
+      "name": "Lamp",
+      "category": "Light",
+      "quantity": 1,
+      "notes": null,
+      "created_at": 3,
+      "updated_at": 430,
+      "search_text": "lamp light"
+     },
+     {
+      "id": "i1",
+      "container_id": "c1",
+      "name": "  Cordless ΟΔΟΣ ",
+      "category": null,
+      "quantity": 0,
+      "notes": "n",
+      "created_at": 400,
+      "updated_at": 420,
+      "search_text": "cordless οδος"
+     },
+     {
+      "id": "i2",
+      "container_id": "drop-zone",
+      "name": "",
+      "category": null,
+      "quantity": 1,
+      "notes": null,
+      "created_at": 410,
+      "updated_at": 411,
+      "search_text": ""
+     },
+     {
+      "id": "i3",
+      "container_id": "remote-box",
+      "name": "Saw",
+      "category": "ΟΔΟΣ",
+      "quantity": 1,
+      "notes": null,
+      "created_at": 412,
+      "updated_at": 412,
+      "search_text": "saw οδος"
+     },
+     {
+      "id": "i4",
+      "container_id": "c1",
+      "name": "Bits",
+      "category": null,
+      "quantity": 1,
+      "notes": null,
+      "created_at": 413,
+      "updated_at": 413,
+      "search_text": "bits"
+     }
+    ],
+    "item_photos": [
+     {
+      "id": "p1",
+      "item_id": "i1",
+      "uri": "r2:household/primary/photos/p1-again.webp",
+      "width": null,
+      "height": null,
+      "byte_size": null,
+      "created_at": 400,
+      "remote_synced_at": 1770000000035,
+      "thumb_uri": null
+     }
+    ],
+    "tags": [
+     {
+      "id": "tag-power",
+      "name": "Power",
+      "normalized_name": "power",
+      "created_at": 4
+     },
+     {
+      "id": "tag-cafe",
+      "name": "Café",
+      "normalized_name": "cafe",
+      "created_at": 4
+     },
+     {
+      "id": "shadow-id-1",
+      "name": "Café",
+      "normalized_name": "café",
+      "created_at": 1770000000014
+     },
+     {
+      "id": "shadow-id-2",
+      "name": "İstanbul",
+      "normalized_name": "i̇stanbul",
+      "created_at": 1770000000021
+     },
+     {
+      "id": "shadow-id-3",
+      "name": "ΣΑΣ",
+      "normalized_name": "σας",
+      "created_at": 1770000000028
+     }
+    ],
+    "item_tags": [
+     {
+      "item_id": "i1",
+      "tag_id": "tag-power"
+     },
+     {
+      "item_id": "i1",
+      "tag_id": "shadow-id-1"
+     },
+     {
+      "item_id": "i1",
+      "tag_id": "shadow-id-2"
+     },
+     {
+      "item_id": "i1",
+      "tag_id": "shadow-id-3"
+     },
+     {
+      "item_id": "i2",
+      "tag_id": "tag-power"
+     }
+    ],
+    "qr_bindings": [
+     {
+      "id": "q3",
+      "token": "cccccccccccccccccccccccccccccccc",
+      "container_id": "local-box",
+      "created_at": 520,
+      "updated_at": 520
+     }
+    ],
+    "sync_deletions": []
+   }
+  },
+  {
+   "op": "items.delete",
+   "id": "i1",
+   "reply": {
+    "deleted": true,
+    "orphanedPhotoUris": [
+     "r2:household/primary/photos/p1-again.webp"
+    ]
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "items.delete",
+   "id": "gone",
+   "reply": {
+    "deleted": false,
+    "orphanedPhotoUris": []
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "containers.delete",
+   "id": "local-box",
+   "reply": {
+    "deleted": true,
+    "orphanedPhotoUris": []
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "containers.delete",
+   "id": "drop-zone",
+   "remoteFails": true,
+   "outcome": "error",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "spaces.delete",
+   "id": "s1",
+   "reply": {
+    "deleted": true,
+    "orphanedPhotoUris": []
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "spaces.delete",
+   "id": "gone",
+   "reply": {
+    "deleted": false,
+    "orphanedPhotoUris": []
+   },
+   "outcome": "ok",
+   "shadowFailed": false,
+   "events": []
+  },
+  {
+   "op": "sql",
+   "sql": "UPDATE sync_deletions SET deleted_at = 0"
+  },
+  {
+   "op": "dump",
+   "tables": {
+    "spaces": [
+     {
+      "id": "drop-zone-space",
+      "name": "Drop zone",
+      "icon": "📥",
+      "color": "#0F9BB0",
+      "created_at": 0,
+      "updated_at": 411,
+      "kind": "system"
+     },
+     {
+      "id": "local-space",
+      "name": "Attic",
+      "icon": "🏠",
+      "color": "#E4572E",
+      "created_at": 1,
+      "updated_at": 210,
+      "kind": "normal"
+     },
+     {
+      "id": "remote-space",
+      "name": "Shed",
+      "icon": "",
+      "color": "",
+      "created_at": 220,
+      "updated_at": 220,
+      "kind": "normal"
+     },
+     {
+      "id": "far-space",
+      "name": "Workshop",
+      "icon": "🔧",
+      "color": "#123456",
+      "created_at": 412,
+      "updated_at": 412,
+      "kind": "normal"
+     }
+    ],
+    "containers": [
+     {
+      "id": "drop-zone",
+      "space_id": "drop-zone-space",
+      "name": null,
+      "visual_type": "box",
+      "short_code": "CTR-DROP",
+      "created_at": 0,
+      "updated_at": 411,
+      "kind": "system"
+     },
+     {
+      "id": "remote-box",
+      "space_id": "far-space",
+      "name": "Rack",
+      "visual_type": "box",
+      "short_code": "RCK-4444",
+      "created_at": 412,
+      "updated_at": 412,
+      "kind": "normal"
+     }
+    ],
+    "items": [
+     {
+      "id": "i2",
+      "container_id": "drop-zone",
+      "name": "",
+      "category": null,
+      "quantity": 1,
+      "notes": null,
+      "created_at": 410,
+      "updated_at": 411,
+      "search_text": ""
+     },
+     {
+      "id": "i3",
+      "container_id": "remote-box",
+      "name": "Saw",
+      "category": "ΟΔΟΣ",
+      "quantity": 1,
+      "notes": null,
+      "created_at": 412,
+      "updated_at": 412,
+      "search_text": "saw οδος"
+     }
+    ],
+    "item_photos": [],
+    "tags": [
+     {
+      "id": "tag-power",
+      "name": "Power",
+      "normalized_name": "power",
+      "created_at": 4
+     },
+     {
+      "id": "tag-cafe",
+      "name": "Café",
+      "normalized_name": "cafe",
+      "created_at": 4
+     },
+     {
+      "id": "shadow-id-1",
+      "name": "Café",
+      "normalized_name": "café",
+      "created_at": 1770000000014
+     },
+     {
+      "id": "shadow-id-2",
+      "name": "İstanbul",
+      "normalized_name": "i̇stanbul",
+      "created_at": 1770000000021
+     },
+     {
+      "id": "shadow-id-3",
+      "name": "ΣΑΣ",
+      "normalized_name": "σας",
+      "created_at": 1770000000028
+     }
+    ],
+    "item_tags": [
+     {
+      "item_id": "i2",
+      "tag_id": "tag-power"
+     }
+    ],
+    "qr_bindings": [],
+    "sync_deletions": [
+     {
+      "photo_id": "p1",
+      "deleted_at": 0
+     }
+    ]
+   }
+  }
+ ]
+}
