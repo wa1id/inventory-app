@@ -14,8 +14,35 @@ private final class TestSupportLog<Item: Sendable>: Sendable {
     func append(_ item: Item) { storage.withLock { $0.append(item) } }
 }
 
+/// The shape of the app models' timers: a main-actor Task asleep on the injected clock, cancelled
+/// on a state change, re-armed from inside itself (ConnectionModel's reconnect, ToastCenter's life).
+@MainActor
+private final class TestSupportRetryModel {
+    private(set) var attempts = 0
+    private var timer: Task<Void, Never>?
+    private let clock: any Clock<Duration>
+
+    init(clock: any Clock<Duration>) {
+        self.clock = clock
+    }
+
+    func arm() {
+        timer?.cancel()
+        timer = Task { [clock] in
+            do { try await clock.sleep(for: .milliseconds(2500)) } catch { return }
+            attempts += 1
+            arm()
+        }
+    }
+
+    func stop() {
+        timer?.cancel()
+        timer = nil
+    }
+}
+
 @Suite("ManualClock")
-struct ManualClockTests {
+struct TestSupportManualClockTests {
     @Test("sleepers wake in deadline order, and only once their deadline is reached")
     func deadlineOrder() async throws {
         let clock = ManualClock()
@@ -105,6 +132,26 @@ struct ManualClockTests {
         }
     }
 
+    @Test("drives a main-actor model's re-arming timer, and a cancelled timer never fires")
+    @MainActor
+    func mainActorModel() async throws {
+        let clock = ManualClock()
+        let model = TestSupportRetryModel(clock: clock)
+        model.arm()
+        try await clock.waitForSleepers()
+        await clock.advance(by: .milliseconds(2499))
+        #expect(model.attempts == 0)
+        await clock.advance(by: .milliseconds(1))
+        #expect(model.attempts == 1)
+        // Each firing arms a new Task, which has to be asleep again before the next deadline.
+        await clock.advance(by: .seconds(5))
+        #expect(model.attempts == 3)
+        model.stop()
+        #expect(clock.pendingSleeperCount == 0)
+        await clock.advance(by: .seconds(10))
+        #expect(model.attempts == 3)
+    }
+
     @Test("works behind any Clock<Duration>")
     func existential() async throws {
         func sleep<C: Clock>(on clock: C, for duration: C.Duration) async throws {
@@ -124,7 +171,7 @@ struct ManualClockTests {
 }
 
 @Suite("Temporary directories and defaults")
-struct TemporaryResourceTests {
+struct TestSupportTemporaryResourceTests {
     @Test("a temporary directory stands in for a container and goes away with its value")
     func directory() throws {
         var directory: TemporaryDirectory? = try TemporaryDirectory(prefix: "support")
@@ -150,7 +197,7 @@ struct TemporaryResourceTests {
 }
 
 @Suite("RecordingTelemetry")
-struct RecordingTelemetryTests {
+struct TestSupportRecordingTelemetryTests {
     @Test("records events and errors in order, as given")
     func records() {
         let telemetry = RecordingTelemetry()
@@ -166,7 +213,7 @@ struct RecordingTelemetryTests {
 }
 
 @Suite("StubServer")
-struct StubServerTests {
+struct TestSupportStubServerTests {
     @Test("records each request and answers from its script")
     func scripted() async throws {
         let seen = TestSupportLog<String>()

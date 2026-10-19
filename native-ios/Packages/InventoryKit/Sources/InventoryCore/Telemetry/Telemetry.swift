@@ -55,6 +55,36 @@ public enum Telemetry {
     }
 }
 
+/// Where one model's or service's telemetry goes: the process-wide ``Telemetry`` unless a sink is
+/// injected, as a test injects a recorder so its assertions never race other suites through the
+/// shared sink. The allowlist redaction applies either way, so an injected sink sees exactly what
+/// the process-wide one would.
+///
+/// Take one through the initialiser, defaulting to ``shared``:
+/// `init(..., telemetry: TelemetryReporter = .shared)`, then `telemetry.event("item_moved")`.
+public struct TelemetryReporter: Sendable {
+    private let sink: (any TelemetrySink)?
+
+    /// ``Telemetry/logEvent(_:_:)`` and ``Telemetry/logError(_:_:)``: the default everywhere.
+    public static let shared = TelemetryReporter(sink: nil)
+
+    /// Reports to `sink` instead of the process-wide sink, after the same redaction; nil reports
+    /// to the process-wide sink.
+    public init(sink: (any TelemetrySink)?) {
+        self.sink = sink
+    }
+
+    /// RN `logEvent(name, payload)`.
+    public func event(_ name: String, _ payload: TelemetryPayload = [:]) {
+        if let sink { sink.event(name, Telemetry.redact(payload)) } else { Telemetry.logEvent(name, payload) }
+    }
+
+    /// RN `logError(name, payload)`.
+    public func error(_ name: String, _ payload: TelemetryPayload = [:]) {
+        if let sink { sink.error(name, Telemetry.redact(payload)) } else { Telemetry.logError(name, payload) }
+    }
+}
+
 /// Prints events to ``InventoryLog/telemetry`` in debug builds and discards them in release builds.
 public struct DebugLogSink: TelemetrySink {
     public init() {}

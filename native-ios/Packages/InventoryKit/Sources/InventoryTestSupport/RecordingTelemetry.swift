@@ -3,10 +3,11 @@ import Synchronization
 
 /// A `TelemetrySink` that records every event and error it is given, in order.
 ///
-/// Inject it where the code under test takes a sink (or adapt it to a module's own telemetry
-/// seam) rather than replacing the process-wide `Telemetry` sink, which other suites running
-/// in parallel would race. It records payloads as given; a seam that stands in for
-/// `Telemetry.logEvent` should pass them through `Telemetry.redact` first.
+/// Inject it where the code under test reports telemetry, usually as
+/// `TelemetryReporter(sink: recorder)` (which redacts first, as the process-wide sink does), rather
+/// than replacing the process-wide `Telemetry` sink, which other suites running in parallel would
+/// race. It records payloads as given; a seam of its own that stands in for `Telemetry.logEvent`
+/// should pass them through `Telemetry.redact` first.
 public final class RecordingTelemetry: TelemetrySink {
     public struct Entry: Sendable, Equatable, CustomStringConvertible {
         /// `"event"` or `"error"`.

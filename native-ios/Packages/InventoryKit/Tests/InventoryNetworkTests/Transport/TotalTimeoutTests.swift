@@ -152,6 +152,24 @@ struct WireHelperTests {
         #expect(configuration.timeoutIntervalForRequest > 60)
     }
 
+    /// Every network test talks to a StubServer, whose sessions start from InventoryTestSupport's
+    /// own configuration rather than this module's; they only prove what production does while
+    /// the two agree.
+    @Test("the stub server's sessions are configured like production's")
+    func stubSessionsMatchProduction() {
+        let production = URLSessionTransport.makeConfiguration()
+        let stub = StubServer.makeConfiguration()
+        #expect((stub.urlCache == nil) == (production.urlCache == nil))
+        #expect(stub.requestCachePolicy == production.requestCachePolicy)
+        #expect((stub.httpCookieStorage == nil) == (production.httpCookieStorage == nil))
+        #expect(stub.httpShouldSetCookies == production.httpShouldSetCookies)
+        #expect(stub.httpCookieAcceptPolicy == production.httpCookieAcceptPolicy)
+        #expect(stub.waitsForConnectivity == production.waitsForConnectivity)
+        #expect(stub.timeoutIntervalForRequest == production.timeoutIntervalForRequest)
+        #expect(stub.timeoutIntervalForResource == production.timeoutIntervalForResource)
+        #expect(stub.httpAdditionalHeaders == nil && production.httpAdditionalHeaders == nil)
+    }
+
     @Test("requests never use a cache and their idle timeout outlasts the deadline")
     func requestDefaults() throws {
         let request = URLRequest(url: try #require(URL(string: "https://a.example")), method: "PUT", deadline: .seconds(60))

@@ -44,7 +44,7 @@ private struct SharedSeamsFixture: Decodable {
 }
 
 @Suite("Motion (src/ui/motion.ts)")
-struct MotionTests {
+struct SharedMotionTests {
     private static func lengths(_ durations: Motion.Durations) -> [String: Int] {
         [
             "press": durations.press, "toastIn": durations.toastIn, "toastOut": durations.toastOut,
@@ -103,7 +103,7 @@ struct MotionTests {
 }
 
 @Suite("Haptics (src/ui/haptics.ts)")
-struct HapticEventTests {
+struct SharedHapticEventTests {
     /// The expo-haptics call RN made for a feedback.
     private static func expoCall(_ feedback: HapticFeedback) -> [String] {
         switch feedback {
@@ -137,7 +137,7 @@ struct HapticEventTests {
 }
 
 @Suite("ConfirmOptions (src/ui/confirm.ts)")
-struct ConfirmOptionsTests {
+struct SharedConfirmOptionsTests {
     @Test("defaults to Cancel and a destructive confirm, as confirm() does")
     func defaults() throws {
         let vector = try #require(try SharedSeamsFixture.load().confirms.first)
@@ -179,7 +179,7 @@ struct ConfirmOptionsTests {
 }
 
 @Suite("Toast seam (src/providers/ToastProvider.tsx)")
-struct ToastSeamTests {
+struct SharedToastSeamTests {
     @MainActor
     final class RecordingToasts: ToastPresenting {
         var shown: [ToastOptions] = []
@@ -231,7 +231,7 @@ struct ToastSeamTests {
 }
 
 @Suite("Invalidation and app activity")
-struct InvalidationAndActivityTests {
+struct SharedInvalidationAndActivityTests {
     @MainActor
     final class CountingInvalidator: InventoryInvalidating {
         var revision = 0
