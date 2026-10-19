@@ -28,6 +28,8 @@ Each checkout, including each git worktree, gets its own folder and simulator on
 ## Tests
 
 - Swift Testing (`import Testing`, `@Test`, `#expect`, `#require`). Use parameterised `arguments:` for RN `it.each` tables.
+- Use the shared test support instead of writing your own: `InventoryTestSupport` (`ManualClock`, `TemporaryDirectory`, `TemporaryDefaults`, `RecordingTelemetry`, `StubServer`/`StubReply`), `TelemetryReporter(sink:)` for injecting telemetry into models and services, and the seam fakes in `Tests/InventoryAppModelsTests/Support/SharedSeamsFakes.swift` (toasts, confirms, haptics, invalidation).
+- Test targets are shared between areas. Give every top-level type in a test target (suites and helpers) a name that starts with your area, so parallel work never clashes.
 - Port every RN test the owner spec lists for your area, and name each Swift test after the RN test it ports.
 - **Parity vectors:** where Swift must match JS byte for byte (tokenizer, folding, base32, ids, formatting, strings), generate expected outputs by running the real TypeScript. In a worktree, first link the dependencies: `ln -s /home/walid/inventory-app/node_modules node_modules` (it is gitignored). Then write a throwaway Jest test at `src/__vectors__/__tests__/<name>.test.ts` (the `logic` project only matches `__tests__/*.test.ts`) that writes JSON, run it with `npx jest --selectProjects logic src/__vectors__`, and delete the throwaway test afterwards. Commit the generated JSON under `Tests/<Target>/Fixtures/` and load it with `Bundle.module`.
 - Database fixtures at historical schema versions can be produced the same way with `src/db/nodeDatabase.ts`, which runs the real migrations on `node:sqlite`.
