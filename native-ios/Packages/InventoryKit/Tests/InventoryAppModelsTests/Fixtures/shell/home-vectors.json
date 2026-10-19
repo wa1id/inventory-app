@@ -1,0 +1,505 @@
+{
+ "highlight": [
+  {
+   "text": "Spare batteries AA",
+   "terms": [
+    "batt",
+    "aa"
+   ],
+   "parts": [
+    "Spare ",
+    "batt",
+    "eries ",
+    "AA",
+    ""
+   ]
+  },
+  {
+   "text": "USB-C (2m)",
+   "terms": [
+    "c",
+    "(2m)"
+   ],
+   "parts": [
+    "USB-C ",
+    "(2m)",
+    ""
+   ]
+  },
+  {
+   "text": "Drill",
+   "terms": [],
+   "parts": [
+    "Drill"
+   ]
+  },
+  {
+   "text": "",
+   "terms": [
+    "ab"
+   ],
+   "parts": [
+    ""
+   ]
+  },
+  {
+   "text": "AA batteries",
+   "terms": [
+    "aa batt"
+   ],
+   "parts": [
+    "",
+    "AA batt",
+    "eries"
+   ]
+  },
+  {
+   "text": "Mixed CASE case Case",
+   "terms": [
+    "case"
+   ],
+   "parts": [
+    "Mixed ",
+    "CASE",
+    " ",
+    "case",
+    " ",
+    "Case",
+    ""
+   ]
+  },
+  {
+   "text": "aaa",
+   "terms": [
+    "aa",
+    "aaa"
+   ],
+   "parts": [
+    "",
+    "aa",
+    "a"
+   ]
+  },
+  {
+   "text": "abc",
+   "terms": [
+    "abc",
+    "ab"
+   ],
+   "parts": [
+    "",
+    "abc",
+    ""
+   ]
+  },
+  {
+   "text": "abc",
+   "terms": [
+    "ab",
+    "abc"
+   ],
+   "parts": [
+    "",
+    "ab",
+    "c"
+   ]
+  },
+  {
+   "text": "tape tape",
+   "terms": [
+    "ta",
+    "ta"
+   ],
+   "parts": [
+    "",
+    "ta",
+    "pe ",
+    "ta",
+    "pe"
+   ]
+  },
+  {
+   "text": "a+b (c) [d] {e} ^f$ g|h \\i .j *k ?l",
+   "terms": [
+    "a+b",
+    "(c)",
+    "[d]",
+    "{e}",
+    "^f$",
+    "g|h",
+    "\\i",
+    ".j",
+    "*k",
+    "?l"
+   ],
+   "parts": [
+    "",
+    "a+b",
+    " ",
+    "(c)",
+    " ",
+    "[d]",
+    " ",
+    "{e}",
+    " ",
+    "^f$",
+    " ",
+    "g|h",
+    " ",
+    "\\i",
+    " ",
+    ".j",
+    " ",
+    "*k",
+    " ",
+    "?l",
+    ""
+   ]
+  },
+  {
+   "text": "ÉCOLE école Ecole",
+   "terms": [
+    "éc"
+   ],
+   "parts": [
+    "",
+    "ÉC",
+    "OLE ",
+    "éc",
+    "ole Ecole"
+   ]
+  },
+  {
+   "text": "Straße STRASSE strasse",
+   "terms": [
+    "ß",
+    "straße",
+    "ss"
+   ],
+   "parts": [
+    "",
+    "Straße",
+    " STRA",
+    "SS",
+    "E stra",
+    "ss",
+    "e"
+   ]
+  },
+  {
+   "text": "ſtop STOP stop",
+   "terms": [
+    "st"
+   ],
+   "parts": [
+    "ſtop ",
+    "ST",
+    "OP ",
+    "st",
+    "op"
+   ]
+  },
+  {
+   "text": "Kelvin KELVIN Kelvin",
+   "terms": [
+    "Kel",
+    "ke"
+   ],
+   "parts": [
+    "",
+    "Ke",
+    "lvin ",
+    "KE",
+    "LVIN ",
+    "Kel",
+    "vin"
+   ]
+  },
+  {
+   "text": "İstanbul istanbul ISTANBUL",
+   "terms": [
+    "is",
+    "İs"
+   ],
+   "parts": [
+    "",
+    "İs",
+    "tanbul ",
+    "is",
+    "tanbul ",
+    "IS",
+    "TANBUL"
+   ]
+  },
+  {
+   "text": "ΣΊΣΥΦΟΣ σίσυφος",
+   "terms": [
+    "σί",
+    "ος"
+   ],
+   "parts": [
+    "",
+    "ΣΊ",
+    "ΣΥΦ",
+    "ΟΣ",
+    " ",
+    "σί",
+    "συφ",
+    "ος",
+    ""
+   ]
+  },
+  {
+   "text": "🧰 tool box 🧰",
+   "terms": [
+    "🧰",
+    "box"
+   ],
+   "parts": [
+    "",
+    "🧰",
+    " tool ",
+    "box",
+    " ",
+    "🧰",
+    ""
+   ]
+  },
+  {
+   "text": "x é y",
+   "terms": [
+    "é"
+   ],
+   "parts": [
+    "x é y"
+   ]
+  },
+  {
+   "text": "Café Café",
+   "terms": [
+    "café"
+   ],
+   "parts": [
+    "Café ",
+    "Café",
+    ""
+   ]
+  },
+  {
+   "text": "ǅungla ǆ Ǆ",
+   "terms": [
+    "ǆu",
+    "ǅu"
+   ],
+   "parts": [
+    "",
+    "ǅu",
+    "ngla ǆ Ǆ"
+   ]
+  },
+  {
+   "text": "ﬁle FILE file",
+   "terms": [
+    "fi"
+   ],
+   "parts": [
+    "ﬁle ",
+    "FI",
+    "LE ",
+    "fi",
+    "le"
+   ]
+  },
+  {
+   "text": "µm MM μm",
+   "terms": [
+    "µm",
+    "μm"
+   ],
+   "parts": [
+    "",
+    "µm",
+    " MM ",
+    "μm",
+    ""
+   ]
+  },
+  {
+   "text": "Ⅻ ⅻ",
+   "terms": [
+    "ⅻ ",
+    "Ⅻ"
+   ],
+   "parts": [
+    "",
+    "Ⅻ ",
+    "ⅻ"
+   ]
+  },
+  {
+   "text": "BOX-7K2M box-7k2m",
+   "terms": [
+    "box-7k2m"
+   ],
+   "parts": [
+    "",
+    "BOX-7K2M",
+    " ",
+    "box-7k2m",
+    ""
+   ]
+  }
+ ],
+ "totals": [
+  {
+   "items": [
+    {
+     "name": "AA batteries",
+     "quantity": 12,
+     "containerId": "c1"
+    },
+    {
+     "name": " aa Batteries ",
+     "quantity": 2,
+     "containerId": "c2"
+    }
+   ],
+   "totals": [
+    {
+     "name": "AA batteries",
+     "quantity": 14,
+     "places": 2
+    }
+   ]
+  },
+  {
+   "items": [
+    {
+     "name": "﻿Café ",
+     "quantity": 1,
+     "containerId": "c1"
+    },
+    {
+     "name": "CAFÉ",
+     "quantity": 4,
+     "containerId": "c2"
+    }
+   ],
+   "totals": [
+    {
+     "name": "Café",
+     "quantity": 5,
+     "places": 2
+    }
+   ]
+  },
+  {
+   "items": [
+    {
+     "name": "Café",
+     "quantity": 1,
+     "containerId": "c1"
+    },
+    {
+     "name": "Café",
+     "quantity": 1,
+     "containerId": "c2"
+    }
+   ],
+   "totals": []
+  },
+  {
+   "items": [
+    {
+     "name": "ΟΔΟΣ",
+     "quantity": 1,
+     "containerId": "c1"
+    },
+    {
+     "name": "οδος",
+     "quantity": 2,
+     "containerId": "c2"
+    },
+    {
+     "name": "οδοσ",
+     "quantity": 3,
+     "containerId": "c3"
+    }
+   ],
+   "totals": [
+    {
+     "name": "ΟΔΟΣ",
+     "quantity": 3,
+     "places": 2
+    }
+   ]
+  },
+  {
+   "items": [
+    {
+     "name": "İpek",
+     "quantity": 1,
+     "containerId": "c1"
+    },
+    {
+     "name": "i̇pek",
+     "quantity": 1,
+     "containerId": "c2"
+    },
+    {
+     "name": "ipek",
+     "quantity": 1,
+     "containerId": "c3"
+    }
+   ],
+   "totals": [
+    {
+     "name": "İpek",
+     "quantity": 2,
+     "places": 2
+    }
+   ]
+  },
+  {
+   "items": [
+    {
+     "name": "Glue",
+     "quantity": 1,
+     "containerId": "c1"
+    },
+    {
+     "name": "Tape",
+     "quantity": 1,
+     "containerId": "c1"
+    },
+    {
+     "name": "glue",
+     "quantity": 1,
+     "containerId": "c1"
+    },
+    {
+     "name": "TAPE",
+     "quantity": 1,
+     "containerId": "c2"
+    },
+    {
+     "name": "GLUE",
+     "quantity": 1,
+     "containerId": "c2"
+    }
+   ],
+   "totals": [
+    {
+     "name": "Glue",
+     "quantity": 3,
+     "places": 2
+    },
+    {
+     "name": "Tape",
+     "quantity": 2,
+     "places": 2
+    }
+   ]
+  }
+ ]
+}
