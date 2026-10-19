@@ -1,0 +1,606 @@
+{
+ "origin": "https://sync.example",
+ "code": "040G2081040G2081040G208104",
+ "appKey": "app-key",
+ "photoId": "11111111-2222-4333-8444-555555555555",
+ "exchanges": {
+  "health": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/health",
+    "headers": {
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"ok\":true,\"contractVersion\":1}",
+    "base64": null
+   }
+  },
+  "missingKey": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/photos/11111111-2222-4333-8444-555555555555",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 401,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"error\":\"Invalid credentials.\"}",
+    "base64": null
+   }
+  },
+  "wrongKey": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/photos/11111111-2222-4333-8444-555555555555",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "nope"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 401,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"error\":\"Invalid credentials.\"}",
+    "base64": null
+   }
+  },
+  "missingCode": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/photos/11111111-2222-4333-8444-555555555555",
+    "headers": {
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 401,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"error\":\"Missing credentials.\"}",
+    "base64": null
+   }
+  },
+  "shortCode": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/photos/11111111-2222-4333-8444-555555555555",
+    "headers": {
+     "Authorization": "Bearer 0W3GE1R",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 401,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"error\":\"Invalid recovery code.\"}",
+    "base64": null
+   }
+  },
+  "uploadPhoto": {
+   "request": {
+    "method": "PUT",
+    "path": "/v1/photos/11111111-2222-4333-8444-555555555555",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key",
+     "Content-Type": "image/webp"
+    },
+    "base64": "UklGRiAAAABXRUJQVlA4IGZha2UgcGhvdG8gYnl0ZXM="
+   },
+   "response": {
+    "status": 201,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"id\":\"11111111-2222-4333-8444-555555555555\",\"size\":32}",
+    "base64": null
+   }
+  },
+  "downloadPhoto": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/photos/11111111-2222-4333-8444-555555555555",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "headers": {
+     "cache-control": "private, max-age=31536000, immutable",
+     "content-length": "32",
+     "content-type": "image/webp",
+     "etag": "\"9cc32336030482671c5d546731e5d8ef\""
+    },
+    "text": null,
+    "base64": "UklGRiAAAABXRUJQVlA4IGZha2UgcGhvdG8gYnl0ZXM="
+   }
+  },
+  "downloadPhotoMissing": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/photos/99999999-8888-4777-8666-555555555555",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 404,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"error\":\"Not found.\"}",
+    "base64": null
+   }
+  },
+  "uploadPhotoUppercaseId": {
+   "request": {
+    "method": "PUT",
+    "path": "/v1/photos/AAAAAAAA-BBBB-4CCC-8DDD-EEEEEEEEEEEE",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key",
+     "Content-Type": "image/webp"
+    },
+    "base64": "UklGRiAAAABXRUJQVlA4IGZha2UgcGhvdG8gYnl0ZXM="
+   },
+   "response": {
+    "status": 400,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"error\":\"Invalid photo id.\"}",
+    "base64": null
+   }
+  },
+  "uploadPhotoEmpty": {
+   "request": {
+    "method": "PUT",
+    "path": "/v1/photos/99999999-8888-4777-8666-555555555555",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key",
+     "Content-Type": "image/jpeg"
+    },
+    "base64": ""
+   },
+   "response": {
+    "status": 400,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"error\":\"Empty upload.\"}",
+    "base64": null
+   }
+  },
+  "uploadPhotoTooLarge": {
+   "request": {
+    "method": "PUT",
+    "path": "/v1/photos/99999999-8888-4777-8666-555555555555",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key",
+     "Content-Type": "image/jpeg"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 413,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"error\":\"Upload is too large.\"}",
+    "base64": null
+   }
+  },
+  "deletePhoto": {
+   "request": {
+    "method": "DELETE",
+    "path": "/v1/photos/11111111-2222-4333-8444-555555555555",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 204,
+    "headers": {},
+    "text": null,
+    "base64": null
+   }
+  },
+  "deletePhotoAgain": {
+   "request": {
+    "method": "DELETE",
+    "path": "/v1/photos/11111111-2222-4333-8444-555555555555",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 204,
+    "headers": {},
+    "text": null,
+    "base64": null
+   }
+  },
+  "photoMethodNotAllowed": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/photos/11111111-2222-4333-8444-555555555555",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 405,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"error\":\"Method not allowed.\"}",
+    "base64": null
+   }
+  },
+  "latestWithoutBackups": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/backups/latest",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 404,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"error\":\"No backups yet.\"}",
+    "base64": null
+   }
+  },
+  "listWithoutBackups": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/backups",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"contractVersion\":1,\"backups\":[]}",
+    "base64": null
+   }
+  },
+  "uploadBackup": {
+   "request": {
+    "method": "PUT",
+    "path": "/v1/backups",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key",
+     "Content-Type": "application/vnd.sqlite3",
+     "x-snapshot-schema-version": "7",
+     "x-snapshot-sha256": "91fd9b6b466f30aa4c6c75c4fef5955ecfe98a7b0c395a31480fd7d6c2afc67c"
+    },
+    "base64": "U1FMaXRlIGZvcm1hdCAzACBmYWtlIHNuYXBzaG90"
+   },
+   "response": {
+    "status": 201,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"id\":\"1767225602000\",\"size\":30,\"capturedAt\":1767225602000,\"schemaVersion\":7}",
+    "base64": null
+   }
+  },
+  "uploadOlderBackup": {
+   "request": {
+    "method": "PUT",
+    "path": "/v1/backups",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key",
+     "Content-Type": "application/vnd.sqlite3",
+     "x-snapshot-schema-version": "6"
+    },
+    "base64": "U1FMaXRlIGZvcm1hdCAzACBmYWtlIHNuYXBzaG90"
+   },
+   "response": {
+    "status": 201,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"id\":\"1767225603000\",\"size\":30,\"capturedAt\":1767225603000,\"schemaVersion\":6}",
+    "base64": null
+   }
+  },
+  "uploadBackupWithoutSchema": {
+   "request": {
+    "method": "PUT",
+    "path": "/v1/backups",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key",
+     "Content-Type": "application/vnd.sqlite3"
+    },
+    "base64": "U1FMaXRlIGZvcm1hdCAzACBmYWtlIHNuYXBzaG90"
+   },
+   "response": {
+    "status": 400,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"error\":\"Missing or invalid schema version.\"}",
+    "base64": null
+   }
+  },
+  "uploadBackupBadChecksum": {
+   "request": {
+    "method": "PUT",
+    "path": "/v1/backups",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key",
+     "Content-Type": "application/vnd.sqlite3",
+     "x-snapshot-schema-version": "7",
+     "x-snapshot-sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "base64": "U1FMaXRlIGZvcm1hdCAzACBmYWtlIHNuYXBzaG90"
+   },
+   "response": {
+    "status": 422,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"error\":\"Snapshot failed its integrity check.\"}",
+    "base64": null
+   }
+  },
+  "listBackups": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/backups",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"contractVersion\":1,\"backups\":[{\"id\":\"1767225603000\",\"size\":30,\"capturedAt\":1767225603000,\"schemaVersion\":6},{\"id\":\"1767225602000\",\"size\":30,\"capturedAt\":1767225602000,\"schemaVersion\":7}]}",
+    "base64": null
+   }
+  },
+  "downloadLatest": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/backups/latest",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "headers": {
+     "content-length": "30",
+     "content-type": "application/vnd.sqlite3",
+     "etag": "\"34e7a6174b31fe0648a82e572c696a6d\"",
+     "x-snapshot-captured-at": "1767225603000",
+     "x-snapshot-schema-version": "6"
+    },
+    "text": null,
+    "base64": "U1FMaXRlIGZvcm1hdCAzACBmYWtlIHNuYXBzaG90"
+   }
+  },
+  "downloadById": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/backups/1767225602000",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "headers": {
+     "content-length": "30",
+     "content-type": "application/vnd.sqlite3",
+     "etag": "\"34e7a6174b31fe0648a82e572c696a6d\"",
+     "x-snapshot-captured-at": "1767225602000",
+     "x-snapshot-schema-version": "7"
+    },
+    "text": null,
+    "base64": "U1FMaXRlIGZvcm1hdCAzACBmYWtlIHNuYXBzaG90"
+   }
+  },
+  "downloadInvalidId": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/backups/yesterday",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 400,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"error\":\"Invalid backup id.\"}",
+    "base64": null
+   }
+  },
+  "downloadMissingId": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/backups/1000000000000",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 404,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"error\":\"Not found.\"}",
+    "base64": null
+   }
+  },
+  "backupsMethodNotAllowed": {
+   "request": {
+    "method": "DELETE",
+    "path": "/v1/backups",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 405,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"error\":\"Method not allowed.\"}",
+    "base64": null
+   }
+  },
+  "usage": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/usage",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"contractVersion\":1,\"bytes\":60,\"objects\":2,\"limitBytes\":2147483648}",
+    "base64": null
+   }
+  },
+  "unknownRoute": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/anything",
+    "headers": {
+     "Authorization": "Bearer 040G2081040G2081040G208104",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "base64": null
+   },
+   "response": {
+    "status": 404,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"error\":\"Not found.\"}",
+    "base64": null
+   }
+  },
+  "quotaExceeded": {
+   "request": {
+    "method": "PUT",
+    "path": "/v1/photos/11111111-2222-4333-8444-555555555555",
+    "headers": {
+     "Authorization": "Bearer 081040G2081040G2081040G208",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key",
+     "Content-Type": "image/webp"
+    },
+    "base64": "UklGRiAAAABXRUJQVlA4IGZha2UgcGhvdG8gYnl0ZXM="
+   },
+   "response": {
+    "status": 507,
+    "headers": {
+     "content-type": "application/json; charset=utf-8"
+    },
+    "text": "{\"error\":\"Storage limit reached for this account.\"}",
+    "base64": null
+   }
+  }
+ }
+}

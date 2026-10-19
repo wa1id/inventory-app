@@ -1,0 +1,1304 @@
+{
+ "origin": "https://inventory.wystudio.be",
+ "token": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+ "ids": {
+  "deviceId": "1c1ccad2-0c4e-451b-b817-a05b1c525e18",
+  "otherDeviceId": "9f62bb96-8260-40a7-b823-cfe6dd5f654d",
+  "spaceId": "8c63533f-3d38-426c-9c2d-603e620177a0",
+  "secondSpaceId": "0449db54-cdbb-4531-b77c-f0f99b9d0d95",
+  "containerId": "825fdcfa-36f2-45fd-a1c2-06ced1863af8",
+  "secondContainerId": "aca26b02-b99f-4025-84ad-59ac728df9ee",
+  "uploadPhotoId": "1b4e28ba-2fa1-4d2b-883f-0016d3cca427",
+  "itemId": "22537afa-a6c7-4360-ab72-2ac3e4947e04",
+  "itemUpdatedAt": 1767225632000,
+  "unnamedItemId": "6b25a756-0a5a-4f9c-a1f3-649db204b4f0",
+  "updatedAt": 1767225649000,
+  "labelToken": "1ce34d781bd838d5c45007d9620203ef",
+  "printedToken": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+  "importPhotoId": "c1898fb8-08ee-4c08-ad71-5e21e292d6c5"
+ },
+ "exchanges": {
+  "health": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/health",
+    "headers": {
+     "Accept": "application/json"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"ok\":true,\"contractVersion\":1}",
+    "base64": null
+   }
+  },
+  "pair": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/pair",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json"
+    },
+    "json": "{\"bootstrapSecret\":\"MMWKY-M2H78-ABCDE-FGHJK-MNPQR-S\",\"deviceName\":\"  Kitchen iPhone  \"}",
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"deviceId\":\"1c1ccad2-0c4e-451b-b817-a05b1c525e18\",\"token\":\"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\",\"origin\":\"https://inventory.wystudio.be\",\"householdName\":\"Home\",\"contractVersion\":1}",
+    "base64": null
+   }
+  },
+  "pairRefused": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/pair",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json"
+    },
+    "json": "{\"bootstrapSecret\":\"AAAAA-AAAAA-AAAAA-AAAAA-AAAAA-A\",\"deviceName\":\"Pixel\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 401,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"unauthorized\"}",
+    "base64": null
+   }
+  },
+  "pairLowercase": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/pair",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json"
+    },
+    "json": "{\"bootstrapSecret\":\"mmwky-m2h78-abcde-fghjk-mnpqr-s\",\"deviceName\":\"Anna’s iPhone\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"deviceId\":\"9f62bb96-8260-40a7-b823-cfe6dd5f654d\",\"token\":\"fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210\",\"origin\":\"https://inventory.wystudio.be\",\"householdName\":\"Home\",\"contractVersion\":1}",
+    "base64": null
+   }
+  },
+  "devices": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/devices",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"devices\":[{\"id\":\"1c1ccad2-0c4e-451b-b817-a05b1c525e18\",\"name\":\"Kitchen iPhone\",\"createdAt\":1767225602000,\"lastSeenAt\":1767225604000},{\"id\":\"9f62bb96-8260-40a7-b823-cfe6dd5f654d\",\"name\":\"Anna’s iPhone\",\"createdAt\":1767225603000,\"lastSeenAt\":1767225603000}]}",
+    "base64": null
+   }
+  },
+  "devicesUnauthorized": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/devices",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 401,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"unauthorized\"}",
+    "base64": null
+   }
+  },
+  "createSpace": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/spaces",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"name\":\"Garage\",\"icon\":\"🧰\",\"color\":\"#7A9E7E\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 201,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"name\":\"Garage\",\"icon\":\"🧰\",\"color\":\"#7A9E7E\",\"createdAt\":1767225606000,\"updatedAt\":1767225606000}",
+    "base64": null
+   }
+  },
+  "createSpaceInvalid": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/spaces",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"name\":\"\",\"icon\":\"x\",\"color\":\"y\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 400,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"invalid_body\"}",
+    "base64": null
+   }
+  },
+  "createSecondSpace": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/spaces",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"name\":\"Attic\",\"icon\":\"📦\",\"color\":\"#B07A5B\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 201,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"0449db54-cdbb-4531-b77c-f0f99b9d0d95\",\"name\":\"Attic\",\"icon\":\"📦\",\"color\":\"#B07A5B\",\"createdAt\":1767225609000,\"updatedAt\":1767225609000}",
+    "base64": null
+   }
+  },
+  "getSpace": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/spaces/8c63533f-3d38-426c-9c2d-603e620177a0",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"name\":\"Garage\",\"icon\":\"🧰\",\"color\":\"#7A9E7E\",\"createdAt\":1767225606000,\"updatedAt\":1767225606000}",
+    "base64": null
+   }
+  },
+  "getSpaceMissing": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/spaces/nope",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 404,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"not_found\"}",
+    "base64": null
+   }
+  },
+  "updateSpace": {
+   "request": {
+    "method": "PATCH",
+    "path": "/v1/spaces/8c63533f-3d38-426c-9c2d-603e620177a0",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"name\":\"Big garage\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"name\":\"Big garage\",\"icon\":\"🧰\",\"color\":\"#7A9E7E\",\"createdAt\":1767225606000,\"updatedAt\":1767225613000}",
+    "base64": null
+   }
+  },
+  "updateSpaceMissing": {
+   "request": {
+    "method": "PATCH",
+    "path": "/v1/spaces/nope",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"name\":\"x\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 404,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"not_found\"}",
+    "base64": null
+   }
+  },
+  "updateDropZoneSpace": {
+   "request": {
+    "method": "PATCH",
+    "path": "/v1/spaces/drop-zone-space",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"name\":\"x\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 500,
+    "contentType": "text/plain; charset=UTF-8",
+    "cacheControl": null,
+    "text": "Internal Server Error",
+    "base64": null
+   }
+  },
+  "createContainer": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/containers",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"spaceId\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"visualType\":\"box\",\"name\":\"Tool chest\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 201,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"825fdcfa-36f2-45fd-a1c2-06ced1863af8\",\"spaceId\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"name\":\"Tool chest\",\"visualType\":\"box\",\"shortCode\":\"BOX-9XMX\",\"createdAt\":1767225617000,\"updatedAt\":1767225617000}",
+    "base64": null
+   }
+  },
+  "createContainerUnnamed": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/containers",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"spaceId\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"visualType\":\"drawer\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 201,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"aca26b02-b99f-4025-84ad-59ac728df9ee\",\"spaceId\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"name\":null,\"visualType\":\"drawer\",\"shortCode\":\"DRW-3VD3\",\"createdAt\":1767225619000,\"updatedAt\":1767225619000}",
+    "base64": null
+   }
+  },
+  "getContainer": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/containers/825fdcfa-36f2-45fd-a1c2-06ced1863af8",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"825fdcfa-36f2-45fd-a1c2-06ced1863af8\",\"spaceId\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"name\":\"Tool chest\",\"visualType\":\"box\",\"shortCode\":\"BOX-9XMX\",\"createdAt\":1767225617000,\"updatedAt\":1767225617000,\"itemCount\":0,\"qrToken\":null}",
+    "base64": null
+   }
+  },
+  "getContainerMissing": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/containers/nope",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 404,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"not_found\"}",
+    "base64": null
+   }
+  },
+  "updateContainerClearName": {
+   "request": {
+    "method": "PATCH",
+    "path": "/v1/containers/825fdcfa-36f2-45fd-a1c2-06ced1863af8",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"name\":null}",
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"825fdcfa-36f2-45fd-a1c2-06ced1863af8\",\"spaceId\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"name\":null,\"visualType\":\"box\",\"shortCode\":\"BOX-9XMX\",\"createdAt\":1767225617000,\"updatedAt\":1767225623000}",
+    "base64": null
+   }
+  },
+  "updateContainerMove": {
+   "request": {
+    "method": "PATCH",
+    "path": "/v1/containers/aca26b02-b99f-4025-84ad-59ac728df9ee",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"name\":\"Bits\",\"visualType\":\"bin\",\"spaceId\":\"0449db54-cdbb-4531-b77c-f0f99b9d0d95\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"aca26b02-b99f-4025-84ad-59ac728df9ee\",\"spaceId\":\"0449db54-cdbb-4531-b77c-f0f99b9d0d95\",\"name\":\"Bits\",\"visualType\":\"bin\",\"shortCode\":\"DRW-3VD3\",\"createdAt\":1767225619000,\"updatedAt\":1767225625000}",
+    "base64": null
+   }
+  },
+  "uploadPhoto": {
+   "request": {
+    "method": "PUT",
+    "path": "/v1/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/octet-stream",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+   },
+   "response": {
+    "status": 201,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"1b4e28ba-2fa1-4d2b-883f-0016d3cca427\",\"uri\":\"r2:household/primary/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427.webp\",\"thumbUri\":\"r2:household/primary/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427-thumb.webp\",\"width\":1,\"height\":1,\"byteSize\":96}",
+    "base64": null
+   }
+  },
+  "uploadPhotoInvalidId": {
+   "request": {
+    "method": "PUT",
+    "path": "/v1/photos/not-a-uuid",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/octet-stream",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+   },
+   "response": {
+    "status": 400,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"invalid_id\"}",
+    "base64": null
+   }
+  },
+  "uploadPhotoEmpty": {
+   "request": {
+    "method": "PUT",
+    "path": "/v1/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/octet-stream",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": ""
+   },
+   "response": {
+    "status": 400,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"empty_upload\"}",
+    "base64": null
+   }
+  },
+  "createItem": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/items",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"containerId\":\"825fdcfa-36f2-45fd-a1c2-06ced1863af8\",\"name\":\"Cordless Drill\",\"category\":\"Power Tools\",\"quantity\":2,\"tags\":[\"dewalt\",\"18v\"],\"photo\":{\"id\":\"1b4e28ba-2fa1-4d2b-883f-0016d3cca427\",\"uri\":\"r2:household/primary/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427.webp\",\"thumbUri\":\"r2:household/primary/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427-thumb.webp\",\"width\":1,\"height\":1,\"byteSize\":96}}",
+    "base64": null
+   },
+   "response": {
+    "status": 201,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"22537afa-a6c7-4360-ab72-2ac3e4947e04\",\"containerId\":\"825fdcfa-36f2-45fd-a1c2-06ced1863af8\",\"name\":\"Cordless Drill\",\"category\":\"Power Tools\",\"quantity\":2,\"notes\":null,\"createdAt\":1767225632000,\"updatedAt\":1767225632000,\"photoId\":\"1b4e28ba-2fa1-4d2b-883f-0016d3cca427\",\"photoUri\":\"r2:household/primary/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427.webp\",\"photoThumbUri\":\"r2:household/primary/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427-thumb.webp\",\"tags\":[\"18v\",\"dewalt\"],\"spaceId\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"spaceName\":\"Big garage\",\"spaceIcon\":\"🧰\",\"spaceColor\":\"#7A9E7E\",\"containerName\":null,\"containerShortCode\":\"BOX-9XMX\"}",
+    "base64": null
+   }
+  },
+  "createItemUnnamed": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/items",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"containerId\":\"drop-zone\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 201,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"6b25a756-0a5a-4f9c-a1f3-649db204b4f0\",\"containerId\":\"drop-zone\",\"name\":\"\",\"category\":null,\"quantity\":1,\"notes\":null,\"createdAt\":1767225636000,\"updatedAt\":1767225636000,\"photoId\":null,\"photoUri\":null,\"photoThumbUri\":null,\"tags\":[],\"spaceId\":\"drop-zone-space\",\"spaceName\":\"Drop zone\",\"spaceIcon\":\"📥\",\"spaceColor\":\"#0F9BB0\",\"containerName\":\"Drop zone\",\"containerShortCode\":\"DROP-ZONE\"}",
+    "base64": null
+   }
+  },
+  "createItemBlankName": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/items",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"containerId\":\"825fdcfa-36f2-45fd-a1c2-06ced1863af8\",\"name\":\"   \"}",
+    "base64": null
+   },
+   "response": {
+    "status": 400,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"Item name is required.\"}",
+    "base64": null
+   }
+  },
+  "createItemMissingPhoto": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/items",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"containerId\":\"825fdcfa-36f2-45fd-a1c2-06ced1863af8\",\"name\":\"Ghost\",\"photo\":{\"id\":\"00000000-0000-4000-8000-000000000000\",\"uri\":\"r2:household/primary/photos/x.webp\"}}",
+    "base64": null
+   },
+   "response": {
+    "status": 400,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"photo_missing\"}",
+    "base64": null
+   }
+  },
+  "getItem": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/items/22537afa-a6c7-4360-ab72-2ac3e4947e04",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"22537afa-a6c7-4360-ab72-2ac3e4947e04\",\"containerId\":\"825fdcfa-36f2-45fd-a1c2-06ced1863af8\",\"name\":\"Cordless Drill\",\"category\":\"Power Tools\",\"quantity\":2,\"notes\":null,\"createdAt\":1767225632000,\"updatedAt\":1767225632000,\"photoId\":\"1b4e28ba-2fa1-4d2b-883f-0016d3cca427\",\"photoUri\":\"r2:household/primary/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427.webp\",\"photoThumbUri\":\"r2:household/primary/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427-thumb.webp\",\"tags\":[\"18v\",\"dewalt\"],\"spaceId\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"spaceName\":\"Big garage\",\"spaceIcon\":\"🧰\",\"spaceColor\":\"#7A9E7E\",\"containerName\":null,\"containerShortCode\":\"BOX-9XMX\"}",
+    "base64": null
+   }
+  },
+  "getItemMissing": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/items/nope",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 404,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"not_found\"}",
+    "base64": null
+   }
+  },
+  "listSpaces": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/spaces",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"spaces\":[{\"id\":\"0449db54-cdbb-4531-b77c-f0f99b9d0d95\",\"name\":\"Attic\",\"icon\":\"📦\",\"color\":\"#B07A5B\",\"createdAt\":1767225609000,\"updatedAt\":1767225609000,\"containerCount\":1,\"itemCount\":0},{\"id\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"name\":\"Big garage\",\"icon\":\"🧰\",\"color\":\"#7A9E7E\",\"createdAt\":1767225606000,\"updatedAt\":1767225613000,\"containerCount\":1,\"itemCount\":1}]}",
+    "base64": null
+   }
+  },
+  "listContainersBySpace": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/containers?spaceId=8c63533f-3d38-426c-9c2d-603e620177a0",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"containers\":[{\"id\":\"825fdcfa-36f2-45fd-a1c2-06ced1863af8\",\"spaceId\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"name\":null,\"visualType\":\"box\",\"shortCode\":\"BOX-9XMX\",\"createdAt\":1767225617000,\"updatedAt\":1767225623000,\"itemCount\":1,\"qrToken\":null}]}",
+    "base64": null
+   }
+  },
+  "listAllContainers": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/containers",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"containers\":[{\"id\":\"aca26b02-b99f-4025-84ad-59ac728df9ee\",\"spaceId\":\"0449db54-cdbb-4531-b77c-f0f99b9d0d95\",\"name\":\"Bits\",\"visualType\":\"bin\",\"shortCode\":\"DRW-3VD3\",\"createdAt\":1767225619000,\"updatedAt\":1767225625000,\"spaceName\":\"Attic\",\"itemCount\":0},{\"id\":\"825fdcfa-36f2-45fd-a1c2-06ced1863af8\",\"spaceId\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"name\":null,\"visualType\":\"box\",\"shortCode\":\"BOX-9XMX\",\"createdAt\":1767225617000,\"updatedAt\":1767225623000,\"spaceName\":\"Big garage\",\"itemCount\":1}]}",
+    "base64": null
+   }
+  },
+  "listItemsByContainer": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/items?containerId=825fdcfa-36f2-45fd-a1c2-06ced1863af8",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"items\":[{\"id\":\"22537afa-a6c7-4360-ab72-2ac3e4947e04\",\"containerId\":\"825fdcfa-36f2-45fd-a1c2-06ced1863af8\",\"name\":\"Cordless Drill\",\"category\":\"Power Tools\",\"quantity\":2,\"notes\":null,\"createdAt\":1767225632000,\"updatedAt\":1767225632000,\"photoId\":\"1b4e28ba-2fa1-4d2b-883f-0016d3cca427\",\"photoUri\":\"r2:household/primary/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427.webp\",\"photoThumbUri\":\"r2:household/primary/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427-thumb.webp\",\"tags\":[\"18v\",\"dewalt\"],\"spaceId\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"spaceName\":\"Big garage\",\"spaceIcon\":\"🧰\",\"spaceColor\":\"#7A9E7E\",\"containerName\":null,\"containerShortCode\":\"BOX-9XMX\"}]}",
+    "base64": null
+   }
+  },
+  "listUnsorted": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/items?unsorted=1",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"items\":[{\"id\":\"6b25a756-0a5a-4f9c-a1f3-649db204b4f0\",\"containerId\":\"drop-zone\",\"name\":\"\",\"category\":null,\"quantity\":1,\"notes\":null,\"createdAt\":1767225636000,\"updatedAt\":1767225636000,\"photoId\":null,\"photoUri\":null,\"photoThumbUri\":null,\"tags\":[],\"spaceId\":\"drop-zone-space\",\"spaceName\":\"Drop zone\",\"spaceIcon\":\"📥\",\"spaceColor\":\"#0F9BB0\",\"containerName\":\"Drop zone\",\"containerShortCode\":\"DROP-ZONE\"}]}",
+    "base64": null
+   }
+  },
+  "listRecent": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/items?recent=1&limit=40",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"items\":[{\"id\":\"6b25a756-0a5a-4f9c-a1f3-649db204b4f0\",\"containerId\":\"drop-zone\",\"name\":\"\",\"category\":null,\"quantity\":1,\"notes\":null,\"createdAt\":1767225636000,\"updatedAt\":1767225636000,\"photoId\":null,\"photoUri\":null,\"photoThumbUri\":null,\"tags\":[],\"spaceId\":\"drop-zone-space\",\"spaceName\":\"Drop zone\",\"spaceIcon\":\"📥\",\"spaceColor\":\"#0F9BB0\",\"containerName\":\"Drop zone\",\"containerShortCode\":\"DROP-ZONE\"},{\"id\":\"22537afa-a6c7-4360-ab72-2ac3e4947e04\",\"containerId\":\"825fdcfa-36f2-45fd-a1c2-06ced1863af8\",\"name\":\"Cordless Drill\",\"category\":\"Power Tools\",\"quantity\":2,\"notes\":null,\"createdAt\":1767225632000,\"updatedAt\":1767225632000,\"photoId\":\"1b4e28ba-2fa1-4d2b-883f-0016d3cca427\",\"photoUri\":\"r2:household/primary/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427.webp\",\"photoThumbUri\":\"r2:household/primary/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427-thumb.webp\",\"tags\":[\"18v\",\"dewalt\"],\"spaceId\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"spaceName\":\"Big garage\",\"spaceIcon\":\"🧰\",\"spaceColor\":\"#7A9E7E\",\"containerName\":null,\"containerShortCode\":\"BOX-9XMX\"}]}",
+    "base64": null
+   }
+  },
+  "updateItem": {
+   "request": {
+    "method": "PATCH",
+    "path": "/v1/items/22537afa-a6c7-4360-ab72-2ac3e4947e04",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"name\":\"Hammer drill\",\"category\":null,\"quantity\":3,\"notes\":\"Left shelf\",\"tags\":[\"bosch\"],\"updatedAt\":1767225632000}",
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"22537afa-a6c7-4360-ab72-2ac3e4947e04\",\"containerId\":\"825fdcfa-36f2-45fd-a1c2-06ced1863af8\",\"name\":\"Hammer drill\",\"category\":null,\"quantity\":3,\"notes\":\"Left shelf\",\"createdAt\":1767225632000,\"updatedAt\":1767225649000}",
+    "base64": null
+   }
+  },
+  "updateItemConflict": {
+   "request": {
+    "method": "PATCH",
+    "path": "/v1/items/22537afa-a6c7-4360-ab72-2ac3e4947e04",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"name\":\"Stale\",\"updatedAt\":1767225632000}",
+    "base64": null
+   },
+   "response": {
+    "status": 409,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"conflict\",\"updatedAt\":1767225649000}",
+    "base64": null
+   }
+  },
+  "updateItemQuantityZero": {
+   "request": {
+    "method": "PATCH",
+    "path": "/v1/items/22537afa-a6c7-4360-ab72-2ac3e4947e04",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"quantity\":0}",
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"22537afa-a6c7-4360-ab72-2ac3e4947e04\",\"containerId\":\"825fdcfa-36f2-45fd-a1c2-06ced1863af8\",\"name\":\"Hammer drill\",\"category\":null,\"quantity\":0,\"notes\":\"Left shelf\",\"createdAt\":1767225632000,\"updatedAt\":1767225654000}",
+    "base64": null
+   }
+  },
+  "updateItemMove": {
+   "request": {
+    "method": "PATCH",
+    "path": "/v1/items/6b25a756-0a5a-4f9c-a1f3-649db204b4f0",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"containerId\":\"aca26b02-b99f-4025-84ad-59ac728df9ee\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"6b25a756-0a5a-4f9c-a1f3-649db204b4f0\",\"containerId\":\"aca26b02-b99f-4025-84ad-59ac728df9ee\",\"name\":\"\",\"category\":null,\"quantity\":1,\"notes\":null,\"createdAt\":1767225636000,\"updatedAt\":1767225656000}",
+    "base64": null
+   }
+  },
+  "updateItemMissing": {
+   "request": {
+    "method": "PATCH",
+    "path": "/v1/items/nope",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"name\":\"x\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 404,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"not_found\"}",
+    "base64": null
+   }
+  },
+  "search": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/search?q=drill",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"terms\":[\"drill\"],\"locations\":[],\"items\":[{\"id\":\"22537afa-a6c7-4360-ab72-2ac3e4947e04\",\"containerId\":\"825fdcfa-36f2-45fd-a1c2-06ced1863af8\",\"name\":\"Hammer drill\",\"category\":null,\"quantity\":0,\"notes\":\"Left shelf\",\"createdAt\":1767225632000,\"updatedAt\":1767225654000,\"photoId\":\"1b4e28ba-2fa1-4d2b-883f-0016d3cca427\",\"photoUri\":\"r2:household/primary/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427.webp\",\"photoThumbUri\":\"r2:household/primary/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427-thumb.webp\",\"tags\":[\"bosch\"],\"spaceId\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"spaceName\":\"Big garage\",\"spaceIcon\":\"🧰\",\"spaceColor\":\"#7A9E7E\",\"containerName\":null,\"containerShortCode\":\"BOX-9XMX\",\"matchKind\":\"direct\"}]}",
+    "base64": null
+   }
+  },
+  "searchLocation": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/search?q=Big%20garage",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"terms\":[\"big\",\"garage\"],\"locations\":[{\"kind\":\"space\",\"id\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"title\":\"Big garage\",\"subtitle\":\"1 container · 1 item\",\"spaceId\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"itemCount\":1}],\"items\":[{\"id\":\"22537afa-a6c7-4360-ab72-2ac3e4947e04\",\"containerId\":\"825fdcfa-36f2-45fd-a1c2-06ced1863af8\",\"name\":\"Hammer drill\",\"category\":null,\"quantity\":0,\"notes\":\"Left shelf\",\"createdAt\":1767225632000,\"updatedAt\":1767225654000,\"photoId\":\"1b4e28ba-2fa1-4d2b-883f-0016d3cca427\",\"photoUri\":\"r2:household/primary/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427.webp\",\"photoThumbUri\":\"r2:household/primary/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427-thumb.webp\",\"tags\":[\"bosch\"],\"spaceId\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"spaceName\":\"Big garage\",\"spaceIcon\":\"🧰\",\"spaceColor\":\"#7A9E7E\",\"containerName\":null,\"containerShortCode\":\"BOX-9XMX\",\"matchKind\":\"location\"}]}",
+    "base64": null
+   }
+  },
+  "searchEmpty": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/search?q=",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"terms\":[],\"locations\":[],\"items\":[]}",
+    "base64": null
+   }
+  },
+  "createLabel": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/containers/825fdcfa-36f2-45fd-a1c2-06ced1863af8/qr",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 201,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"f4bc06ac-ddb5-4d6e-b0d6-7a21995d6efe\",\"token\":\"1ce34d781bd838d5c45007d9620203ef\",\"containerId\":\"825fdcfa-36f2-45fd-a1c2-06ced1863af8\",\"createdAt\":1767225662000,\"updatedAt\":1767225662000}",
+    "base64": null
+   }
+  },
+  "scanBound": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/qr/scan",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"raw\":\"inventory://c/1ce34d781bd838d5c45007d9620203ef\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"kind\":\"bound\",\"token\":\"1ce34d781bd838d5c45007d9620203ef\",\"container\":{\"id\":\"825fdcfa-36f2-45fd-a1c2-06ced1863af8\",\"spaceId\":\"8c63533f-3d38-426c-9c2d-603e620177a0\",\"name\":null,\"visualType\":\"box\",\"shortCode\":\"BOX-9XMX\",\"createdAt\":1767225617000,\"updatedAt\":1767225623000}}",
+    "base64": null
+   }
+  },
+  "scanUnknown": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/qr/scan",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"raw\":\"abababababababababababababababab\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"kind\":\"unknown\",\"token\":\"abababababababababababababababab\"}",
+    "base64": null
+   }
+  },
+  "scanInvalid": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/qr/scan",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"raw\":\"hello\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"kind\":\"invalid\",\"raw\":\"hello\"}",
+    "base64": null
+   }
+  },
+  "bindLabel": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/qr/bind",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"token\":\"cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\",\"containerId\":\"aca26b02-b99f-4025-84ad-59ac728df9ee\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"3d405383-282c-41e1-9715-f7b1b9a494ae\",\"token\":\"cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\",\"containerId\":\"aca26b02-b99f-4025-84ad-59ac728df9ee\",\"createdAt\":1767225667000,\"updatedAt\":1767225667000}",
+    "base64": null
+   }
+  },
+  "bindLabelDropZone": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/qr/bind",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"token\":\"efefefefefefefefefefefefefefefef\",\"containerId\":\"drop-zone\"}",
+    "base64": null
+   },
+   "response": {
+    "status": 400,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"system_record\"}",
+    "base64": null
+   }
+  },
+  "unbindLabel": {
+   "request": {
+    "method": "DELETE",
+    "path": "/v1/containers/825fdcfa-36f2-45fd-a1c2-06ced1863af8/qr",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 204,
+    "contentType": null,
+    "cacheControl": null,
+    "text": "",
+    "base64": null
+   }
+  },
+  "unbindLabelMissing": {
+   "request": {
+    "method": "DELETE",
+    "path": "/v1/containers/825fdcfa-36f2-45fd-a1c2-06ced1863af8/qr",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 404,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"not_found\"}",
+    "base64": null
+   }
+  },
+  "getPhotoThumb": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427?thumb=1",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "image/webp",
+    "cacheControl": "private, max-age=31536000, immutable",
+    "text": null,
+    "base64": "UklGRjYBAABXRUJQVlA4WAoAAAAQAAAAPwEAPwEAQUxQSBgAAAABB9C/iAgoSNuAqX/5uxH9T+7//b//CgBWUDgg+AAAAPAYAJ0BKkABQAE+nU6kTiWkI6IgKACwE4lpbuF3YR7cAAAT2Ae+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJwoAA/v+sPP//W17bwyg///tLP/qWf/Us/zThgbCBAAAAAAAAAAAAAAAA"
+   }
+  },
+  "getPhotoFull": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "image/webp",
+    "cacheControl": "private, max-age=31536000, immutable",
+    "text": null,
+    "base64": "UklGRlgAAABXRUJQVlA4WAoAAAAQAAAAAAAAAAAAQUxQSAIAAAAAf1ZQOCAwAAAA0AEAnQEqAQABAAFAJiWgAnS6AfgAA7AA/vLrf/zYFc1z7/f/0uD9Lg/S4P/SkAAA"
+   }
+  },
+  "getPhotoMissing": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/photos/00000000-0000-4000-8000-000000000000",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 404,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"not_found\"}",
+    "base64": null
+   }
+  },
+  "deleteItem": {
+   "request": {
+    "method": "DELETE",
+    "path": "/v1/items/22537afa-a6c7-4360-ab72-2ac3e4947e04",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"deleted\":true,\"orphanedPhotoUris\":[\"r2:household/primary/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427.webp\",\"r2:household/primary/photos/1b4e28ba-2fa1-4d2b-883f-0016d3cca427-thumb.webp\"]}",
+    "base64": null
+   }
+  },
+  "deleteItemMissing": {
+   "request": {
+    "method": "DELETE",
+    "path": "/v1/items/22537afa-a6c7-4360-ab72-2ac3e4947e04",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 404,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"not_found\"}",
+    "base64": null
+   }
+  },
+  "deleteContainer": {
+   "request": {
+    "method": "DELETE",
+    "path": "/v1/containers/aca26b02-b99f-4025-84ad-59ac728df9ee",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"deleted\":true,\"orphanedPhotoUris\":[]}",
+    "base64": null
+   }
+  },
+  "deleteContainerMissing": {
+   "request": {
+    "method": "DELETE",
+    "path": "/v1/containers/aca26b02-b99f-4025-84ad-59ac728df9ee",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 404,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"not_found\"}",
+    "base64": null
+   }
+  },
+  "deleteSpace": {
+   "request": {
+    "method": "DELETE",
+    "path": "/v1/spaces/0449db54-cdbb-4531-b77c-f0f99b9d0d95",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"deleted\":true,\"orphanedPhotoUris\":[]}",
+    "base64": null
+   }
+  },
+  "deleteSpaceMissing": {
+   "request": {
+    "method": "DELETE",
+    "path": "/v1/spaces/0449db54-cdbb-4531-b77c-f0f99b9d0d95",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 404,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"not_found\"}",
+    "base64": null
+   }
+  },
+  "import": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/import",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"spaces\":[{\"id\":\"drop-zone-space\",\"name\":\"Drop zone\",\"icon\":\"📥\",\"color\":\"#0F9BB0\",\"kind\":\"system\",\"createdAt\":1767225600000,\"updatedAt\":1767225600000},{\"id\":\"b4ff51aa-09b6-4c25-a0d7-271f226bb50d\",\"name\":\"Shed\",\"icon\":\"🪴\",\"color\":\"#6B8E23\",\"kind\":\"normal\",\"createdAt\":1767225680000,\"updatedAt\":1767225680000}],\"containers\":[{\"id\":\"drop-zone\",\"spaceId\":\"drop-zone-space\",\"name\":\"Drop zone\",\"visualType\":\"other\",\"shortCode\":\"DROP-ZONE\",\"kind\":\"system\",\"createdAt\":1767225600000,\"updatedAt\":1767225600000},{\"id\":\"5fdec81e-e823-4724-a57f-07d07b611922\",\"spaceId\":\"b4ff51aa-09b6-4c25-a0d7-271f226bb50d\",\"name\":\"Seeds\",\"visualType\":\"crate\",\"shortCode\":\"CRT-4ZZK\",\"kind\":\"normal\",\"createdAt\":1767225681000,\"updatedAt\":1767225681000}],\"items\":[{\"id\":\"5ea48137-6027-4ec7-849b-3c1084e460fd\",\"containerId\":\"5fdec81e-e823-4724-a57f-07d07b611922\",\"name\":\"Tomato seeds\",\"category\":null,\"quantity\":0,\"notes\":null,\"searchText\":\"tomato seeds\",\"createdAt\":1767225682000,\"updatedAt\":1767225682000}],\"tags\":[{\"id\":\"4ec7a3e0-48ab-4eff-b494-4b45f3d4bfca\",\"name\":\"garden\",\"normalizedName\":\"garden\",\"createdAt\":1767225683000}],\"itemTags\":[{\"itemId\":\"5ea48137-6027-4ec7-849b-3c1084e460fd\",\"tagId\":\"4ec7a3e0-48ab-4eff-b494-4b45f3d4bfca\"}],\"qrBindings\":[],\"photos\":[{\"id\":\"c1898fb8-08ee-4c08-ad71-5e21e292d6c5\",\"itemId\":\"5ea48137-6027-4ec7-849b-3c1084e460fd\",\"width\":1,\"height\":1,\"byteSize\":70,\"createdAt\":1767225682000}]}",
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"ok\":true,\"spaces\":2,\"containers\":2,\"items\":1,\"photos\":1}",
+    "base64": null
+   }
+  },
+  "importPhoto": {
+   "request": {
+    "method": "PUT",
+    "path": "/v1/photos/c1898fb8-08ee-4c08-ad71-5e21e292d6c5",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/octet-stream",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+   },
+   "response": {
+    "status": 201,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"id\":\"c1898fb8-08ee-4c08-ad71-5e21e292d6c5\",\"uri\":\"r2:household/primary/photos/c1898fb8-08ee-4c08-ad71-5e21e292d6c5.webp\",\"thumbUri\":\"r2:household/primary/photos/c1898fb8-08ee-4c08-ad71-5e21e292d6c5-thumb.webp\",\"width\":1,\"height\":1,\"byteSize\":96}",
+    "base64": null
+   }
+  },
+  "revokeDevice": {
+   "request": {
+    "method": "DELETE",
+    "path": "/v1/devices/9f62bb96-8260-40a7-b823-cfe6dd5f654d",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 204,
+    "contentType": null,
+    "cacheControl": null,
+    "text": "",
+    "base64": null
+   }
+  },
+  "revokeDeviceMissing": {
+   "request": {
+    "method": "DELETE",
+    "path": "/v1/devices/9f62bb96-8260-40a7-b823-cfe6dd5f654d",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 404,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"not_found\"}",
+    "base64": null
+   }
+  },
+  "revokedTokenRefused": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/spaces",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 401,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"unauthorized\"}",
+    "base64": null
+   }
+  },
+  "unknownRoute": {
+   "request": {
+    "method": "GET",
+    "path": "/v1/nope",
+    "headers": {
+     "Accept": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": null,
+    "base64": null
+   },
+   "response": {
+    "status": 404,
+    "contentType": "text/plain; charset=UTF-8",
+    "cacheControl": null,
+    "text": "404 Not Found",
+    "base64": null
+   }
+  }
+ }
+}

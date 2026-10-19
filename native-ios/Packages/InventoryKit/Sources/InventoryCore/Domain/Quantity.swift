@@ -44,7 +44,9 @@ public func parseQuantityInput(_ raw: String) -> Int? {
 }
 
 /// JS `Number(string)` (ECMA-262 StringToNumber) for an already trimmed string; `nil` stands for NaN.
-func jsNumber(_ text: String) -> Double? {
+///
+/// Public so the network clients coerce server values (`Number(body.updatedAt)`) with the same grammar.
+public func jsNumber(_ text: String) -> Double? {
     let scalars = Array(text.unicodeScalars)
     if scalars.isEmpty { return 0 }
     guard scalars.allSatisfy(\.isASCII) else { return nil }

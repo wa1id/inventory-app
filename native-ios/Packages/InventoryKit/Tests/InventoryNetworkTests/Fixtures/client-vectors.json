@@ -1,0 +1,1539 @@
+{
+ "household": [
+  {
+   "status": 200,
+   "body": "{\"a\":1,\"b\":[true,null]}",
+   "outcome": {
+    "kind": "ok",
+    "body": {
+     "a": 1,
+     "b": [
+      true,
+      null
+     ]
+    }
+   }
+  },
+  {
+   "status": 200,
+   "body": "",
+   "outcome": {
+    "kind": "ok",
+    "body": {}
+   }
+  },
+  {
+   "status": 200,
+   "body": "[]",
+   "outcome": {
+    "kind": "ok",
+    "body": []
+   }
+  },
+  {
+   "status": 200,
+   "body": "[1,2]",
+   "outcome": {
+    "kind": "ok",
+    "body": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "status": 200,
+   "body": "42",
+   "outcome": {
+    "kind": "ok",
+    "body": {}
+   }
+  },
+  {
+   "status": 200,
+   "body": "null",
+   "outcome": {
+    "kind": "ok",
+    "body": {}
+   }
+  },
+  {
+   "status": 200,
+   "body": "\"str\"",
+   "outcome": {
+    "kind": "ok",
+    "body": {}
+   }
+  },
+  {
+   "status": 200,
+   "body": "true",
+   "outcome": {
+    "kind": "ok",
+    "body": {}
+   }
+  },
+  {
+   "status": 200,
+   "body": "<html>oops</html>",
+   "outcome": {
+    "kind": "http",
+    "status": 200,
+    "code": "invalid_json"
+   }
+  },
+  {
+   "status": 200,
+   "body": "   ",
+   "outcome": {
+    "kind": "http",
+    "status": 200,
+    "code": "invalid_json"
+   }
+  },
+  {
+   "status": 201,
+   "body": "{\"id\":\"x\"}",
+   "outcome": {
+    "kind": "ok",
+    "body": {
+     "id": "x"
+    }
+   }
+  },
+  {
+   "status": 204,
+   "body": null,
+   "outcome": {
+    "kind": "ok",
+    "body": {}
+   }
+  },
+  {
+   "status": 404,
+   "body": "{\"error\":\"not_found\"}",
+   "outcome": {
+    "kind": "http",
+    "status": 404,
+    "code": "not_found"
+   }
+  },
+  {
+   "status": 404,
+   "body": "404 Not Found",
+   "outcome": {
+    "kind": "http",
+    "status": 404,
+    "code": "invalid_json"
+   }
+  },
+  {
+   "status": 500,
+   "body": "Internal Server Error",
+   "outcome": {
+    "kind": "http",
+    "status": 500,
+    "code": "invalid_json"
+   }
+  },
+  {
+   "status": 530,
+   "body": "<!DOCTYPE html><title>Origin is unreachable</title>",
+   "outcome": {
+    "kind": "http",
+    "status": 530,
+    "code": "invalid_json"
+   }
+  },
+  {
+   "status": 502,
+   "body": "{\"error\":\"upstream\"}",
+   "outcome": {
+    "kind": "http",
+    "status": 502,
+    "code": "upstream"
+   }
+  },
+  {
+   "status": 418,
+   "body": "{}",
+   "outcome": {
+    "kind": "http",
+    "status": 418,
+    "code": "http_418"
+   }
+  },
+  {
+   "status": 418,
+   "body": "",
+   "outcome": {
+    "kind": "http",
+    "status": 418,
+    "code": "http_418"
+   }
+  },
+  {
+   "status": 401,
+   "body": "{\"error\":\"unauthorized\"}",
+   "outcome": {
+    "kind": "http",
+    "status": 401,
+    "code": "unauthorized"
+   }
+  },
+  {
+   "status": 400,
+   "body": "{\"error\":\"Item name is required.\"}",
+   "outcome": {
+    "kind": "http",
+    "status": 400,
+    "code": "Item name is required."
+   }
+  },
+  {
+   "status": 400,
+   "body": "{\"error\":42}",
+   "outcome": {
+    "kind": "http",
+    "status": 400,
+    "code": "42"
+   }
+  },
+  {
+   "status": 400,
+   "body": "{\"error\":null}",
+   "outcome": {
+    "kind": "http",
+    "status": 400,
+    "code": "null"
+   }
+  },
+  {
+   "status": 400,
+   "body": "{\"error\":true}",
+   "outcome": {
+    "kind": "http",
+    "status": 400,
+    "code": "true"
+   }
+  },
+  {
+   "status": 400,
+   "body": "{\"error\":[\"a\",null,1,[2,[3]]]}",
+   "outcome": {
+    "kind": "http",
+    "status": 400,
+    "code": "a,,1,2,3"
+   }
+  },
+  {
+   "status": 400,
+   "body": "{\"error\":{\"x\":1}}",
+   "outcome": {
+    "kind": "http",
+    "status": 400,
+    "code": "[object Object]"
+   }
+  },
+  {
+   "status": 400,
+   "body": "{\"error\":1.5}",
+   "outcome": {
+    "kind": "http",
+    "status": 400,
+    "code": "1.5"
+   }
+  },
+  {
+   "status": 400,
+   "body": "{\"error\":-0}",
+   "outcome": {
+    "kind": "http",
+    "status": 400,
+    "code": "0"
+   }
+  },
+  {
+   "status": 400,
+   "body": "{\"error\":1e21}",
+   "outcome": {
+    "kind": "http",
+    "status": 400,
+    "code": "1e+21"
+   }
+  },
+  {
+   "status": 400,
+   "body": "{\"error\":123456789012345680000}",
+   "outcome": {
+    "kind": "http",
+    "status": 400,
+    "code": "123456789012345680000"
+   }
+  },
+  {
+   "status": 400,
+   "body": "{\"error\":0.000001}",
+   "outcome": {
+    "kind": "http",
+    "status": 400,
+    "code": "0.000001"
+   }
+  },
+  {
+   "status": 400,
+   "body": "{\"error\":1e-7}",
+   "outcome": {
+    "kind": "http",
+    "status": 400,
+    "code": "1e-7"
+   }
+  },
+  {
+   "status": 400,
+   "body": "{\"error\":-2.5e-9}",
+   "outcome": {
+    "kind": "http",
+    "status": 400,
+    "code": "-2.5e-9"
+   }
+  },
+  {
+   "status": 400,
+   "body": "{\"error\":\"\"}",
+   "outcome": {
+    "kind": "http",
+    "status": 400,
+    "code": ""
+   }
+  },
+  {
+   "status": 400,
+   "body": "[]",
+   "outcome": {
+    "kind": "http",
+    "status": 400,
+    "code": "http_400"
+   }
+  },
+  {
+   "status": 400,
+   "body": "[\"error\"]",
+   "outcome": {
+    "kind": "http",
+    "status": 400,
+    "code": "http_400"
+   }
+  },
+  {
+   "status": 400,
+   "body": "\"error\"",
+   "outcome": {
+    "kind": "http",
+    "status": 400,
+    "code": "http_400"
+   }
+  },
+  {
+   "status": 409,
+   "body": "{\"error\":\"conflict\",\"updatedAt\":11}",
+   "outcome": {
+    "kind": "conflict",
+    "updatedAt": 11
+   }
+  },
+  {
+   "status": 409,
+   "body": "{\"updatedAt\":null}",
+   "outcome": {
+    "kind": "conflict",
+    "updatedAt": 0
+   }
+  },
+  {
+   "status": 409,
+   "body": "{\"updatedAt\":\"11\"}",
+   "outcome": {
+    "kind": "conflict",
+    "updatedAt": 11
+   }
+  },
+  {
+   "status": 409,
+   "body": "{\"updatedAt\":\" 0x1F \"}",
+   "outcome": {
+    "kind": "conflict",
+    "updatedAt": 31
+   }
+  },
+  {
+   "status": 409,
+   "body": "{\"updatedAt\":\"1e3\"}",
+   "outcome": {
+    "kind": "conflict",
+    "updatedAt": 1000
+   }
+  },
+  {
+   "status": 409,
+   "body": "{\"updatedAt\":\"\"}",
+   "outcome": {
+    "kind": "conflict",
+    "updatedAt": 0
+   }
+  },
+  {
+   "status": 409,
+   "body": "{\"updatedAt\":\"junk\"}",
+   "outcome": {
+    "kind": "conflict",
+    "updatedAt": null
+   }
+  },
+  {
+   "status": 409,
+   "body": "{\"updatedAt\":true}",
+   "outcome": {
+    "kind": "conflict",
+    "updatedAt": 1
+   }
+  },
+  {
+   "status": 409,
+   "body": "{\"updatedAt\":false}",
+   "outcome": {
+    "kind": "conflict",
+    "updatedAt": 0
+   }
+  },
+  {
+   "status": 409,
+   "body": "{\"updatedAt\":[]}",
+   "outcome": {
+    "kind": "conflict",
+    "updatedAt": 0
+   }
+  },
+  {
+   "status": 409,
+   "body": "{\"updatedAt\":[7]}",
+   "outcome": {
+    "kind": "conflict",
+    "updatedAt": 7
+   }
+  },
+  {
+   "status": 409,
+   "body": "{\"updatedAt\":[\"8\"]}",
+   "outcome": {
+    "kind": "conflict",
+    "updatedAt": 8
+   }
+  },
+  {
+   "status": 409,
+   "body": "{\"updatedAt\":[1,2]}",
+   "outcome": {
+    "kind": "conflict",
+    "updatedAt": null
+   }
+  },
+  {
+   "status": 409,
+   "body": "{\"updatedAt\":{}}",
+   "outcome": {
+    "kind": "conflict",
+    "updatedAt": null
+   }
+  },
+  {
+   "status": 409,
+   "body": "{}",
+   "outcome": {
+    "kind": "conflict",
+    "updatedAt": null
+   }
+  },
+  {
+   "status": 409,
+   "body": "",
+   "outcome": {
+    "kind": "conflict",
+    "updatedAt": null
+   }
+  },
+  {
+   "status": 409,
+   "body": "[1]",
+   "outcome": {
+    "kind": "conflict",
+    "updatedAt": null
+   }
+  },
+  {
+   "status": 409,
+   "body": "12",
+   "outcome": {
+    "kind": "conflict",
+    "updatedAt": null
+   }
+  },
+  {
+   "status": 409,
+   "body": "oops",
+   "outcome": {
+    "kind": "http",
+    "status": 409,
+    "code": "invalid_json"
+   }
+  }
+ ],
+ "devices": [
+  {
+   "body": "{\"devices\":[{\"id\":\"a\",\"name\":\"Kitchen iPhone\",\"createdAt\":1,\"lastSeenAt\":5},{\"id\":\"b\",\"name\":\"Anna’s iPhone\",\"createdAt\":2,\"lastSeenAt\":null}]}",
+   "outcome": {
+    "kind": "ok",
+    "body": [
+     {
+      "id": "a",
+      "name": "Kitchen iPhone",
+      "createdAt": 1,
+      "lastSeenAt": 5
+     },
+     {
+      "id": "b",
+      "name": "Anna’s iPhone",
+      "createdAt": 2,
+      "lastSeenAt": null
+     }
+    ]
+   }
+  },
+  {
+   "body": "{\"devices\":[{\"id\":\"a\",\"name\":\"Kitchen iPhone\",\"createdAt\":1,\"lastSeenAt\":5},{\"id\":7},null]}",
+   "outcome": {
+    "kind": "ok",
+    "body": [
+     {
+      "id": "a",
+      "name": "Kitchen iPhone",
+      "createdAt": 1,
+      "lastSeenAt": 5
+     }
+    ]
+   }
+  },
+  {
+   "body": "{\"devices\":[{\"id\":\"c\",\"name\":\"C\"}]}",
+   "outcome": {
+    "kind": "ok",
+    "body": [
+     {
+      "id": "c",
+      "name": "C",
+      "createdAt": 0,
+      "lastSeenAt": null
+     }
+    ]
+   }
+  },
+  {
+   "body": "{\"devices\":[{\"id\":\"d\",\"name\":\"D\",\"createdAt\":\"5\",\"lastSeenAt\":\" 6 \"}]}",
+   "outcome": {
+    "kind": "ok",
+    "body": [
+     {
+      "id": "d",
+      "name": "D",
+      "createdAt": 5,
+      "lastSeenAt": 6
+     }
+    ]
+   }
+  },
+  {
+   "body": "{\"devices\":[{\"id\":\"e\",\"name\":\"E\",\"createdAt\":true,\"lastSeenAt\":false}]}",
+   "outcome": {
+    "kind": "ok",
+    "body": [
+     {
+      "id": "e",
+      "name": "E",
+      "createdAt": 1,
+      "lastSeenAt": 0
+     }
+    ]
+   }
+  },
+  {
+   "body": "{\"devices\":[{\"id\":\"f\",\"name\":\"F\",\"createdAt\":\"x\",\"lastSeenAt\":{}}]}",
+   "outcome": {
+    "kind": "ok",
+    "body": [
+     {
+      "id": "f",
+      "name": "F",
+      "createdAt": 0,
+      "lastSeenAt": null
+     }
+    ]
+   }
+  },
+  {
+   "body": "{\"devices\":[{\"id\":\"g\",\"name\":\"G\",\"createdAt\":null,\"lastSeenAt\":[]}]}",
+   "outcome": {
+    "kind": "ok",
+    "body": [
+     {
+      "id": "g",
+      "name": "G",
+      "createdAt": 0,
+      "lastSeenAt": 0
+     }
+    ]
+   }
+  },
+  {
+   "body": "{\"devices\":[[\"a\"],\"str\",3,{\"id\":\"h\",\"name\":7},{\"id\":\"i\",\"name\":\"I\",\"createdAt\":[4],\"lastSeenAt\":\"0x10\"}]}",
+   "outcome": {
+    "kind": "ok",
+    "body": [
+     {
+      "id": "i",
+      "name": "I",
+      "createdAt": 4,
+      "lastSeenAt": 16
+     }
+    ]
+   }
+  },
+  {
+   "body": "{\"devices\":[]}",
+   "outcome": {
+    "kind": "ok",
+    "body": []
+   }
+  },
+  {
+   "body": "{\"nope\":true}",
+   "outcome": {
+    "kind": "http",
+    "status": 500,
+    "code": "invalid_response"
+   }
+  },
+  {
+   "body": "{\"devices\":{}}",
+   "outcome": {
+    "kind": "http",
+    "status": 500,
+    "code": "invalid_response"
+   }
+  },
+  {
+   "body": "{\"devices\":null}",
+   "outcome": {
+    "kind": "http",
+    "status": 500,
+    "code": "invalid_response"
+   }
+  },
+  {
+   "body": "{\"devices\":\"a\"}",
+   "outcome": {
+    "kind": "http",
+    "status": 500,
+    "code": "invalid_response"
+   }
+  },
+  {
+   "body": "[]",
+   "outcome": {
+    "kind": "http",
+    "status": 500,
+    "code": "invalid_response"
+   }
+  },
+  {
+   "body": "",
+   "outcome": {
+    "kind": "http",
+    "status": 500,
+    "code": "invalid_response"
+   }
+  }
+ ],
+ "recognition": [
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"Cordless Drill\",\"category\":\"Power Tools\",\"tags\":[\"dewalt\",\"18v\"],\"confidence\":0.92}}",
+   "result": {
+    "status": "success",
+    "contractVersion": 1,
+    "suggestion": {
+     "name": "Cordless Drill",
+     "category": "Power Tools",
+     "tags": [
+      "dewalt",
+      "18v"
+     ],
+     "confidence": 0.92
+    }
+   }
+  },
+  {
+   "body": "null",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "\"nope\"",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "42",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "[]",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "{}",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":\"1\",\"suggestion\":{\"name\":\"A\",\"tags\":[],\"confidence\":0.9}}",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":true,\"suggestion\":{\"name\":\"A\",\"tags\":[],\"confidence\":0.9}}",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1.0,\"suggestion\":{\"name\":\"A\",\"tags\":[],\"confidence\":0.9}}",
+   "result": {
+    "status": "success",
+    "contractVersion": 1,
+    "suggestion": {
+     "name": "A",
+     "category": null,
+     "tags": [],
+     "confidence": 0.9
+    }
+   }
+  },
+  {
+   "body": "{\"contractVersion\":2,\"status\":\"unrecognized\"}",
+   "result": {
+    "status": "failed",
+    "reason": "unsupported_version"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":0,\"suggestion\":{\"name\":\"A\",\"tags\":[],\"confidence\":0.9}}",
+   "result": {
+    "status": "failed",
+    "reason": "unsupported_version"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"status\":\"unrecognized\",\"suggestion\":{\"name\":\"A\",\"tags\":[],\"confidence\":0.9}}",
+   "result": {
+    "status": "failed",
+    "reason": "unrecognized"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"status\":\"UNRECOGNIZED\"}",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1}",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":null}",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":[]}",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":\"A\"}",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"A\",\"tags\":[]}}",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"A\",\"tags\":[],\"confidence\":null}}",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"A\",\"tags\":[],\"confidence\":\"0.9\"}}",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"A\",\"tags\":[],\"confidence\":true}}",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"A\",\"tags\":[],\"confidence\":-0.1}}",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"A\",\"tags\":[],\"confidence\":-0}}",
+   "result": {
+    "status": "failed",
+    "reason": "low_confidence"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"A\",\"tags\":[],\"confidence\":0}}",
+   "result": {
+    "status": "failed",
+    "reason": "low_confidence"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"A\",\"tags\":[],\"confidence\":1}}",
+   "result": {
+    "status": "success",
+    "contractVersion": 1,
+    "suggestion": {
+     "name": "A",
+     "category": null,
+     "tags": [],
+     "confidence": 1
+    }
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"A\",\"tags\":[],\"confidence\":1.0000001}}",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"A\",\"tags\":[],\"confidence\":0.35}}",
+   "result": {
+    "status": "success",
+    "contractVersion": 1,
+    "suggestion": {
+     "name": "A",
+     "category": null,
+     "tags": [],
+     "confidence": 0.35
+    }
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"A\",\"tags\":[],\"confidence\":0.3499999}}",
+   "result": {
+    "status": "failed",
+    "reason": "low_confidence"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"   \",\"tags\":[],\"confidence\":0.9}}",
+   "result": {
+    "status": "failed",
+    "reason": "unrecognized"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"   \",\"tags\":[],\"confidence\":4}}",
+   "result": {
+    "status": "failed",
+    "reason": "malformed_response"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"tags\":[],\"confidence\":0.1}}",
+   "result": {
+    "status": "failed",
+    "reason": "unrecognized"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":42,\"tags\":[],\"confidence\":0.9}}",
+   "result": {
+    "status": "failed",
+    "reason": "unrecognized"
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"\\ufeff\\u00a0 Angle  grinder \\u0085\",\"category\":\" \\u2003Tools\\u3000\",\"tags\":[\"  a  \"],\"confidence\":0.9}}",
+   "result": {
+    "status": "success",
+    "contractVersion": 1,
+    "suggestion": {
+     "name": "Angle  grinder ",
+     "category": "Tools",
+     "tags": [
+      "a"
+     ],
+     "confidence": 0.9
+    }
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"Drill\",\"category\":42,\"tags\":[\"ok\",17,null,\"  \",\"fine\"],\"confidence\":0.8}}",
+   "result": {
+    "status": "success",
+    "contractVersion": 1,
+    "suggestion": {
+     "name": "Drill",
+     "category": null,
+     "tags": [
+      "ok",
+      "fine"
+     ],
+     "confidence": 0.8
+    }
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"Drill\",\"category\":\"\",\"tags\":\"a,b\",\"confidence\":0.8}}",
+   "result": {
+    "status": "success",
+    "contractVersion": 1,
+    "suggestion": {
+     "name": "Drill",
+     "category": null,
+     "tags": [],
+     "confidence": 0.8
+    }
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"Drill\",\"category\":null,\"tags\":{\"0\":\"a\"},\"confidence\":0.8}}",
+   "result": {
+    "status": "success",
+    "contractVersion": 1,
+    "suggestion": {
+     "name": "Drill",
+     "category": null,
+     "tags": [],
+     "confidence": 0.8
+    }
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"Drill\",\"tags\":[\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\"8\",\"9\",\"10\"],\"confidence\":0.8}}",
+   "result": {
+    "status": "success",
+    "contractVersion": 1,
+    "suggestion": {
+     "name": "Drill",
+     "category": null,
+     "tags": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ],
+     "confidence": 0.8
+    }
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"Drill\",\"tags\":[\" \",\"1\",\"\",\"2\",null,\"3\",\"4\",\"5\",\"6\",\"7\",\"8\",\"9\"],\"confidence\":0.8}}",
+   "result": {
+    "status": "success",
+    "contractVersion": 1,
+    "suggestion": {
+     "name": "Drill",
+     "category": null,
+     "tags": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ],
+     "confidence": 0.8
+    }
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx b\",\"tags\":[\"yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\"],\"confidence\":0.8}}",
+   "result": {
+    "status": "success",
+    "contractVersion": 1,
+    "suggestion": {
+     "name": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ",
+     "category": null,
+     "tags": [
+      "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+     ],
+     "confidence": 0.8
+    }
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx🔧tail\",\"tags\":[],\"confidence\":0.8}}",
+   "result": {
+    "status": "success",
+    "contractVersion": 1,
+    "suggestion": {
+     "name": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx🔧",
+     "category": null,
+     "tags": [],
+     "confidence": 0.8
+    }
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"   éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé\",\"tags\":[],\"confidence\":0.8}}",
+   "result": {
+    "status": "success",
+    "contractVersion": 1,
+    "suggestion": {
+     "name": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+     "category": null,
+     "tags": [],
+     "confidence": 0.8
+    }
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"Drill\",\"tags\":[],\"confidence\":0.8},\"extra\":{\"nested\":[1]}}",
+   "result": {
+    "status": "success",
+    "contractVersion": 1,
+    "suggestion": {
+     "name": "Drill",
+     "category": null,
+     "tags": [],
+     "confidence": 0.8
+    }
+   }
+  }
+ ],
+ "backupLists": [
+  {
+   "body": "{\"contractVersion\":1,\"backups\":[]}",
+   "result": []
+  },
+  {
+   "body": "{\"contractVersion\":1,\"backups\":[{\"id\":\"2\",\"size\":2,\"capturedAt\":2,\"schemaVersion\":7},{\"id\":\"1\",\"size\":1,\"capturedAt\":1,\"schemaVersion\":6}]}",
+   "result": [
+    {
+     "id": "2",
+     "size": 2,
+     "capturedAt": 2,
+     "schemaVersion": 7
+    },
+    {
+     "id": "1",
+     "size": 1,
+     "capturedAt": 1,
+     "schemaVersion": 6
+    }
+   ]
+  },
+  {
+   "body": "{\"contractVersion\":1.0,\"backups\":[]}",
+   "result": []
+  },
+  {
+   "body": "{\"contractVersion\":2,\"backups\":[]}",
+   "result": null
+  },
+  {
+   "body": "{\"contractVersion\":\"1\",\"backups\":[]}",
+   "result": null
+  },
+  {
+   "body": "{\"contractVersion\":true,\"backups\":[]}",
+   "result": null
+  },
+  {
+   "body": "{\"backups\":[]}",
+   "result": null
+  },
+  {
+   "body": "{\"contractVersion\":1}",
+   "result": null
+  },
+  {
+   "body": "{\"contractVersion\":1,\"backups\":{}}",
+   "result": null
+  },
+  {
+   "body": "{\"contractVersion\":1,\"backups\":null}",
+   "result": null
+  },
+  {
+   "body": "{\"contractVersion\":1,\"backups\":[{\"id\":\"1\",\"size\":1,\"capturedAt\":1}]}",
+   "result": null
+  },
+  {
+   "body": "{\"contractVersion\":1,\"backups\":[{\"id\":1,\"size\":1,\"capturedAt\":1,\"schemaVersion\":1}]}",
+   "result": null
+  },
+  {
+   "body": "{\"contractVersion\":1,\"backups\":[{\"id\":\"1\",\"size\":\"1\",\"capturedAt\":1,\"schemaVersion\":1}]}",
+   "result": null
+  },
+  {
+   "body": "{\"contractVersion\":1,\"backups\":[{\"id\":\"1\",\"size\":1,\"capturedAt\":1,\"schemaVersion\":true}]}",
+   "result": null
+  },
+  {
+   "body": "{\"contractVersion\":1,\"backups\":[null]}",
+   "result": null
+  },
+  {
+   "body": "{\"contractVersion\":1,\"backups\":[{\"id\":\"1\",\"size\":1,\"capturedAt\":1,\"schemaVersion\":1,\"extra\":\"x\"}]}",
+   "result": [
+    {
+     "id": "1",
+     "size": 1,
+     "capturedAt": 1,
+     "schemaVersion": 1,
+     "extra": "x"
+    }
+   ]
+  },
+  {
+   "body": "[]",
+   "result": null
+  },
+  {
+   "body": "null",
+   "result": null
+  }
+ ],
+ "coercion": [
+  {
+   "json": "\"text\"",
+   "string": "text",
+   "number": null,
+   "numberString": null
+  },
+  {
+   "json": "\"\"",
+   "string": "",
+   "number": 0,
+   "numberString": null
+  },
+  {
+   "json": "\"  42  \"",
+   "string": "  42  ",
+   "number": 42,
+   "numberString": null
+  },
+  {
+   "json": "\" 0x1F \"",
+   "string": " 0x1F ",
+   "number": 31,
+   "numberString": null
+  },
+  {
+   "json": "\"1e3\"",
+   "string": "1e3",
+   "number": 1000,
+   "numberString": null
+  },
+  {
+   "json": "\"-5\"",
+   "string": "-5",
+   "number": -5,
+   "numberString": null
+  },
+  {
+   "json": "\"+5\"",
+   "string": "+5",
+   "number": 5,
+   "numberString": null
+  },
+  {
+   "json": "\"5.\"",
+   "string": "5.",
+   "number": 5,
+   "numberString": null
+  },
+  {
+   "json": "\".5\"",
+   "string": ".5",
+   "number": 0.5,
+   "numberString": null
+  },
+  {
+   "json": "\"Infinity\"",
+   "string": "Infinity",
+   "number": "Infinity",
+   "numberString": null
+  },
+  {
+   "json": "\"-Infinity\"",
+   "string": "-Infinity",
+   "number": "-Infinity",
+   "numberString": null
+  },
+  {
+   "json": "\"1,2\"",
+   "string": "1,2",
+   "number": null,
+   "numberString": null
+  },
+  {
+   "json": "\"0b101\"",
+   "string": "0b101",
+   "number": 5,
+   "numberString": null
+  },
+  {
+   "json": "\"0o17\"",
+   "string": "0o17",
+   "number": 15,
+   "numberString": null
+  },
+  {
+   "json": "\"12px\"",
+   "string": "12px",
+   "number": null,
+   "numberString": null
+  },
+  {
+   "json": "\"\\u00a0 7 \\ufeff\"",
+   "string": "  7 ﻿",
+   "number": 7,
+   "numberString": null
+  },
+  {
+   "json": "0",
+   "string": "0",
+   "number": 0,
+   "numberString": "0"
+  },
+  {
+   "json": "-0",
+   "string": "0",
+   "number": 0,
+   "numberString": "0"
+  },
+  {
+   "json": "1",
+   "string": "1",
+   "number": 1,
+   "numberString": "1"
+  },
+  {
+   "json": "-1",
+   "string": "-1",
+   "number": -1,
+   "numberString": "-1"
+  },
+  {
+   "json": "1.5",
+   "string": "1.5",
+   "number": 1.5,
+   "numberString": "1.5"
+  },
+  {
+   "json": "0.1",
+   "string": "0.1",
+   "number": 0.1,
+   "numberString": "0.1"
+  },
+  {
+   "json": "100",
+   "string": "100",
+   "number": 100,
+   "numberString": "100"
+  },
+  {
+   "json": "1e21",
+   "string": "1e+21",
+   "number": 1e+21,
+   "numberString": "1e+21"
+  },
+  {
+   "json": "1e20",
+   "string": "100000000000000000000",
+   "number": 100000000000000000000,
+   "numberString": "100000000000000000000"
+  },
+  {
+   "json": "123456789012345680000",
+   "string": "123456789012345680000",
+   "number": 123456789012345680000,
+   "numberString": "123456789012345680000"
+  },
+  {
+   "json": "0.000001",
+   "string": "0.000001",
+   "number": 0.000001,
+   "numberString": "0.000001"
+  },
+  {
+   "json": "0.0000001",
+   "string": "1e-7",
+   "number": 1e-7,
+   "numberString": "1e-7"
+  },
+  {
+   "json": "1e-7",
+   "string": "1e-7",
+   "number": 1e-7,
+   "numberString": "1e-7"
+  },
+  {
+   "json": "-2.5e-9",
+   "string": "-2.5e-9",
+   "number": -2.5e-9,
+   "numberString": "-2.5e-9"
+  },
+  {
+   "json": "5e-324",
+   "string": "5e-324",
+   "number": 5e-324,
+   "numberString": "5e-324"
+  },
+  {
+   "json": "1.7976931348623157e308",
+   "string": "1.7976931348623157e+308",
+   "number": 1.7976931348623157e+308,
+   "numberString": "1.7976931348623157e+308"
+  },
+  {
+   "json": "9007199254740993",
+   "string": "9007199254740992",
+   "number": 9007199254740992,
+   "numberString": "9007199254740992"
+  },
+  {
+   "json": "12345678901234567890",
+   "string": "12345678901234567000",
+   "number": 12345678901234567000,
+   "numberString": "12345678901234567000"
+  },
+  {
+   "json": "0.30000000000000004",
+   "string": "0.30000000000000004",
+   "number": 0.30000000000000004,
+   "numberString": "0.30000000000000004"
+  },
+  {
+   "json": "1234.5678",
+   "string": "1234.5678",
+   "number": 1234.5678,
+   "numberString": "1234.5678"
+  },
+  {
+   "json": "-1e-6",
+   "string": "-0.000001",
+   "number": -0.000001,
+   "numberString": "-0.000001"
+  },
+  {
+   "json": "true",
+   "string": "true",
+   "number": 1,
+   "numberString": null
+  },
+  {
+   "json": "false",
+   "string": "false",
+   "number": 0,
+   "numberString": null
+  },
+  {
+   "json": "null",
+   "string": "null",
+   "number": 0,
+   "numberString": null
+  },
+  {
+   "json": "[]",
+   "string": "",
+   "number": 0,
+   "numberString": null
+  },
+  {
+   "json": "[7]",
+   "string": "7",
+   "number": 7,
+   "numberString": null
+  },
+  {
+   "json": "[\"8\"]",
+   "string": "8",
+   "number": 8,
+   "numberString": null
+  },
+  {
+   "json": "[1,2]",
+   "string": "1,2",
+   "number": null,
+   "numberString": null
+  },
+  {
+   "json": "[null]",
+   "string": "",
+   "number": 0,
+   "numberString": null
+  },
+  {
+   "json": "[[1,2],3]",
+   "string": "1,2,3",
+   "number": null,
+   "numberString": null
+  },
+  {
+   "json": "[true]",
+   "string": "true",
+   "number": null,
+   "numberString": null
+  },
+  {
+   "json": "{}",
+   "string": "[object Object]",
+   "number": null,
+   "numberString": null
+  },
+  {
+   "json": "{\"a\":1}",
+   "string": "[object Object]",
+   "number": null,
+   "numberString": null
+  }
+ ],
+ "uriComponents": [
+  {
+   "value": "",
+   "encoded": ""
+  },
+  {
+   "value": "abc",
+   "encoded": "abc"
+  },
+  {
+   "value": "a/b",
+   "encoded": "a%2Fb"
+  },
+  {
+   "value": "a b",
+   "encoded": "a%20b"
+  },
+  {
+   "value": "a+b",
+   "encoded": "a%2Bb"
+  },
+  {
+   "value": "-_.!~*'()",
+   "encoded": "-_.!~*'()"
+  },
+  {
+   "value": "#?&=%",
+   "encoded": "%23%3F%26%3D%25"
+  },
+  {
+   "value": "@:;,$",
+   "encoded": "%40%3A%3B%2C%24"
+  },
+  {
+   "value": "[]{}|\\^`\"<>",
+   "encoded": "%5B%5D%7B%7D%7C%5C%5E%60%22%3C%3E"
+  },
+  {
+   "value": "drop-zone",
+   "encoded": "drop-zone"
+  },
+  {
+   "value": "11111111-2222-4333-8444-555555555555",
+   "encoded": "11111111-2222-4333-8444-555555555555"
+  },
+  {
+   "value": "é",
+   "encoded": "%C3%A9"
+  },
+  {
+   "value": "Straße",
+   "encoded": "Stra%C3%9Fe"
+  },
+  {
+   "value": "日本",
+   "encoded": "%E6%97%A5%E6%9C%AC"
+  },
+  {
+   "value": "🔧",
+   "encoded": "%F0%9F%94%A7"
+  },
+  {
+   "value": "a\u0000b",
+   "encoded": "a%00b"
+  },
+  {
+   "value": " ",
+   "encoded": "%C2%A0"
+  },
+  {
+   "value": "Ünïcödé 🔧 x/y?z",
+   "encoded": "%C3%9Cn%C3%AFc%C3%B6d%C3%A9%20%F0%9F%94%A7%20x%2Fy%3Fz"
+  }
+ ]
+}

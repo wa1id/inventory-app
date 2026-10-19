@@ -1,0 +1,240 @@
+{
+ "endpoint": "https://server.example/api/recognize",
+ "appKey": "app-key",
+ "image": "UklGRiAAAABXRUJQVlA4IGZha2UgcGhvdG8gYnl0ZXM=",
+ "exchanges": {
+  "success": {
+   "request": {
+    "headers": {
+     "Content-Type": "application/json",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "json": "{\"contractVersion\":1,\"image\":{\"data\":\"UklGRiAAAABXRUJQVlA4IGZha2UgcGhvdG8gYnl0ZXM=\",\"encoding\":\"base64\",\"mediaType\":\"image/webp\"}}"
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "text": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"Cordless Drill\",\"category\":\"Power Tools\",\"tags\":[\"dewalt\",\"18v\"],\"confidence\":0.92}}"
+   },
+   "adapterSaw": {
+    "mediaType": "image/webp",
+    "byteLength": 32,
+    "nameHint": null
+   }
+  },
+  "successHinted": {
+   "request": {
+    "headers": {
+     "Content-Type": "application/json",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "json": "{\"contractVersion\":1,\"image\":{\"data\":\"UklGRiAAAABXRUJQVlA4IGZha2UgcGhvdG8gYnl0ZXM=\",\"encoding\":\"base64\",\"mediaType\":\"image/webp\"},\"nameHint\":\"Angle   grinder\"}"
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "text": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"Angle grinder\",\"category\":\"Power Tools\",\"tags\":[\"dewalt\",\"18v\"],\"confidence\":0.92}}"
+   },
+   "adapterSaw": {
+    "mediaType": "image/webp",
+    "byteLength": 32,
+    "nameHint": "Angle grinder"
+   }
+  },
+  "unrecognized": {
+   "request": {
+    "headers": {
+     "Content-Type": "application/json",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "json": "{\"contractVersion\":1,\"image\":{\"data\":\"UklGRiAAAABXRUJQVlA4IGZha2UgcGhvdG8gYnl0ZXM=\",\"encoding\":\"base64\",\"mediaType\":\"image/webp\"}}"
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "text": "{\"contractVersion\":1,\"status\":\"unrecognized\"}"
+   },
+   "adapterSaw": {
+    "mediaType": "image/webp",
+    "byteLength": 32,
+    "nameHint": null
+   }
+  },
+  "rateLimited": {
+   "request": {
+    "headers": {
+     "Content-Type": "application/json",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "json": "{\"contractVersion\":1,\"image\":{\"data\":\"UklGRiAAAABXRUJQVlA4IGZha2UgcGhvdG8gYnl0ZXM=\",\"encoding\":\"base64\",\"mediaType\":\"image/webp\"}}"
+   },
+   "response": {
+    "status": 429,
+    "contentType": "application/json",
+    "text": "{\"error\":\"rate_limited\"}"
+   },
+   "adapterSaw": {
+    "mediaType": "image/webp",
+    "byteLength": 32,
+    "nameHint": null
+   }
+  },
+  "providerTimeout": {
+   "request": {
+    "headers": {
+     "Content-Type": "application/json",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "json": "{\"contractVersion\":1,\"image\":{\"data\":\"UklGRiAAAABXRUJQVlA4IGZha2UgcGhvdG8gYnl0ZXM=\",\"encoding\":\"base64\",\"mediaType\":\"image/webp\"}}"
+   },
+   "response": {
+    "status": 504,
+    "contentType": "application/json",
+    "text": "{\"error\":\"timeout\"}"
+   },
+   "adapterSaw": {
+    "mediaType": "image/webp",
+    "byteLength": 32,
+    "nameHint": null
+   }
+  },
+  "upstream": {
+   "request": {
+    "headers": {
+     "Content-Type": "application/json",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "json": "{\"contractVersion\":1,\"image\":{\"data\":\"UklGRiAAAABXRUJQVlA4IGZha2UgcGhvdG8gYnl0ZXM=\",\"encoding\":\"base64\",\"mediaType\":\"image/webp\"}}"
+   },
+   "response": {
+    "status": 502,
+    "contentType": "application/json",
+    "text": "{\"error\":\"upstream\"}"
+   },
+   "adapterSaw": {
+    "mediaType": "image/webp",
+    "byteLength": 32,
+    "nameHint": null
+   }
+  },
+  "missingKey": {
+   "request": {
+    "headers": {
+     "Content-Type": "application/json",
+     "X-Contract-Version": "1"
+    },
+    "json": "{\"contractVersion\":1,\"image\":{\"data\":\"UklGRiAAAABXRUJQVlA4IGZha2UgcGhvdG8gYnl0ZXM=\",\"encoding\":\"base64\",\"mediaType\":\"image/webp\"}}"
+   },
+   "response": {
+    "status": 401,
+    "contentType": "application/json",
+    "text": "{\"error\":\"Missing credentials.\"}"
+   },
+   "adapterSaw": null
+  },
+  "wrongKey": {
+   "request": {
+    "headers": {
+     "Content-Type": "application/json",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "nope"
+    },
+    "json": "{\"contractVersion\":1,\"image\":{\"data\":\"UklGRiAAAABXRUJQVlA4IGZha2UgcGhvdG8gYnl0ZXM=\",\"encoding\":\"base64\",\"mediaType\":\"image/webp\"}}"
+   },
+   "response": {
+    "status": 401,
+    "contentType": "application/json",
+    "text": "{\"error\":\"Invalid credentials.\"}"
+   },
+   "adapterSaw": null
+  },
+  "notJSON": {
+   "request": {
+    "headers": {
+     "Content-Type": "application/json",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "json": "not json"
+   },
+   "response": {
+    "status": 400,
+    "contentType": "application/json",
+    "text": "{\"error\":\"Body must be valid JSON.\"}"
+   },
+   "adapterSaw": null
+  },
+  "wrongVersion": {
+   "request": {
+    "headers": {
+     "Content-Type": "application/json",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "json": "{\"contractVersion\":2,\"image\":{\"data\":\"UklGRiAAAABXRUJQVlA4IGZha2UgcGhvdG8gYnl0ZXM=\",\"encoding\":\"base64\",\"mediaType\":\"image/webp\"}}"
+   },
+   "response": {
+    "status": 400,
+    "contentType": "application/json",
+    "text": "{\"error\":\"Unsupported contractVersion. This service speaks v1.\"}"
+   },
+   "adapterSaw": null
+  },
+  "emptyImage": {
+   "request": {
+    "headers": {
+     "Content-Type": "application/json",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "json": "{\"contractVersion\":1,\"image\":{\"data\":\"\",\"encoding\":\"base64\",\"mediaType\":\"image/webp\"}}"
+   },
+   "response": {
+    "status": 400,
+    "contentType": "application/json",
+    "text": "{\"error\":\"image.data decoded to zero bytes.\"}"
+   },
+   "adapterSaw": null
+  },
+  "tooLarge": {
+   "request": {
+    "headers": {
+     "Content-Type": "application/json",
+     "X-Contract-Version": "1",
+     "x-inventory-key": "app-key"
+    },
+    "json": null
+   },
+   "response": {
+    "status": 413,
+    "contentType": "application/json",
+    "text": "{\"error\":\"Image is too large.\"}"
+   },
+   "adapterSaw": null
+  }
+ },
+ "mediaTypes": [
+  {
+   "sent": "image/webp",
+   "accepted": "image/webp"
+  },
+  {
+   "sent": "image/jpeg",
+   "accepted": "image/jpeg"
+  },
+  {
+   "sent": "image/png",
+   "accepted": "image/png"
+  },
+  {
+   "sent": "image/gif",
+   "accepted": "image/gif"
+  }
+ ]
+}
