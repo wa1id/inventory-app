@@ -196,11 +196,12 @@ public final class ToastCenter: ToastPresenting {
     }
 
     /// Registers bottom chrome the toast has to clear; the latest registration wins. Register
-    /// only a positive height, and only while the screen is focused; take it back when it loses
-    /// focus (RN `useBottomChrome`).
+    /// only while the screen is focused, and take it back when it loses focus (RN
+    /// `useBottomChrome`). A height of zero or less is not registered, as RN skipped it; its
+    /// registration is still safe to take back.
     public func registerChrome(height: Double) -> ChromeRegistration {
         nextChromeToken += 1
-        chrome.append((nextChromeToken, height))
+        if height > 0 { chrome.append((nextChromeToken, height)) }
         return ChromeRegistration(token: nextChromeToken)
     }
 
@@ -236,6 +237,9 @@ public final class ToastCenter: ToastPresenting {
         lifeStartedAt = stopwatch.now
         lifeTask = Task { [weak self, clock] in
             do { try await clock.sleep(for: life) } catch { return }
+            // A sleep that ended just before a cancel still returns normally; a timer that
+            // was replaced meanwhile must not act (clearTimeout in RN never let it).
+            guard !Task.isCancelled else { return }
             self?.lifeEnded(id)
         }
     }
@@ -253,6 +257,7 @@ public final class ToastCenter: ToastPresenting {
         leaveTask?.cancel()
         leaveTask = Task { [weak self, clock] in
             do { try await clock.sleep(for: Self.exitDuration) } catch { return }
+            guard !Task.isCancelled else { return }
             self?.remove(id)
         }
     }

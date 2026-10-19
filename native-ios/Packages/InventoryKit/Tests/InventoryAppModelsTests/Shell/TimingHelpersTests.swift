@@ -43,6 +43,26 @@ struct DelayedFlagTests {
         #expect(flag.value)
     }
 
+    @Test("a wait that ran out just as the condition broke does not count for the next one")
+    func staleWaitIgnored() async {
+        let clock = ShellStepClock()
+        let flag = DelayedFlag(clock: clock)
+        flag.setActive(true)
+        await ShellWait.until("the first wait") { clock.sleeperCount == 1 }
+        // The first wait ends, but its task has not run when the condition breaks and holds again.
+        #expect(clock.fire(throughMilliseconds: 180) == 1)
+        flag.setActive(false)
+        flag.setActive(true)
+        await ShellWait.until("the second wait") { clock.sleeperCount == 1 }
+        await ShellWait.settle()
+        #expect(!flag.value)
+        clock.fire(throughMilliseconds: 359)
+        await ShellWait.settle()
+        #expect(!flag.value)
+        clock.fire(throughMilliseconds: 360)
+        await ShellWait.until("the second wait to end") { flag.value }
+    }
+
     @Test("setting the same condition again does not restart the wait")
     func sameConditionKeepsWaiting() async throws {
         let clock = ManualClock()
@@ -104,6 +124,21 @@ struct NowTickerTests {
         #expect(clock.pendingSleeperCount == 0)
         ticker.focusChanged(true)
         #expect(ticker.now == 500_000)
+    }
+
+    @Test("a tick that came due just as the screen lost focus does not land")
+    func staleTickIgnored() async {
+        let clock = ShellStepClock()
+        let wall = Wall()
+        let ticker = NowTicker(clock: clock, currentTime: wall.read)
+        ticker.focusChanged(true)
+        await ShellWait.until("the tick") { clock.sleeperCount == 1 }
+        wall.set(61_000)
+        #expect(clock.fire(throughMilliseconds: 60_000) == 1)
+        ticker.focusChanged(false)
+        await ShellWait.settle()
+        #expect(ticker.now == 1000)
+        #expect(clock.sleeperCount == 0)
     }
 }
 

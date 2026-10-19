@@ -354,12 +354,40 @@ struct ToastCenterTests {
         #expect(log.events == ["undo"])
     }
 
+    @Test("a life timer that ran out as a new toast replaced it never touches the new toast's life")
+    func staleLifeTimerIgnored() async {
+        let clock = ShellStepClock()
+        let center = ToastCenter(clock: clock)
+        center.show(ToastOptions(message: "first"))
+        await ShellWait.until("the first life timer") { clock.sleeperCount == 1 }
+        // The first toast's sleep ends, but its task has not run yet when the second arrives.
+        #expect(clock.fire(throughMilliseconds: 5000) == 1)
+        center.show(ToastOptions(message: "second"))
+        await ShellWait.until("the second life timer") { clock.sleeperCount == 1 }
+        await ShellWait.settle()
+        #expect(center.current?.message == "second")
+        #expect(!center.leaving)
+
+        // A finger on the second toast must still stop its life.
+        center.pause()
+        #expect(clock.sleeperCount == 0)
+        clock.fire(throughMilliseconds: 30000)
+        await ShellWait.settle()
+        #expect(center.current?.message == "second")
+        #expect(!center.leaving)
+    }
+
     @Test("bottom chrome: the latest registration wins, and unregistering falls back")
     func chrome() {
         let harness = Harness()
         #expect(harness.center.chromeHeight == nil)
         let tabBar = harness.center.registerChrome(height: 83)
         let bottomBar = harness.center.registerChrome(height: 120)
+        #expect(harness.center.chromeHeight == 120)
+        // RN useBottomChrome registered nothing for a height of zero.
+        let collapsed = harness.center.registerChrome(height: 0)
+        #expect(harness.center.chromeHeight == 120)
+        harness.center.unregisterChrome(collapsed)
         #expect(harness.center.chromeHeight == 120)
         harness.center.unregisterChrome(bottomBar)
         #expect(harness.center.chromeHeight == 83)

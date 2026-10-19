@@ -47,7 +47,7 @@ public final class NowTicker {
         ticking = Task { [weak self, clock] in
             while true {
                 do { try await clock.sleep(for: interval) } catch { return }
-                guard let self else { return }
+                guard !Task.isCancelled, let self else { return }
                 self.now = self.currentTime()
             }
         }

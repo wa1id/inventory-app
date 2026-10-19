@@ -71,6 +71,7 @@ public final class HomeSearchFocus {
         isWaitingForTransition = true
         fallback = Task { [weak self, clock] in
             do { try await clock.sleep(for: Self.transitionFallback) } catch { return }
+            guard !Task.isCancelled else { return }
             self?.transitionEnded()
         }
     }

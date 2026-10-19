@@ -83,48 +83,95 @@ struct DatabaseModelTests {
         #expect(attempts.callCount == 2)
     }
 
-    @Test("retry closes the previous connection before opening a new one")
-    func retryClosesPrevious() async throws {
+    @Test("an open database is never reopened: Try again and open leave the live connection alone")
+    func neverReopened() async throws {
         let first = try Self.migratedStore()
-        let second = try Self.migratedStore()
-        let stores = ShellQueuedReads<Int>([.value(0), .value(1)])
-        let model = DatabaseModel(open: {
-            try stores.call("open") == 0 ? first : second
-        }, telemetry: TelemetryReporter(sink: RecordingTelemetry()))
+        let calls = ShellQueuedReads<DatabaseStore>([.value(first), .failure(ShellTestError("second connection"))])
+        let model = DatabaseModel(open: { try calls.call("open") }, telemetry: TelemetryReporter(sink: RecordingTelemetry()))
         await model.open()
         #expect(model.store === first)
 
         await model.retry()
-        #expect(model.store === second)
-        #expect(throws: (any Error).self) { try first.schemaVersion() }
-        #expect(try await second.schemaVersion() == 7)
+        await model.open()
+        #expect(calls.callCount == 1)
+        #expect(model.store === first)
+        #expect(try await first.schemaVersion() == 7)
     }
 
-    @Test("an attempt a retry superseded is dropped, and its connection closed")
-    func staleAttemptDropped() async throws {
-        let slow = try Self.migratedStore()
-        let fast = try Self.migratedStore()
+    @Test("a second Try again while the database is opening waits for that open: one connection")
+    func doubleTapJoins() async throws {
+        let attempts = ShellQueuedReads<Bool>([.failure(ShellTestError()), .value(true)])
         let gate = ShellGate()
-        let calls = ShellQueuedReads<Int>([.value(0), .value(1)])
         let telemetry = RecordingTelemetry()
         let model = DatabaseModel(open: {
-            if try calls.call("open") == 0 {
-                await gate.wait()
-                return slow
-            }
-            return fast
+            if try attempts.call("open") == false { throw ShellTestError() }
+            await gate.wait()
+            return try Self.migratedStore()
         }, telemetry: TelemetryReporter(sink: telemetry))
+        await model.open()
+        #expect(model.status == .failed)
 
-        let firstOpen = Task { await model.open() }
-        await ShellWait.until("the first open to wait") { gate.waiterCount == 1 }
-        await model.retry()
-        #expect(model.store === fast)
+        let firstTap = Task { await model.retry() }
+        await ShellWait.until("the retry to open") { gate.waiterCount == 1 }
+        let secondTap = Task { await model.retry() }
+        let boot = Task { await model.open() }
+        await ShellWait.settle()
+        #expect(attempts.callCount == 2)
+        #expect(gate.waiterCount == 1)
 
         gate.open()
-        await firstOpen.value
-        #expect(model.store === fast)
-        #expect(throws: (any Error).self) { try slow.schemaVersion() }
+        await firstTap.value
+        await secondTap.value
+        await boot.value
+        #expect(model.status == .ready)
+        #expect(attempts.callCount == 2)
+        #expect(telemetry.names == ["database_open_failed", "database_ready"])
+    }
+
+    @Test("cancelling the caller does not fail the open: the migration runs to the end")
+    func callerCancellationIgnored() async throws {
+        let gate = ShellGate()
+        let telemetry = RecordingTelemetry()
+        let model = DatabaseModel(open: {
+            await gate.wait()
+            // Like GRDB's async access, a cancellation-aware open throws when its task is cancelled.
+            try Task.checkCancellation()
+            return try Self.migratedStore()
+        }, telemetry: TelemetryReporter(sink: telemetry))
+        let caller = Task { await model.open() }
+        await ShellWait.until("the open to wait") { gate.waiterCount == 1 }
+        caller.cancel()
+        gate.open()
+        await caller.value
+        #expect(model.status == .ready)
         #expect(telemetry.names == ["database_ready"])
+    }
+
+    @Test("state observers hear every change: ready, and loading then ready again after Try again")
+    func stateObservers() async throws {
+        let attempts = ShellQueuedReads<Bool>([.failure(ShellTestError()), .value(true)])
+        let model = DatabaseModel(open: {
+            if try attempts.call("open") == false { throw ShellTestError() }
+            return try Self.migratedStore()
+        }, telemetry: TelemetryReporter(sink: RecordingTelemetry()))
+        let log = ShellEventLog()
+        let observation = model.addStateObserver { state in
+            switch state {
+            case .loading: log.record("loading")
+            case .ready(let repositories): log.record(repositories.store === model.store ? "ready" : "ready (stale)")
+            case .failed: log.record("failed")
+            }
+        }
+        let other = model.addStateObserver { _ in log.record("second observer") }
+
+        await model.open()
+        #expect(log.events == ["failed", "second observer"])
+        model.removeStateObserver(other)
+        await model.retry()
+        #expect(log.events == ["failed", "second observer", "loading", "ready"])
+        model.removeStateObserver(observation)
+        model.invalidate()
+        #expect(log.events.count == 4)
     }
 
     @Test("invalidate bumps the revision from 0, one at a time, through the shared seam")

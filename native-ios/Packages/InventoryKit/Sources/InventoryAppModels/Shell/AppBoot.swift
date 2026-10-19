@@ -100,6 +100,8 @@ public final class AppBoot {
     public private(set) var progress: Progress = .notStarted
 
     @ObservationIgnored private let steps: Steps
+    /// The boot sequence, started by the first ``run()``.
+    @ObservationIgnored private var bootTask: Task<Void, Never>?
     /// The backup account load, running beside the gate.
     @ObservationIgnored public private(set) var syncAccountTask: Task<Void, Never>?
     /// The background cache purge.
@@ -116,11 +118,21 @@ public final class AppBoot {
         BootGate.phase(database: database.status, onboarding: onboarding.status, householdReady: householdReady)
     }
 
-    /// Runs the boot sequence. Only the first call does anything; it returns once the database
-    /// open and the household session load have returned. A failed database is retried from
-    /// the failure screen with `DatabaseModel.retry()`, not by running boot again.
+    /// Runs the boot sequence. Only the first call starts it; every call returns once the
+    /// database open and the household session load have returned. A failed database is retried
+    /// from the failure screen with `DatabaseModel.retry()`, not by running boot again.
+    ///
+    /// The sequence runs in a task of its own: cancelling the caller (the root view's `.task`
+    /// going away or restarting) neither cuts the boot short nor leaves it half done, since a
+    /// later call only waits for it.
     public func run() async {
-        guard progress == .notStarted else { return }
+        if bootTask == nil {
+            bootTask = Task { await self.sequence() }
+        }
+        await bootTask?.value
+    }
+
+    private func sequence() async {
         progress = .waitingForProtectedData
         await steps.waitForProtectedData()
 

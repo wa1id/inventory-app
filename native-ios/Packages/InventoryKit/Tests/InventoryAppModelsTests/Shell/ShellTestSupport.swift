@@ -1,5 +1,6 @@
 import Foundation
 import InventoryCore
+import InventoryTestSupport
 import Synchronization
 import Testing
 
@@ -40,6 +41,83 @@ enum ShellWait {
             await Task.detached(priority: .background) { await Task.yield() }.value
             await Task.yield()
         }
+    }
+}
+
+/// A clock whose sleepers wake only when the test calls ``fire(throughMilliseconds:)``, which
+/// resumes them synchronously and returns before they run.
+///
+/// `ManualClock.advance` lets each woken task run before it returns; this one leaves a gap, so
+/// a main-actor test can act after a timer's sleep has ended but before the timer's task runs:
+/// the window in which cancelling the task no longer stops its sleep, and only a check of
+/// `Task.isCancelled` after the sleep keeps a replaced timer from acting.
+final class ShellStepClock: Clock, Sendable {
+    typealias Instant = ManualClock.Instant
+
+    private struct Sleeper {
+        let id: UInt64
+        let deadline: Instant
+        let continuation: CheckedContinuation<Void, any Error>
+    }
+
+    private struct State {
+        var now = Instant(offset: .zero)
+        var nextID: UInt64 = 0
+        var sleepers: [Sleeper] = []
+        /// Ids whose task was cancelled before its continuation was registered.
+        var cancelledEarly: Set<UInt64> = []
+    }
+
+    private let state = Mutex(State())
+
+    init() {}
+
+    var now: Instant { state.withLock { $0.now } }
+    var minimumResolution: Duration { .zero }
+    /// How many tasks are asleep on this clock.
+    var sleeperCount: Int { state.withLock { $0.sleepers.count } }
+
+    func sleep(until deadline: Instant, tolerance: Duration? = nil) async throws {
+        try Task.checkCancellation()
+        let id = state.withLock { state -> UInt64 in
+            state.nextID += 1
+            return state.nextID
+        }
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
+                let immediate: Result<Void, any Error>? = state.withLock { state in
+                    if state.cancelledEarly.remove(id) != nil { return .failure(CancellationError()) }
+                    if deadline <= state.now { return .success(()) }
+                    state.sleepers.append(Sleeper(id: id, deadline: deadline, continuation: continuation))
+                    return nil
+                }
+                if let immediate { continuation.resume(with: immediate) }
+            }
+        } onCancel: {
+            let sleeper: Sleeper? = state.withLock { state in
+                if let index = state.sleepers.firstIndex(where: { $0.id == id }) {
+                    return state.sleepers.remove(at: index)
+                }
+                state.cancelledEarly.insert(id)
+                return nil
+            }
+            sleeper?.continuation.resume(throwing: CancellationError())
+        }
+    }
+
+    /// Moves time to `ms` after the start and ends every sleep due by then, without waiting for
+    /// the sleepers to run. Returns how many it woke.
+    @discardableResult
+    func fire(throughMilliseconds ms: Int) -> Int {
+        let target = Instant(offset: .milliseconds(ms))
+        let due: [Sleeper] = state.withLock { state in
+            if state.now < target { state.now = target }
+            let due = state.sleepers.filter { $0.deadline <= target }
+            state.sleepers.removeAll { $0.deadline <= target }
+            return due
+        }
+        due.forEach { $0.continuation.resume() }
+        return due.count
     }
 }
 

@@ -42,6 +42,8 @@ public final class DelayedFlag {
         let delay = delay
         timer = Task { [weak self, clock] in
             do { try await clock.sleep(for: delay) } catch { return }
+            // A wait that ended just before the condition broke must not count for the next one.
+            guard !Task.isCancelled else { return }
             self?.elapsed()
         }
     }

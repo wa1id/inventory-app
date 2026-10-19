@@ -231,6 +231,60 @@ struct AppBootTests {
         #expect(harness.log.events.filter { $0 == "database.open" }.count == 1)
     }
 
+    @Test("cancelling the caller neither fails the database open nor cuts boot short")
+    func callerCancellation() async {
+        let gate = ShellGate()
+        let database = DatabaseModel(open: {
+            await gate.wait()
+            // Like GRDB's async access, a cancellation-aware open throws when its task is cancelled.
+            try Task.checkCancellation()
+            let store = try DatabaseStore.inMemory()
+            try await store.migrate()
+            return store
+        }, telemetry: TelemetryReporter(sink: RecordingTelemetry()))
+        let onboarding = OnboardingModel(storage: OnboardingModel.Storage(read: { true }, write: { _ in }))
+        let log = ShellEventLog()
+        let unlocked = ShellHolder<Bool>()
+        let boot = AppBoot(database: database, onboarding: onboarding, steps: AppBoot.Steps(
+            waitForProtectedData: {
+                // Like ProtectedData.waitUntilAvailable, whose notification loop ends when its
+                // task is cancelled.
+                while unlocked.value != true, !Task.isCancelled {
+                    try? await Task.sleep(for: .milliseconds(1))
+                }
+            },
+            importLegacyPreferences: { log.record(unlocked.value == true ? "import" : "import while locked") },
+            loadHouseholdSession: { log.record("household.loaded") },
+            loadSyncAccount: nil,
+            purgeTemporaryCaches: {}))
+
+        // The caller goes away while the device is still locked: boot keeps waiting for the unlock.
+        let caller = Task { await boot.run() }
+        await ShellWait.until("the wait") { boot.progress == .waitingForProtectedData }
+        caller.cancel()
+        try? await Task.sleep(for: .milliseconds(20))
+        #expect(log.events.isEmpty)
+        #expect(boot.progress == .waitingForProtectedData)
+
+        // ... and goes away again while the database migrates: the open still completes.
+        let second = Task { await boot.run() }
+        unlocked.value = true
+        await ShellWait.until("the open to wait") { gate.waiterCount == 1 }
+        second.cancel()
+        gate.open()
+        await second.value
+        await caller.value
+        #expect(log.events == ["import", "household.loaded"])
+        #expect(database.status == .ready)
+        #expect(boot.householdReady)
+        #expect(boot.phase == .main)
+        #expect(boot.progress == .finished)
+
+        // A later call waits for the same boot; nothing runs twice.
+        await boot.run()
+        #expect(log.events == ["import", "household.loaded"])
+    }
+
     @Test("with the real import: an RN onboarding flag in the AsyncStorage manifest opens the main shell")
     func realLegacyImportBeforeOnboardingRead() async throws {
         let container = try TemporaryDirectory()

@@ -74,6 +74,27 @@ struct HomeSearchFocusTests {
         #expect(focus.focusRequests == 0)
     }
 
+    @Test("a fallback that ran out just as Home lost focus never focuses the field early")
+    func staleFallbackIgnored() async {
+        let clock = ShellStepClock()
+        let focus = HomeSearchFocus(clock: clock)
+        focus.request(afterTransition: true)
+        focus.homeFocusChanged(true)
+        await ShellWait.until("the fallback") { clock.sleeperCount == 1 }
+        // The first fallback runs out, but its task has not run when Home loses focus and a
+        // second request starts a second wait.
+        #expect(clock.fire(throughMilliseconds: 600) == 1)
+        focus.homeFocusChanged(false)
+        focus.request(afterTransition: true)
+        focus.homeFocusChanged(true)
+        await ShellWait.until("the second fallback") { clock.sleeperCount == 1 }
+        await ShellWait.settle()
+        #expect(focus.focusRequests == 0)
+        #expect(focus.isWaitingForTransition)
+        focus.transitionEnded()
+        #expect(focus.focusRequests == 1)
+    }
+
     @Test("a transition ending with no request waiting does nothing")
     func strayTransition() {
         let focus = HomeSearchFocus(clock: ManualClock())
