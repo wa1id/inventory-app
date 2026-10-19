@@ -8,11 +8,15 @@
 #   scripts/mac.sh test [swift-test args]   swift test for Packages/InventoryKit (macOS host, no simulator)
 #   scripts/mac.sh build                    xcodegen + xcodebuild the app for the iOS simulator
 #   scripts/mac.sh apptest [xcodebuild args] run the app-hosted InventoryTests on this checkout's simulator
-#   scripts/mac.sh run [out.png]            build, install and launch on the simulator, then save a screenshot
+#   scripts/mac.sh run [out.png] [args...]  build, install and launch on the simulator (with launch args), then save a screenshot
+#   scripts/mac.sh launch [out.png] [args...] relaunch the installed app with launch args (no build), then save a screenshot
+#   scripts/mac.sh openurl <url> [out.png]  open a URL (deep link) in the simulator, then save a screenshot
 #   scripts/mac.sh screenshot [out.png]     screenshot the running simulator
 #   scripts/mac.sh shell '<command>'        run a command in this checkout's folder on the Mac
 #   scripts/mac.sh clean                    delete this checkout's folder and simulator on the Mac
 #
+# run, launch and openurl honour APPEARANCE=light|dark and CONTENT_SIZE=<simctl content size,
+# e.g. large, accessibility-extra-extra-extra-large>, and wait RUN_SETTLE_SECONDS (default 4).
 # Full logs go to native-ios/.build-logs/<command>.log; stdout gets a filtered summary.
 set -euo pipefail
 
@@ -64,6 +68,13 @@ xcbuild_app() {
   echo "$generate && xcodebuild -project Inventory.xcodeproj -scheme Inventory -configuration Debug -destination \"$2\" -derivedDataPath ~/$REMOTE_ROOT/DerivedData CODE_SIGNING_ALLOWED=NO $3 $1"
 }
 
+boot_sim='{ xcrun simctl boot $udid 2>/dev/null || true; } && xcrun simctl bootstatus $udid -b >/dev/null && xcrun simctl ui $udid appearance '"${APPEARANCE:-light}"' && xcrun simctl ui $udid content_size '"${CONTENT_SIZE:-large}"
+
+launch_app() {
+  # $1 = launch arguments. Terminates the app, launches it with them, waits, then screenshots.
+  echo "{ xcrun simctl terminate \$udid $BUNDLE_ID 2>/dev/null || true; } && xcrun simctl launch \$udid $BUNDLE_ID $1 && sleep \${RUN_SETTLE_SECONDS:-4} && xcrun simctl io \$udid screenshot ~/$REMOTE_ROOT/screenshot.png"
+}
+
 cmd="${1:-help}"
 shift || true
 
@@ -84,8 +95,21 @@ case "$cmd" in
     ;;
   run)
     out="${1:-$LOG_DIR/screenshot.png}"
+    shift || true
     sync_up
-    run_logged run "$ensure_sim && $(xcbuild_app build 'id=$udid' '') && { xcrun simctl boot \$udid 2>/dev/null || true; } && xcrun simctl bootstatus \$udid -b >/dev/null && xcrun simctl install \$udid ~/$REMOTE_ROOT/DerivedData/Build/Products/Debug-iphonesimulator/Inventory.app && { xcrun simctl terminate \$udid $BUNDLE_ID 2>/dev/null || true; } && xcrun simctl launch \$udid $BUNDLE_ID && sleep \${RUN_SETTLE_SECONDS:-4} && xcrun simctl io \$udid screenshot ~/$REMOTE_ROOT/screenshot.png"
+    run_logged run "$ensure_sim && $(xcbuild_app build 'id=$udid' '') && $boot_sim && xcrun simctl install \$udid ~/$REMOTE_ROOT/DerivedData/Build/Products/Debug-iphonesimulator/Inventory.app && $(launch_app "$*")"
+    scp -q "$MAC_HOST:$REMOTE_ROOT/screenshot.png" "$out" && echo "screenshot: $out"
+    ;;
+  launch)
+    out="${1:-$LOG_DIR/screenshot.png}"
+    shift || true
+    run_logged launch "$ensure_sim && $boot_sim && $(launch_app "$*")"
+    scp -q "$MAC_HOST:$REMOTE_ROOT/screenshot.png" "$out" && echo "screenshot: $out"
+    ;;
+  openurl)
+    url="${1:?usage: mac.sh openurl <url> [out.png]}"
+    out="${2:-$LOG_DIR/screenshot.png}"
+    run_logged openurl "$ensure_sim && $boot_sim && xcrun simctl openurl \$udid '$url' && sleep \${RUN_SETTLE_SECONDS:-4} && xcrun simctl io \$udid screenshot ~/$REMOTE_ROOT/screenshot.png"
     scp -q "$MAC_HOST:$REMOTE_ROOT/screenshot.png" "$out" && echo "screenshot: $out"
     ;;
   screenshot)
@@ -102,6 +126,6 @@ case "$cmd" in
     echo "removed ~/$REMOTE_ROOT and simulator $SIM_NAME on $MAC_HOST"
     ;;
   *)
-    sed -n '2,17p' "${BASH_SOURCE[0]}"
+    sed -n '2,20p' "${BASH_SOURCE[0]}"
     ;;
 esac

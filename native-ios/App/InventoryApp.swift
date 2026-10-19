@@ -5,7 +5,19 @@ import InventoryCore
 struct InventoryApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentUnavailableView("Inventory", systemImage: "shippingbox")
+            #if DEBUG
+            if let gallery = DebugGallery.requested {
+                DebugGallery.view(named: gallery)
+            } else {
+                placeholder
+            }
+            #else
+            placeholder
+            #endif
         }
+    }
+
+    private var placeholder: some View {
+        ContentUnavailableView("Inventory", systemImage: "shippingbox")
     }
 }
