@@ -85,6 +85,14 @@ struct SchemaTests {
         #expect(row["lowered"] as String? == "Ärmel")
         #expect(row["liked"] as Int? == 0)
         #expect(row["nocase"] as Int? == 0)
+
+        // ...and they do fold ASCII: search patterns keep capitals the tokenizer lets through
+        // (`™` → `TM`, 01 §6.5), and names sort ASCII case-insensitively.
+        let ascii = try #require(try store.queue.read { db in
+            try Row.fetchOne(db, sql: "SELECT 'tm sticker' LIKE '%TM%' AS liked, 'garage' = 'GARAGE' COLLATE NOCASE AS nocase")
+        })
+        #expect(ascii["liked"] as Int? == 1)
+        #expect(ascii["nocase"] as Int? == 1)
     }
 
     @Test("puts the live database at Documents/SQLite/inventory.db")
