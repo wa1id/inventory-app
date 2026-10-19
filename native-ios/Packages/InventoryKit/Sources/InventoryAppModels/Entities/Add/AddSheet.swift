@@ -123,8 +123,9 @@ public struct AddInitialState: Sendable, Hashable {
     }
 }
 
-/// One row of "Where it goes" (RN `WhereEntry`).
-public enum WhereEntry: Sendable, Hashable {
+/// One row of "Where it goes" (RN `WhereEntry`). ``AddSheetRules/whereEntries(param:recentIds:options:selectedId:picked:maxRecent:)``
+/// never lists the same place twice, so ``id`` identifies a row.
+public enum WhereEntry: Sendable, Hashable, Identifiable {
     /// Why a container row is listed.
     public enum Source: Sendable, Hashable {
         /// The container the sheet was opened for.
@@ -162,8 +163,9 @@ public struct ResolvedPlace: Sendable, Hashable {
     public var isDropZone: Bool { EntityText.same(id, DropZone.containerId) }
 }
 
-/// The Add sheet's rules (RN `src/ui/add/addSheet.ts`).
-public enum AddSheet {
+/// The Add sheet's rules (RN `src/ui/add/addSheet.ts`). Not named `AddSheet`, which is the
+/// name the SwiftUI sheet takes.
+public enum AddSheetRules {
     /// Recent places shown under "Where it goes"; the picker shows more (RN `MAX_RECENT_WHERE`).
     public static let maxRecentWhere = 3
 

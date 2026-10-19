@@ -90,7 +90,10 @@ public final class NameItModel {
         return !name.isEmpty && !EntityText.same(name, value.jsTrimmed()) ? name : nil
     }
 
-    /// The line under the field about the offered name (announced when it changes).
+    /// The line under the field about the offered name. The view announces it whenever it
+    /// changes to a new non-nil value (RN's `useEffect` on `notice`, NameItInline.tsx:104-106);
+    /// only errors, which must be said again when the same one is set again, go through the
+    /// model's `announce`.
     public var notice: String? {
         guard let offered else { return nil }
         return meanwhile != nil

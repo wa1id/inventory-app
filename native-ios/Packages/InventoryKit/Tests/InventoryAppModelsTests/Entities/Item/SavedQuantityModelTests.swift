@@ -181,6 +181,38 @@ struct EntitiesSavedQuantityModelTests {
         #expect(harness.haptics.played == [.error])
     }
 
+    @Test("a successful write, or a failure that gives up, gives the next run all three retries again")
+    func retriesReset() async {
+        // One conflict, then the write goes through: the retry it used is given back.
+        let items = EntitiesFakeItems(updates: [Self.conflict, Self.saved(6, 21)], reads: [Self.fresh(5, 20)])
+        let harness = Harness(items: items)
+        harness.model.setQuantity(6)
+        await harness.settle()
+        #expect(harness.model.errorKind == nil)
+
+        await items.script(
+            updates: Array(repeating: Self.conflict, count: 4),
+            reads: [Self.fresh(6, 22), Self.fresh(6, 23), Self.fresh(6, 24)]
+        )
+        harness.model.setQuantity(7)
+        await harness.settle()
+        #expect(await items.updates.count == 2 + 4)
+        #expect(await items.reads.count == 1 + 3)
+        #expect(harness.model.errorKind == .other)
+
+        // The fourth conflict gave up and reset the count: three retries once more.
+        await items.script(
+            updates: [Self.conflict, Self.conflict, Self.conflict, Self.saved(8, 40)],
+            reads: [Self.fresh(6, 30), Self.fresh(6, 31), Self.fresh(6, 32)]
+        )
+        harness.model.setQuantity(8)
+        await harness.settle()
+        #expect(await items.updates.count == 2 + 4 + 4)
+        #expect(harness.model.errorKind == nil)
+        #expect(harness.model.quantity == 8)
+        #expect(harness.haptics.played == [.error])
+    }
+
     @Test("the screen's reads are taken only while nothing is pending or being written")
     func externalUpdates() async {
         let items = EntitiesFakeItems(updates: [Self.saved(6, 11)])

@@ -260,6 +260,29 @@ struct EntitiesAddSheetModelTests {
         #expect(model.suggestionBanner == nil)
     }
 
+    @Test("a photo removed before its recognition task has even run never takes the answer")
+    func removedBeforeRecognitionRuns() async {
+        let recognizer = EntitiesRecognizer([Self.found("Cordless drill"), Self.found("Drill")])
+        let harness = Harness(recognizer: recognizer)
+        let model = harness.makeModel(AddParams(photoUri: "file:///p.webp"))
+        // No suspension between starting recognition and removing the photo: RN notes the photo
+        // before its first await, so the answer is dropped however early the removal comes.
+        model.start()
+        model.removePhoto()
+        await model.recognitionTask?.value
+        #expect(model.values == .empty)
+        #expect(model.suggestion == .idle)
+        #expect(model.photo == nil)
+
+        let other = Harness(recognizer: EntitiesRecognizer([Self.found("Drill")]))
+        let retried = other.makeModel(AddParams(photoUri: "file:///q.webp"))
+        retried.retrySuggestion()
+        retried.removePhoto()
+        await retried.recognitionTask?.value
+        #expect(retried.values == .empty)
+        #expect(retried.suggestion == .idle)
+    }
+
     @Test("a name typed before the answer survives it, and the details then read as stale")
     func typedNameSurvives() async {
         let recognizer = EntitiesRecognizer([Self.found("Cordless drill")])
@@ -415,6 +438,29 @@ struct EntitiesAddSheetModelTests {
         #expect(loaded.placesCause != nil)
         #expect(!loaded.showsPlacesFailed)
         #expect(!loaded.placesLoading)
+    }
+
+    @Test("a places read whose task was cancelled settles nothing, so it never reads as failed")
+    func placesCancelled() async {
+        let chest = Container(id: "chest", spaceId: "garage", name: "Tool chest", visualType: .cabinet, shortCode: "CAB-J92R", createdAt: 1, updatedAt: 1)
+        let containers = EntitiesFakeContainers([
+            .failure(CancellationError()),
+            .value([ContainerWithSpace(container: chest, spaceName: "Garage", itemCount: 0)]),
+        ])
+        let (spaces, _) = Self.garage()
+        let harness = Harness(spaces: spaces, containers: containers)
+        let model = harness.makeModel()
+        // The view's `.task(id:)` restarting: the old read is cancelled as it runs.
+        let cancelled = Task { await model.loadPlaces() }
+        cancelled.cancel()
+        await cancelled.value
+        #expect(!model.showsPlacesFailed)
+        #expect(model.placesCause == nil)
+        #expect(model.places == nil)
+
+        await model.loadPlaces()
+        #expect(model.places?.map(\.id) == ["chest"])
+        #expect(!model.placesLoading)
     }
 
     @Test("choosing a row selects it with a choice tick; the selected row does nothing")
@@ -748,12 +794,16 @@ struct EntitiesAddSheetModelTests {
         model.snapSeveral()
         model.clearRestored()
         await model.takePhoto()
+        // The photo files are being written into the item: removing or retaking does nothing.
+        model.removePhoto()
+        await model.retakePhoto()
         #expect(await items.creates.count == 1)
         #expect(harness.confirm.asked.isEmpty)
         #expect(!model.isPickingPlace)
         #expect(harness.camera.replacements.isEmpty)
         #expect(harness.camera.opened.isEmpty)
         #expect(model.photo != nil)
+        #expect(harness.photos.deleted.isEmpty)
 
         await items.releaseNextUpdate()
         await saving.value

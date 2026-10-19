@@ -35,7 +35,7 @@ public enum PickedPlace: Sendable, Hashable {
 }
 
 /// One row of the picker (RN `Entry`).
-public enum PlacePickerEntry: Sendable, Hashable {
+public enum PlacePickerEntry: Sendable, Hashable, Identifiable {
     /// A container; `recent` rows carry the space name as a caption.
     case option(PlaceOption, recent: Bool)
     /// "Drop zone · Sort it later".
@@ -43,6 +43,16 @@ public enum PlacePickerEntry: Sendable, Hashable {
     /// "New container in <space>…"; `color` is set in the single "Make a new container" list,
     /// where the space pip leads the row.
     case newContainer(spaceId: String, spaceName: String, color: String?)
+
+    /// The row's key (RN `entryKey`, PlacePicker.tsx:384-388): a container listed both under
+    /// Recent and under its space gets a different key in each.
+    public var id: String {
+        switch self {
+        case .option(let option, let recent): "\(recent ? "recent" : "space")-\(option.id)"
+        case .dropZone: DropZone.containerId
+        case .newContainer(let spaceId, _, _): "new-\(spaceId)"
+        }
+    }
 }
 
 /// One section of the picker (RN `PickerSection`).
@@ -72,8 +82,9 @@ public struct PlacePickerSection: Sendable, Hashable, Identifiable {
     }
 }
 
-/// The picker's rules (RN `PlacePicker`).
-public enum PlacePicker {
+/// The picker's rules (RN `PlacePicker`'s logic). Not named `PlacePicker`, which is the name
+/// the SwiftUI view porting the RN component takes.
+public enum PlacePickerRules {
     /// Recent places shown above the spaces (RN `MAX_RECENT_SHOWN`).
     public static let maxRecentShown = 4
 

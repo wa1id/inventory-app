@@ -184,7 +184,7 @@ public final class AddSheetModel {
         self.now = now
         self.owner = owner
 
-        let initial = AddSheet.initialState(params: params, draft: drafts.restorableDraft(now: now())?.state)
+        let initial = AddSheetRules.initialState(params: params, draft: drafts.restorableDraft(now: now())?.state)
         self.initial = initial
         recentIds = recentPlaces.read()
         values = initial.state.values
@@ -215,20 +215,20 @@ public final class AddSheetModel {
 
     /// Where a save goes now.
     public var place: ResolvedPlace {
-        AddSheet.resolvePlace(selectedId: placeId, options: options, picked: picked)
+        AddSheetRules.resolvePlace(selectedId: placeId, options: options, picked: picked)
     }
 
     /// The "Where it goes" rows. While the places load, or after they failed with nothing
     /// loaded, only the drop zone (and a picked place) show.
     public var entries: [WhereEntry] {
-        AddSheet.whereEntries(param: paramOption, recentIds: recentIds, options: options ?? [:], selectedId: place.id, picked: picked)
+        AddSheetRules.whereEntries(param: paramOption, recentIds: recentIds, options: options ?? [:], selectedId: place.id, picked: picked)
     }
 
     /// The trimmed name.
     public var typedName: String { values.name.jsTrimmed() }
 
     /// Whether anything is worth keeping or asking about before closing.
-    public var hasContent: Bool { AddSheet.formHasContent(values, photo: photo) }
+    public var hasContent: Bool { AddSheetRules.formHasContent(values, photo: photo) }
 
     /// The name the suggested details no longer describe, if any.
     public var staleName: String? { suggestion.staleName(typed: typedName) }
@@ -246,17 +246,17 @@ public final class AddSheetModel {
     /// "More details" is open: opened by hand, or holding something and not closed over exactly
     /// these values, so details a suggestion changed are never hidden.
     public var detailsShown: Bool {
-        showMore || (AddSheet.hasDetails(values) && !EntityText.same(detailsKey, collapsedAt))
+        showMore || (AddSheetRules.hasDetails(values) && !EntityText.same(detailsKey, collapsedAt))
     }
 
     /// The form step's title.
-    public var title: String { AddSheet.title(param: paramOption) }
+    public var title: String { AddSheetRules.title(param: paramOption) }
 
     /// The place step's title.
     public var placeStepTitle: String { L10n.Add.placeTitle }
 
     /// The Save button's spoken label.
-    public var saveAccessibilityLabel: String { AddSheet.saveAccessibilityLabel(place) }
+    public var saveAccessibilityLabel: String { AddSheetRules.saveAccessibilityLabel(place) }
 
     /// The stepper's value: the typed quantity, or 1.
     public var quantity: Int { parseQuantityInput(values.quantity) ?? 1 }
@@ -313,13 +313,14 @@ public final class AddSheetModel {
         if !initial.restored { drafts.discardStaleDraft(now: now()) }
         syncDraft()
         if initial.recognize, let photo = initial.state.photo {
-            let hint = Self.hint(initial.state.values.name.jsTrimmed())
-            recognitionTask = Task { await runRecognition(uri: photo.uri, nameHint: hint) }
+            startRecognition(uri: photo.uri, nameHint: Self.hint(initial.state.values.name.jsTrimmed()))
         }
     }
 
     /// Reads every container with its space (the `add-places` query). A failed read keeps what
-    /// was loaded before; only the newest read's answer counts (RN `useInventoryQuery`).
+    /// was loaded before; only the newest read's answer counts (RN `useInventoryQuery`). A read
+    /// whose task was cancelled (the view's `.task(id:)` restarting it, or the sheet going)
+    /// settles nothing, so its cancellation never shows as "could not be loaded".
     public func loadPlaces() async {
         placesGeneration += 1
         let generation = placesGeneration
@@ -334,7 +335,7 @@ public final class AddSheetModel {
         } catch {
             result = .failure(error)
         }
-        guard generation == placesGeneration else { return }
+        guard generation == placesGeneration, !Task.isCancelled else { return }
         placesLoading = false
         switch result {
         case .success(let loaded):
@@ -419,18 +420,20 @@ public final class AddSheetModel {
         let next = AddPhoto(taken)
         photo = next
         suggestion = .running
-        let hint = Self.hint(typedName)
-        recognitionTask = Task { await runRecognition(uri: next.uri, nameHint: hint) }
+        startRecognition(uri: next.uri, nameHint: Self.hint(typedName))
     }
 
-    /// Photo options › Retake: the photo goes, then the camera opens.
+    /// Photo options › Retake: the photo goes, then the camera opens. Ignored while saving
+    /// (RN `photoOptions`, app/item/new.tsx:407-408): the files may already be the item's.
     public func retakePhoto() async {
+        guard !savingGuard else { return }
         dropPhoto()
         await takePhoto()
     }
 
-    /// Photo options › Remove photo.
+    /// Photo options › Remove photo. Ignored while saving, as ``retakePhoto()``.
     public func removePhoto() {
+        guard !savingGuard else { return }
         dropPhoto()
     }
 
@@ -438,8 +441,7 @@ public final class AddSheetModel {
     public func retrySuggestion() {
         guard let photo else { return }
         suggestion = .running
-        let hint = Self.hint(typedName)
-        recognitionTask = Task { await runRecognition(uri: photo.uri, nameHint: hint) }
+        startRecognition(uri: photo.uri, nameHint: Self.hint(typedName))
     }
 
     /// The banner's "Update the other details" (stale only): replaces category and tags for
@@ -447,7 +449,7 @@ public final class AddSheetModel {
     public func refreshSuggestion() {
         guard let photo, let staleName else { return }
         suggestion = .refreshing
-        recognitionTask = Task { await runRecognition(uri: photo.uri, nameHint: staleName, overwrite: true) }
+        startRecognition(uri: photo.uri, nameHint: staleName, overwrite: true)
     }
 
     /// The draft banner's "Clear": the photo goes too; back to an empty form in the drop zone.
@@ -482,7 +484,7 @@ public final class AddSheetModel {
             )
             guard discard else { return }
             recognitionURI = nil
-            photos.deleteStoredPhotos(AddSheet.photoFiles(photo))
+            photos.deleteStoredPhotos(AddSheetRules.photoFiles(photo))
         }
         drafts.clearDraft(owner: owner)
         leave()
@@ -594,7 +596,7 @@ public final class AddSheetModel {
         let itemId = item.id
         toasts.show(
             ToastOptions(
-                message: AddSheet.savedMessage(target),
+                message: AddSheetRules.savedMessage(target),
                 action: ToastAction(
                     label: L10n.Common.undo,
                     accessibilityLabel: L10n.Add.undoA11y(name: parsed.name),
@@ -609,7 +611,7 @@ public final class AddSheetModel {
         do {
             let result = try await items.delete(itemId)
             // Paired, the household reports its own copies; the files this phone took go too.
-            photos.deleteStoredPhotos(result.orphanedPhotoUris.map(Optional.some) + AddSheet.photoFiles(addedPhoto))
+            photos.deleteStoredPhotos(result.orphanedPhotoUris.map(Optional.some) + AddSheetRules.photoFiles(addedPhoto))
             telemetry.event("item_deleted")
             invalidator.invalidate()
             haptics(.undo)
@@ -638,16 +640,24 @@ public final class AddSheetModel {
     /// Deletes the photo's files (both) and forgets it; a pending answer about it is dropped.
     private func dropPhoto() {
         recognitionURI = nil
-        photos.deleteStoredPhotos(AddSheet.photoFiles(photo))
+        photos.deleteStoredPhotos(AddSheetRules.photoFiles(photo))
         photo = nil
         suggestion = .idle
     }
 
-    /// Runs recognition for `uri`; sets only the terminal states (whoever starts it set
-    /// `running` or `refreshing`). An answer about a photo removed or replaced meanwhile, or
-    /// arriving after the sheet went, is dropped.
-    func runRecognition(uri: String, nameHint: String?, overwrite: Bool = false) async {
+    /// Starts recognition for `uri`. The photo it is for is noted here, before the task runs,
+    /// as RN sets `recognitionRef` before its first await (app/item/new.tsx:248): a photo
+    /// removed or replaced right after can then never have its answer applied.
+    private func startRecognition(uri: String, nameHint: String?, overwrite: Bool = false) {
         recognitionURI = uri
+        recognitionTask = Task { await runRecognition(uri: uri, nameHint: nameHint, overwrite: overwrite) }
+    }
+
+    /// Runs recognition for `uri` (started by ``startRecognition(uri:nameHint:overwrite:)``);
+    /// sets only the terminal states (whoever starts it set `running` or `refreshing`). An
+    /// answer about a photo removed or replaced meanwhile, or arriving after the sheet went, is
+    /// dropped.
+    private func runRecognition(uri: String, nameHint: String?, overwrite: Bool) async {
         let result = await recognize(uri, nameHint)
         guard active, let current = recognitionURI, EntityText.same(current, uri) else { return }
 

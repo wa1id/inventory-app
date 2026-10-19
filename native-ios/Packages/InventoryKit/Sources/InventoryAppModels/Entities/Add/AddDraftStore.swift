@@ -40,7 +40,7 @@ public final class AddDraftStore {
     /// Throws away a draft older than half an hour, and its photo (RN `discardStaleDraft`).
     public func discardStaleDraft(now: Int64) {
         guard let slot, !Self.isFresh(slot.draft, now: now) else { return }
-        photos.deleteStoredPhotos(AddSheet.photoFiles(slot.draft.state.photo))
+        photos.deleteStoredPhotos(AddSheetRules.photoFiles(slot.draft.state.photo))
         self.slot = nil
     }
 
@@ -55,7 +55,7 @@ public final class AddDraftStore {
             return
         }
         if let slot, !EntityText.same(slot.draft.state.photo?.uri, draft.state.photo?.uri) {
-            photos.deleteStoredPhotos(AddSheet.photoFiles(slot.draft.state.photo))
+            photos.deleteStoredPhotos(AddSheetRules.photoFiles(slot.draft.state.photo))
         }
         slot = (owner, draft)
     }
