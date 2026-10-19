@@ -156,8 +156,9 @@ struct AppConfigTests {
 
     // 00-index §5 / 09 §15 Q14: RN keeps 0 or NaN, which aborts every request at once.
     @Test("empty, non-numeric and non-positive timeouts fall back to the defaults", arguments: [
-        "", " ", "abc", "12abc", "0", "-0", "-1", "-20000", "0.4", "0.9999", "Infinity", "-Infinity",
-        "infinity", "NaN", "1e400", "1_000", "1,000", "\u{663}\u{660}\u{660}", "\u{FF11}\u{FF15}", "0x", "1e",
+        "", " ", "abc", "12abc", "0", "-0", "-1", "-20000", "0.4", "0.9999", "-Infinity", "-1e400",
+        "infinity", "INFINITY", "NaN", "1_000", "1,000", "\u{663}\u{660}\u{660}", "\u{FF11}\u{FF15}", "0x", "1e",
+        "-0x10", "+0x10", "0x10.5", ".", "+", "-", "15000n", "Infinityx",
     ])
     func unusableTimeoutsFallBack(raw: String) {
         let parsed = config([.recognitionTimeoutMs: raw, .syncTimeoutMs: raw])
@@ -165,9 +166,19 @@ struct AppConfigTests {
         #expect(parsed.syncTimeoutMs == AppConfig.defaultSyncTimeoutMs)
     }
 
-    @Test("a timeout too large for an Int is capped instead of trapping")
-    func hugeTimeoutIsCapped() {
-        #expect(config([.syncTimeoutMs: "1e30"]).syncTimeoutMs == Int.max)
+    // RN's timer for an infinite or huge value never fires; only empty, NaN and ≤ 0 fall back.
+    @Test("a timeout too large for an Int, Infinity included, is capped instead of trapping", arguments: [
+        "1e30", "Infinity", "+Infinity", "1e400", "9223372036854775807", "9223372036854775808",
+    ])
+    func hugeTimeoutIsCapped(raw: String) {
+        let parsed = config([.recognitionTimeoutMs: raw, .syncTimeoutMs: raw])
+        #expect(parsed.recognitionTimeoutMs == Int.max)
+        #expect(parsed.syncTimeoutMs == Int.max)
+        #expect(parsed.syncTimeout == .milliseconds(Int.max))
+    }
+
+    @Test("a large timeout that fits keeps its JS value")
+    func largeTimeoutKeepsItsValue() {
         #expect(config([.syncTimeoutMs: "9007199254740993"]).syncTimeoutMs == 9_007_199_254_740_992)
     }
 
@@ -176,7 +187,9 @@ struct AppConfigTests {
         #expect(config([.recognitionTimeoutMs: 30_000]).recognitionTimeoutMs == 30_000)
         #expect(config([.syncTimeoutMs: 2_500.5]).syncTimeoutMs == 2_500)
         #expect(config([.syncTimeoutMs: 0]).syncTimeoutMs == AppConfig.defaultSyncTimeoutMs)
+        #expect(config([.syncTimeoutMs: -5]).syncTimeoutMs == AppConfig.defaultSyncTimeoutMs)
         #expect(config([.syncTimeoutMs: Double.nan]).syncTimeoutMs == AppConfig.defaultSyncTimeoutMs)
+        #expect(config([.syncTimeoutMs: Double.infinity]).syncTimeoutMs == Int.max)
     }
 
     @Test("a non-string value for a text setting counts as absent")
@@ -193,6 +206,26 @@ struct AppConfigTests {
         #expect(config([:], version: "0.2.0").appVersion == "0.2.0")
         #expect(config([:]).appVersion == "0.0.0")
         #expect(config([:], version: "").appVersion == "0.0.0")
+    }
+
+    // 09 §11: an x-inventory-key never goes into a log line.
+    @Test("printing a configuration says whether each key is set, never what it is")
+    func printingRedactsTheKeys() {
+        let keyed = config([
+            .recognitionKey: "recognition-secret-1", .syncKey: "sync-secret-2",
+            .syncURL: "https://sync.example", .environment: "preview",
+        ], version: "0.2.0")
+        var dumped = ""
+        dump(keyed, to: &dumped)
+        for text in [String(describing: keyed), String(reflecting: keyed), "\(keyed)", dumped] {
+            #expect(!text.contains("recognition-secret-1"), "\(text)")
+            #expect(!text.contains("sync-secret-2"), "\(text)")
+            #expect(text.contains("<set>"), "\(text)")
+            #expect(text.contains("https://sync.example"), "\(text)")
+            #expect(text.contains("preview"), "\(text)")
+        }
+        #expect(String(describing: AppConfig()).contains("recognitionKey: nil"))
+        #expect(String(describing: AppConfig()).contains("syncKey: nil"))
     }
 
     @Test("timeouts are also available as durations")
@@ -279,9 +312,10 @@ struct AppConfigParityTests {
         let timeouts: [Timeout]
     }
 
-    /// What the native parser keeps of the number JS computed: whole positive milliseconds, else the default.
+    /// What the native parser keeps of the number JS computed: whole positive milliseconds,
+    /// capped at `Int.max` (Infinity included); the default for NaN and anything below 1.
     static func native(_ js: String, default fallback: Int) -> Int {
-        guard let value = Double(js), value.isFinite, value.rounded(.towardZero) > 0 else { return fallback }
+        guard let value = Double(js), !value.isNaN, value.rounded(.towardZero) > 0 else { return fallback }
         let whole = value.rounded(.towardZero)
         return whole < Double(Int.max) ? Int(whole) : Int.max
     }
@@ -339,7 +373,7 @@ struct AppConfigParityTests {
             #expect(parsed.syncTimeoutMs == Self.native(entry.sync, default: 60_000), "\(label) JS \(entry.sync)")
             if let value = Double(entry.sync), value.isFinite, value >= 1 { usable += 1 }
         }
-        #expect(usable >= 10)
+        #expect(usable >= 20)
     }
 }
 

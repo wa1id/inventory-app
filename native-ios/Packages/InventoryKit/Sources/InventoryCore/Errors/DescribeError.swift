@@ -62,8 +62,10 @@ public struct ErrorCopy: Sendable, Hashable {
 /// Describes a failure in plain words (RN `describeError`, src/ui/errors.ts:41-82).
 ///
 /// `nil` stands for JS `null`: a read that found nothing, because the record was
-/// deleted elsewhere, so it reads as gone. (JS `undefined` has no Swift
-/// counterpart; a thrown error is never `nil`.) In order:
+/// deleted elsewhere, so it reads as gone. Where 09 §5 and §10.4 pass
+/// `QueryCause.gone`, pass `nil`. (JS `undefined` has no Swift counterpart; a
+/// thrown error is never `nil`, and any unclassified error reads as local, as
+/// `undefined` did.) In order:
 /// 1. a ``ConflictError`` is a conflict;
 /// 2. `nil` is gone, titled by `subject`;
 /// 3. a ``HouseholdHttpError`` is offline when the home server did not answer,
@@ -168,6 +170,6 @@ func httpStatus(inCode code: String) -> Int? {
 }
 
 /// JS `error.code === expected`: exact code units, no canonical equivalence.
-private func isCode(_ error: HouseholdHttpError, _ expected: String) -> Bool {
+func isCode(_ error: HouseholdHttpError, _ expected: String) -> Bool {
     error.code.utf8.elementsEqual(expected.utf8)
 }

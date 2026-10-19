@@ -516,6 +516,151 @@
    "input": "e5",
    "recognition": "NaN",
    "sync": "NaN"
+  },
+  {
+   "input": "-0x10",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "+0x10",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "0x10.5",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "0o",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "0b2",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "0xG",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": ".",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "+",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "-",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": ".e1",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "1.e1",
+   "recognition": "10",
+   "sync": "10"
+  },
+  {
+   "input": "0.5e1",
+   "recognition": "5",
+   "sync": "5"
+  },
+  {
+   "input": "1e-3",
+   "recognition": "0.001",
+   "sync": "0.001"
+  },
+  {
+   "input": "1e+3",
+   "recognition": "1000",
+   "sync": "1000"
+  },
+  {
+   "input": "1E3",
+   "recognition": "1000",
+   "sync": "1000"
+  },
+  {
+   "input": "00015000",
+   "recognition": "15000",
+   "sync": "15000"
+  },
+  {
+   "input": "15000.000",
+   "recognition": "15000",
+   "sync": "15000"
+  },
+  {
+   "input": "15000n",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "Infinityx",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "INFINITY",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "  15000  ",
+   "recognition": "15000",
+   "sync": "15000"
+  },
+  {
+   "input": "\t60000\n",
+   "recognition": "60000",
+   "sync": "60000"
+  },
+  {
+   "input": "15 000",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "0.0",
+   "recognition": "0",
+   "sync": "0"
+  },
+  {
+   "input": "-0.0",
+   "recognition": "0",
+   "sync": "0"
+  },
+  {
+   "input": "1.7976931348623157e308",
+   "recognition": "1.7976931348623157e+308",
+   "sync": "1.7976931348623157e+308"
+  },
+  {
+   "input": "1e309",
+   "recognition": "Infinity",
+   "sync": "Infinity"
+  },
+  {
+   "input": "9223372036854775807",
+   "recognition": "9223372036854776000",
+   "sync": "9223372036854776000"
+  },
+  {
+   "input": "9223372036854775808",
+   "recognition": "9223372036854776000",
+   "sync": "9223372036854776000"
   }
  ]
 }

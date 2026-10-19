@@ -1,6 +1,6 @@
 /**
- * Generates the AppConfig and describeError parity vectors from the real TypeScript
- * (src/services/config.ts and src/ui/errors.ts).
+ * Generates the AppConfig, describeError and joinFailure parity vectors from the real
+ * TypeScript (src/services/config.ts, src/ui/errors.ts and src/ui/household/join.ts).
  *
  * Not part of the RN test suite. To regenerate (see native-ios/docs/CONVENTIONS.md):
  *
@@ -25,6 +25,7 @@ import {
   type ErrorContext,
   type ErrorSubject,
 } from '@/ui/errors';
+import { joinFailure } from '@/ui/household/join';
 
 const OUT = join(__dirname, '../../../native-ios/Packages/InventoryKit/Tests/InventoryCoreTests/Fixtures');
 
@@ -79,6 +80,11 @@ const TIMEOUTS = [
   '0X3a98', '0o17', '0b101', '0', '-0', '-1', '-20000', '0.4', '0.9999', '1', '1.9', 'abc', '12abc',
   'Infinity', '-Infinity', '+Infinity', 'infinity', 'NaN', '1e21', '1e400', '9007199254740993',
   '1_000', '1,000', '٣٠٠٠', '１５０００', '0x', '1e', 'e5',
+  // Signed or broken radix literals, bare signs and dots, exponents, leading zeros, huge values.
+  '-0x10', '+0x10', '0x10.5', '0o', '0b2', '0xG', '.', '+', '-', '.e1', '1.e1', '0.5e1', '1e-3',
+  '1e+3', '1E3', '00015000', '15000.000', '15000n', 'Infinityx', 'INFINITY', '\u2028 15000 \u2029',
+  '\t60000\n', '15 000', '0.0', '-0.0', '1.7976931348623157e308', '1e309', '9223372036854775807',
+  '9223372036854775808',
 ];
 
 const STATUSES = [0, 200, 400, 401, 403, 404, 409, 500, 501, 502, 503, 519, 520, 525, 530, 531];
@@ -90,6 +96,16 @@ const CODES = [
   'conflict', '', 'http_5020', 'http_50', 'HTTP_502', 'http_502 ', ' http_502', 'http_502\n',
   'http_５０２', 'http_٥٠٢', 'Offline', 'TIMEOUT', 'Unauthorized',
   'not found', 'photo_missing ',
+];
+
+/** Statuses and codes outside the cross product above, as single (status, code) causes. */
+const EXTRA_HTTP: [number, string][] = [
+  [-1, 'x'], [100, 'x'], [204, 'x'], [418, 'x'], [599, 'x'], [600, 'x'], [999, 'x'],
+  [0, 'http_000'], [0, 'http_999'], [502, 'http_000'], [0, 'http_'], [0, 'http_5'], [0, 'http_52a'],
+  [0, 'http_+52'], [0, 'http_ 52'], [0, 'http_5 2'], [0, 'xhttp_502'], [0, 'http_502http_502'],
+  [0, 'http_521'], [0, 'http_529'], [0, 'http_0520'], [0, 'http_520\u0000'], [0, 'http_５２０'],
+  [0, 'offline\u0301'], [0, 'ｏffline'], [0, 'time out'], [403, 'http_403'], [401, 'refused'],
+  [404, 'http_401'], [409, 'conflict'], [409, 'http_409'], [520, 'unauthorized'], [530, 'not_found'],
 ];
 
 const CONTEXTS: ErrorContext[] = ['read', 'save', 'move', 'quantity', 'delete', 'label', 'join'];
@@ -163,6 +179,7 @@ describe('AppConfig and describeError parity vectors', () => {
     for (const status of STATUSES) {
       for (const code of CODES) causes.push({ type: 'http', status, code });
     }
+    for (const [status, code] of EXTRA_HTTP) causes.push({ type: 'http', status, code });
     causes.push(
       { type: 'conflict', updatedAt: 1 },
       { type: 'conflict', updatedAt: null },
@@ -196,6 +213,7 @@ describe('AppConfig and describeError parity vectors', () => {
         defaults: describeError(cause).kind,
         refreshBanner: needsRefreshBanner(true, cause),
         offline: isOffline(cause),
+        join: joinFailure(cause),
       };
     });
     // One entry per line: pretty-printing the nested arrays would make the file six times larger.

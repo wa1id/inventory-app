@@ -81,10 +81,11 @@ public struct AppConfig: Sendable, Hashable {
     ///   recognition URL keeps them, being a full URL with its path.
     /// - The environment must be exactly `production` or `preview`; anything else
     ///   is `development`.
-    /// - A timeout goes through JS `Number()`. Where RN would keep 0, NaN, a
-    ///   negative or an infinity (all of which abort the request at once), this
-    ///   falls back to the default instead (00-index §5, 09 §15 Q14); a fraction
-    ///   is truncated to whole milliseconds, as `setTimeout` does.
+    /// - A timeout goes through JS `Number()`. Where RN would keep 0, NaN or a
+    ///   negative (all of which abort the request at once), this falls back to the
+    ///   default instead (00-index §5, 09 §15 Q14). A fraction is truncated to whole
+    ///   milliseconds, so anything below 1 ms falls back too; a value beyond `Int`,
+    ///   `Infinity` included, is capped at `Int.max` (RN never aborts it).
     public init(infoDictionary info: [String: Any]) {
         func value(_ key: InfoKey) -> Any? { info[key.rawValue] }
         self.init(
@@ -141,6 +142,11 @@ extension AppConfig {
     }
 
     /// `Number(value ?? fallback)` (config.ts:68,71), with the native fallback for unusable values.
+    ///
+    /// Only an empty, non-numeric (NaN) or non-positive value falls back (00-index §5). A
+    /// value too large for an `Int`, `Infinity` included, is capped at `Int.max`: RN's timer
+    /// for it never fires, so the request is never aborted, and `Int.max` milliseconds
+    /// keeps that.
     static func milliseconds(_ raw: Any?, default fallback: Int) -> Int {
         let number: Double? = switch raw {
         case let text as String: jsNumber(text.jsTrimmed())
@@ -148,7 +154,7 @@ extension AppConfig {
         case let real as Double: real
         default: nil
         }
-        guard let number, number.isFinite else { return fallback }
+        guard let number, !number.isNaN else { return fallback }
         let whole = number.rounded(.towardZero)
         guard whole > 0 else { return fallback }
         return whole < Double(Int.max) ? Int(whole) : Int.max
@@ -158,5 +164,43 @@ extension AppConfig {
     static func version(_ raw: Any?) -> String {
         guard let text = raw as? String, !text.isEmpty else { return defaultAppVersion }
         return text
+    }
+}
+
+// MARK: - Printing
+
+// 09 §11: an `x-inventory-key` never goes into a log. The synthesized description
+// and mirror would print both keys for `"\(config)"`, `print` or `dump`, so they
+// only say whether a key is set.
+extension AppConfig: CustomStringConvertible, CustomDebugStringConvertible, CustomReflectable {
+    public var description: String {
+        "AppConfig(environment: \(environment.rawValue), appVersion: \(appVersion), "
+            + "recognitionEndpoint: \(recognitionEndpoint ?? "nil"), recognitionKey: \(Self.redacted(recognitionKey)), "
+            + "recognitionTimeoutMs: \(recognitionTimeoutMs), syncEndpoint: \(syncEndpoint ?? "nil"), "
+            + "syncKey: \(Self.redacted(syncKey)), syncTimeoutMs: \(syncTimeoutMs), householdOrigin: \(householdOrigin))"
+    }
+
+    public var debugDescription: String { description }
+
+    public var customMirror: Mirror {
+        Mirror(
+            self,
+            children: [
+                "recognitionEndpoint": recognitionEndpoint as Any,
+                "recognitionKey": Self.redacted(recognitionKey),
+                "recognitionTimeoutMs": recognitionTimeoutMs,
+                "syncEndpoint": syncEndpoint as Any,
+                "syncKey": Self.redacted(syncKey),
+                "syncTimeoutMs": syncTimeoutMs,
+                "householdOrigin": householdOrigin,
+                "environment": environment,
+                "appVersion": appVersion,
+            ],
+            displayStyle: .struct
+        )
+    }
+
+    private static func redacted(_ key: String?) -> String {
+        key == nil ? "nil" : "<set>"
     }
 }

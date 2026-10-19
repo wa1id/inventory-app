@@ -4,7 +4,7 @@ import Testing
 
 // Port of src/ui/__tests__/errors.test.ts, plus the 09 §10.2 rules the RN tests
 // leave implicit and Fixtures/errors.json (every cause × context × subject, run
-// through the real errors.ts).
+// through the real errors.ts, and joinFailure from src/ui/household/join.ts).
 
 /// RN `RAW`: `/http_|invalid_|offline|timeout|unauthorized|not_found|photo_missing/`.
 private let rawCodeFragments = ["http_", "invalid_", "offline", "timeout", "unauthorized", "not_found", "photo_missing"]
@@ -316,6 +316,8 @@ struct DescribeErrorParityTests {
         let defaults: String
         let refreshBanner: Bool
         let offline: Bool
+        /// RN `joinFailure(cause)` (src/ui/household/join.ts).
+        let join: String
     }
 
     struct File: Decodable {
@@ -347,7 +349,12 @@ struct DescribeErrorParityTests {
             #expect(needsRefreshBanner(true, cause: cause) == entry.refreshBanner, "\(label)")
             #expect(!needsRefreshBanner(false, cause: cause), "\(label)")
             #expect(isOffline(cause) == entry.offline, "\(label)")
+            #expect(joinFailure(cause).rawValue == entry.join, "\(label)")
         }
+        // Every kind and every join outcome is reached at least once.
+        let kinds = Set(file.entries.flatMap { $0.described.flatMap { $0.map(\.kind) } })
+        #expect(kinds == Set(ErrorKind.allCases.map(\.rawValue)))
+        #expect(Set(file.entries.map(\.join)) == Set(JoinFailure.allCases.map(\.rawValue)))
     }
 
     @Test("no errors.* copy shows a raw code")
