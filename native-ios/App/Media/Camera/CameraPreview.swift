@@ -41,9 +41,23 @@ struct CameraPreview: View {
     }
 }
 
-/// `CameraPreviewUIView` in SwiftUI.
+/// `CameraPreviewUIView` in SwiftUI. A dismantled view lets go of the session and its rotation
+/// coordinator, so a rebuilt preview starts clean.
 struct CameraPreviewLayerView: UIViewRepresentable {
     let camera: CameraController
+
+    /// Remembers which camera the view showed, for `dismantleUIView`.
+    final class Coordinator {
+        var camera: CameraController
+
+        init(camera: CameraController) {
+            self.camera = camera
+        }
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(camera: camera)
+    }
 
     func makeUIView(context: Context) -> CameraPreviewUIView {
         let view = CameraPreviewUIView()
@@ -51,8 +65,19 @@ struct CameraPreviewLayerView: UIViewRepresentable {
         return view
     }
 
+    /// Attaches again only for a different camera. A session shows in one preview layer at a
+    /// time (setting it on a layer takes it from the last one), so re-attaching on every update
+    /// would let an outgoing view, still updated during a transition, take the picture back from
+    /// the view replacing it.
     func updateUIView(_ view: CameraPreviewUIView, context: Context) {
+        guard context.coordinator.camera !== camera else { return }
+        context.coordinator.camera.detach(view)
+        context.coordinator.camera = camera
         camera.attach(view)
+    }
+
+    static func dismantleUIView(_ view: CameraPreviewUIView, coordinator: Coordinator) {
+        coordinator.camera.detach(view)
     }
 }
 
@@ -106,6 +131,13 @@ struct CameraFocusSquare: View {
             .accessibilityHidden(true)
             .accessibilityIdentifier("capture-focus-spot")
     }
+}
+
+#Preview("Preview, no camera, tap to focus") {
+    // `discover: { nil }`: the session fails to start without asking for the camera, so the
+    // black picture and the focus square can be looked at anywhere.
+    CameraPreview(camera: CameraController(use: .photo, discover: { nil }), focus: TapToFocusModel())
+        .ignoresSafeArea()
 }
 
 #Preview("Focus square") {

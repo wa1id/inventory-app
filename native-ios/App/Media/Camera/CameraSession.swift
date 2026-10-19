@@ -144,7 +144,11 @@ actor CameraSession {
         self.use = use
         self.discover = discover
         queue = DispatchSerialQueue(label: "com.wystudio.inventory.camera", qos: .userInitiated)
-        let stream = AsyncStream.makeStream(of: Signal.self, bufferingPolicy: .bufferingNewest(64))
+        // Unbounded: events and `configured` share the stream with QR frames (up to 30 a second
+        // while a label is in view), and a bounded buffer would drop the oldest signal first when
+        // the main actor is busy, losing a `failedToStart` or the device the rotation coordinator
+        // needs. The frames stop with the session, so the buffer cannot grow for long.
+        let stream = AsyncStream.makeStream(of: Signal.self, bufferingPolicy: .unbounded)
         signals = stream.stream
         continuation = stream.continuation
     }

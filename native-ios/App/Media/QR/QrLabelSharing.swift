@@ -73,7 +73,10 @@ struct QrLabelShareLink: View {
         QrLabelGeometry.card(availableWidth: Double(availableWidth)).size
     }
 
-    private var key: String { "\(token)|\(shortCode)|\(cardSize)" }
+    /// What the picture depends on. Whether the width is known yet is part of it: on a window so
+    /// narrow that the measured card is the same as the unmeasured default, the key would otherwise
+    /// never change after the first (skipped) pass and the picture would never be made.
+    private var key: String { "\(token)|\(shortCode)|\(cardSize)|\(availableWidth > 0)" }
 
     var body: some View {
         Group {

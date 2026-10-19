@@ -24,6 +24,49 @@ struct MediaCameraControllerTests {
         camera.attach(CameraPreviewUIView(frame: CGRect(x: 0, y: 0, width: 393, height: 852)))
     }
 
+    @Test("a host wired after the session reported still hears its state")
+    func lateWiringReplaysLastEvent() async {
+        let camera = CameraController(use: .photo, discover: { nil })
+        camera.setRunning(true)
+        #expect(await mediaWait { camera.lastEvent == .failedToStart })
+
+        var heard: [CameraFeedEvent] = []
+        camera.deliverEvents { heard.append($0) }
+        #expect(heard == [.failedToStart])
+
+        var fresh: [CameraFeedEvent] = []
+        CameraController(use: .photo, discover: { nil }).deliverEvents { fresh.append($0) }
+        #expect(fresh.isEmpty, "nothing to replay before the session reported anything")
+    }
+
+    @Test("a rebuilt preview takes the session over; a dismantled one lets it go")
+    func previewHandOver() {
+        let camera = CameraController(use: .photo, discover: { nil })
+        let first = CameraPreviewUIView(frame: CGRect(x: 0, y: 0, width: 393, height: 852))
+        let second = CameraPreviewUIView(frame: CGRect(x: 0, y: 0, width: 393, height: 852))
+
+        camera.attach(first)
+        let session = first.previewLayer?.session
+        #expect(session != nil)
+        #expect(first.previewLayer?.videoGravity == .resizeAspectFill)
+
+        camera.attach(second)
+        #expect(second.previewLayer?.session === session)
+
+        // The old view goes after the new one arrived (a SwiftUI rebuild): the new one keeps it.
+        // (AVFoundation already moved the session off the old layer when the new one took it.)
+        camera.detach(first)
+        #expect(first.previewLayer?.session == nil)
+        #expect(second.previewLayer?.session === session)
+
+        camera.detach(second)
+        #expect(second.previewLayer?.session == nil)
+
+        // And a view that comes back gets the same session again.
+        camera.attach(first)
+        #expect(first.previewLayer?.session === session)
+    }
+
     @Test("no camera: the shutter throws notRunning, which CaptureModel shows as noPhoto")
     func captureWithoutCamera() async throws {
         let camera = CameraController(use: .photo, discover: { nil })

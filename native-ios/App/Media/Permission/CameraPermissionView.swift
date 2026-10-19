@@ -24,9 +24,14 @@ struct CameraPermissionView: View {
     var onCancel: (() -> Void)?
     /// The close button's identifier; each camera screen names its own (RN `closeTestID`).
     var closeIdentifier = "camera-close"
+    /// Capture: a library photo picked from this screen is being stored. RN showed nothing here
+    /// while a large photo took seconds to process; 05 §4.8 asks for progress, so the buttons
+    /// pause and "Saving your photo…" shows under them (the close button stays).
+    var isProcessing = false
 
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         let layout = CameraPermissionLayout(
@@ -91,7 +96,22 @@ struct CameraPermissionView: View {
                     permissionButton(button)
                 }
             }
+            .disabled(isProcessing)
             .padding(.top, 8)
+
+            if isProcessing {
+                HStack(spacing: 8) {
+                    ProgressView()
+                    Text(L10n.Capture.saving)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("camera-processing")
+                .onAppear {
+                    AccessibilityNotification.Announcement(L10n.Capture.saving).post()
+                }
+            }
         }
     }
 
@@ -116,17 +136,24 @@ struct CameraPermissionView: View {
             }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
+                .buttonBorderShape(borderShape)
                 .accessibilityIdentifier(button.id)
         case .secondary:
             Button(action: action) { label.frame(maxWidth: 320) }
                 .buttonStyle(.bordered)
                 .controlSize(.large)
+                .buttonBorderShape(borderShape)
                 .accessibilityIdentifier(button.id)
         case .quiet:
             Button(action: action) { label }
                 .buttonStyle(.borderless)
                 .accessibilityIdentifier(button.id)
         }
+    }
+
+    /// A capsule around a label that wraps to three lines at the largest sizes is an oval.
+    private var borderShape: ButtonBorderShape {
+        dynamicTypeSize.isAccessibilitySize ? .roundedRectangle : .automatic
     }
 
     private func perform(_ action: CameraPermissionLayout.Action) {
@@ -206,6 +233,16 @@ struct CameraPermissionLayout {
         onLibrary: {},
         onManual: {},
         onCancel: {}
+    )
+}
+
+#Preview("Capture, storing a library photo") {
+    CameraPermissionView(
+        model: CameraPermissionModel(purpose: .capture, readAuthorization: { .notDetermined }, requestAccess: { false }),
+        onLibrary: {},
+        onManual: {},
+        onCancel: {},
+        isProcessing: true
     )
 }
 

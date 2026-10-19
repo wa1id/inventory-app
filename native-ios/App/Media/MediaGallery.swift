@@ -20,6 +20,7 @@ struct MediaGallery: View {
         ("QR label card and share", { AnyView(MediaGalleryQrCard()) }),
         ("Label share picture", { AnyView(MediaGallerySharePicture()) }),
         ("Camera preview and focus", { AnyView(MediaGalleryCameraPreview()) }),
+        ("Permission: capture, storing a library photo", { AnyView(MediaGalleryPermission(purpose: .capture, authorization: .notDetermined, isProcessing: true)) }),
     ]
 
     var body: some View {
@@ -36,6 +37,7 @@ struct MediaGallery: View {
 private struct MediaGalleryPermission: View {
     let purpose: CameraPermissionPurpose
     let authorization: CameraAuthorization
+    var isProcessing = false
 
     var body: some View {
         CameraPermissionView(
@@ -43,7 +45,8 @@ private struct MediaGalleryPermission: View {
             onLibrary: purpose == .capture ? {} : nil,
             onManual: {},
             onCancel: {},
-            closeIdentifier: "capture-close"
+            closeIdentifier: "capture-close",
+            isProcessing: isProcessing
         )
     }
 }
@@ -201,7 +204,7 @@ private struct MediaGalleryCameraPreview: View {
         }
         .environment(\.colorScheme, .dark)
         .onAppear {
-            camera.onEvent = { event = $0 }
+            camera.deliverEvents { event = $0 }
         }
         .task {
             // Keep the 700 ms focus square up for the screenshot.

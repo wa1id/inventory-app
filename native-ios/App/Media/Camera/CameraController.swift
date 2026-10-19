@@ -78,12 +78,27 @@ final class CameraController {
     // MARK: Preview
 
     /// Shows the session in `view` (``CameraPreviewLayerView`` calls this).
+    ///
+    /// A new view (SwiftUI rebuilt the preview while this controller lived on) gets its own
+    /// rotation coordinator: the coordinator follows one preview layer, and a coordinator left on
+    /// the old, detached layer would stop turning the picture on iPad and give the crop a stale
+    /// preview angle.
     func attach(_ view: CameraPreviewUIView) {
         guard preview !== view else { return }
+        dropRotationCoordinator()
         preview = view
         view.previewLayer?.session = session.hardware.session
         view.previewLayer?.videoGravity = .resizeAspectFill
         makeRotationCoordinator()
+    }
+
+    /// The view is gone (``CameraPreviewLayerView`` dismantled it): it lets go of the session,
+    /// and of the rotation coordinator if it was the one showing it.
+    func detach(_ view: CameraPreviewUIView) {
+        view.previewLayer?.session = nil
+        guard preview === view else { return }
+        dropRotationCoordinator()
+        preview = nil
     }
 
     /// A tap on the preview at `point` (the preview's own coordinates): converted to the device
@@ -166,6 +181,12 @@ final class CameraController {
         }
     }
 
+    private func dropRotationCoordinator() {
+        rotationObservation?.invalidate()
+        rotationObservation = nil
+        rotationCoordinator = nil
+    }
+
     private func applyPreviewRotation(_ angle: CGFloat) {
         guard let connection = preview?.previewLayer?.connection, connection.isVideoRotationAngleSupported(angle) else { return }
         connection.videoRotationAngle = angle
@@ -173,10 +194,18 @@ final class CameraController {
 }
 
 extension CameraController {
+    /// Sends every session event to `handler`, starting with the last one already reported, so a
+    /// host that wires itself up after the session started (or failed) still learns its state.
+    func deliverEvents(to handler: @escaping @MainActor (CameraFeedEvent) -> Void) {
+        onEvent = handler
+        if let lastEvent { handler(lastEvent) }
+    }
+
     /// Reports the session to the capture screen's model: running, stopped (the shutter waits) and
-    /// failed to start (`strings.capture.didNotStart`).
+    /// failed to start (`strings.capture.didNotStart`). A model wired late still hears the current
+    /// state; otherwise `CaptureModel` would think the camera is not running and ignore the shutter.
     func reportEvents(to model: CaptureModel) {
-        onEvent = { [weak model] event in
+        deliverEvents { [weak model] event in
             switch event {
             case .running: model?.sessionStarted()
             case .stopped: model?.sessionStopped()

@@ -99,14 +99,20 @@ struct QrScannerView<Footer: View>: View {
         }
         .onAppear {
             isShown = true
-            if bridge?.model !== model {
-                bridge = QrScannerBridge(model: model, feed: makeFeed())
-            }
-            update()
+            connect()
         }
         .onDisappear {
             isShown = false
             update()
+        }
+        .onChange(of: ObjectIdentifier(model)) {
+            // A host that swaps its model while the scanner stays on screen gets a new bridge;
+            // the old feed stops first, so two sessions never hold the camera, and the focus moves
+            // from the old model to the new one (the focus value itself did not change).
+            guard isShown else { return }
+            if managesFocus { bridge?.model.focusLost() }
+            connect()
+            if managesFocus, isScreenFocused { model.focusGained() }
         }
         .onChange(of: model.cameraRuns) { update() }
         .onChange(of: scenePhase) { update() }
@@ -122,6 +128,17 @@ struct QrScannerView<Footer: View>: View {
                 model.focusLost()
             }
         }
+    }
+
+    /// Makes the bridge for the current model (once per model), then runs or stops its feed.
+    private func connect() {
+        if bridge?.model !== model {
+            bridge?.feed.setRunning(false)
+            let next = QrScannerBridge(model: model, feed: makeFeed())
+            if model.torchOn { next.syncTorch() }
+            bridge = next
+        }
+        update()
     }
 
     private func update() {

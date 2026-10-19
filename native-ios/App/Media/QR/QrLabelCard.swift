@@ -88,13 +88,16 @@ struct QrLabelCard: View {
 }
 
 /// The short code on the large label tape (RN `Tape size="l"`): shown exactly as stored, on one
-/// line, never truncated. Decorative here: the card's label spells the code.
+/// line, never truncated. Decorative here: the card's label spells the code. Like RN's `tapeL`
+/// (`maxScale` 1.5) it stops growing at `.xxxLarge` (08 §6: cap fixed-geometry text such as the
+/// tape), so the printed-label preview keeps its proportions.
 private struct QrLabelTape: View {
     let code: String
 
     var body: some View {
         Text(code)
             .font(.system(.title3, design: .monospaced).weight(.bold))
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
             .foregroundStyle(MediaPalette.tapeInk)
             .lineLimit(1)
             .fixedSize()

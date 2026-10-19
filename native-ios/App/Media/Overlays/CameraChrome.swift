@@ -161,6 +161,8 @@ struct CameraPanel: View {
     let message: String
     var actions: [CameraPanelAction] = []
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     /// What VoiceOver hears when the panel appears (nil for the hint).
     var announcement: String? {
         guard tone != .hint else { return nil }
@@ -224,6 +226,8 @@ struct CameraPanel: View {
                 .fixedSize(horizontal: false, vertical: true)
             }
             .buttonStyle(.bordered)
+            // A capsule around a label that wraps to three lines at the largest sizes is an oval.
+            .buttonBorderShape(dynamicTypeSize.isAccessibilitySize ? .roundedRectangle : .automatic)
             .tint(.white)
             .accessibilityIdentifier(action.id)
         }

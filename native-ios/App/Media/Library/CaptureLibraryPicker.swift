@@ -17,9 +17,15 @@ extension View {
     /// picker closes without a choice (or the screen goes away with it open), `.failed` when the
     /// photo cannot be loaded (`strings.capture.libraryFailed`).
     ///
+    /// Attach it once, to the screen's root: the camera's library button and the permission
+    /// screen's "Choose a photo instead" both set the same flag, and a picker attached to a button
+    /// that goes away (fast mode, the permission screen giving way to the camera) would close with
+    /// it.
+    ///
     /// ```swift
     /// Button(L10n.Capture.library) { if model.beginLibraryPick() { picking = true } }
-    ///     .captureLibraryPicker(isPresented: $picking) { await model.finishLibraryPick($0) }
+    /// …
+    /// screen.captureLibraryPicker(isPresented: $picking) { await model.finishLibraryPick($0) }
     /// ```
     func captureLibraryPicker(
         isPresented: Binding<Bool>,
@@ -64,23 +70,34 @@ private struct CaptureLibraryPickerModifier: ViewModifier {
                 if presented {
                     gate.opened()
                 } else {
-                    // The picker writes the selection and then closes; read it on the next turn
-                    // so a pick is never taken for a cancel.
-                    Task { await answer() }
+                    // Closed. A pick usually writes the selection in the same update; give it a
+                    // turn, so a pick that lands just after the dismissal is not taken for a
+                    // cancel. The selection handler below answers a pick directly.
+                    Task {
+                        await Task.yield()
+                        finish(with: selection)
+                    }
                 }
             }
+            .onChange(of: selection) { _, item in
+                // A choice answers at once, whichever of the selection and the dismissal comes
+                // first; the gate keeps it to one answer.
+                guard let item else { return }
+                finish(with: item)
+            }
             .onDisappear {
-                guard gate.close() else { return }
-                selection = nil
-                Task { await onFinish(.cancelled) }
+                finish(with: nil)
             }
     }
 
-    private func answer() async {
-        await Task.yield()
+    /// Answers the open presentation once: with the picked item, or `.cancelled` without one.
+    private func finish(with item: PhotosPickerItem?) {
         guard gate.close() else { return }
-        let item = selection
         selection = nil
+        Task { await answer(item) }
+    }
+
+    private func answer(_ item: PhotosPickerItem?) async {
         guard let item else {
             await onFinish(.cancelled)
             return
