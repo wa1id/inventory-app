@@ -541,6 +541,50 @@
   {
    "input": "ABCDEFGHJKMNPQRSTVWXYZ0123456789",
    "hex": "52d8d73e1194e95b5f19d6f9df7c0110c8531d09"
+  },
+  {
+   "input": "ſſſſſſſſ",
+   "hex": "ce739ce739"
+  },
+  {
+   "input": "ﬀﬀﬀﬀ",
+   "hex": "7bdef7bdef"
+  },
+  {
+   "input": "KK",
+   "hex": null
+  },
+  {
+   "input": "ŉ",
+   "hex": null
+  },
+  {
+   "input": "ǅ",
+   "hex": null
+  },
+  {
+   "input": "89144GJ289144­GJ289144GJ288",
+   "hex": null
+  },
+  {
+   "input": "89144GJ289144​GJ289144GJ288",
+   "hex": null
+  },
+  {
+   "input": "89144GJ289144GJ289144GJ288\u0000",
+   "hex": null
+  },
+  {
+   "input": "\t89144GJ289144GJ289144GJ288\r\n",
+   "hex": "42424242424242424242424242424242"
+  },
+  {
+   "input": "89144GJ289144‐GJ289144GJ288",
+   "hex": null
+  },
+  {
+   "input": "89144GJ289144－GJ289144GJ288",
+   "hex": null
   }
  ],
  "format": [

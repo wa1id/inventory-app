@@ -19,6 +19,26 @@ struct JSStringTests {
         #expect(sameScalars("ʰΣ".jsLowercased(), "ʰ\u{03C3}"))
     }
 
+    // 01 Q10: these are the corpus inputs where CoreFoundation's CFStringLowercase (and so
+    // NSString.lowercased, and most likely Hermes on iOS) disagrees with V8/ICU, measured on
+    // the macOS test host. They pin the ICU choice, so swapping jsLowercased() for a
+    // Foundation call fails here by name rather than somewhere in the corpus.
+    static let icuNotFoundationSigma: [(String, String)] = [
+        ("ΑΣ.Β", "α\u{03C3}.β"),
+        ("ΑΣ:Β", "α\u{03C3}:β"),
+        ("ΑΣ·Β", "α\u{03C3}·β"),
+        ("ʰΣ", "ʰ\u{03C3}"),
+        ("\u{0345}Σ", "\u{0345}\u{03C3}"),
+        ("Σ.Σ", "\u{03C3}.\u{03C2}"),
+        ("ⅯΣ", "ⅿ\u{03C2}"),
+        ("ⒶΣ", "ⓐ\u{03C2}"),
+    ]
+
+    @Test("keeps ICU's Final_Sigma where CoreFoundation differs", arguments: icuNotFoundationSigma)
+    func icuFinalSigmaNotFoundation(input: String, expected: String) {
+        #expect(sameScalars(input.jsLowercased(), expected), "\(scalarDump(input.jsLowercased()))")
+    }
+
     @Test("full case mappings")
     func fullCaseMappings() {
         #expect(sameScalars("İ".jsLowercased(), "i\u{0307}"))

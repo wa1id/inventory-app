@@ -54,25 +54,41 @@
    "input": " mmwky-m2h78 ",
    "normalised": "MMWKYM2H78",
    "invalid": [],
-   "formatted": "MMWKY-M2H78"
+   "formatted": "MMWKY-M2H78",
+   "problem": {
+    "kind": "length",
+    "count": 10
+   }
   },
   {
    "input": "mmwky\nm2h78\t",
    "normalised": "MMWKYM2H78",
    "invalid": [],
-   "formatted": "MMWKY-M2H78"
+   "formatted": "MMWKY-M2H78",
+   "problem": {
+    "kind": "length",
+    "count": 10
+   }
   },
   {
    "input": "il0o",
    "normalised": "1100",
    "invalid": [],
-   "formatted": "1100"
+   "formatted": "1100",
+   "problem": {
+    "kind": "length",
+    "count": 4
+   }
   },
   {
    "input": "ILO",
    "normalised": "110",
    "invalid": [],
-   "formatted": "110"
+   "formatted": "110",
+   "problem": {
+    "kind": "length",
+    "count": 3
+   }
   },
   {
    "input": "U",
@@ -80,7 +96,11 @@
    "invalid": [
     "U"
    ],
-   "formatted": "U"
+   "formatted": "U",
+   "problem": {
+    "kind": "chars",
+    "chars": "U"
+   }
   },
   {
    "input": "ABUU!",
@@ -89,13 +109,21 @@
     "U",
     "!"
    ],
-   "formatted": "ABUU!"
+   "formatted": "ABUU!",
+   "problem": {
+    "kind": "chars",
+    "chars": "U !"
+   }
   },
   {
    "input": "MMWKY-M2H78",
    "normalised": "MMWKYM2H78",
    "invalid": [],
-   "formatted": "MMWKY-M2H78"
+   "formatted": "MMWKY-M2H78",
+   "problem": {
+    "kind": "length",
+    "count": 10
+   }
   },
   {
    "input": "MMWKU-M2H7%",
@@ -104,37 +132,55 @@
     "U",
     "%"
    ],
-   "formatted": "MMWKU-M2H7%"
+   "formatted": "MMWKU-M2H7%",
+   "problem": {
+    "kind": "chars",
+    "chars": "U %"
+   }
   },
   {
    "input": "MMWKY-M2H78-ABCDE-FGHJK-MNPQR-S",
    "normalised": "MMWKYM2H78ABCDEFGHJKMNPQRS",
    "invalid": [],
-   "formatted": "MMWKY-M2H78-ABCDE-FGHJK-MNPQR-S"
+   "formatted": "MMWKY-M2H78-ABCDE-FGHJK-MNPQR-S",
+   "problem": null
   },
   {
    "input": "mmwky m2h78 abcde fghjk mnpqr s",
    "normalised": "MMWKYM2H78ABCDEFGHJKMNPQRS",
    "invalid": [],
-   "formatted": "MMWKY-M2H78-ABCDE-FGHJK-MNPQR-S"
+   "formatted": "MMWKY-M2H78-ABCDE-FGHJK-MNPQR-S",
+   "problem": null
   },
   {
    "input": "ı",
    "normalised": "1",
    "invalid": [],
-   "formatted": "1"
+   "formatted": "1",
+   "problem": {
+    "kind": "length",
+    "count": 1
+   }
   },
   {
    "input": "ß",
    "normalised": "SS",
    "invalid": [],
-   "formatted": "SS"
+   "formatted": "SS",
+   "problem": {
+    "kind": "length",
+    "count": 2
+   }
   },
   {
    "input": "ﬁ",
    "normalised": "F1",
    "invalid": [],
-   "formatted": "F1"
+   "formatted": "F1",
+   "problem": {
+    "kind": "length",
+    "count": 2
+   }
   },
   {
    "input": "Ö",
@@ -142,7 +188,11 @@
    "invalid": [
     "Ö"
    ],
-   "formatted": "Ö"
+   "formatted": "Ö",
+   "problem": {
+    "kind": "chars",
+    "chars": "Ö"
+   }
   },
   {
    "input": "ü",
@@ -150,7 +200,11 @@
    "invalid": [
     "Ü"
    ],
-   "formatted": "Ü"
+   "formatted": "Ü",
+   "problem": {
+    "kind": "chars",
+    "chars": "Ü"
+   }
   },
   {
    "input": "é",
@@ -158,7 +212,11 @@
    "invalid": [
     "É"
    ],
-   "formatted": "É"
+   "formatted": "É",
+   "problem": {
+    "kind": "chars",
+    "chars": "É"
+   }
   },
   {
    "input": "Ａ",
@@ -166,7 +224,11 @@
    "invalid": [
     "Ａ"
    ],
-   "formatted": "Ａ"
+   "formatted": "Ａ",
+   "problem": {
+    "kind": "chars",
+    "chars": "Ａ"
+   }
   },
   {
    "input": "０",
@@ -174,7 +236,11 @@
    "invalid": [
     "０"
    ],
-   "formatted": "０"
+   "formatted": "０",
+   "problem": {
+    "kind": "chars",
+    "chars": "０"
+   }
   },
   {
    "input": "🔧",
@@ -182,7 +248,11 @@
    "invalid": [
     "🔧"
    ],
-   "formatted": "🔧"
+   "formatted": "🔧",
+   "problem": {
+    "kind": "chars",
+    "chars": "🔧"
+   }
   },
   {
    "input": " A B﻿CD",
@@ -190,7 +260,11 @@
    "invalid": [
     ""
    ],
-   "formatted": "ABCD"
+   "formatted": "ABCD",
+   "problem": {
+    "kind": "chars",
+    "chars": ""
+   }
   },
   {
    "input": "–A—B",
@@ -199,7 +273,11 @@
     "–",
     "—"
    ],
-   "formatted": "–A—B"
+   "formatted": "–A—B",
+   "problem": {
+    "kind": "chars",
+    "chars": "– —"
+   }
   },
   {
    "input": "a_b",
@@ -207,7 +285,11 @@
    "invalid": [
     "_"
    ],
-   "formatted": "A_B"
+   "formatted": "A_B",
+   "problem": {
+    "kind": "chars",
+    "chars": "_"
+   }
   },
   {
    "input": "a.b",
@@ -215,7 +297,11 @@
    "invalid": [
     "."
    ],
-   "formatted": "A.B"
+   "formatted": "A.B",
+   "problem": {
+    "kind": "chars",
+    "chars": "."
+   }
   },
   {
    "input": "ʰ",
@@ -223,7 +309,11 @@
    "invalid": [
     "ʰ"
    ],
-   "formatted": "ʰ"
+   "formatted": "ʰ",
+   "problem": {
+    "kind": "chars",
+    "chars": "ʰ"
+   }
   },
   {
    "input": "٣",
@@ -231,7 +321,11 @@
    "invalid": [
     "٣"
    ],
-   "formatted": "٣"
+   "formatted": "٣",
+   "problem": {
+    "kind": "chars",
+    "chars": "٣"
+   }
   },
   {
    "input": "ǅ",
@@ -239,7 +333,113 @@
    "invalid": [
     "Ǆ"
    ],
-   "formatted": "Ǆ"
+   "formatted": "Ǆ",
+   "problem": {
+    "kind": "chars",
+    "chars": "Ǆ"
+   }
+  },
+  {
+   "input": "",
+   "normalised": "",
+   "invalid": [],
+   "formatted": "",
+   "problem": {
+    "kind": "length",
+    "count": 0
+   }
+  },
+  {
+   "input": "mmwky-m2h78-abcde-fghjk-mnpqr-sx",
+   "normalised": "MMWKYM2H78ABCDEFGHJKMNPQRSX",
+   "invalid": [],
+   "formatted": "MMWKY-M2H78-ABCDE-FGHJK-MNPQR-SX",
+   "problem": {
+    "kind": "length",
+    "count": 27
+   }
+  },
+  {
+   "input": "MMWKY-M2H78-ABCDE-FGH",
+   "normalised": "MMWKYM2H78ABCDEFGH",
+   "invalid": [],
+   "formatted": "MMWKY-M2H78-ABCDE-FGH",
+   "problem": {
+    "kind": "length",
+    "count": 18
+   }
+  },
+  {
+   "input": "ſ",
+   "normalised": "S",
+   "invalid": [],
+   "formatted": "S",
+   "problem": {
+    "kind": "length",
+    "count": 1
+   }
+  },
+  {
+   "input": "ſoil",
+   "normalised": "S011",
+   "invalid": [],
+   "formatted": "S011",
+   "problem": {
+    "kind": "length",
+    "count": 4
+   }
+  },
+  {
+   "input": "89144-GJ289-144GJ-28914-4GJ28-8",
+   "normalised": "89144GJ289144GJ289144GJ288",
+   "invalid": [],
+   "formatted": "89144-GJ289-144GJ-28914-4GJ28-8",
+   "problem": null
+  },
+  {
+   "input": "89144 gj289 144gj 28914 4gj28 8",
+   "normalised": "89144GJ289144GJ289144GJ288",
+   "invalid": [],
+   "formatted": "89144-GJ289-144GJ-28914-4GJ28-8",
+   "problem": null
+  },
+  {
+   "input": "MMWKY-M2H78-ABCDE-FGHJK-MNPQR-S🔧",
+   "normalised": "MMWKYM2H78ABCDEFGHJKMNPQRS🔧",
+   "invalid": [
+    "🔧"
+   ],
+   "formatted": "MMWKY-M2H78-ABCDE-FGHJK-MNPQR-S🔧",
+   "problem": {
+    "kind": "chars",
+    "chars": "🔧"
+   }
+  },
+  {
+   "input": "MMWKU-M2H7%",
+   "normalised": "MMWKUM2H7%",
+   "invalid": [
+    "U",
+    "%"
+   ],
+   "formatted": "MMWKU-M2H7%",
+   "problem": {
+    "kind": "chars",
+    "chars": "U %"
+   }
+  },
+  {
+   "input": "uu%%uu",
+   "normalised": "UU%%UU",
+   "invalid": [
+    "U",
+    "%"
+   ],
+   "formatted": "UU%%U-U",
+   "problem": {
+    "kind": "chars",
+    "chars": "U %"
+   }
   }
  ],
  "hosts": [

@@ -6,6 +6,12 @@
 // native app reproduces them exactly instead of using Foundation's variants:
 // `.whitespacesAndNewlines` differs from JS `trim()` (it keeps U+FEFF and
 // strips U+0085), and Swift's `lowercased()` has no Final_Sigma rule.
+//
+// The target is V8/ICU (the home server, and the vectors in Fixtures/). Foundation's
+// `NSString.lowercased` / `CFStringLowercase`, which Hermes on iOS most likely used for
+// the data already on devices, applies Final_Sigma differently around `.`, `:`, `·`,
+// modifier letters and circled or Roman-numeral letters (01 Q10, still open; see
+// JSStringTests "keeps ICU's Final_Sigma where CoreFoundation differs").
 
 extension Unicode.Scalar {
     /// JS `WhiteSpace` or `LineTerminator`: the set `String.prototype.trim()` strips and regex `\s` matches.

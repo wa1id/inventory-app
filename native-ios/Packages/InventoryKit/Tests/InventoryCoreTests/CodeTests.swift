@@ -1,8 +1,9 @@
+import Foundation
 import Testing
 @testable import InventoryCore
 
-// Port of src/ui/__tests__/code.test.ts and the serverHost test of
-// src/ui/household/__tests__/join.test.ts, plus Fixtures/codes.json and the
+// Port of src/ui/__tests__/code.test.ts and the codeProblem and serverHost tests
+// of src/ui/household/__tests__/join.test.ts, plus Fixtures/codes.json and the
 // code columns of Fixtures/folding.json.
 
 @Suite("normaliseCode")
@@ -40,6 +41,35 @@ struct FormatCodeTests {
     }
 }
 
+// Port of the codeProblem block of src/ui/household/__tests__/join.test.ts (03 §3.5, §14.5).
+@Suite("codeProblem")
+struct CodeProblemTests {
+    static let code = "MMWKY-M2H78-ABCDE-FGHJK-MNPQR-S"
+
+    @Test("accepts a full code however it was typed")
+    func acceptsAFullCodeHoweverItWasTyped() {
+        #expect(codeProblem(normaliseCode(Self.code)) == nil)
+        #expect(codeProblem(normaliseCode(Self.code.lowercased().replacingOccurrences(of: "-", with: " "))) == nil)
+    }
+
+    @Test("names characters no code uses before complaining about the length")
+    func namesCharactersBeforeLength() {
+        #expect(codeProblem(normaliseCode("MMWKU-M2H7%")) == .chars("U %"))
+    }
+
+    @Test("reports the length of a short or long code")
+    func reportsTheLength() {
+        #expect(codeProblem(normaliseCode("MMWKY-M2H78-ABCDE-FGH")) == .length(count: 18))
+        #expect(codeProblem(normaliseCode("\(Self.code)X")) == .length(count: 27))
+    }
+
+    @Test("the code length is 26")
+    func codeLengthIs26() {
+        #expect(codeLength == 26)
+        #expect(codeLength == RecoveryCode.length)
+    }
+}
+
 @Suite("serverHost")
 struct ServerHostTests {
     @Test("keeps only the host of the address")
@@ -59,7 +89,14 @@ struct ServerHostTests {
 
 @Suite("code parity (Fixtures/codes.json, folding.json)")
 struct CodeParityTests {
-    struct CodeEntry: Decodable { let input: String; let normalised: String; let invalid: [String]; let formatted: String }
+    struct Problem: Decodable { let kind: String; let chars: String?; let count: Int? }
+    struct CodeEntry: Decodable {
+        let input: String
+        let normalised: String
+        let invalid: [String]
+        let formatted: String
+        let problem: Problem?
+    }
     struct HostEntry: Decodable { let input: String; let host: String }
     struct File: Decodable { let codes: [CodeEntry]; let hosts: [HostEntry] }
 
@@ -70,6 +107,12 @@ struct CodeParityTests {
             #expect(sameScalars(normalised, entry.normalised), "\(scalarDump(entry.input))")
             #expect(sameScalars(invalidCodeChars(normalised), entry.invalid), "\(scalarDump(entry.input))")
             #expect(sameScalars(formatCode(normalised), entry.formatted), "\(scalarDump(entry.input))")
+            let expected: CodeProblem? = switch entry.problem?.kind {
+            case "chars": .chars(entry.problem?.chars ?? "")
+            case "length": .length(count: entry.problem?.count ?? -1)
+            default: nil
+            }
+            #expect(codeProblem(normalised) == expected, "\(scalarDump(entry.input))")
         }
     }
 

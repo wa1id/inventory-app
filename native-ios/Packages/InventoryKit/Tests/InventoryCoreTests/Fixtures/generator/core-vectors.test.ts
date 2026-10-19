@@ -27,7 +27,7 @@ import { deriveAccountId } from '@/services/account/identity';
 import { quantitySpoken, spellCode, whereSpoken, type PlaceLike } from '@/ui/a11y';
 import { formatCode, invalidCodeChars, normaliseCode } from '@/ui/code';
 import { contrast, luminance, mixHex, rgb, safeColor, spaceTint, toHex as colorHex, withAlpha } from '@/ui/color';
-import { serverHost } from '@/ui/household/join';
+import { codeProblem, serverHost } from '@/ui/household/join';
 import { matchesPlace, placeTerms } from '@/ui/placeMatch';
 import { parseQrPayload } from '@/repositories/qr';
 
@@ -101,6 +101,40 @@ const WHITESPACE = [
   '\u2000\u200Ax\u202F\u205F', '\u000B\u000Cx', ' \n\t ', '\u200B', 'a\u00ADb',
 ];
 
+/** Compatibility forms whose NFKD output brings spaces, punctuation or capitals back after lowercasing. */
+const COMPAT_MORE = [
+  '№5', '⑴⒜', '⒈⒉', '㉐', '㏇', '🄰🄱', '🄐', '℀', '㋌', '㍱', '¨', 'a¨b', '´', 'a´b', '¯x', 'x˘y', '‼',
+  '⁇', '…', 'a…b', '﹏', '︳', '⅓', '↉', '⁄', 'ẛ', 'ẖ', 'և', 'ꭰ', 'ᏸ', 'Ᏸ', 'Ɪ', 'ᲀ', 'Ꙋ', 'ǆ', 'Ǉ',
+  'ﬅ', 'ﺀ', 'ﷺ', '﷽', 'ﾊﾞ', 'ﾟ', 'ｰ', '〜', '〰', '゛', '゜', 'ゟ', 'ヿ', '㌀', '㍻', 'ℓ', '℮', 'ℹ',
+  '𝚺', '𝚺𝚺', 'Ϲ', 'ϲ', 'ϴ', 'ϑ', 'ϕ', 'ẞß', 'ǰ̌', 'ﬀﬃﬄ', '㎐', '㎑', '㎓', '㏒', 'Å', 'Ω', 'K',
+];
+
+/**
+ * Case mappings in scripts the main corpus misses, up to Unicode 16 (Garay, Tulu-Tigalari, U+1C89).
+ * Unicode 17 letters (e.g. U+323B0, CJK Extension J) are left out: Node 24 knows them, the
+ * macOS 15 test host does not, so they would test the host's Unicode tables, not our code.
+ */
+const CASE_MORE = [
+  '𐒰𐓘', '𞤀𞤢', '𐲀𐳀', '𑢠𑣀', '𖹀𖹠', '𐕰𐖗', 'ⰀⰰⱠⱡ', 'ⴀႠ', 'ꞪɦꞫɜ', 'Ʂʂ', 'ꞰʞꞱʇ', 'Ᶎᶎ', 'Ꟑꟑ', 'Ɐɐ',
+  'Ᲊᲊ', 'Ꟍꟍ', 'Ƛƛ', '𐵐𐵰', '𑎀', '𑼄', '𞀰', '𰀀', '𱍐', '\u{2EBF0}', 'ΆΈΉΊΌΎΏ', 'ΪΫ', 'ᾼῌῼ',
+  'ᾈᾉᾊ', 'ǅǈǋǲ', 'İİ', 'İ́', 'Ii̇', 'ΣΣΣ', 'ϹΣ', 'Σϲ',
+];
+
+/** More Final_Sigma contexts: marks, format characters and letters of other cases around Σ. */
+const SIGMA_MORE = [
+  'ΑΣ́', 'ΑΣ́Β', 'ΑΣ​', 'ΑΣ​Β', 'ΑΣ﻿Β', 'ΑΣ­Β', 'ἈΣ', '́Σ',
+  'ΑΣ’', 'ΑΣ\'', 'ΑΣ.', 'ΑΣ:', 'ΑΣ·', 'ΑΣ·Β', 'ΑΣ״Β', 'ΑΣ‘Β', 'ΑΣʼΒ',
+  'ΑΣʰ', 'ΑΣʰΒ', 'ΑΣᴬΒ', 'ΑΣⅯ', 'ΑΣⓐ', 'ΑΣ𝐀', 'ΑΣ𝚺', 'ΑΣͅΒ', 'ΑΣ゙Β',
+  'ΑΣัΒ', 'ΑΣिΒ', 'ΑΣ⃝Β', 'ΑΣ\u{E0001}Β', 'ΑΣ\u{1F3FB}', 'ΑΣ\u{1F3FB}Β', 'ΑΣ️Β',
+  'Σ\u{1D400}', '\u{1D400}Σ', 'ꭰΣ', 'ᏸΣ', 'ǅΣ', 'ʰΣ', 'ᵃΣ', 'ªΣ', 'ºΣ', 'ΑΣ Β', 'ΑΣ Β',
+];
+
+/** Strings made only of marks, separators or format characters. */
+const EDGES = [
+  '́', '́́a', 'á́', '゙', '‍', '⁠', '­', '﻿',
+  '\u0000', 'a\u0000b', '�', '\u{10FFFF}', '\u{E000}', '\u{F0000}', '͸', '\u{E0041}',
+];
+
 const TOKEN = '0123456789abcdefABCDEF0123456789';
 const QR = [
   `inventory://c/${TOKEN}`, TOKEN, ` ${TOKEN}\n`, ` inventory://c/${TOKEN}﻿`, `INVENTORY://c/${TOKEN}`,
@@ -111,7 +145,7 @@ const QR = [
 function buildCorpus(): string[] {
   const out = [
     ...SPEC_EXAMPLES, ...TEST_INPUTS, ...SIGMA, ...CASE_AND_COMPAT, ...NUMBERS, ...PUNCTUATION,
-    ...SCRIPTS, ...EMOJI, ...WHITESPACE, ...QR,
+    ...SCRIPTS, ...EMOJI, ...WHITESPACE, ...QR, ...COMPAT_MORE, ...CASE_MORE, ...SIGMA_MORE, ...EDGES,
     Array.from({ length: 40 }, (_, i) => `term${i}`).join(' '),
     Array.from({ length: 13 }, (_, i) => String.fromCharCode(97 + i)).join(' '),
     'a b a c b d e f g h i j k l m n',
@@ -134,12 +168,24 @@ function buildCorpus(): string[] {
 
 const TYPE_NAMES = strings.entities.typeNames;
 
+// Not exported by the RN modules, so restated verbatim here (same JS built-ins, same order).
+/** src/repositories/items.ts:126-128 (also src/services/household/shadow.ts:225-226). */
+function normalizeTag(tag: string): string {
+  return tag.trim().toLowerCase();
+}
+/** src/repositories/items.ts:130-132 (also src/services/household/shadow.ts:153). */
+function searchTextFor(name: string, category: string | null): string {
+  return `${name} ${category ?? ''}`.trim().toLowerCase();
+}
+
 describe('InventoryCore parity vectors', () => {
   it('writes folding.json', () => {
     const entries = buildCorpus().map((input) => {
       const normalised = normaliseCode(input);
       return {
         input,
+        // Code points of the input, so the Swift side can check JSON decoding kept every scalar.
+        codePoints: [...input].map((char) => char.codePointAt(0)),
         lower: input.toLowerCase(),
         upper: input.toUpperCase(),
         trim: input.trim(),
@@ -155,6 +201,21 @@ describe('InventoryCore parity vectors', () => {
       };
     });
     write('folding.json', entries);
+  });
+
+  it('writes storedText.json', () => {
+    const corpus = buildCorpus();
+    const pairs: [string, string | null][] = [
+      ['', null], ['', ''], ['Drill', null], ['  Drill ', ' Tools '], ['ΟΔΟΣ', 'ΣΑΣ'], ['Drill', 'ΣΑΣ'],
+      ['ΑΣ', null], ['ΑΣ', ''], ['ΑΣ', ' '], ['\uFEFFİstanbul\u00A0', '\u0085Ünï'], ['Café', 'Küche'],
+    ];
+    corpus.forEach((name, index) => {
+      pairs.push([name, index % 3 === 0 ? null : corpus[(index * 7 + 3) % corpus.length]!]);
+    });
+    write('storedText.json', {
+      searchText: pairs.map(([name, category]) => ({ name, category, searchText: searchTextFor(name, category) })),
+      tags: corpus.map((tag) => ({ tag, normalized: normalizeTag(tag) })),
+    });
   });
 
   it('writes base32.json', async () => {
@@ -184,6 +245,10 @@ describe('InventoryCore parity vectors', () => {
       'ı', 'ﬁ', 'ß', 'ǰ', 'ö', 'Ａ', 'i', 'l', 'o', 'O0Il1L', '-8-9-1-4-4-', '8 9', '89144GJ2*9',
       'ZZZZZZZZZZZZZZZZZZZZZZZZZW', '00000000000000000000000000', '041061050R3GG28A1C60T3GF20',
       '248H248H248H248H248H248H24', 'abcdefghjkmnpqrstvwxyz', 'ABCDEFGHJKMNPQRSTVWXYZ0123456789',
+      // Characters JS toUpperCase folds into the alphabet (ſ → S, ﬀ → FF) or next to it (K sign stays).
+      'ſſſſſſſſ', 'ﬀﬀﬀﬀ', '\u212A\u212A', 'ŉ', 'ǅ', `${canonical.slice(0, 13)}\u00AD${canonical.slice(13)}`,
+      `${canonical.slice(0, 13)}\u200B${canonical.slice(13)}`, `${canonical}\u0000`, `\t${canonical}\r\n`,
+      `${canonical.slice(0, 13)}\u2010${canonical.slice(13)}`, `${canonical.slice(0, 13)}\uFF0D${canonical.slice(13)}`,
     ];
     const decode = decodeInputs.map((input) => {
       const bytes = decodeBase32(input);
@@ -251,6 +316,11 @@ describe('InventoryCore parity vectors', () => {
       '0xFFFFFFFFFFFFFFFFF', '1 2', '1\u00A0', '\uFEFF3', '\u00854', '４２', '①', '5-', '--5', '+-5',
       'infinity', '-Infinity', '+Infinity', 'NaN', '0.1e1', '100e-2', '1.23e2', '0e0', '0x0', '0b0',
       '0o0', '07', '08', '0.', '-.0', '- 1', '1 ', '\t8\t', '\u20283', '1e2.5', '1.2.3', '١',
+      '0x1e2', '1e+', '1e-0', '+.5e1', '0b11e1', '1e0000000000000000002', '1e310', '4.9e-324',
+      '9999.0000000000001', '9999.00000000000001', '1.0000000000000001', '０', '1\u00002', '5\u0000',
+      '\u180E5', '5\u200B', '0x7FFFFFFFFFFFFFFF', '0x8000000000000000', '9223372036854774784',
+      '0x', '0x_1', '0b1_0', '1__0', '+', '-', '++1', '1.', '.0', '0.e1', '00.5e1', '1E-2', '5e-1', '15e-1',
+      `1${'0'.repeat(30)}e-30`, `0.${'0'.repeat(30)}1e31`,
     ];
     const parse = inputs.map((input) => {
       const value = parseQuantityInput(input);
@@ -270,10 +340,18 @@ describe('InventoryCore parity vectors', () => {
       ' mmwky-m2h78 ', 'mmwky\nm2h78\t', 'il0o', 'ILO', 'U', 'ABUU!', 'MMWKY-M2H78', 'MMWKU-M2H7%',
       'MMWKY-M2H78-ABCDE-FGHJK-MNPQR-S', 'mmwky m2h78 abcde fghjk mnpqr s', 'ı', 'ß', 'ﬁ', 'Ö', 'ü', 'é',
       'Ａ', '０', '🔧', '\u00A0A\u2028B\uFEFFC\u0085D', '–A—B', 'a_b', 'a.b', 'ʰ', '٣', 'ǅ',
+      '', 'mmwky-m2h78-abcde-fghjk-mnpqr-sx', 'MMWKY-M2H78-ABCDE-FGH', 'ſ', 'ſoil', '89144-GJ289-144GJ-28914-4GJ28-8',
+      '89144 gj289 144gj 28914 4gj28 8', 'MMWKY-M2H78-ABCDE-FGHJK-MNPQR-S🔧', 'MMWKU-M2H7%', 'uu%%uu',
     ];
     const codes = codeInputs.map((input) => {
       const normalised = normaliseCode(input);
-      return { input, normalised, invalid: invalidCodeChars(normalised), formatted: formatCode(normalised) };
+      return {
+        input,
+        normalised,
+        invalid: invalidCodeChars(normalised),
+        formatted: formatCode(normalised),
+        problem: codeProblem(normalised),
+      };
     });
     const hostInputs = [
       'https://inventory.wystudio.be', 'http://192.168.1.5:8788/', 'inventory.example', '  https://a.b/c?d#e  ',

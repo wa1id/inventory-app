@@ -124,14 +124,16 @@ struct JoinPlaceOptionsTests {
         )
         let space = Space(id: "s1", name: "Kitchen", icon: "🍳", color: "#2E9E4F", createdAt: 0, updatedAt: 0)
         let joined = joinPlaceOptions([row], spaces: [space])
-        #expect(
-            joined == [
-                PlaceOption(
-                    id: "c1", name: nil, shortCode: "DRW-1", visualType: "drawer", spaceId: "s1", spaceName: "Kitchen",
-                    spaceColor: "#2E9E4F", spaceIcon: "🍳", itemCount: 3
-                ),
-            ]
-        )
+        let expected = [
+            PlaceOption(
+                id: "c1", name: nil, shortCode: "DRW-1", visualType: "drawer", spaceId: "s1", spaceName: "Kitchen",
+                spaceColor: "#2E9E4F", spaceIcon: "🍳", itemCount: 3
+            ),
+        ]
+        #expect(joined == expected)
+        // The RN callers pass `spaces.listWithCounts()` rows.
+        let counted = SpaceWithCounts(space: space, containerCount: 1, itemCount: 3)
+        #expect(joinPlaceOptions([row], spaces: [counted]) == expected)
     }
 }
 

@@ -1,4 +1,4 @@
-// RN: src/ui/code.ts and serverHost from src/ui/household/join.ts:83-90.
+// RN: src/ui/code.ts, plus codeProblem and serverHost from src/ui/household/join.ts.
 // Household and recovery codes as a person types them, folded the same way the
 // servers decode them, and the home server's address as Settings shows it.
 
@@ -30,6 +30,30 @@ public func invalidCodeChars(_ normalised: String) -> [String] {
 /// Groups of five joined by hyphens, as the code is printed: `MMWKY-M2H78-A` (RN `formatCode`).
 public func formatCode(_ normalised: String) -> String {
     groupedInFives(normalised)
+}
+
+/// Household codes and recovery codes are both 16 bytes of Crockford base32: 26 characters
+/// (RN `CODE_LENGTH`, src/ui/household/join.ts:12).
+public let codeLength = 26
+
+/// What is wrong with a normalised code (RN `CodeProblem`, src/ui/household/join.ts:14-15).
+public enum CodeProblem: Sendable, Hashable {
+    /// Characters no code uses, each once, joined by spaces: `U %`.
+    case chars(String)
+    /// The code has `count` characters (UTF-16 units, as JS `length` counts) instead of the expected length.
+    case length(count: Int)
+}
+
+/// What is wrong with a normalised code, or `nil` (RN `codeProblem`, src/ui/household/join.ts:22-27).
+///
+/// Characters are checked first: a code with a `U` in it is wrong whatever its
+/// length, and saying so points at the character to check.
+public func codeProblem(_ normalised: String, length: Int = codeLength) -> CodeProblem? {
+    let bad = invalidCodeChars(normalised)
+    if !bad.isEmpty { return .chars(bad.joined(separator: " ")) }
+    let count = normalised.utf16.count
+    if count != length { return .length(count: count) }
+    return nil
 }
 
 /// RN `/^[0-9A-HJKMNP-TV-Z]$/`.

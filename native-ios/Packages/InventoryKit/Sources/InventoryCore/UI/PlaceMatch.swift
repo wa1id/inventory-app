@@ -101,6 +101,12 @@ public func joinPlaceOptions(_ rows: [ContainerWithSpace], spaces: [Space]) -> [
     return rows.map { toPlaceOption($0, space: spaceById[$0.container.spaceId]) }
 }
 
+/// ``joinPlaceOptions(_:spaces:)`` over `spaces.listWithCounts()` rows, which is what the RN
+/// callers pass (src/ui/components/PlacePicker.tsx:133, app/item/new.tsx:195).
+public func joinPlaceOptions(_ rows: [ContainerWithSpace], spaces: [SpaceWithCounts]) -> [PlaceOption] {
+    joinPlaceOptions(rows, spaces: spaces.map(\.space))
+}
+
 extension Array where Element == Unicode.Scalar {
     /// Code-point substring test, like JS `String.prototype.includes`.
     func containsScalars(_ needle: [Unicode.Scalar]) -> Bool {

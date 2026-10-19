@@ -185,6 +185,8 @@ struct FoldingVectorTests {
 /// One entry of Fixtures/folding.json.
 struct FoldingEntry: Decodable {
     let input: String
+    /// The input's code points as JS sees them, to prove JSON decoding kept every scalar.
+    let codePoints: [UInt32]
     let lower: String
     let upper: String
     let trim: String
@@ -207,9 +209,14 @@ struct FoldingCorpusTests {
         entries = try loadFixture("folding")
     }
 
-    @Test("the corpus is non-trivial")
+    @Test("the corpus is non-trivial and decodes scalar for scalar")
     func corpusIsLoaded() {
-        #expect(entries.count > 600)
+        #expect(entries.count > 800)
+        for entry in entries {
+            // Every other assertion feeds `input` to Swift; if decoding had dropped or
+            // normalised a scalar, a JS expectation could pass for the wrong input.
+            #expect(entry.input.unicodeScalars.map(\.value) == entry.codePoints, "\(scalarDump(entry.input))")
+        }
     }
 
     @Test("tokenizeQuery matches JS")
