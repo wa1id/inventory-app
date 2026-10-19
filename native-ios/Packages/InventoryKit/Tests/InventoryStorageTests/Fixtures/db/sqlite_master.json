@@ -1,0 +1,174 @@
+{
+ "generatedWith": "node v24.18.0, SQLite 3.53.1",
+ "userVersion": 7,
+ "rows": [
+  {
+   "type": "table",
+   "name": "spaces",
+   "tbl_name": "spaces",
+   "sql": "CREATE TABLE spaces (\n        id          TEXT PRIMARY KEY NOT NULL,\n        name        TEXT NOT NULL,\n        icon        TEXT NOT NULL DEFAULT 'cube',\n        color       TEXT NOT NULL DEFAULT '#5B8DEF',\n        created_at  INTEGER NOT NULL,\n        updated_at  INTEGER NOT NULL\n      , kind TEXT NOT NULL DEFAULT 'normal')"
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_spaces_1",
+   "tbl_name": "spaces",
+   "sql": null
+  },
+  {
+   "type": "table",
+   "name": "containers",
+   "tbl_name": "containers",
+   "sql": "CREATE TABLE containers (\n        id          TEXT PRIMARY KEY NOT NULL,\n        space_id    TEXT NOT NULL REFERENCES spaces(id) ON DELETE CASCADE,\n        name        TEXT,\n        visual_type TEXT NOT NULL DEFAULT 'box',\n        short_code  TEXT NOT NULL UNIQUE,\n        created_at  INTEGER NOT NULL,\n        updated_at  INTEGER NOT NULL\n      , kind TEXT NOT NULL DEFAULT 'normal')"
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_containers_1",
+   "tbl_name": "containers",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_containers_2",
+   "tbl_name": "containers",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "idx_containers_space",
+   "tbl_name": "containers",
+   "sql": "CREATE INDEX idx_containers_space ON containers(space_id)"
+  },
+  {
+   "type": "table",
+   "name": "item_photos",
+   "tbl_name": "item_photos",
+   "sql": "CREATE TABLE item_photos (\n        id         TEXT PRIMARY KEY NOT NULL,\n        item_id    TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,\n        uri        TEXT NOT NULL,\n        width      INTEGER,\n        height     INTEGER,\n        byte_size  INTEGER,\n        created_at INTEGER NOT NULL\n      , remote_synced_at INTEGER, thumb_uri TEXT)"
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_item_photos_1",
+   "tbl_name": "item_photos",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "idx_item_photos_item",
+   "tbl_name": "item_photos",
+   "sql": "CREATE INDEX idx_item_photos_item ON item_photos(item_id)"
+  },
+  {
+   "type": "table",
+   "name": "tags",
+   "tbl_name": "tags",
+   "sql": "CREATE TABLE tags (\n        id              TEXT PRIMARY KEY NOT NULL,\n        name            TEXT NOT NULL,\n        normalized_name TEXT NOT NULL UNIQUE,\n        created_at      INTEGER NOT NULL\n      )"
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_tags_1",
+   "tbl_name": "tags",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_tags_2",
+   "tbl_name": "tags",
+   "sql": null
+  },
+  {
+   "type": "table",
+   "name": "item_tags",
+   "tbl_name": "item_tags",
+   "sql": "CREATE TABLE item_tags (\n        item_id TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,\n        tag_id  TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,\n        PRIMARY KEY (item_id, tag_id)\n      )"
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_item_tags_1",
+   "tbl_name": "item_tags",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "idx_item_tags_tag",
+   "tbl_name": "item_tags",
+   "sql": "CREATE INDEX idx_item_tags_tag ON item_tags(tag_id)"
+  },
+  {
+   "type": "table",
+   "name": "qr_bindings",
+   "tbl_name": "qr_bindings",
+   "sql": "CREATE TABLE qr_bindings (\n        id           TEXT PRIMARY KEY NOT NULL,\n        token        TEXT NOT NULL UNIQUE,\n        container_id TEXT NOT NULL REFERENCES containers(id) ON DELETE CASCADE,\n        created_at   INTEGER NOT NULL,\n        updated_at   INTEGER NOT NULL\n      )"
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_qr_bindings_1",
+   "tbl_name": "qr_bindings",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_qr_bindings_2",
+   "tbl_name": "qr_bindings",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "idx_qr_bindings_container",
+   "tbl_name": "qr_bindings",
+   "sql": "CREATE INDEX idx_qr_bindings_container ON qr_bindings(container_id)"
+  },
+  {
+   "type": "index",
+   "name": "idx_item_photos_unsynced",
+   "tbl_name": "item_photos",
+   "sql": "CREATE INDEX idx_item_photos_unsynced\n        ON item_photos(created_at)\n        WHERE remote_synced_at IS NULL"
+  },
+  {
+   "type": "table",
+   "name": "sync_deletions",
+   "tbl_name": "sync_deletions",
+   "sql": "CREATE TABLE sync_deletions (\n        photo_id   TEXT PRIMARY KEY NOT NULL,\n        deleted_at INTEGER NOT NULL\n      )"
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_sync_deletions_1",
+   "tbl_name": "sync_deletions",
+   "sql": null
+  },
+  {
+   "type": "trigger",
+   "name": "item_photos_tombstone",
+   "tbl_name": "item_photos",
+   "sql": "CREATE TRIGGER item_photos_tombstone\n      AFTER DELETE ON item_photos\n      WHEN OLD.remote_synced_at IS NOT NULL\n      BEGIN\n        INSERT OR REPLACE INTO sync_deletions (photo_id, deleted_at)\n        VALUES (OLD.id, CAST(strftime('%s','now') AS INTEGER) * 1000);\n      END"
+  },
+  {
+   "type": "table",
+   "name": "items",
+   "tbl_name": "items",
+   "sql": "CREATE TABLE \"items\" (\n        id           TEXT PRIMARY KEY NOT NULL,\n        container_id TEXT NOT NULL REFERENCES containers(id) ON DELETE CASCADE,\n        name         TEXT NOT NULL,\n        category     TEXT,\n        quantity     INTEGER NOT NULL DEFAULT 1 CHECK (quantity >= 0),\n        notes        TEXT,\n        created_at   INTEGER NOT NULL,\n        updated_at   INTEGER NOT NULL,\n        search_text  TEXT NOT NULL DEFAULT ''\n      )"
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_items_1",
+   "tbl_name": "items",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "idx_items_container",
+   "tbl_name": "items",
+   "sql": "CREATE INDEX idx_items_container ON items(container_id)"
+  },
+  {
+   "type": "index",
+   "name": "idx_items_name",
+   "tbl_name": "items",
+   "sql": "CREATE INDEX idx_items_name ON items(name COLLATE NOCASE)"
+  },
+  {
+   "type": "index",
+   "name": "idx_items_search_text",
+   "tbl_name": "items",
+   "sql": "CREATE INDEX idx_items_search_text ON items(search_text)"
+  }
+ ]
+}
