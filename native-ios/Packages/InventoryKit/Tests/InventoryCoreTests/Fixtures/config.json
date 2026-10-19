@@ -1,0 +1,666 @@
+{
+ "unset": {
+  "recognitionEndpoint": null,
+  "recognitionKey": null,
+  "recognitionTimeoutMs": 15000,
+  "syncEndpoint": null,
+  "syncKey": null,
+  "syncTimeoutMs": 60000,
+  "householdOrigin": "https://inventory.wystudio.be",
+  "environment": "development"
+ },
+ "text": [
+  {
+   "input": "",
+   "recognitionEndpoint": null,
+   "recognitionKey": null,
+   "syncEndpoint": null,
+   "syncKey": null,
+   "householdOrigin": "https://inventory.wystudio.be"
+  },
+  {
+   "input": " ",
+   "recognitionEndpoint": null,
+   "recognitionKey": null,
+   "syncEndpoint": null,
+   "syncKey": null,
+   "householdOrigin": "https://inventory.wystudio.be"
+  },
+  {
+   "input": "\t\n\r",
+   "recognitionEndpoint": null,
+   "recognitionKey": null,
+   "syncEndpoint": null,
+   "syncKey": null,
+   "householdOrigin": "https://inventory.wystudio.be"
+  },
+  {
+   "input": "https://a.example",
+   "recognitionEndpoint": "https://a.example",
+   "recognitionKey": "https://a.example",
+   "syncEndpoint": "https://a.example",
+   "syncKey": "https://a.example",
+   "householdOrigin": "https://a.example"
+  },
+  {
+   "input": "https://a.example/",
+   "recognitionEndpoint": "https://a.example/",
+   "recognitionKey": "https://a.example/",
+   "syncEndpoint": "https://a.example",
+   "syncKey": "https://a.example/",
+   "householdOrigin": "https://a.example"
+  },
+  {
+   "input": "https://a.example///",
+   "recognitionEndpoint": "https://a.example///",
+   "recognitionKey": "https://a.example///",
+   "syncEndpoint": "https://a.example",
+   "syncKey": "https://a.example///",
+   "householdOrigin": "https://a.example"
+  },
+  {
+   "input": " https://a.example/ ",
+   "recognitionEndpoint": "https://a.example/",
+   "recognitionKey": "https://a.example/",
+   "syncEndpoint": "https://a.example",
+   "syncKey": "https://a.example/",
+   "householdOrigin": "https://a.example"
+  },
+  {
+   "input": "https://a.example/ /",
+   "recognitionEndpoint": "https://a.example/ /",
+   "recognitionKey": "https://a.example/ /",
+   "syncEndpoint": "https://a.example/ ",
+   "syncKey": "https://a.example/ /",
+   "householdOrigin": "https://a.example/ "
+  },
+  {
+   "input": "https://a.example /",
+   "recognitionEndpoint": "https://a.example /",
+   "recognitionKey": "https://a.example /",
+   "syncEndpoint": "https://a.example ",
+   "syncKey": "https://a.example /",
+   "householdOrigin": "https://a.example "
+  },
+  {
+   "input": "https://a.example/path/",
+   "recognitionEndpoint": "https://a.example/path/",
+   "recognitionKey": "https://a.example/path/",
+   "syncEndpoint": "https://a.example/path",
+   "syncKey": "https://a.example/path/",
+   "householdOrigin": "https://a.example/path"
+  },
+  {
+   "input": "https://a.example/path//",
+   "recognitionEndpoint": "https://a.example/path//",
+   "recognitionKey": "https://a.example/path//",
+   "syncEndpoint": "https://a.example/path",
+   "syncKey": "https://a.example/path//",
+   "householdOrigin": "https://a.example/path"
+  },
+  {
+   "input": "/",
+   "recognitionEndpoint": "/",
+   "recognitionKey": "/",
+   "syncEndpoint": null,
+   "syncKey": "/",
+   "householdOrigin": "https://inventory.wystudio.be"
+  },
+  {
+   "input": "///",
+   "recognitionEndpoint": "///",
+   "recognitionKey": "///",
+   "syncEndpoint": null,
+   "syncKey": "///",
+   "householdOrigin": "https://inventory.wystudio.be"
+  },
+  {
+   "input": " / ",
+   "recognitionEndpoint": "/",
+   "recognitionKey": "/",
+   "syncEndpoint": null,
+   "syncKey": "/",
+   "householdOrigin": "https://inventory.wystudio.be"
+  },
+  {
+   "input": "/ /",
+   "recognitionEndpoint": "/ /",
+   "recognitionKey": "/ /",
+   "syncEndpoint": "/ ",
+   "syncKey": "/ /",
+   "householdOrigin": "/ "
+  },
+  {
+   "input": "https:/",
+   "recognitionEndpoint": "https:/",
+   "recognitionKey": "https:/",
+   "syncEndpoint": "https:",
+   "syncKey": "https:/",
+   "householdOrigin": "https:"
+  },
+  {
+   "input": "http://192.168.1.5:8788/",
+   "recognitionEndpoint": "http://192.168.1.5:8788/",
+   "recognitionKey": "http://192.168.1.5:8788/",
+   "syncEndpoint": "http://192.168.1.5:8788",
+   "syncKey": "http://192.168.1.5:8788/",
+   "householdOrigin": "http://192.168.1.5:8788"
+  },
+  {
+   "input": "﻿https://a.example　",
+   "recognitionEndpoint": "https://a.example",
+   "recognitionKey": "https://a.example",
+   "syncEndpoint": "https://a.example",
+   "syncKey": "https://a.example",
+   "householdOrigin": "https://a.example"
+  },
+  {
+   "input": " https://a.example/ ",
+   "recognitionEndpoint": "https://a.example/",
+   "recognitionKey": "https://a.example/",
+   "syncEndpoint": "https://a.example",
+   "syncKey": "https://a.example/",
+   "householdOrigin": "https://a.example"
+  },
+  {
+   "input": " https://a.example/ ",
+   "recognitionEndpoint": "https://a.example/",
+   "recognitionKey": "https://a.example/",
+   "syncEndpoint": "https://a.example",
+   "syncKey": "https://a.example/",
+   "householdOrigin": "https://a.example"
+  },
+  {
+   "input": "https://a.example",
+   "recognitionEndpoint": "https://a.example",
+   "recognitionKey": "https://a.example",
+   "syncEndpoint": "https://a.example",
+   "syncKey": "https://a.example",
+   "householdOrigin": "https://a.example"
+  },
+  {
+   "input": "​https://a.example/​",
+   "recognitionEndpoint": "​https://a.example/​",
+   "recognitionKey": "​https://a.example/​",
+   "syncEndpoint": "​https://a.example/​",
+   "syncKey": "​https://a.example/​",
+   "householdOrigin": "​https://a.example/​"
+  },
+  {
+   "input": "᠎https://a.example᠎",
+   "recognitionEndpoint": "᠎https://a.example᠎",
+   "recognitionKey": "᠎https://a.example᠎",
+   "syncEndpoint": "᠎https://a.example᠎",
+   "syncKey": "᠎https://a.example᠎",
+   "householdOrigin": "᠎https://a.example᠎"
+  },
+  {
+   "input": "https://a.example\\",
+   "recognitionEndpoint": "https://a.example\\",
+   "recognitionKey": "https://a.example\\",
+   "syncEndpoint": "https://a.example\\",
+   "syncKey": "https://a.example\\",
+   "householdOrigin": "https://a.example\\"
+  },
+  {
+   "input": "https://a.example/\\/",
+   "recognitionEndpoint": "https://a.example/\\/",
+   "recognitionKey": "https://a.example/\\/",
+   "syncEndpoint": "https://a.example/\\",
+   "syncKey": "https://a.example/\\/",
+   "householdOrigin": "https://a.example/\\"
+  },
+  {
+   "input": "https://a.example/?q=/",
+   "recognitionEndpoint": "https://a.example/?q=/",
+   "recognitionKey": "https://a.example/?q=/",
+   "syncEndpoint": "https://a.example/?q=",
+   "syncKey": "https://a.example/?q=/",
+   "householdOrigin": "https://a.example/?q="
+  },
+  {
+   "input": "https://a.example/#/",
+   "recognitionEndpoint": "https://a.example/#/",
+   "recognitionKey": "https://a.example/#/",
+   "syncEndpoint": "https://a.example/#",
+   "syncKey": "https://a.example/#/",
+   "householdOrigin": "https://a.example/#"
+  },
+  {
+   "input": "  key with spaces  ",
+   "recognitionEndpoint": "key with spaces",
+   "recognitionKey": "key with spaces",
+   "syncEndpoint": "key with spaces",
+   "syncKey": "key with spaces",
+   "householdOrigin": "key with spaces"
+  },
+  {
+   "input": "k",
+   "recognitionEndpoint": "k",
+   "recognitionKey": "k",
+   "syncEndpoint": "k",
+   "syncKey": "k",
+   "householdOrigin": "k"
+  },
+  {
+   "input": "ünïcode/",
+   "recognitionEndpoint": "ünïcode/",
+   "recognitionKey": "ünïcode/",
+   "syncEndpoint": "ünïcode",
+   "syncKey": "ünïcode/",
+   "householdOrigin": "ünïcode"
+  },
+  {
+   "input": "é/",
+   "recognitionEndpoint": "é/",
+   "recognitionKey": "é/",
+   "syncEndpoint": "é",
+   "syncKey": "é/",
+   "householdOrigin": "é"
+  },
+  {
+   "input": "🔑//",
+   "recognitionEndpoint": "🔑//",
+   "recognitionKey": "🔑//",
+   "syncEndpoint": "🔑",
+   "syncKey": "🔑//",
+   "householdOrigin": "🔑"
+  }
+ ],
+ "environments": [
+  {
+   "input": "",
+   "environment": "development"
+  },
+  {
+   "input": "production",
+   "environment": "production"
+  },
+  {
+   "input": "preview",
+   "environment": "preview"
+  },
+  {
+   "input": "development",
+   "environment": "development"
+  },
+  {
+   "input": "Production",
+   "environment": "development"
+  },
+  {
+   "input": "PREVIEW",
+   "environment": "development"
+  },
+  {
+   "input": " production",
+   "environment": "development"
+  },
+  {
+   "input": "production ",
+   "environment": "development"
+  },
+  {
+   "input": "preview\n",
+   "environment": "development"
+  },
+  {
+   "input": "staging",
+   "environment": "development"
+  },
+  {
+   "input": "prod",
+   "environment": "development"
+  },
+  {
+   "input": "test",
+   "environment": "development"
+  },
+  {
+   "input": "﻿preview",
+   "environment": "development"
+  }
+ ],
+ "timeouts": [
+  {
+   "input": "",
+   "recognition": "0",
+   "sync": "0"
+  },
+  {
+   "input": " ",
+   "recognition": "0",
+   "sync": "0"
+  },
+  {
+   "input": "15000",
+   "recognition": "15000",
+   "sync": "15000"
+  },
+  {
+   "input": " 20000 ",
+   "recognition": "20000",
+   "sync": "20000"
+  },
+  {
+   "input": " 30000﻿",
+   "recognition": "30000",
+   "sync": "30000"
+  },
+  {
+   "input": "20000.7",
+   "recognition": "20000.7",
+   "sync": "20000.7"
+  },
+  {
+   "input": "1.5e4",
+   "recognition": "15000",
+   "sync": "15000"
+  },
+  {
+   "input": ".5e4",
+   "recognition": "5000",
+   "sync": "5000"
+  },
+  {
+   "input": "5.",
+   "recognition": "5",
+   "sync": "5"
+  },
+  {
+   "input": "+500",
+   "recognition": "500",
+   "sync": "500"
+  },
+  {
+   "input": "0x3A98",
+   "recognition": "15000",
+   "sync": "15000"
+  },
+  {
+   "input": "0X3a98",
+   "recognition": "15000",
+   "sync": "15000"
+  },
+  {
+   "input": "0o17",
+   "recognition": "15",
+   "sync": "15"
+  },
+  {
+   "input": "0b101",
+   "recognition": "5",
+   "sync": "5"
+  },
+  {
+   "input": "0",
+   "recognition": "0",
+   "sync": "0"
+  },
+  {
+   "input": "-0",
+   "recognition": "0",
+   "sync": "0"
+  },
+  {
+   "input": "-1",
+   "recognition": "-1",
+   "sync": "-1"
+  },
+  {
+   "input": "-20000",
+   "recognition": "-20000",
+   "sync": "-20000"
+  },
+  {
+   "input": "0.4",
+   "recognition": "0.4",
+   "sync": "0.4"
+  },
+  {
+   "input": "0.9999",
+   "recognition": "0.9999",
+   "sync": "0.9999"
+  },
+  {
+   "input": "1",
+   "recognition": "1",
+   "sync": "1"
+  },
+  {
+   "input": "1.9",
+   "recognition": "1.9",
+   "sync": "1.9"
+  },
+  {
+   "input": "abc",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "12abc",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "Infinity",
+   "recognition": "Infinity",
+   "sync": "Infinity"
+  },
+  {
+   "input": "-Infinity",
+   "recognition": "-Infinity",
+   "sync": "-Infinity"
+  },
+  {
+   "input": "+Infinity",
+   "recognition": "Infinity",
+   "sync": "Infinity"
+  },
+  {
+   "input": "infinity",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "NaN",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "1e21",
+   "recognition": "1e+21",
+   "sync": "1e+21"
+  },
+  {
+   "input": "1e400",
+   "recognition": "Infinity",
+   "sync": "Infinity"
+  },
+  {
+   "input": "9007199254740993",
+   "recognition": "9007199254740992",
+   "sync": "9007199254740992"
+  },
+  {
+   "input": "1_000",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "1,000",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "٣٠٠٠",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "１５０００",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "0x",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "1e",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "e5",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "-0x10",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "+0x10",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "0x10.5",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "0o",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "0b2",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "0xG",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": ".",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "+",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "-",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": ".e1",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "1.e1",
+   "recognition": "10",
+   "sync": "10"
+  },
+  {
+   "input": "0.5e1",
+   "recognition": "5",
+   "sync": "5"
+  },
+  {
+   "input": "1e-3",
+   "recognition": "0.001",
+   "sync": "0.001"
+  },
+  {
+   "input": "1e+3",
+   "recognition": "1000",
+   "sync": "1000"
+  },
+  {
+   "input": "1E3",
+   "recognition": "1000",
+   "sync": "1000"
+  },
+  {
+   "input": "00015000",
+   "recognition": "15000",
+   "sync": "15000"
+  },
+  {
+   "input": "15000.000",
+   "recognition": "15000",
+   "sync": "15000"
+  },
+  {
+   "input": "15000n",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "Infinityx",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "INFINITY",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "  15000  ",
+   "recognition": "15000",
+   "sync": "15000"
+  },
+  {
+   "input": "\t60000\n",
+   "recognition": "60000",
+   "sync": "60000"
+  },
+  {
+   "input": "15 000",
+   "recognition": "NaN",
+   "sync": "NaN"
+  },
+  {
+   "input": "0.0",
+   "recognition": "0",
+   "sync": "0"
+  },
+  {
+   "input": "-0.0",
+   "recognition": "0",
+   "sync": "0"
+  },
+  {
+   "input": "1.7976931348623157e308",
+   "recognition": "1.7976931348623157e+308",
+   "sync": "1.7976931348623157e+308"
+  },
+  {
+   "input": "1e309",
+   "recognition": "Infinity",
+   "sync": "Infinity"
+  },
+  {
+   "input": "9223372036854775807",
+   "recognition": "9223372036854776000",
+   "sync": "9223372036854776000"
+  },
+  {
+   "input": "9223372036854775808",
+   "recognition": "9223372036854776000",
+   "sync": "9223372036854776000"
+  }
+ ]
+}
