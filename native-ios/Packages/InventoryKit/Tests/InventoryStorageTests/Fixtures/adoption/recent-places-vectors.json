@@ -1,0 +1,140 @@
+[
+  {
+    "input": "[\"a\",\"b\",\"c\"]",
+    "expected": [
+      "a",
+      "b",
+      "c"
+    ]
+  },
+  {
+    "input": "[1,\"a\"]",
+    "expected": [
+      "a"
+    ]
+  },
+  {
+    "input": "[\"a\",null,true,{\"x\":1},[\"b\"],\"c\"]",
+    "expected": [
+      "a",
+      "c"
+    ]
+  },
+  {
+    "input": "[\"a\",\"a\",\"b\"]",
+    "expected": [
+      "a",
+      "a",
+      "b"
+    ]
+  },
+  {
+    "input": "[\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\"8\"]",
+    "expected": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ]
+  },
+  {
+    "input": "[\"drop-zone\",\"a\"]",
+    "expected": [
+      "drop-zone",
+      "a"
+    ]
+  },
+  {
+    "input": "{\"a\":1}",
+    "expected": []
+  },
+  {
+    "input": "\"a\"",
+    "expected": []
+  },
+  {
+    "input": "7",
+    "expected": []
+  },
+  {
+    "input": "null",
+    "expected": []
+  },
+  {
+    "input": "[]",
+    "expected": []
+  },
+  {
+    "input": "",
+    "expected": []
+  },
+  {
+    "input": "not json",
+    "expected": []
+  },
+  {
+    "input": "[\"a\",",
+    "expected": []
+  },
+  {
+    "input": "[\"a\\/b\",\"c\\u00e9\"]",
+    "expected": [
+      "a/b",
+      "cé"
+    ]
+  },
+  {
+    "input": "﻿[\"a\"]",
+    "expected": []
+  },
+  {
+    "input": " [\"a\"]",
+    "expected": []
+  },
+  {
+    "input": "\t\r\n [\"a\"] \n",
+    "expected": [
+      "a"
+    ]
+  },
+  {
+    "input": "[\"a\"]x",
+    "expected": []
+  },
+  {
+    "input": "[\"\\u0041\\u00E9\\uD83D\\uDCE6\"]",
+    "expected": [
+      "Aé📦"
+    ]
+  },
+  {
+    "input": "[\"a\u0001\"]",
+    "expected": []
+  },
+  {
+    "input": "[-0, 1.5e3, \"b\"]",
+    "expected": [
+      "b"
+    ]
+  },
+  {
+    "input": "[01]",
+    "expected": []
+  },
+  {
+    "input": "[\"a\",]",
+    "expected": []
+  },
+  {
+    "input": "['a']",
+    "expected": []
+  },
+  {
+    "input": "[1e400, \"c\"]",
+    "expected": [
+      "c"
+    ]
+  }
+]

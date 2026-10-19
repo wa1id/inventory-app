@@ -1,0 +1,841 @@
+[
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "to",
+    "expected": [
+      "Tools",
+      "Toys",
+      "Towels"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "Tools",
+    "expected": []
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "",
+    "expected": [
+      "Tools",
+      "Toys",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "g",
+    "expected": [
+      "Garden"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": " GAR",
+    "expected": [
+      "Garden"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "garden",
+    "expected": []
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "ο",
+    "expected": [
+      "ΟΔΟΣ"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "οδ",
+    "expected": [
+      "ΟΔΟΣ"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "ΟΔΟ",
+    "expected": [
+      "ΟΔΟΣ"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "str",
+    "expected": [
+      "Straße"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "STRASSE",
+    "expected": []
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "i",
+    "expected": [
+      "İstanbul"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "i̇",
+    "expected": [
+      "İstanbul"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "nb",
+    "expected": [
+      "Nbsp"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "bo",
+    "expected": [
+      "Bom"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "ne",
+    "expected": []
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "ne",
+    "expected": [
+      "Nel"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "å",
+    "expected": [
+      "Ångström"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "a",
+    "expected": [
+      "angle"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "x",
+    "expected": []
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "t",
+    "max": 3,
+    "expected": [
+      "Tools",
+      "Toys",
+      "Tape"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      " Garden ",
+      "garden",
+      "",
+      "   ",
+      "ΟΔΟΣ",
+      "οδος",
+      "Straße",
+      "İstanbul",
+      " Nbsp",
+      "﻿Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ],
+    "prefix": "",
+    "max": 100,
+    "expected": [
+      "Tools",
+      "Toys",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      "Garden",
+      "ΟΔΟΣ",
+      "Straße",
+      "İstanbul",
+      "Nbsp",
+      "Bom",
+      "Nel",
+      "Ångström",
+      "angle"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      "café",
+      "café bar"
+    ],
+    "prefix": "t",
+    "max": 0,
+    "expected": [
+      "Tools",
+      "Toys",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      "café",
+      "café bar"
+    ],
+    "prefix": "t",
+    "max": -1,
+    "expected": [
+      "Tools",
+      "Toys",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      "café",
+      "café bar"
+    ],
+    "prefix": "t",
+    "max": 1,
+    "expected": [
+      "Tools"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      "café",
+      "café bar"
+    ],
+    "prefix": "",
+    "max": 0,
+    "expected": [
+      "Tools",
+      "Toys",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      "café",
+      "café bar"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      "café",
+      "café bar"
+    ],
+    "prefix": "café",
+    "expected": []
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      "café",
+      "café bar"
+    ],
+    "prefix": "café",
+    "expected": [
+      "café bar"
+    ]
+  },
+  {
+    "known": [
+      "Tools",
+      "Toys",
+      "tools",
+      "Kitchen",
+      "Tape",
+      "Tins",
+      "Tea",
+      "Towels",
+      "Tiles",
+      "café",
+      "café bar"
+    ],
+    "prefix": "caf",
+    "expected": [
+      "café",
+      "café bar"
+    ]
+  },
+  {
+    "known": [],
+    "prefix": "a",
+    "expected": []
+  }
+]

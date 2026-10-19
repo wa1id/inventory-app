@@ -1,0 +1,130 @@
+[
+  {
+    "input": "{\"spaces\":1,\"items\":2}",
+    "expected": {
+      "spaces": 1,
+      "items": 2
+    }
+  },
+  {
+    "input": "{\"items\":2,\"spaces\":1}",
+    "expected": {
+      "spaces": 1,
+      "items": 2
+    }
+  },
+  {
+    "input": "{\"spaces\":0,\"items\":0}",
+    "expected": {
+      "spaces": 0,
+      "items": 0
+    }
+  },
+  {
+    "input": "{\"spaces\":-3,\"items\":12}",
+    "expected": {
+      "spaces": -3,
+      "items": 12
+    }
+  },
+  {
+    "input": "{\"spaces\":1,\"items\":\"2\"}",
+    "expected": null
+  },
+  {
+    "input": "{\"spaces\":\"1\",\"items\":2}",
+    "expected": null
+  },
+  {
+    "input": "{\"spaces\":true,\"items\":2}",
+    "expected": null
+  },
+  {
+    "input": "{\"spaces\":1,\"items\":null}",
+    "expected": null
+  },
+  {
+    "input": "{\"spaces\":1}",
+    "expected": null
+  },
+  {
+    "input": "{\"items\":1}",
+    "expected": null
+  },
+  {
+    "input": "{}",
+    "expected": null
+  },
+  {
+    "input": "[]",
+    "expected": null
+  },
+  {
+    "input": "[1,2]",
+    "expected": null
+  },
+  {
+    "input": "null",
+    "expected": null
+  },
+  {
+    "input": "5",
+    "expected": null
+  },
+  {
+    "input": "\"x\"",
+    "expected": null
+  },
+  {
+    "input": "true",
+    "expected": null
+  },
+  {
+    "input": "",
+    "expected": null
+  },
+  {
+    "input": "not json",
+    "expected": null
+  },
+  {
+    "input": "{\"spaces\":1,\"items\":2",
+    "expected": null
+  },
+  {
+    "input": " {\"spaces\":1,\"items\":2} ",
+    "expected": {
+      "spaces": 1,
+      "items": 2
+    }
+  },
+  {
+    "input": "{\"spaces\":1,\"items\":2,\"extra\":\"x\"}",
+    "expected": {
+      "spaces": 1,
+      "items": 2
+    }
+  },
+  {
+    "input": "{\"spaces\":1e2,\"items\":2.0}",
+    "expected": {
+      "spaces": 100,
+      "items": 2
+    }
+  },
+  {
+    "input": "{\"spaces\":3,\"items\":4,\"spaces\":5}",
+    "expected": {
+      "spaces": 5,
+      "items": 4
+    }
+  },
+  {
+    "input": "{\"spaces\":{\"n\":1},\"items\":2}",
+    "expected": null
+  },
+  {
+    "input": "{\"spaces\":[1],\"items\":2}",
+    "expected": null
+  }
+]

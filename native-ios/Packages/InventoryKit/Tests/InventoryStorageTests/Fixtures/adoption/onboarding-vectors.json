@@ -1,0 +1,46 @@
+[
+  {
+    "input": "true",
+    "expected": true
+  },
+  {
+    "input": "True",
+    "expected": false
+  },
+  {
+    "input": "TRUE",
+    "expected": false
+  },
+  {
+    "input": " true",
+    "expected": false
+  },
+  {
+    "input": "true ",
+    "expected": false
+  },
+  {
+    "input": "1",
+    "expected": false
+  },
+  {
+    "input": "yes",
+    "expected": false
+  },
+  {
+    "input": "",
+    "expected": false
+  },
+  {
+    "input": "\"true\"",
+    "expected": false
+  },
+  {
+    "input": "false",
+    "expected": false
+  },
+  {
+    "input": "<absent>",
+    "expected": false
+  }
+]

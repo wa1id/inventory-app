@@ -78,7 +78,9 @@ case "$cmd" in
     ;;
   apptest)
     sync_up
-    run_logged apptest "$ensure_sim && $(xcbuild_app test 'id=$udid' "$*")"
+    # Hosted tests use the keychain, which the simulator only grants to a signed app (-34018
+    # otherwise), so sign ad hoc here; these later settings override CODE_SIGNING_ALLOWED=NO.
+    run_logged apptest "$ensure_sim && $(xcbuild_app test 'id=$udid' "CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual $*")"
     ;;
   run)
     out="${1:-$LOG_DIR/screenshot.png}"
