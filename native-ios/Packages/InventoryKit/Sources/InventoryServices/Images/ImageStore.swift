@@ -19,6 +19,7 @@ public actor ImageStore {
     public nonisolated let resolver: PhotoPathResolver
     private nonisolated let freeSpace: @Sendable () throws -> Int64?
     private nonisolated let makePhotoId: @Sendable () -> String
+    private nonisolated let telemetry: (any TelemetrySink)?
 
     /// Image format and extension of every file this store writes (RN `IMAGE_EXTENSION`).
     public static let fileExtension = "webp"
@@ -29,16 +30,49 @@ public actor ImageStore {
     ///     `systemFreeSize` of `Documents`, as expo-file-system did.
     ///   - makePhotoId: The file name stem of a new photo. The default is ``InventoryCore/newId()``,
     ///     a lowercase v4 UUID.
+    ///   - telemetry: Where `photo_stored` and `photo_store_failed` go, after the same allowlist
+    ///     redaction as ``InventoryCore/Telemetry``. Nil (the default) logs through `Telemetry`;
+    ///     tests pass their own sink so they neither depend on nor disturb the shared one.
     public init(
         resolver: PhotoPathResolver = PhotoPathResolver(),
         freeSpace: (@Sendable () throws -> Int64?)? = nil,
-        makePhotoId: @escaping @Sendable () -> String = { newId() }
+        makePhotoId: @escaping @Sendable () -> String = { newId() },
+        telemetry: (any TelemetrySink)? = nil
     ) {
         self.resolver = resolver
         self.freeSpace = freeSpace ?? { [documents = resolver.documents] in
             try Self.systemFreeSize(of: documents)
         }
         self.makePhotoId = makePhotoId
+        self.telemetry = telemetry
+    }
+
+    /// The `cropToAspect` that keeps exactly what the camera preview showed (DECISIONS U7, 05 C4):
+    /// the preview's size on screen, turned a quarter when the photo is turned a quarter from the
+    /// preview.
+    ///
+    /// expo-camera measured the preview in sensor space, swapping its width and height when the
+    /// interface was portrait, and cropped the still there before turning it upright
+    /// (`CameraPhotoCapture.swift:159-167`). The native store crops the upright photo, so the same
+    /// rectangle comes from swapping the preview size whenever the capture and preview rotations
+    /// differ by a quarter turn. That is the case for an iPhone held sideways: the interface stays
+    /// portrait, the photo is landscape, and it is stored at about 1400 × 646, as in RN (05 C4).
+    ///
+    /// - Parameters:
+    ///   - previewSize: The preview layer's size in interface points.
+    ///   - previewRotationAngle: The preview connection's rotation in degrees
+    ///     (`RotationCoordinator.videoRotationAngleForHorizonLevelPreview`).
+    ///   - captureRotationAngle: The photo connection's rotation in degrees for this shot
+    ///     (`RotationCoordinator.videoRotationAngleForHorizonLevelCapture`).
+    // RN: node_modules/expo-camera/ios/Current/CameraPhotoCapture.swift:159-167
+    public static func previewCropAspect(
+        previewSize: CGSize,
+        previewRotationAngle: Double,
+        captureRotationAngle: Double
+    ) -> CGSize {
+        let turns = ((captureRotationAngle - previewRotationAngle) / 90).rounded()
+        guard turns.isFinite, turns.truncatingRemainder(dividingBy: 2) != 0 else { return previewSize }
+        return CGSize(width: previewSize.height, height: previewSize.width)
     }
 
     // MARK: Writing
@@ -61,20 +95,23 @@ public actor ImageStore {
     ///
     /// - Parameters:
     ///   - source: The photo. A file stays where it is; the caller owns it.
-    ///   - aspect: Width-to-height proportions, as shown on screen, of the centred area to keep;
-    ///     nil keeps the whole image.
+    ///   - aspect: Width-to-height proportions of the centred area to keep, measured on the
+    ///     upright photo; nil keeps the whole image. For the camera's crop to the preview, pass
+    ///     ``previewCropAspect(previewSize:previewRotationAngle:captureRotationAngle:)``, not the
+    ///     raw preview size: a photo taken with the phone held sideways is landscape while the
+    ///     preview stays portrait.
     // RN: src/services/capture/imageStore.ts:100-134
-    public func storeItemPhoto(_ source: ImageSource, cropToAspect aspect: CGSize? = nil) throws -> StoredImage {
+    public func storeItemPhoto(_ source: ImageSource, cropToAspect aspect: CGSize?) throws -> StoredImage {
         let startedAt = ContinuousClock.now
         do {
             let stored = try store(source, cropToAspect: aspect)
-            Telemetry.logEvent("photo_stored", [
+            logEvent("photo_stored", [
                 "durationMs": .int(Self.milliseconds(since: startedAt)),
                 "byteSize": stored.byteSize.map(TelemetryValue.int) ?? .null,
             ])
             return stored
         } catch {
-            Telemetry.logError("photo_store_failed", [
+            logError("photo_store_failed", [
                 "durationMs": .int(Self.milliseconds(since: startedAt)),
                 "errorClass": .string(String(describing: type(of: error))),
             ])
@@ -148,9 +185,10 @@ public actor ImageStore {
     /// (RN `hasRoomForPhoto`, called before capture; issue #8).
     ///
     /// An unknown free size means no room, as JS `null > n` is false; a probe that throws means
-    /// room, as RN's `catch` returns true (02 §3.1, 05 §9.3).
+    /// room, as RN's `catch` returns true (02 §3.1, 05 §9.3). ``PhotoStoring/hasRoomForPhoto()``
+    /// supplies RN's default estimate of 1 000 000 bytes.
     // RN: src/services/capture/imageStore.ts:200-207
-    public nonisolated func hasRoomForPhoto(estimatedBytes: Int64 = 1_000_000) -> Bool {
+    public nonisolated func hasRoomForPhoto(estimatedBytes: Int64) -> Bool {
         do {
             guard let available = try freeSpace() else { return false }
             // Compared as doubles, like the JS numbers, so a huge estimate cannot overflow.
@@ -168,6 +206,14 @@ public actor ImageStore {
     }
 
     // MARK: Internals
+
+    private nonisolated func logEvent(_ name: String, _ payload: TelemetryPayload) {
+        if let telemetry { telemetry.event(name, Telemetry.redact(payload)) } else { Telemetry.logEvent(name, payload) }
+    }
+
+    private nonisolated func logError(_ name: String, _ payload: TelemetryPayload) {
+        if let telemetry { telemetry.error(name, Telemetry.redact(payload)) } else { Telemetry.logError(name, payload) }
+    }
 
     private func store(_ source: ImageSource, cropToAspect aspect: CGSize?) throws -> StoredImage {
         let (full, thumb) = try ImagePipeline.photoRenditions(of: source, cropToAspect: aspect)

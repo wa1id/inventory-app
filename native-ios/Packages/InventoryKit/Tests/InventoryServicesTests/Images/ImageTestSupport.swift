@@ -1,6 +1,8 @@
 import CoreGraphics
 import Foundation
 import ImageIO
+import InventoryCore
+import Synchronization
 import Testing
 import UniformTypeIdentifiers
 @testable import InventoryServices
@@ -37,11 +39,14 @@ final class PhotoContainer: Sendable {
     var resolver: PhotoPathResolver { PhotoPathResolver(documents: documents, caches: caches) }
     var photoDirectory: URL { resolver.itemPhotosDirectory }
 
+    /// A store rooted in this container. Telemetry goes to `telemetry`, never to the shared
+    /// `Telemetry` sink, which other suites replace while they run.
     func store(
         freeSpace: (@Sendable () throws -> Int64?)? = nil,
-        makePhotoId: @escaping @Sendable () -> String = { UUID().uuidString.lowercased() }
+        makePhotoId: @escaping @Sendable () -> String = { UUID().uuidString.lowercased() },
+        telemetry: RecordingTelemetry = RecordingTelemetry()
     ) -> ImageStore {
-        ImageStore(resolver: resolver, freeSpace: freeSpace, makePhotoId: makePhotoId)
+        ImageStore(resolver: resolver, freeSpace: freeSpace, makePhotoId: makePhotoId, telemetry: telemetry)
     }
 
     /// File names in `Documents/item-photos`, sorted.
@@ -56,6 +61,27 @@ final class PhotoContainer: Sendable {
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         try data.write(to: url)
         return url
+    }
+}
+
+/// Records what the image store logs.
+final class RecordingTelemetry: TelemetrySink {
+    struct Entry: Sendable, Equatable {
+        var level: String
+        var name: String
+        var payload: TelemetryPayload
+    }
+
+    private let entries = Mutex<[Entry]>([])
+
+    var logged: [Entry] { entries.withLock { $0 } }
+
+    func event(_ name: String, _ payload: TelemetryPayload) {
+        entries.withLock { $0.append(Entry(level: "event", name: name, payload: payload)) }
+    }
+
+    func error(_ name: String, _ payload: TelemetryPayload) {
+        entries.withLock { $0.append(Entry(level: "error", name: name, payload: payload)) }
     }
 }
 
@@ -207,6 +233,35 @@ enum Inspect {
             context.draw(image, in: CGRect(x: -x, y: y - image.height + 1, width: image.width, height: image.height))
         }
         return RGB(r: Int(buffer[0]), g: Int(buffer[1]), b: Int(buffer[2]))
+    }
+
+    /// Mean absolute difference per sRGB channel (0…255) between two images of the same size.
+    static func meanError(_ a: CGImage, _ b: CGImage) throws -> Double {
+        try #require(a.width == b.width && a.height == b.height)
+        let pa = try rgbx(a), pb = try rgbx(b)
+        var total = 0
+        var count = 0
+        for index in stride(from: 0, to: pa.count, by: 4) {
+            for channel in 0..<3 {
+                total += abs(Int(pa[index + channel]) - Int(pb[index + channel]))
+                count += 1
+            }
+        }
+        return Double(total) / Double(count)
+    }
+
+    /// The image's pixels as tightly packed sRGB RGBX bytes.
+    static func rgbx(_ image: CGImage) throws -> [UInt8] {
+        let space = try #require(CGColorSpace(name: CGColorSpace.sRGB))
+        var buffer = [UInt8](repeating: 0, count: image.width * image.height * 4)
+        try buffer.withUnsafeMutableBytes { raw in
+            let context = try #require(CGContext(
+                data: raw.baseAddress, width: image.width, height: image.height, bitsPerComponent: 8,
+                bytesPerRow: image.width * 4, space: space, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue))
+            context.interpolationQuality = .none
+            context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        }
+        return buffer
     }
 
     /// The pixel at fractions of the width and height.

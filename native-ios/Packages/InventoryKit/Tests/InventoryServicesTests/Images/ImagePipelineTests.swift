@@ -63,6 +63,27 @@ struct WebPEncoderTests {
         // libwebp is deterministic, so the same pixels and quality give the same bytes.
         #expect(try WebPEncoder.encode(bitmap, quality: ImageScaling.imageQuality) == high)
     }
+
+    @Test("reads RN's 0…1 quality on libwebp's 0…100 scale")
+    func qualityScale() throws {
+        // Grey detail everywhere (so chroma subsampling plays no part), and a wrong scale shows:
+        // quality 0.8 read as libwebp 0.8 instead of 80 would smear it, which is what the 0.008
+        // encode stands for here.
+        var generator = SplitMix(seed: 11)
+        let blocks = (0..<900).map { _ in
+            let level = Int(generator.next() % 256)
+            return TestImages.Block(
+                x: Int(generator.next() % 236), y: Int(generator.next() % 236), width: 2 + Int(generator.next() % 18),
+                height: 2 + Int(generator.next() % 18), color: RGB(r: level, g: level, b: level))
+        }
+        let image = try TestImages.make(width: 256, height: 256, blocks: blocks)
+        let bitmap = try Self.bitmap(image)
+
+        let good = try Inspect.meanError(image, Inspect.image(WebPEncoder.encode(bitmap, quality: ImageScaling.imageQuality)))
+        let smeared = try Inspect.meanError(image, Inspect.image(WebPEncoder.encode(bitmap, quality: ImageScaling.imageQuality / 100)))
+        #expect(good < 4, "mean error \(good) at quality 0.8")
+        #expect(smeared > good * 3, "mean error \(smeared) at 0.008 against \(good) at 0.8")
+    }
 }
 
 @Suite("Image pipeline")
@@ -93,6 +114,28 @@ struct ImagePipelineTests {
         let whole = PixelRect(x: 0, y: 0, width: 3024, height: 4032)
         #expect(ImagePipeline.cropRect(for: PixelSize(width: 3024, height: 4032), aspect: aspect) == whole)
         #expect(ImagePipeline.cropRect(for: PixelSize(width: 3024, height: 4032), aspect: nil) == whole)
+    }
+
+    @Test("turns the preview size a quarter only when the photo is turned a quarter from it", arguments: [
+        // Portrait interface, phone upright: the photo is portrait like the preview.
+        (90.0, 90.0, CGSize(width: 393, height: 852)),
+        // Portrait interface, phone held sideways either way: the photo is landscape.
+        (90.0, 0.0, CGSize(width: 852, height: 393)),
+        (90.0, 180.0, CGSize(width: 852, height: 393)),
+        // Half a turn changes nothing; angles may be negative or past a full turn.
+        (90.0, 270.0, CGSize(width: 393, height: 852)),
+        (90.0, -90.0, CGSize(width: 393, height: 852)),
+        (0.0, 450.0, CGSize(width: 852, height: 393)),
+        // An iPad window narrower than the landscape screen keeps its own shape.
+        (0.0, 0.0, CGSize(width: 393, height: 852)),
+        // Unusable angles keep the preview as it is.
+        (Double.nan, 0.0, CGSize(width: 393, height: 852)),
+        (90.0, Double.infinity, CGSize(width: 393, height: 852)),
+    ])
+    func previewCropAspect(previewAngle: Double, captureAngle: Double, expected: CGSize) {
+        #expect(ImageStore.previewCropAspect(
+            previewSize: CGSize(width: 393, height: 852),
+            previewRotationAngle: previewAngle, captureRotationAngle: captureAngle) == expected)
     }
 
     @Test("a wider aspect shortens the long edge")

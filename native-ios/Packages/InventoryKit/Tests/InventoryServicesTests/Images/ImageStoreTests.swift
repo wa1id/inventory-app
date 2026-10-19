@@ -1,6 +1,7 @@
 import CoreGraphics
 import Foundation
 import ImageIO
+import InventoryCore
 import Synchronization
 import Testing
 import UniformTypeIdentifiers
@@ -12,7 +13,7 @@ struct StoreItemPhotoTests {
     @Test("names both files by one fresh lowercase UUID under Documents/item-photos, as absolute file URIs")
     func namesFiles() async throws {
         let container = try PhotoContainer()
-        let store = ImageStore(resolver: container.resolver)
+        let store = container.store()
         let stored = try await store.storeItemPhoto(.data(TestImages.jpeg(TestImages.marked(width: 800, height: 600))))
 
         let full = try #require(URL(string: stored.uri))
@@ -33,7 +34,7 @@ struct StoreItemPhotoTests {
     @Test("gives every photo a new name")
     func freshNames() async throws {
         let container = try PhotoContainer()
-        let store = ImageStore(resolver: container.resolver)
+        let store = container.store()
         let jpeg = try TestImages.jpeg(TestImages.marked(width: 400, height: 300))
         let first = try await store.storeItemPhoto(.data(jpeg))
         let second = try await store.storeItemPhoto(.data(jpeg))
@@ -170,6 +171,73 @@ struct StoreItemPhotoTests {
         #expect(try Inspect.vp8Size(thumb) == PixelSize(width: 148, height: 320))
     }
 
+    @Test("keeps a sideways iPhone shot landscape, as expo-camera did")
+    func cropsSidewaysShot() async throws {
+        // The interface stays portrait (preview 393×852 pt at 90°) while the phone is held
+        // sideways, so the photo is captured at 0° and lands landscape: about 1400×646 (05 C4).
+        let aspect = ImageStore.previewCropAspect(
+            previewSize: CGSize(width: 393, height: 852), previewRotationAngle: 90, captureRotationAngle: 0)
+        let container = try PhotoContainer()
+        let stored = try await container.store().storeItemPhoto(
+            .data(TestImages.jpeg(TestImages.marked(width: 4032, height: 3024))), cropToAspect: aspect)
+
+        #expect(stored.width == 1400 && stored.height == 646)
+        let thumb = try Data(contentsOf: #require(container.resolver.resolve(stored.thumbUri)))
+        #expect(try Inspect.vp8Size(thumb) == PixelSize(width: 320, height: 148))
+    }
+
+    @Test("logs photo_stored with its duration and byte size")
+    func logsStored() async throws {
+        let container = try PhotoContainer()
+        let telemetry = RecordingTelemetry()
+        let stored = try await container.store(telemetry: telemetry)
+            .storeItemPhoto(.image(TestImages.marked(width: 640, height: 480)))
+
+        let logged = telemetry.logged
+        try #require(logged.count == 1)
+        #expect(logged[0].level == "event" && logged[0].name == "photo_stored")
+        #expect(Set(logged[0].payload.keys) == ["durationMs", "byteSize"])
+        #expect(logged[0].payload["byteSize"] == stored.byteSize.map(TelemetryValue.int))
+        guard case .int(let duration)? = logged[0].payload["durationMs"] else {
+            Issue.record("durationMs is \(String(describing: logged[0].payload["durationMs"]))")
+            return
+        }
+        #expect(duration >= 0)
+    }
+
+    @Test("logs photo_store_failed with its duration and error class")
+    func logsFailure() async throws {
+        let container = try PhotoContainer()
+        let telemetry = RecordingTelemetry()
+        let store = container.store(telemetry: telemetry)
+        await #expect(throws: ImageStoreError.couldNotProcess) {
+            try await store.storeItemPhoto(.data(Data("not an image".utf8)))
+        }
+
+        let logged = telemetry.logged
+        try #require(logged.count == 1)
+        #expect(logged[0].level == "error" && logged[0].name == "photo_store_failed")
+        #expect(Set(logged[0].payload.keys) == ["durationMs", "errorClass"])
+        #expect(logged[0].payload["errorClass"] == .string("ImageStoreError"))
+    }
+
+    @Test("works through PhotoStoring, the seam other areas fake")
+    func worksThroughProtocol() async throws {
+        let container = try PhotoContainer()
+        let store: any PhotoStoring = container.store(freeSpace: { 3_000_000 })
+        #expect(store.hasRoomForPhoto())
+        #expect(!store.hasRoomForPhoto(estimatedBytes: 1_500_000))
+
+        let stored = try await store.storeItemPhoto(.image(TestImages.marked(width: 64, height: 48)))
+        let bytes = try #require(await store.readStoredPhoto(stored.uri))
+        let restored = try await store.writeStoredPhoto(photoId: WriteStoredPhotoTests.rowId, bytes: bytes)
+        #expect(restored.width == 64 && restored.height == 48)
+        #expect(container.photoFiles().count == 4)
+
+        store.deleteStoredPhotos([stored.uri, stored.thumbUri, restored.uri, restored.thumbUri])
+        #expect(container.photoFiles().isEmpty)
+    }
+
     @Test("encodes the full image at quality 0.8 and the thumbnail at 0.7")
     func encodesAtRNQualities() async throws {
         let image = try TestImages.marked(width: 2100, height: 1400)
@@ -196,6 +264,29 @@ struct StoreItemPhotoTests {
             try await store.storeItemPhoto(.file(container.root.appending(path: "missing.jpg")))
         }
         #expect(container.photoFiles().isEmpty)
+    }
+
+    @Test("fails when the photo directory cannot be written, instead of returning a URI to nothing")
+    func failsWhenUnwritable() async throws {
+        // RN's un-awaited move could fail after storeItemPhoto had returned (02 §3.1, §11.2 5b).
+        let container = try PhotoContainer()
+        try container.write(Data("in the way".utf8), to: "Documents/item-photos")
+        let store = container.store()
+        await #expect(throws: ImageStoreError.couldNotProcess) {
+            try await store.storeItemPhoto(.image(TestImages.marked(width: 64, height: 48)))
+        }
+    }
+
+    @Test("removes the full image when the thumbnail cannot be written")
+    func noOrphanWhenThumbnailFails() async throws {
+        let container = try PhotoContainer()
+        // A non-empty directory where the thumbnail must go, so writing it fails.
+        try container.write(Data("x".utf8), to: "Documents/item-photos/fixed-thumb.webp/blocker")
+        let store = container.store(makePhotoId: { "fixed" })
+        await #expect(throws: ImageStoreError.couldNotProcess) {
+            try await store.storeItemPhoto(.image(TestImages.marked(width: 64, height: 48)))
+        }
+        #expect(container.photoFiles() == ["fixed-thumb.webp"])
     }
 
     @Test("processes a burst one photo at a time")
@@ -364,6 +455,26 @@ struct StoredPhotoFileTests {
         try container.write(Data(), to: "Documents/item-photos/empty.webp")
         let store = container.store()
         #expect(store.readStoredPhoto(container.resolver.storedURI(forPhotoNamed: "empty.webp")) == Data())
+    }
+
+    @Test("finds and decodes photos the RN build left behind", arguments: [
+        // MVP-era JPEG under an older iOS container (02 §3.2 shape 2).
+        "file:///var/mobile/Containers/Data/Application/0E1D2C3B-4A59-4687-9A0B-C1D2E3F40516/Documents/item-photos/legacy.jpg",
+        // A row restored from an Android backup, its file rehydrated here (shape 4).
+        "file:///data/user/0/com.wystudio.inventory/files/item-photos/legacy.jpg",
+    ])
+    func readsLegacyPhotos(uri: String) async throws {
+        let container = try PhotoContainer()
+        let jpeg = try TestImages.jpeg(TestImages.marked(width: 1600, height: 1200), orientation: 6)
+        try container.write(jpeg, to: "Documents/item-photos/legacy.jpg")
+        let store = container.store()
+
+        #expect(store.readStoredPhoto(uri) == jpeg)
+        let image = try #require(await store.loadStoredPhoto(uri, maxPixelSize: 400))
+        #expect(image.width == 300 && image.height == 400)
+        #expect(try Inspect.redCorner(image) == .topRight)
+        store.deleteStoredPhotos([uri])
+        #expect(container.photoFiles().isEmpty)
     }
 
     @Test("decodes a stored photo for display, downsampled")

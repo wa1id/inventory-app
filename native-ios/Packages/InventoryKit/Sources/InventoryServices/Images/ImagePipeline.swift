@@ -66,9 +66,10 @@ enum ImagePipeline {
     ///
     /// This is the camera's crop to the preview (DECISIONS U7, 05 C4): expo-camera takes
     /// `AVMakeRect(aspectRatio:insideRect:)` of the still and crops with `CGImage.cropping(to:)`,
-    /// which rounds the rectangle out with `CGRectIntegral`. Pass the aspect as it appears on
-    /// screen; the crop is measured on the upright image, which gives the same rectangle as
-    /// expo's in sensor space.
+    /// which rounds the rectangle out with `CGRectIntegral`. `aspect` is measured on the upright
+    /// image (``ImageStore/previewCropAspect(previewSize:previewRotationAngle:captureRotationAngle:)``
+    /// turns the on-screen preview size into it). A centred rectangle rounds out to the same
+    /// pixels whichever way it is turned, so this matches expo's crop in sensor space.
     // RN: node_modules/expo-camera/ios/Current/CameraPhotoCapture.swift:187-190
     static func cropRect(for size: PixelSize, aspect: CGSize?) -> PixelRect {
         let whole = PixelRect(size)
