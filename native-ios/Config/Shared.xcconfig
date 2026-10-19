@@ -1,0 +1,19 @@
+// Values every configuration shares. They reach the app through custom
+// Info.plist keys (App/Resources/Info.plist) and are parsed by AppConfig.
+// They mirror the EXPO_PUBLIC_* variables of the React Native build
+// (src/services/config.ts) and are public by design: anything here ships
+// inside the app bundle.
+//
+// xcconfig treats `//` as a comment, so URLs are written `https:/$()/host`.
+
+INV_RECOGNITION_URL = https:/$()/server-wy-studio.vercel.app/api/recognize
+INV_RECOGNITION_TIMEOUT_MS = 15000
+INV_SYNC_URL = https:/$()/inventory-sync.wyachou95.workers.dev
+INV_SYNC_TIMEOUT_MS = 60000
+INV_HOUSEHOLD_ORIGIN =
+
+// Shared app keys (header x-inventory-key). Empty here; the real values come
+// from Secrets.xcconfig, which is gitignored and written from the EAS
+// production environment. Empty means the header is omitted.
+INV_RECOGNITION_KEY =
+INV_SYNC_KEY =

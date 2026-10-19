@@ -1,0 +1,96 @@
+# XcodeGen spec for the native iOS app. Generate with `xcodegen generate`
+# (scripts/mac.sh build does it for you); the .xcodeproj is not committed.
+name: Inventory
+options:
+  bundleIdPrefix: com.wystudio
+  deploymentTarget:
+    iOS: "26.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+configs:
+  Debug: debug
+  Preview: release
+  Release: release
+
+configFiles:
+  Debug: Config/Debug.xcconfig
+  Preview: Config/Preview.xcconfig
+  Release: Config/Release.xcconfig
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    SWIFT_APPROACHABLE_CONCURRENCY: NO
+    DEVELOPMENT_TEAM: 4BQ3BX3UHK
+    MARKETING_VERSION: 0.2.0
+    CURRENT_PROJECT_VERSION: 16
+    TARGETED_DEVICE_FAMILY: "1,2"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
+    DEAD_CODE_STRIPPING: YES
+
+packages:
+  InventoryKit:
+    path: Packages/InventoryKit
+
+targets:
+  Inventory:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+    settings:
+      base:
+        PRODUCT_NAME: Inventory
+        PRODUCT_BUNDLE_IDENTIFIER: com.wystudio.inventory
+        INFOPLIST_FILE: App/Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/Resources/Inventory.entitlements
+        CODE_SIGN_STYLE: Automatic
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - package: InventoryKit
+        products:
+          - InventoryStrings
+          - InventoryCore
+          - InventoryStorage
+          - InventoryNetwork
+          - InventoryServices
+          - InventoryAppModels
+
+  InventoryTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: AppTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.wystudio.inventory.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Inventory.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Inventory
+        BUNDLE_LOADER: $(TEST_HOST)
+    dependencies:
+      - target: Inventory
+
+schemes:
+  Inventory:
+    build:
+      targets:
+        Inventory: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - InventoryTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

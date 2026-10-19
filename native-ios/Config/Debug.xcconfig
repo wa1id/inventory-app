@@ -1,0 +1,6 @@
+#include "Shared.xcconfig"
+
+INV_APP_ENV = development
+
+#include? "Secrets.xcconfig"
+#include? "Local.xcconfig"
