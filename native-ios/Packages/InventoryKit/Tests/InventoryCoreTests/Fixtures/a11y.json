@@ -1,0 +1,167 @@
+{
+ "copy": {
+  "inDropZone": "In the drop zone, not filed yet",
+  "noneLeft": "None left",
+  "inPlace": "In %1$@, %2$@, label %3$@",
+  "inSpace": "In %1$@, label %2$@",
+  "quantity": "Quantity 1234"
+ },
+ "where": [
+  {
+   "place": {
+    "containerId": "c1",
+    "containerName": "Tool chest",
+    "containerShortCode": "CAB-J92R",
+    "spaceId": "s1",
+    "spaceName": "Garage",
+    "spaceColor": "#5B8DEF"
+   },
+   "spoken": "In Garage, Tool chest, label C A B, J 9 2 R"
+  },
+  {
+   "place": {
+    "containerId": "c1",
+    "containerName": null,
+    "containerShortCode": "CAB-J92R",
+    "spaceId": "s1",
+    "spaceName": "Garage",
+    "spaceColor": "#5B8DEF"
+   },
+   "spoken": "In Garage, label C A B, J 9 2 R"
+  },
+  {
+   "place": {
+    "containerId": "c1",
+    "containerName": "",
+    "containerShortCode": "CAB-J92R",
+    "spaceId": "s1",
+    "spaceName": "Garage",
+    "spaceColor": "#5B8DEF"
+   },
+   "spoken": "In Garage, label C A B, J 9 2 R"
+  },
+  {
+   "place": {
+    "containerId": "c1",
+    "containerName": " ",
+    "containerShortCode": "CAB-J92R",
+    "spaceId": "s1",
+    "spaceName": "Garage",
+    "spaceColor": "#5B8DEF"
+   },
+   "spoken": "In Garage,  , label C A B, J 9 2 R"
+  },
+  {
+   "place": {
+    "containerId": "c1",
+    "containerName": "Tool chest",
+    "containerShortCode": "-AB--C-",
+    "spaceId": "s1",
+    "spaceName": "Garage",
+    "spaceColor": "#5B8DEF"
+   },
+   "spoken": "In Garage, Tool chest, label A B, C"
+  },
+  {
+   "place": {
+    "containerId": "c1",
+    "containerName": "Tool chest",
+    "containerShortCode": " DRW - 7K2M ",
+    "spaceId": "s1",
+    "spaceName": "Garage",
+    "spaceColor": "#5B8DEF"
+   },
+   "spoken": "In Garage, Tool chest, label D R W, 7 K 2 M"
+  },
+  {
+   "place": {
+    "containerId": "drop-zone",
+    "containerName": "Drop zone",
+    "containerShortCode": "DROP-ZONE",
+    "spaceId": "s1",
+    "spaceName": "Garage",
+    "spaceColor": "#5B8DEF"
+   },
+   "spoken": "In the drop zone, not filed yet"
+  },
+  {
+   "place": {
+    "containerId": "c1",
+    "containerName": "Ящик",
+    "containerShortCode": "BOX-ÄÖ",
+    "spaceId": "s1",
+    "spaceName": "Küche",
+    "spaceColor": "#5B8DEF"
+   },
+   "spoken": "In Küche, Ящик, label B O X, Ä Ö"
+  }
+ ],
+ "quantities": [
+  {
+   "quantity": 0,
+   "spoken": "None left"
+  },
+  {
+   "quantity": 1,
+   "spoken": "Quantity 1"
+  },
+  {
+   "quantity": 12,
+   "spoken": "Quantity 12"
+  },
+  {
+   "quantity": 9999,
+   "spoken": "Quantity 9999"
+  },
+  {
+   "quantity": 10000,
+   "spoken": "Quantity 10000"
+  }
+ ],
+ "spell": [
+  {
+   "input": "DRW-7K2M",
+   "spelled": "D R W, 7 K 2 M"
+  },
+  {
+   "input": "BOX1",
+   "spelled": "B O X 1"
+  },
+  {
+   "input": "-AB--C-",
+   "spelled": "A B, C"
+  },
+  {
+   "input": "",
+   "spelled": ""
+  },
+  {
+   "input": "-",
+   "spelled": ""
+  },
+  {
+   "input": "A",
+   "spelled": "A"
+  },
+  {
+   "input": " A B -C",
+   "spelled": "A   B, C"
+  },
+  {
+   "input": "É-ü",
+   "spelled": "É, ü"
+  },
+  {
+   "input": "🔧-x",
+   "spelled": "🔧, x"
+  },
+  {
+   "input": "a b-c",
+   "spelled": "a   b, c"
+  },
+  {
+   "input": "DROP-ZONE",
+   "spelled": "D R O P, Z O N E"
+  }
+ ]
+}

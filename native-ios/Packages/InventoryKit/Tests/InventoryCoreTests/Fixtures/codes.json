@@ -1,0 +1,555 @@
+{
+ "prefixes": [
+  {
+   "type": "box",
+   "prefix": "BOX"
+  },
+  {
+   "type": "drawer",
+   "prefix": "DRW"
+  },
+  {
+   "type": "shelf",
+   "prefix": "SHF"
+  },
+  {
+   "type": "cabinet",
+   "prefix": "CAB"
+  },
+  {
+   "type": "bin",
+   "prefix": "BIN"
+  },
+  {
+   "type": "bag",
+   "prefix": "BAG"
+  },
+  {
+   "type": "crate",
+   "prefix": "CRT"
+  },
+  {
+   "type": "other",
+   "prefix": "CTR"
+  },
+  {
+   "type": "Box",
+   "prefix": "CTR"
+  },
+  {
+   "type": "unknown",
+   "prefix": "CTR"
+  },
+  {
+   "type": "",
+   "prefix": "CTR"
+  },
+  {
+   "type": "BOX",
+   "prefix": "CTR"
+  }
+ ],
+ "codes": [
+  {
+   "input": " mmwky-m2h78 ",
+   "normalised": "MMWKYM2H78",
+   "invalid": [],
+   "formatted": "MMWKY-M2H78",
+   "problem": {
+    "kind": "length",
+    "count": 10
+   }
+  },
+  {
+   "input": "mmwky\nm2h78\t",
+   "normalised": "MMWKYM2H78",
+   "invalid": [],
+   "formatted": "MMWKY-M2H78",
+   "problem": {
+    "kind": "length",
+    "count": 10
+   }
+  },
+  {
+   "input": "il0o",
+   "normalised": "1100",
+   "invalid": [],
+   "formatted": "1100",
+   "problem": {
+    "kind": "length",
+    "count": 4
+   }
+  },
+  {
+   "input": "ILO",
+   "normalised": "110",
+   "invalid": [],
+   "formatted": "110",
+   "problem": {
+    "kind": "length",
+    "count": 3
+   }
+  },
+  {
+   "input": "U",
+   "normalised": "U",
+   "invalid": [
+    "U"
+   ],
+   "formatted": "U",
+   "problem": {
+    "kind": "chars",
+    "chars": "U"
+   }
+  },
+  {
+   "input": "ABUU!",
+   "normalised": "ABUU!",
+   "invalid": [
+    "U",
+    "!"
+   ],
+   "formatted": "ABUU!",
+   "problem": {
+    "kind": "chars",
+    "chars": "U !"
+   }
+  },
+  {
+   "input": "MMWKY-M2H78",
+   "normalised": "MMWKYM2H78",
+   "invalid": [],
+   "formatted": "MMWKY-M2H78",
+   "problem": {
+    "kind": "length",
+    "count": 10
+   }
+  },
+  {
+   "input": "MMWKU-M2H7%",
+   "normalised": "MMWKUM2H7%",
+   "invalid": [
+    "U",
+    "%"
+   ],
+   "formatted": "MMWKU-M2H7%",
+   "problem": {
+    "kind": "chars",
+    "chars": "U %"
+   }
+  },
+  {
+   "input": "MMWKY-M2H78-ABCDE-FGHJK-MNPQR-S",
+   "normalised": "MMWKYM2H78ABCDEFGHJKMNPQRS",
+   "invalid": [],
+   "formatted": "MMWKY-M2H78-ABCDE-FGHJK-MNPQR-S",
+   "problem": null
+  },
+  {
+   "input": "mmwky m2h78 abcde fghjk mnpqr s",
+   "normalised": "MMWKYM2H78ABCDEFGHJKMNPQRS",
+   "invalid": [],
+   "formatted": "MMWKY-M2H78-ABCDE-FGHJK-MNPQR-S",
+   "problem": null
+  },
+  {
+   "input": "ı",
+   "normalised": "1",
+   "invalid": [],
+   "formatted": "1",
+   "problem": {
+    "kind": "length",
+    "count": 1
+   }
+  },
+  {
+   "input": "ß",
+   "normalised": "SS",
+   "invalid": [],
+   "formatted": "SS",
+   "problem": {
+    "kind": "length",
+    "count": 2
+   }
+  },
+  {
+   "input": "ﬁ",
+   "normalised": "F1",
+   "invalid": [],
+   "formatted": "F1",
+   "problem": {
+    "kind": "length",
+    "count": 2
+   }
+  },
+  {
+   "input": "Ö",
+   "normalised": "Ö",
+   "invalid": [
+    "Ö"
+   ],
+   "formatted": "Ö",
+   "problem": {
+    "kind": "chars",
+    "chars": "Ö"
+   }
+  },
+  {
+   "input": "ü",
+   "normalised": "Ü",
+   "invalid": [
+    "Ü"
+   ],
+   "formatted": "Ü",
+   "problem": {
+    "kind": "chars",
+    "chars": "Ü"
+   }
+  },
+  {
+   "input": "é",
+   "normalised": "É",
+   "invalid": [
+    "É"
+   ],
+   "formatted": "É",
+   "problem": {
+    "kind": "chars",
+    "chars": "É"
+   }
+  },
+  {
+   "input": "Ａ",
+   "normalised": "Ａ",
+   "invalid": [
+    "Ａ"
+   ],
+   "formatted": "Ａ",
+   "problem": {
+    "kind": "chars",
+    "chars": "Ａ"
+   }
+  },
+  {
+   "input": "０",
+   "normalised": "０",
+   "invalid": [
+    "０"
+   ],
+   "formatted": "０",
+   "problem": {
+    "kind": "chars",
+    "chars": "０"
+   }
+  },
+  {
+   "input": "🔧",
+   "normalised": "🔧",
+   "invalid": [
+    "🔧"
+   ],
+   "formatted": "🔧",
+   "problem": {
+    "kind": "chars",
+    "chars": "🔧"
+   }
+  },
+  {
+   "input": " A B﻿CD",
+   "normalised": "ABCD",
+   "invalid": [
+    ""
+   ],
+   "formatted": "ABCD",
+   "problem": {
+    "kind": "chars",
+    "chars": ""
+   }
+  },
+  {
+   "input": "–A—B",
+   "normalised": "–A—B",
+   "invalid": [
+    "–",
+    "—"
+   ],
+   "formatted": "–A—B",
+   "problem": {
+    "kind": "chars",
+    "chars": "– —"
+   }
+  },
+  {
+   "input": "a_b",
+   "normalised": "A_B",
+   "invalid": [
+    "_"
+   ],
+   "formatted": "A_B",
+   "problem": {
+    "kind": "chars",
+    "chars": "_"
+   }
+  },
+  {
+   "input": "a.b",
+   "normalised": "A.B",
+   "invalid": [
+    "."
+   ],
+   "formatted": "A.B",
+   "problem": {
+    "kind": "chars",
+    "chars": "."
+   }
+  },
+  {
+   "input": "ʰ",
+   "normalised": "ʰ",
+   "invalid": [
+    "ʰ"
+   ],
+   "formatted": "ʰ",
+   "problem": {
+    "kind": "chars",
+    "chars": "ʰ"
+   }
+  },
+  {
+   "input": "٣",
+   "normalised": "٣",
+   "invalid": [
+    "٣"
+   ],
+   "formatted": "٣",
+   "problem": {
+    "kind": "chars",
+    "chars": "٣"
+   }
+  },
+  {
+   "input": "ǅ",
+   "normalised": "Ǆ",
+   "invalid": [
+    "Ǆ"
+   ],
+   "formatted": "Ǆ",
+   "problem": {
+    "kind": "chars",
+    "chars": "Ǆ"
+   }
+  },
+  {
+   "input": "",
+   "normalised": "",
+   "invalid": [],
+   "formatted": "",
+   "problem": {
+    "kind": "length",
+    "count": 0
+   }
+  },
+  {
+   "input": "mmwky-m2h78-abcde-fghjk-mnpqr-sx",
+   "normalised": "MMWKYM2H78ABCDEFGHJKMNPQRSX",
+   "invalid": [],
+   "formatted": "MMWKY-M2H78-ABCDE-FGHJK-MNPQR-SX",
+   "problem": {
+    "kind": "length",
+    "count": 27
+   }
+  },
+  {
+   "input": "MMWKY-M2H78-ABCDE-FGH",
+   "normalised": "MMWKYM2H78ABCDEFGH",
+   "invalid": [],
+   "formatted": "MMWKY-M2H78-ABCDE-FGH",
+   "problem": {
+    "kind": "length",
+    "count": 18
+   }
+  },
+  {
+   "input": "ſ",
+   "normalised": "S",
+   "invalid": [],
+   "formatted": "S",
+   "problem": {
+    "kind": "length",
+    "count": 1
+   }
+  },
+  {
+   "input": "ſoil",
+   "normalised": "S011",
+   "invalid": [],
+   "formatted": "S011",
+   "problem": {
+    "kind": "length",
+    "count": 4
+   }
+  },
+  {
+   "input": "89144-GJ289-144GJ-28914-4GJ28-8",
+   "normalised": "89144GJ289144GJ289144GJ288",
+   "invalid": [],
+   "formatted": "89144-GJ289-144GJ-28914-4GJ28-8",
+   "problem": null
+  },
+  {
+   "input": "89144 gj289 144gj 28914 4gj28 8",
+   "normalised": "89144GJ289144GJ289144GJ288",
+   "invalid": [],
+   "formatted": "89144-GJ289-144GJ-28914-4GJ28-8",
+   "problem": null
+  },
+  {
+   "input": "MMWKY-M2H78-ABCDE-FGHJK-MNPQR-S🔧",
+   "normalised": "MMWKYM2H78ABCDEFGHJKMNPQRS🔧",
+   "invalid": [
+    "🔧"
+   ],
+   "formatted": "MMWKY-M2H78-ABCDE-FGHJK-MNPQR-S🔧",
+   "problem": {
+    "kind": "chars",
+    "chars": "🔧"
+   }
+  },
+  {
+   "input": "MMWKU-M2H7%",
+   "normalised": "MMWKUM2H7%",
+   "invalid": [
+    "U",
+    "%"
+   ],
+   "formatted": "MMWKU-M2H7%",
+   "problem": {
+    "kind": "chars",
+    "chars": "U %"
+   }
+  },
+  {
+   "input": "uu%%uu",
+   "normalised": "UU%%UU",
+   "invalid": [
+    "U",
+    "%"
+   ],
+   "formatted": "UU%%U-U",
+   "problem": {
+    "kind": "chars",
+    "chars": "U %"
+   }
+  }
+ ],
+ "hosts": [
+  {
+   "input": "https://inventory.wystudio.be",
+   "host": "inventory.wystudio.be"
+  },
+  {
+   "input": "http://192.168.1.5:8788/",
+   "host": "192.168.1.5:8788"
+  },
+  {
+   "input": "inventory.example",
+   "host": "inventory.example"
+  },
+  {
+   "input": "  https://a.b/c?d#e  ",
+   "host": "a.b"
+  },
+  {
+   "input": "HTTPS://Example.COM/path",
+   "host": "Example.COM"
+  },
+  {
+   "input": "ftp://x.y",
+   "host": "x.y"
+  },
+  {
+   "input": "web+app://host",
+   "host": "host"
+  },
+  {
+   "input": "1http://host",
+   "host": "1http:"
+  },
+  {
+   "input": "http://",
+   "host": "http://"
+  },
+  {
+   "input": "   ",
+   "host": "   "
+  },
+  {
+   "input": "",
+   "host": ""
+  },
+  {
+   "input": "https:/host",
+   "host": "https:"
+  },
+  {
+   "input": "https://host?x=1",
+   "host": "host"
+  },
+  {
+   "input": "https://host#frag",
+   "host": "host"
+  },
+  {
+   "input": "host/path",
+   "host": "host"
+  },
+  {
+   "input": "/path",
+   "host": "/path"
+  },
+  {
+   "input": "http://[::1]:8080/",
+   "host": "[::1]:8080"
+  },
+  {
+   "input": "a+b.c-d://h",
+   "host": "h"
+  },
+  {
+   "input": "mailto:me@x.y",
+   "host": "mailto:me@x.y"
+  },
+  {
+   "input": "https://user:pw@host:1/x",
+   "host": "user:pw@host:1"
+  },
+  {
+   "input": "https://ex.com\n/abc",
+   "host": "ex.com\n"
+  },
+  {
+   "input": "https://h/a\nb/c",
+   "host": "h/a\nb"
+  },
+  {
+   "input": "https://h/a b",
+   "host": "h/a b"
+  },
+  {
+   "input": " https://h ",
+   "host": "h"
+  },
+  {
+   "input": "https://ünï.de/x",
+   "host": "ünï.de"
+  },
+  {
+   "input": "ſhttp://host",
+   "host": "ſhttp:"
+  },
+  {
+   "input": "https://host/",
+   "host": "host"
+  }
+ ]
+}

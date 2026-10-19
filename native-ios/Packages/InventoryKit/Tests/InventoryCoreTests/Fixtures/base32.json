@@ -1,0 +1,778 @@
+{
+ "encode": [
+  {
+   "hex": "",
+   "code": ""
+  },
+  {
+   "hex": "",
+   "code": ""
+  },
+  {
+   "hex": "01",
+   "code": "04"
+  },
+  {
+   "hex": "e1",
+   "code": "W4"
+  },
+  {
+   "hex": "0227",
+   "code": "08KG"
+  },
+  {
+   "hex": "0b5a",
+   "code": "1DD0"
+  },
+  {
+   "hex": "03284d",
+   "code": "0CM4T"
+  },
+  {
+   "hex": "b08869",
+   "code": "P246J"
+  },
+  {
+   "hex": "04294e73",
+   "code": "0GMMWWR"
+  },
+  {
+   "hex": "cdf57a47",
+   "code": "SQTQMHR"
+  },
+  {
+   "hex": "052a4f7499",
+   "code": "0MN4YX4S"
+  },
+  {
+   "hex": "80b5757e91",
+   "code": "G2TQAZMH"
+  },
+  {
+   "hex": "062b50759abf",
+   "code": "0RNN0XCTQW"
+  },
+  {
+   "hex": "b063cafa5e1d",
+   "code": "P1HWNYJY3M"
+  },
+  {
+   "hex": "072c51769bc0e5",
+   "code": "0WP52XMVR3JG"
+  },
+  {
+   "hex": "0f8770036d548b",
+   "code": "1Y3Q00VDAJ5G"
+  },
+  {
+   "hex": "082d52779cc1e60b",
+   "code": "10PN4XWWR7K0P"
+  },
+  {
+   "hex": "d9c5f50dbdb1a6ed",
+   "code": "V72ZA3DXP6KET"
+  },
+  {
+   "hex": "092e53789dc2e70c31",
+   "code": "14Q56Y4XRBKGRC8"
+  },
+  {
+   "hex": "321a30177fe35ac7f6",
+   "code": "68D305VZWDDCFXG"
+  },
+  {
+   "hex": "0a2f54799ec3e80d3257",
+   "code": "18QN8YCYRFM0TCJQ"
+  },
+  {
+   "hex": "621fc5d88ef58add27da",
+   "code": "C8FWBP4EYP5DT9YT"
+  },
+  {
+   "hex": "0b30557a9fc4e90e33587d",
+   "code": "1CR5AYMZRKMGWCTRFM"
+  },
+  {
+   "hex": "b1ac3dff37bdd44a696e90",
+   "code": "P6P3VZSQQQA4MTBEJ0"
+  },
+  {
+   "hex": "0c31567ba0c5ea0f34597ea3",
+   "code": "1GRNCYX0RQN0YD2SFTHG"
+  },
+  {
+   "hex": "ee9650aceaccea9a29418418",
+   "code": "XTB51B7ASKN9MAA1GGC0"
+  },
+  {
+   "hex": "0d32577ca1c6eb10355a7fa4c9",
+   "code": "1MS5EZ51RVNH0DATFYJCJ"
+  },
+  {
+   "hex": "8a39a598187565412a8dc5f145",
+   "code": "H8WTB60RENJM2AMDRQRMA"
+  },
+  {
+   "hex": "0e33587da2c7ec11365b80a5caef",
+   "code": "1RSNGZD2RZP12DJVG2JWNVR"
+  },
+  {
+   "hex": "ba90f9e2f294888a5c34f6d97f88",
+   "code": "QA8FKRQJJJ48MQ1MYVCQZ20"
+  },
+  {
+   "hex": "0f34597ea3c8ed12375c81a6cbf015",
+   "code": "1WT5JZN3S3PH4DTWG6KCQW0N"
+  },
+  {
+   "hex": "6257afaa5d4fa2dd93fc279a9eb866",
+   "code": "C9BTZAJX9YHDV4ZW4YD9XE36"
+  },
+  {
+   "hex": "10355a7fa4c9ee13385d82a7ccf1163b",
+   "code": "20TNMZX4S7Q16E2XGAKWSW8P7C"
+  },
+  {
+   "hex": "ca870f3bad9bdd77358ed621d3231d0c",
+   "code": "SA3GYEXDKFEQEDCETRGX68RX1G"
+  },
+  {
+   "hex": "11365b80a5caef14395e83a8cdf2173c61",
+   "code": "24V5Q055SBQH8EAYGEMCVWGQ7HGG"
+  },
+  {
+   "hex": "04c4d15117c2b18cf93e41dd03d405131b",
+   "code": "0K2D2M8QRARRSY9Y87EG7N052CDG"
+  },
+  {
+   "hex": "12375c81a6cbf0153a5f84a9cef3183d6287",
+   "code": "28VNS0D6SFR1AEJZGJMWXWRR7NH8E"
+  },
+  {
+   "hex": "94cd9397f31fbdbaab33fcc9b31dc5f3dd09",
+   "code": "JK6S75ZK3YYVNASKZK4V67E5YFEGJ"
+  },
+  {
+   "hex": "13385d82a7ccf1163b6085aacff4193e6388ad",
+   "code": "2CW5V0N7SKRHCEV0GPNCZX0S7SHRHB8"
+  },
+  {
+   "hex": "1b9eaab675d26c8808cdcbd9e1fd3f7351f111",
+   "code": "3EFANDKNT9P8G26DSFCY3Z9ZED8Z248"
+  },
+  {
+   "hex": "14395e83a8cdf2173c6186abd0f51a3f6489aed3",
+   "code": "2GWNX0X8SQS1EF31GTNX1X8T7XJ8KBPK"
+  },
+  {
+   "hex": "517cf0fa063852798070ca60f3b5354e27cea902",
+   "code": "A5YF1YG67197K03GS9GF7D9N9RKWXA82"
+  },
+  {
+   "hex": "00000000000000000000000000000000",
+   "code": "00000000000000000000000000"
+  },
+  {
+   "hex": "11111111111111111111111111111111",
+   "code": "248H248H248H248H248H248H24"
+  },
+  {
+   "hex": "42424242424242424242424242424242",
+   "code": "89144GJ289144GJ289144GJ288"
+  },
+  {
+   "hex": "ffffffffffffffffffffffffffffffff",
+   "code": "ZZZZZZZZZZZZZZZZZZZZZZZZZW"
+  },
+  {
+   "hex": "09090909090909090909090909090909",
+   "code": "144GJ289144GJ289144GJ28914"
+  },
+  {
+   "hex": "0102030405060708090a0b0c0d0e0f10",
+   "code": "041061050R3GG28A1C60T3GF20"
+  },
+  {
+   "hex": "784cc5c13e8f984379b684d6dd6108ae",
+   "code": "F16CBG9YHYC46YDPGKBDTR88NR"
+  },
+  {
+   "hex": "b754509c3445e3930b7bf8ba93ff20fc",
+   "code": "PXA5171M8QHS62VVZ2X97ZS0ZG"
+  },
+  {
+   "hex": "bc8462478550f7f2dab83ef8f50c990a",
+   "code": "QJ264HW5A3VZ5PNR7VWFA34S18"
+  },
+  {
+   "hex": "b10349966af37d4e4d7c24cd4c614068",
+   "code": "P41MK5KAYDYMWKBW4K6MRRA0D0"
+  },
+  {
+   "hex": "02bbba423fcb0c2d15012e028c129a67",
+   "code": "0AXVMGHZSC62T5815R18R4MTCW"
+  },
+  {
+   "hex": "682b6638969bbaff3a7d1e3d6744726a",
+   "code": "D0NPCE4PKEXFYEKX3RYPEH3JD8"
+  },
+  {
+   "hex": "fd3389eb441dab6d2eef8a515afa6a32",
+   "code": "ZMSRKTT43PNPTBQFH98NNYKA68"
+  },
+  {
+   "hex": "4de877a473d2a0a9d9f56b90bfe98737",
+   "code": "9QM7F93KTAGAKPFNDE8BZTC76W"
+  },
+  {
+   "hex": "63612fd0b0d38bbead94ab18dc42c9ec",
+   "code": "CDGJZM5GTE5VXBCMNCCDRGP9XG"
+  },
+  {
+   "hex": "db89eb52fca11ae0b310b624f287b21a",
+   "code": "VE4YPMQWM4DE1CRGPRJF51XJ38"
+  },
+  {
+   "hex": "efedb0d1e0f34abe9db60d5d5159dd29",
+   "code": "XZPV1MF0YD5BX7DP1NEN2PEX54"
+  },
+  {
+   "hex": "8d90da0c7486f6cfd5afcf2962498a72",
+   "code": "HP8DM33MGVVCZNDFSWMP4JCAE8"
+  },
+  {
+   "hex": "60b5b32478f267a38ecf51fbbda52f91",
+   "code": "C2TV693RY9KT73PFA7XVV99FJ4"
+  },
+  {
+   "hex": "e4b4fcf25e73e633d165a7a2354c0ab2",
+   "code": "WJTFSWJYEFK37MB5MYH3AK0AP8"
+  },
+  {
+   "hex": "77c884525fbd4732920c3b9ee97dade2",
+   "code": "EZ488MJZQN3K54GC7EFEJZDDW8"
+  },
+  {
+   "hex": "66e0b17785cc805dbd7a576954a49260",
+   "code": "CVGB2XW5SJ05VFBTAXMN994JC0"
+  },
+  {
+   "hex": "fc6d1438c0b332c94350b6ca602ea8ec",
+   "code": "ZHPH8E60PCSCJGTGPV560BN8XG"
+  },
+  {
+   "hex": "9934f862f46b3f3431ea17286f56e517",
+   "code": "K4TFGRQMDCZK8CFA2WM6YNQ52W"
+  },
+  {
+   "hex": "b91cf5070aa75557bb30cdd572f8d494",
+   "code": "Q4EFA1RAMXANFESGSQAQ5Y6MJG"
+  },
+  {
+   "hex": "0b0179cefe9e81314c654860f75d2986",
+   "code": "1C0QKKQYKT0K2K3591GFEQ99GR"
+  },
+  {
+   "hex": "7c826044f1e1bf5f99f6b1e834104cd2",
+   "code": "FJ160H7HW6ZNZ6FPP7M3842CT8"
+  },
+  {
+   "hex": "4cd07d2a37268862af4e6d6621a8ec6f",
+   "code": "9K87TAHQ4T465BTEDNK23A7CDW"
+  },
+  {
+   "hex": "198030c96a1c64f902a1b7027e9e8db3",
+   "code": "36031JBA3HJFJ0N1PW17X7MDPC"
+  },
+  {
+   "hex": "f15af23b78387a687fbf2b61e9181ba9",
+   "code": "Y5DF4EVR71X6GZXZ5DGYJ60VN4"
+  },
+  {
+   "hex": "652ae6c2b2881ed09ce257f5ebbe7759",
+   "code": "CMNEDGNJH0FD1772AZTYQFKQB4"
+  },
+  {
+   "hex": "938f6916de7e637a67824d4e0b850a1e",
+   "code": "JE7PJ5PYFSHQMSW29N70Q18A3R"
+  },
+  {
+   "hex": "3bcaa4b147c7a925941f2f67dc8251f6",
+   "code": "7F5A9CA7RYMJB50Z5XKXS0JHYR"
+  },
+  {
+   "hex": "cd921926ca16305f9317c3fc0bb970ce",
+   "code": "SP91J9PA2RR5Z4RQRFY0QEBGSR"
+  },
+  {
+   "hex": "7add336becf3a4cb997200d374edc3d4",
+   "code": "FBEK6TZCYEJCQ6BJ039Q9VE3TG"
+  },
+  {
+   "hex": "41b9da2ce28fb377b6b39f112e7169ca",
+   "code": "86WXMB72HYSQFDNKKW8JWWB9S8"
+  },
+  {
+   "hex": "0414ff1aa894952adfa9ae879cf7da50",
+   "code": "0GAFY6N8JJAJNQX9NT3SSXYTA0"
+  },
+  {
+   "hex": "93902c3a0ef1a2b4043d19037e61743a",
+   "code": "JE82REGEY6HB811X341QWRBM78"
+  },
+  {
+   "hex": "bf521739c7ace23d1c4541a3008e09db",
+   "code": "QX91EEE7NKH3T72586HG13G9VC"
+  },
+  {
+   "hex": "6bd52fb77bb4999937518a20c92f7458",
+   "code": "DFAJZDVVPJCSJDTHH8GCJBVMB0"
+  },
+  {
+   "hex": "97b22f9bd7aed9948d7de7200f9124f8",
+   "code": "JYS2Z6YQNVCS93BXWWG0Z494Z0"
+  },
+  {
+   "hex": "767baa5f9ac615428d407187a275b073",
+   "code": "ESXTMQWTRRAM53A0E63T4XDGEC"
+  },
+  {
+   "hex": "79819f64ab81aa53f03bf1c7fed66442",
+   "code": "F60SYS5BG6N57W1VY73ZXNK488"
+  },
+  {
+   "hex": "64aa06412188785cc70c722d5ec1d4ee",
+   "code": "CJN0CG91H1W5SHRCE8PNXGEMXR"
+  },
+  {
+   "hex": "593e620f5b806a318b1cd336c5246863",
+   "code": "B4Z643TVG1N332RWTCVCA938CC"
+  },
+  {
+   "hex": "ebbb51bf08d009292b6f53da1797ef3e",
+   "code": "XEXN3FR8T04JJAVFAFD1F5ZF7R"
+  }
+ ],
+ "decode": [
+  {
+   "input": "",
+   "hex": null
+  },
+  {
+   "input": "-",
+   "hex": null
+  },
+  {
+   "input": "--",
+   "hex": null
+  },
+  {
+   "input": "   ",
+   "hex": null
+  },
+  {
+   "input": "Z",
+   "hex": ""
+  },
+  {
+   "input": "ZZ",
+   "hex": "ff"
+  },
+  {
+   "input": "0",
+   "hex": ""
+  },
+  {
+   "input": "U",
+   "hex": null
+  },
+  {
+   "input": "u",
+   "hex": null
+  },
+  {
+   "input": "hello world",
+   "hex": null
+  },
+  {
+   "input": "89144GJ289144GJ289144GJ288",
+   "hex": "42424242424242424242424242424242"
+  },
+  {
+   "input": "89144gj289144gj289144gj288",
+   "hex": "42424242424242424242424242424242"
+  },
+  {
+   "input": "89144-GJ289-144GJ-28914-4GJ28-8",
+   "hex": "42424242424242424242424242424242"
+  },
+  {
+   "input": "  89144-gj289-144gj-28914-4gj28-8  ",
+   "hex": "42424242424242424242424242424242"
+  },
+  {
+   "input": "\n89144GJ289144GJ289144GJ288\n",
+   "hex": "42424242424242424242424242424242"
+  },
+  {
+   "input": " 89144GJ289144GJ289144GJ288",
+   "hex": "42424242424242424242424242424242"
+  },
+  {
+   "input": "﻿89144GJ289144GJ289144GJ288",
+   "hex": "42424242424242424242424242424242"
+  },
+  {
+   "input": "89144GJ289144GJ289144GJ288 ",
+   "hex": "42424242424242424242424242424242"
+  },
+  {
+   "input": "89144GJ289144GJ289144GJ288",
+   "hex": null
+  },
+  {
+   "input": "89144GJ289 144GJ289144GJ288",
+   "hex": null
+  },
+  {
+   "input": "89144GJ289144GJ289144GJ288X",
+   "hex": "42424242424242424242424242424242"
+  },
+  {
+   "input": "89144GJ289144GJ289144GJ288XY",
+   "hex": "424242424242424242424242424242423b"
+  },
+  {
+   "input": "89144GJ289144GJ289144GJ289",
+   "hex": "42424242424242424242424242424242"
+  },
+  {
+   "input": "89144GJ289144GJ289144GJ28A",
+   "hex": "42424242424242424242424242424242"
+  },
+  {
+   "input": "89144GJ289144GJ289144GJ28B",
+   "hex": "42424242424242424242424242424242"
+  },
+  {
+   "input": "IOIOIOIOIOIOIOIOIOIOIOIOIO",
+   "hex": "08020080200802008020080200802008"
+  },
+  {
+   "input": "LOLOLOLOLOLOLOLOLOLOLOLOLO",
+   "hex": "08020080200802008020080200802008"
+  },
+  {
+   "input": "10101010101010101010101010",
+   "hex": "08020080200802008020080200802008"
+  },
+  {
+   "input": "ı",
+   "hex": ""
+  },
+  {
+   "input": "ﬁ",
+   "hex": "78"
+  },
+  {
+   "input": "ß",
+   "hex": "ce"
+  },
+  {
+   "input": "ǰ",
+   "hex": null
+  },
+  {
+   "input": "ö",
+   "hex": null
+  },
+  {
+   "input": "Ａ",
+   "hex": null
+  },
+  {
+   "input": "i",
+   "hex": ""
+  },
+  {
+   "input": "l",
+   "hex": ""
+  },
+  {
+   "input": "o",
+   "hex": ""
+  },
+  {
+   "input": "O0Il1L",
+   "hex": "000210"
+  },
+  {
+   "input": "-8-9-1-4-4-",
+   "hex": "424242"
+  },
+  {
+   "input": "8 9",
+   "hex": null
+  },
+  {
+   "input": "89144GJ2*9",
+   "hex": null
+  },
+  {
+   "input": "ZZZZZZZZZZZZZZZZZZZZZZZZZW",
+   "hex": "ffffffffffffffffffffffffffffffff"
+  },
+  {
+   "input": "00000000000000000000000000",
+   "hex": "00000000000000000000000000000000"
+  },
+  {
+   "input": "041061050R3GG28A1C60T3GF20",
+   "hex": "0102030405060708090a0b0c0d0e0f10"
+  },
+  {
+   "input": "248H248H248H248H248H248H24",
+   "hex": "11111111111111111111111111111111"
+  },
+  {
+   "input": "abcdefghjkmnpqrstvwxyz",
+   "hex": "52d8d73e1194e95b5f19d6f9df"
+  },
+  {
+   "input": "ABCDEFGHJKMNPQRSTVWXYZ0123456789",
+   "hex": "52d8d73e1194e95b5f19d6f9df7c0110c8531d09"
+  },
+  {
+   "input": "ſſſſſſſſ",
+   "hex": "ce739ce739"
+  },
+  {
+   "input": "ﬀﬀﬀﬀ",
+   "hex": "7bdef7bdef"
+  },
+  {
+   "input": "KK",
+   "hex": null
+  },
+  {
+   "input": "ŉ",
+   "hex": null
+  },
+  {
+   "input": "ǅ",
+   "hex": null
+  },
+  {
+   "input": "89144GJ289144­GJ289144GJ288",
+   "hex": null
+  },
+  {
+   "input": "89144GJ289144​GJ289144GJ288",
+   "hex": null
+  },
+  {
+   "input": "89144GJ289144GJ289144GJ288\u0000",
+   "hex": null
+  },
+  {
+   "input": "\t89144GJ289144GJ289144GJ288\r\n",
+   "hex": "42424242424242424242424242424242"
+  },
+  {
+   "input": "89144GJ289144‐GJ289144GJ288",
+   "hex": null
+  },
+  {
+   "input": "89144GJ289144－GJ289144GJ288",
+   "hex": null
+  }
+ ],
+ "format": [
+  {
+   "input": "",
+   "formatRecoveryCode": "",
+   "formatCode": ""
+  },
+  {
+   "input": "A",
+   "formatRecoveryCode": "A",
+   "formatCode": "A"
+  },
+  {
+   "input": "ABCDE",
+   "formatRecoveryCode": "ABCDE",
+   "formatCode": "ABCDE"
+  },
+  {
+   "input": "ABCDEF",
+   "formatRecoveryCode": "ABCDE-F",
+   "formatCode": "ABCDE-F"
+  },
+  {
+   "input": "89144GJ289144GJ289144GJ288",
+   "formatRecoveryCode": "89144-GJ289-144GJ-28914-4GJ28-8",
+   "formatCode": "89144-GJ289-144GJ-28914-4GJ28-8"
+  },
+  {
+   "input": "MMWKYM2H78A",
+   "formatRecoveryCode": "MMWKY-M2H78-A",
+   "formatCode": "MMWKY-M2H78-A"
+  },
+  {
+   "input": "AB\nCD",
+   "formatRecoveryCode": "AB-CD",
+   "formatCode": "AB-CD"
+  },
+  {
+   "input": "ABCDEFG\r\nHIJ",
+   "formatRecoveryCode": "ABCDE-FG-HIJ",
+   "formatCode": "ABCDE-FG-HIJ"
+  },
+  {
+   "input": "AB CDEFGHIJK",
+   "formatRecoveryCode": "AB-CDEFG-HIJK",
+   "formatCode": "AB-CDEFG-HIJK"
+  },
+  {
+   "input": "\n",
+   "formatRecoveryCode": "",
+   "formatCode": ""
+  },
+  {
+   "input": "ABCDE\n",
+   "formatRecoveryCode": "ABCDE",
+   "formatCode": "ABCDE"
+  },
+  {
+   "input": "1234567890123",
+   "formatRecoveryCode": "12345-67890-123",
+   "formatCode": "12345-67890-123"
+  },
+  {
+   "input": "ÄÖÜäöüß",
+   "formatRecoveryCode": "ÄÖÜäö-üß",
+   "formatCode": "ÄÖÜäö-üß"
+  },
+  {
+   "input": "a b c d e f",
+   "formatRecoveryCode": "a b c- d e -f",
+   "formatCode": "a b c- d e -f"
+  }
+ ],
+ "accounts": [
+  {
+   "hex": "42424242424242424242424242424242",
+   "code": "89144GJ289144GJ289144GJ288",
+   "formatted": "89144-GJ289-144GJ-28914-4GJ28-8",
+   "accountId": "900dfeb7f1b5e344209e2abce56c333d"
+  },
+  {
+   "hex": "00000000000000000000000000000000",
+   "code": "00000000000000000000000000",
+   "formatted": "00000-00000-00000-00000-00000-0",
+   "accountId": "374708fff7719dd5979ec875d56cd228"
+  },
+  {
+   "hex": "ffffffffffffffffffffffffffffffff",
+   "code": "ZZZZZZZZZZZZZZZZZZZZZZZZZW",
+   "formatted": "ZZZZZ-ZZZZZ-ZZZZZ-ZZZZZ-ZZZZZ-W",
+   "accountId": "5ac6a5945f16500911219129984ba8b3"
+  },
+  {
+   "hex": "11111111111111111111111111111111",
+   "code": "248H248H248H248H248H248H24",
+   "formatted": "248H2-48H24-8H248-H248H-248H2-4",
+   "accountId": "b8f12ea8c9a95d4b4641b03d9fa5a71a"
+  },
+  {
+   "hex": "09090909090909090909090909090909",
+   "code": "144GJ289144GJ289144GJ28914",
+   "formatted": "144GJ-28914-4GJ28-9144G-J2891-4",
+   "accountId": "06232b08dabb5a4fdb466598179349c8"
+  },
+  {
+   "hex": "0102030405060708090a0b0c0d0e0f10",
+   "code": "041061050R3GG28A1C60T3GF20",
+   "formatted": "04106-1050R-3GG28-A1C60-T3GF2-0",
+   "accountId": "5dfbabeedf318bf33c0927c43d7630f5"
+  },
+  {
+   "hex": "",
+   "code": "",
+   "formatted": "",
+   "accountId": "e3b0c44298fc1c149afbf4c8996fb924"
+  },
+  {
+   "hex": "61",
+   "code": "C4",
+   "formatted": "C4",
+   "accountId": "ca978112ca1bbdcafac231b39a23dc4d"
+  },
+  {
+   "hex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+   "code": "000G40R40M30E209185GR38E1W8124GK2GAHC5RR34D1P70X3RFG",
+   "formatted": "000G4-0R40M-30E20-9185G-R38E1-W8124-GK2GA-HC5RR-34D1P-70X3R-FG",
+   "accountId": "630dcd2966c4336691125448bbb25b4f"
+  },
+  {
+   "hex": "2da01967417a0f79237325df20372f1e",
+   "code": "5PG1JST1F87QJ8VK4QFJ0DSF3R",
+   "formatted": "5PG1J-ST1F8-7QJ8V-K4QFJ-0DSF3-R",
+   "accountId": "307e6ce2f4cfa0faa157ce2bb678ed07"
+  },
+  {
+   "hex": "c23f3d918de7f27e83d3ff29ab6d74f0",
+   "code": "R8ZKV4CDWZS7X0YKZWMTPVBMY0",
+   "formatted": "R8ZKV-4CDWZ-S7X0Y-KZWMT-PVBMY-0",
+   "accountId": "d5da928b480038bf9ea7ec7b53a76749"
+  },
+  {
+   "hex": "ef8e088efcb4770d0545a6098ec12046",
+   "code": "XY70H3QWPHVGT1A5MR4RXG908R",
+   "formatted": "XY70H-3QWPH-VGT1A-5MR4R-XG908-R",
+   "accountId": "8893c8db6ef1a1c9dd4558589312adc8"
+  },
+  {
+   "hex": "a7f71fc2308a42c51b59848cbdac3ba1",
+   "code": "MZVHZGHGH91CA6TSGJ6BVB1VM4",
+   "formatted": "MZVHZ-GHGH9-1CA6T-SGJ6B-VB1VM-4",
+   "accountId": "829d68f2ea4b9f7842359fad10c632c8"
+  },
+  {
+   "hex": "9e2715f970e5635e004c35cd556504c4",
+   "code": "KRKHBYBGWNHNW02C6Q6NAS84RG",
+   "formatted": "KRKHB-YBGWN-HNW02-C6Q6N-AS84R-G",
+   "accountId": "efb0fb8c3a9cbb8df72ffd4254b3ef07"
+  },
+  {
+   "hex": "59dcf2b2b7ebeafbc6d51645b2b37f04",
+   "code": "B7EF5CNQXFNFQHPN2S2V5CVZ0G",
+   "formatted": "B7EF5-CNQXF-NFQHP-N2S2V-5CVZ0-G",
+   "accountId": "51fa6ef918e6443e4b40a46f7cfbe955"
+  },
+  {
+   "hex": "3cbacd72c438757668f6d71a7bbc0795",
+   "code": "7JXCTWP471TQCT7PTWD7QF07JM",
+   "formatted": "7JXCT-WP471-TQCT7-PTWD7-QF07J-M",
+   "accountId": "a4dd6689a787b7c9dfd30bdbd2229cbb"
+  },
+  {
+   "hex": "9d1753132aafc1b3d9ce0b6eb4d6dfe0",
+   "code": "KMBN64SANZ0V7PEE1DQB9NPZW0",
+   "formatted": "KMBN6-4SANZ-0V7PE-E1DQB-9NPZW-0",
+   "accountId": "755d4be89437c2e06dd1992a75a80370"
+  },
+  {
+   "hex": "d1cc5f15624c38ef1465b6b2cd53bcca",
+   "code": "T765Y5B29GWEY535PTSCTMXWS8",
+   "formatted": "T765Y-5B29G-WEY53-5PTSC-TMXWS-8",
+   "accountId": "f6dc0d72f263c894008cdffba2113a88"
+  },
+  {
+   "hex": "3c0784edd7f081112d81def3b2595e0f",
+   "code": "7G3R9VEQY20H2BC1VVSV4PAY1W",
+   "formatted": "7G3R9-VEQY2-0H2BC-1VVSV-4PAY1-W",
+   "accountId": "4e8dc5194579a16b5812cfed21837b65"
+  }
+ ]
+}
