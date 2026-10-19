@@ -1,5 +1,6 @@
 import Foundation
 import InventoryCore
+import InventoryTestSupport
 import Synchronization
 import Testing
 @testable import InventoryNetwork
@@ -43,7 +44,7 @@ private final class Recorder: Sendable {
 }
 
 private func client(_ server: StubServer, hub: ReachabilityHub, token: String? = "t") -> HouseholdClient {
-    HouseholdClient(origin: origin, token: token, transport: server.transport, reachability: hub, telemetry: TelemetryRecorder().telemetry)
+    HouseholdClient(origin: origin, token: token, transport: server.transport, reachability: hub, telemetry: RecordingTelemetry().telemetry)
 }
 
 /// A token-carrying read that gets `status` back.

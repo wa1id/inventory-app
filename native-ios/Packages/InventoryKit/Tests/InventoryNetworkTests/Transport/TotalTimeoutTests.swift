@@ -1,23 +1,8 @@
 import Foundation
+import InventoryCore
+import InventoryTestSupport
 import Testing
 @testable import InventoryNetwork
-
-/// A clock whose sleeps end at once: the deadline is always already past.
-private struct ImmediateClock: Clock {
-    struct Instant: InstantProtocol {
-        var offset: Duration
-        func advanced(by duration: Duration) -> Instant { Instant(offset: offset + duration) }
-        func duration(to other: Instant) -> Duration { other.offset - offset }
-        static func < (lhs: Instant, rhs: Instant) -> Bool { lhs.offset < rhs.offset }
-    }
-
-    var now: Instant { Instant(offset: .zero) }
-    var minimumResolution: Duration { .zero }
-
-    func sleep(until deadline: Instant, tolerance: Duration?) async throws {
-        try Task.checkCancellation()
-    }
-}
 
 @Suite("withTotalTimeout")
 struct TotalTimeoutTests {
@@ -40,13 +25,20 @@ struct TotalTimeoutTests {
     }
 
     @Test("uses the injected clock")
-    func usesTheInjectedClock() async {
-        await #expect(throws: DeadlineExceeded.self) {
-            try await withTotalTimeout(.seconds(3600), clock: ImmediateClock()) {
+    func usesTheInjectedClock() async throws {
+        let clock = ManualClock()
+        let exchange = Task {
+            try await withTotalTimeout(.seconds(3600), clock: clock) {
                 try await Task.sleep(for: .seconds(10))
                 return 1
             }
         }
+        try await clock.waitForSleepers()
+        #expect(clock.nextDeadline == ManualClock.Instant(offset: .seconds(3600)))
+        await clock.advance(by: .seconds(3599))
+        #expect(clock.pendingSleeperCount == 1)
+        await clock.advance(by: .seconds(1))
+        await #expect(throws: DeadlineExceeded.self) { try await exchange.value }
     }
 
     @Test("a body still arriving when the clock runs out is a deadline, through a real URLSession")
@@ -130,11 +122,13 @@ struct TransportFailureTests {
         #expect(cancellation == .cancelled)
     }
 
-    @Test("telemetry names URLSession's errors URLError")
-    func errorClass() {
-        #expect(errorClassName(URLError(.timedOut)) == "URLError")
-        #expect(errorClassName(NSError(domain: NSURLErrorDomain, code: -1009)) == "URLError")
-        #expect(errorClassName(CancellationError()) == "CancellationError")
+    @Test("telemetry names a transport's bridged NSError URLError, through InventoryCore's errorClass")
+    func urlErrorClass() async {
+        let telemetry = RecordingTelemetry()
+        let failing = ThrowingTransport(error: NSError(domain: NSURLErrorDomain, code: NSURLErrorNotConnectedToInternet))
+        let client = HouseholdClient(origin: "https://a.example", token: "t", transport: failing, telemetry: telemetry.telemetry)
+        _ = try? await client.send(HouseholdRequest(path: "/v1/spaces"))
+        #expect(telemetry.entries == [.init(level: "error", name: "household_fetch_failed", payload: ["errorClass": .string("URLError")])])
     }
 }
 
@@ -158,6 +152,24 @@ struct WireHelperTests {
         #expect(configuration.timeoutIntervalForRequest > 60)
     }
 
+    /// Every network test talks to a StubServer, whose sessions start from InventoryTestSupport's
+    /// own configuration rather than this module's; they only prove what production does while
+    /// the two agree.
+    @Test("the stub server's sessions are configured like production's")
+    func stubSessionsMatchProduction() {
+        let production = URLSessionTransport.makeConfiguration()
+        let stub = StubServer.makeConfiguration()
+        #expect((stub.urlCache == nil) == (production.urlCache == nil))
+        #expect(stub.requestCachePolicy == production.requestCachePolicy)
+        #expect((stub.httpCookieStorage == nil) == (production.httpCookieStorage == nil))
+        #expect(stub.httpShouldSetCookies == production.httpShouldSetCookies)
+        #expect(stub.httpCookieAcceptPolicy == production.httpCookieAcceptPolicy)
+        #expect(stub.waitsForConnectivity == production.waitsForConnectivity)
+        #expect(stub.timeoutIntervalForRequest == production.timeoutIntervalForRequest)
+        #expect(stub.timeoutIntervalForResource == production.timeoutIntervalForResource)
+        #expect(stub.httpAdditionalHeaders == nil && production.httpAdditionalHeaders == nil)
+    }
+
     @Test("requests never use a cache and their idle timeout outlasts the deadline")
     func requestDefaults() throws {
         let request = URLRequest(url: try #require(URL(string: "https://a.example")), method: "PUT", deadline: .seconds(60))
@@ -174,15 +186,21 @@ struct WireHelperTests {
         (#""\"\ud83d""#, "\"\u{FFFD}"), (#""x\uD83D""#, "x\u{FFFD}"),
     ])
     func loneSurrogates(json: String, expected: String) {
-        #expect(WireJSON.parse(Data(json.utf8)) == .string(expected), "\(json)")
+        #expect(JSONValue.parse(Data(json.utf8)) == .string(expected), "\(json)")
     }
 
     @Test("a body that is broken for another reason stays broken")
     func otherBreakageStaysBroken() {
-        #expect(WireJSON.parse(Data(#"{"a":"\ud83d"#.utf8)) == nil)
-        #expect(WireJSON.parse(Data(#"{"a":"\ud83d"} x"#.utf8)) == nil)
-        #expect(WireJSON.parse(Data(#"{"a":"\q"}"#.utf8)) == nil)
-        #expect(WireJSON.replacingLoneSurrogateEscapes(in: Data(#"{"a":"\ud83d\udd27"}"#.utf8)) == nil)
+        #expect(JSONValue.parse(Data(#"{"a":"\ud83d"#.utf8)) == nil)
+        #expect(JSONValue.parse(Data(#"{"a":"\ud83d"} x"#.utf8)) == nil)
+        #expect(JSONValue.parse(Data(#"{"a":"\q"}"#.utf8)) == nil)
+    }
+
+    @Test("a body is read as response.json() reads it: a UTF-8 BOM is dropped, invalid UTF-8 is refused")
+    func bodyDecoding() {
+        #expect(JSONValue.parse(Data([0xEF, 0xBB, 0xBF]) + Data(#"{"a":1}"#.utf8)) == .object(["a": .number(1)]))
+        #expect(JSONValue.parse(Data([0x22, 0xFF, 0x22])) == nil)
+        #expect(JSONValue.parse(Data()) == nil)
     }
 
     @Test("HTTPResponse reads headers case-insensitively")

@@ -13,7 +13,7 @@ import os
 /// - for an error, log its type name (``errorClass(of:)``), never
 ///   `localizedDescription`, which can carry user text or paths.
 ///
-/// Telemetry has its own `telemetry` category (`DebugLogSink`).
+/// Telemetry has its own `telemetry` category, written by `DebugLogSink`.
 public enum InventoryLog {
     public static let subsystem = "com.wystudio.inventory"
 
@@ -27,4 +27,6 @@ public enum InventoryLog {
     public static let sync = Logger(subsystem: subsystem, category: "sync")
     /// Photo recognition requests.
     public static let recognition = Logger(subsystem: subsystem, category: "recognition")
+    /// Telemetry events and errors, after redaction (`DebugLogSink`, debug builds only).
+    public static let telemetry = Logger(subsystem: subsystem, category: "telemetry")
 }

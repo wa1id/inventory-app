@@ -1,6 +1,7 @@
 import Foundation
 import GRDB
 import InventoryCore
+import InventoryTestSupport
 import Testing
 @testable import InventoryStorage
 
@@ -447,7 +448,7 @@ struct QrPersistenceTests {
 struct DurabilityTests {
     @Test("keeps inventory after closing and reopening the database file")
     func survivesReopen() async throws {
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let path = scratch.path("inventory-test.db")
 
         let first = try await LocalRepositories.initialize(DatabaseStore(path: path))

@@ -19,7 +19,7 @@ public actor ImageStore {
     public nonisolated let resolver: PhotoPathResolver
     private nonisolated let freeSpace: @Sendable () throws -> Int64?
     private nonisolated let makePhotoId: @Sendable () -> String
-    private nonisolated let telemetry: (any TelemetrySink)?
+    private nonisolated let telemetry: TelemetryReporter
 
     /// Image format and extension of every file this store writes (RN `IMAGE_EXTENSION`).
     public static let fileExtension = "webp"
@@ -44,7 +44,7 @@ public actor ImageStore {
             try Self.systemFreeSize(of: documents)
         }
         self.makePhotoId = makePhotoId
-        self.telemetry = telemetry
+        self.telemetry = TelemetryReporter(sink: telemetry)
     }
 
     /// The `cropToAspect` that keeps exactly what the camera preview showed (DECISIONS U7, 05 C4):
@@ -208,11 +208,11 @@ public actor ImageStore {
     // MARK: Internals
 
     private nonisolated func logEvent(_ name: String, _ payload: TelemetryPayload) {
-        if let telemetry { telemetry.event(name, Telemetry.redact(payload)) } else { Telemetry.logEvent(name, payload) }
+        telemetry.event(name, payload)
     }
 
     private nonisolated func logError(_ name: String, _ payload: TelemetryPayload) {
-        if let telemetry { telemetry.error(name, Telemetry.redact(payload)) } else { Telemetry.logError(name, payload) }
+        telemetry.error(name, payload)
     }
 
     private func store(_ source: ImageSource, cropToAspect aspect: CGSize?) throws -> StoredImage {

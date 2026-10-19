@@ -1,0 +1,212 @@
+{
+ "duration": {
+  "press": 100,
+  "toastIn": 160,
+  "toastOut": 120,
+  "expand": 180,
+  "stepSwap": 180,
+  "reticleLock": 250,
+  "focusSpot": 700,
+  "shutterFlash": 120
+ },
+ "delay": {
+  "skeleton": 180,
+  "spinner": 150,
+  "bootCaption": 400,
+  "reconnect": 2500,
+  "searchDebounce": 200,
+  "searchSkeleton": 600,
+  "toast": 5000,
+  "toastWithAction": 9000,
+  "stepRepeat": 400,
+  "stepRepeatEvery": 80
+ },
+ "easing": {
+  "settle": {
+   "bezier": [
+    0.2,
+    0.8,
+    0.2,
+    1
+   ]
+  },
+  "out": {
+   "out": "cubic"
+  },
+  "exit": {
+   "bezier": [
+    0.4,
+    0,
+    1,
+    1
+   ]
+  }
+ },
+ "motionMs": [
+  {
+   "ms": 100,
+   "reduced": false,
+   "result": 100
+  },
+  {
+   "ms": 100,
+   "reduced": true,
+   "result": 0
+  },
+  {
+   "ms": 160,
+   "reduced": false,
+   "result": 160
+  },
+  {
+   "ms": 160,
+   "reduced": true,
+   "result": 0
+  },
+  {
+   "ms": 120,
+   "reduced": false,
+   "result": 120
+  },
+  {
+   "ms": 120,
+   "reduced": true,
+   "result": 0
+  },
+  {
+   "ms": 180,
+   "reduced": false,
+   "result": 180
+  },
+  {
+   "ms": 180,
+   "reduced": true,
+   "result": 0
+  },
+  {
+   "ms": 180,
+   "reduced": false,
+   "result": 180
+  },
+  {
+   "ms": 180,
+   "reduced": true,
+   "result": 0
+  },
+  {
+   "ms": 250,
+   "reduced": false,
+   "result": 250
+  },
+  {
+   "ms": 250,
+   "reduced": true,
+   "result": 0
+  },
+  {
+   "ms": 700,
+   "reduced": false,
+   "result": 700
+  },
+  {
+   "ms": 700,
+   "reduced": true,
+   "result": 0
+  },
+  {
+   "ms": 120,
+   "reduced": false,
+   "result": 120
+  },
+  {
+   "ms": 120,
+   "reduced": true,
+   "result": 0
+  }
+ ],
+ "haptics": {
+  "step": [
+   [
+    "selectionAsync"
+   ]
+  ],
+  "reachedZero": [
+   [
+    "impactAsync",
+    "light"
+   ]
+  ],
+  "choice": [
+   [
+    "selectionAsync"
+   ]
+  ],
+  "undo": [
+   [
+    "selectionAsync"
+   ]
+  ],
+  "success": [
+   [
+    "notificationAsync",
+    "success"
+   ]
+  ],
+  "warning": [
+   [
+    "notificationAsync",
+    "warning"
+   ]
+  ],
+  "error": [
+   [
+    "notificationAsync",
+    "error"
+   ]
+  ],
+  "tap": [
+   [
+    "impactAsync",
+    "light"
+   ]
+  ],
+  "longPress": [
+   [
+    "impactAsync",
+    "medium"
+   ]
+  ]
+ },
+ "confirms": [
+  {
+   "title": "Delete “Cordless drill”?",
+   "body": "This cannot be undone.",
+   "buttons": [
+    {
+     "text": "Cancel",
+     "style": "cancel"
+    },
+    {
+     "text": "Delete",
+     "style": "destructive"
+    }
+   ],
+   "cancelable": true
+  },
+  {
+   "title": "Discard?",
+   "body": "Changes go.",
+   "buttons": [
+    {
+     "text": "Keep editing",
+     "style": "cancel"
+    },
+    {
+     "text": "Discard",
+     "style": "default"
+    }
+   ],
+   "cancelable": true
+  }
+ ]
+}

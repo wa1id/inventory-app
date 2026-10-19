@@ -1,5 +1,6 @@
 import Foundation
 import InventoryCore
+import InventoryTestSupport
 import Testing
 @testable import InventoryNetwork
 
@@ -17,7 +18,7 @@ private func client(
     endpoint: String? = endpoint,
     key: String? = nil,
     timeout: Duration = .seconds(5),
-    telemetry: TelemetryRecorder = TelemetryRecorder()
+    telemetry: RecordingTelemetry = RecordingTelemetry()
 ) -> SyncClient {
     SyncClient(
         recoveryCode: code, endpoint: endpoint, key: key, timeout: timeout,
@@ -72,7 +73,7 @@ struct SyncClientRequestTests {
     @Test("uploads a photo with its sniffed type and the raw bytes")
     func uploadsAPhoto() async throws {
         let server = StubServer(reply: .json(201, #"{"id":"\#(photoId)","size":21}"#))
-        let telemetry = TelemetryRecorder()
+        let telemetry = RecordingTelemetry()
         let result = await client(server, telemetry: telemetry).uploadPhoto(id: photoId, bytes: webp)
         #expect(result.failureReason == nil)
         let request = try #require(server.lastRequest)
@@ -94,7 +95,7 @@ struct SyncClientRequestTests {
     @Test("a failed photo upload is logged with its reason")
     func failedUploadIsLogged() async throws {
         let server = StubServer(reply: .json(507, #"{"error":"Storage limit reached for this account."}"#))
-        let telemetry = TelemetryRecorder()
+        let telemetry = RecordingTelemetry()
         #expect(await client(server, telemetry: telemetry).uploadPhoto(id: photoId, bytes: webp).failureReason == .quotaExceeded)
         let entry = try #require(telemetry.entries.first)
         #expect(entry.level == "error" && entry.name == "photo_upload_failed")
@@ -113,7 +114,7 @@ struct SyncClientRequestTests {
     func uploadsABackup() async throws {
         let summary = #"{"id":"1767225600000","size":4,"capturedAt":1767225600000,"schemaVersion":7}"#
         let server = StubServer(reply: .json(201, summary))
-        let telemetry = TelemetryRecorder()
+        let telemetry = RecordingTelemetry()
         let checksum = String(repeating: "ab", count: 32)
         let result = await client(server, telemetry: telemetry).uploadBackup(Data([1, 2, 3, 4]), schemaVersion: 7, checksum: checksum)
         #expect(result == .success(BackupSummary(id: "1767225600000", size: 4, capturedAt: 1_767_225_600_000, schemaVersion: 7)))
@@ -140,7 +141,7 @@ struct SyncClientRequestTests {
     ])
     func malformedSummary(body: String) async {
         let server = StubServer(reply: .json(201, body))
-        let telemetry = TelemetryRecorder()
+        let telemetry = RecordingTelemetry()
         #expect(await client(server, telemetry: telemetry).uploadBackup(Data([1]), schemaVersion: 7, checksum: nil) == .failure(.malformedResponse))
         #expect(telemetry.entries.isEmpty)
     }
@@ -148,7 +149,7 @@ struct SyncClientRequestTests {
     @Test("a failed snapshot upload is logged with its schema version")
     func failedBackupIsLogged() async throws {
         let server = StubServer(reply: .json(422, #"{"error":"Snapshot failed its integrity check."}"#))
-        let telemetry = TelemetryRecorder()
+        let telemetry = RecordingTelemetry()
         #expect(await client(server, telemetry: telemetry).uploadBackup(Data([1]), schemaVersion: 7, checksum: nil) == .failure(.corrupted))
         let entry = try #require(telemetry.entries.first)
         #expect(entry.name == "backup_upload_failed")
@@ -285,7 +286,7 @@ struct SyncClientFailureTests {
         for error in [URLError(.badServerResponse), URLError(.cannotParseResponse)] as [any Error & Sendable] {
             let sync = SyncClient(
                 recoveryCode: code, endpoint: endpoint, key: nil,
-                transport: ThrowingTransport(error: error), telemetry: TelemetryRecorder().telemetry
+                transport: ThrowingTransport(error: error), telemetry: RecordingTelemetry().telemetry
             )
             #expect(await sync.deletePhoto(id: photoId).failureReason == .serverError)
         }

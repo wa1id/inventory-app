@@ -1,4 +1,5 @@
 import Foundation
+import InventoryCore
 
 /// What this phone held of its own before it first joined a household, offered for copying in.
 public struct ImportOffer: Sendable, Equatable, Hashable {

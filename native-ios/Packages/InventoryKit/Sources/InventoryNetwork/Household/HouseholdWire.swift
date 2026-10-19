@@ -5,26 +5,14 @@ import InventoryCore
 // types do not already cover. Responses decode into the domain types wherever
 // one exists (`Space`, `ItemWithContext`, …).
 
-/// One field of a PATCH body: left out, sent as JSON `null`, or sent with a value.
-///
-/// The home server tells a missing key from a `null` one: `category: null`
-/// clears an item's category while a missing `category` leaves it alone (04 §3.7).
-/// Synthesized `Encodable` cannot express that, so patch bodies encode this by hand.
-public enum PatchField<Value> {
-    /// The key is omitted (RN `undefined`).
-    case unchanged
-    /// The key is sent as `null`.
-    case clear
-    /// The key is sent with this value.
-    case set(Value)
-}
-
-extension PatchField: Sendable where Value: Sendable {}
-extension PatchField: Equatable where Value: Equatable {}
-extension PatchField: Hashable where Value: Hashable {}
-
 extension KeyedEncodingContainer {
-    mutating func encode<Value: Encodable>(_ field: PatchField<Value>, forKey key: Key) throws {
+    /// One tri-state field of a PATCH body: `.unchanged` leaves the key out (RN `undefined`),
+    /// `.clear` sends JSON `null`, `.set` sends the value.
+    ///
+    /// The home server tells a missing key from a `null` one: `category: null`
+    /// clears an item's category while a missing `category` leaves it alone (04 §3.7).
+    /// Synthesized `Encodable` cannot express that, so patch bodies encode this by hand.
+    mutating func encode<Value: Encodable>(_ field: FieldUpdate<Value>, forKey key: Key) throws {
         switch field {
         case .unchanged: break
         case .clear: try encodeNil(forKey: key)
@@ -79,11 +67,11 @@ public enum HouseholdBody {
 
     /// `PATCH /v1/containers/:id` (RN `UpdateContainerInput`). `name` clears with `null`.
     public struct ContainerPatch: Encodable, Sendable, Hashable {
-        public var name: PatchField<String>
+        public var name: FieldUpdate<String>
         public var visualType: ContainerVisualType?
         public var spaceId: String?
 
-        public init(name: PatchField<String> = .unchanged, visualType: ContainerVisualType? = nil, spaceId: String? = nil) {
+        public init(name: FieldUpdate<String> = .unchanged, visualType: ContainerVisualType? = nil, spaceId: String? = nil) {
             self.name = name
             self.visualType = visualType
             self.spaceId = spaceId
@@ -156,9 +144,9 @@ public enum HouseholdBody {
     public struct ItemPatch: Encodable, Sendable, Hashable {
         public var containerId: String?
         public var name: String?
-        public var category: PatchField<String>
+        public var category: FieldUpdate<String>
         public var quantity: Int?
-        public var notes: PatchField<String>
+        public var notes: FieldUpdate<String>
         public var tags: [String]?
         /// The optimistic lock, sent as `updatedAt`: a stale value is answered 409.
         public var expectedUpdatedAt: Int64?
@@ -166,9 +154,9 @@ public enum HouseholdBody {
         public init(
             containerId: String? = nil,
             name: String? = nil,
-            category: PatchField<String> = .unchanged,
+            category: FieldUpdate<String> = .unchanged,
             quantity: Int? = nil,
-            notes: PatchField<String> = .unchanged,
+            notes: FieldUpdate<String> = .unchanged,
             tags: [String]? = nil,
             expectedUpdatedAt: Int64? = nil
         ) {
@@ -264,7 +252,7 @@ public struct HouseholdDevice: Sendable, Hashable, Identifiable {
 
     /// RN `toDevice`: skip entries without string `id` and `name`; coerce the
     /// timestamps with JS `Number()`, unreadable `createdAt` → 0, `lastSeenAt` → nil.
-    init?(wire value: WireJSON) {
+    init?(wire value: JSONValue) {
         guard let record = value.objectValue,
               let id = record["id"]?.stringValue,
               let name = record["name"]?.stringValue
@@ -317,7 +305,7 @@ public struct HouseholdUploadedPhoto: Sendable, Hashable {
         self.byteSize = byteSize
     }
 
-    init?(wire value: WireJSON) {
+    init?(wire value: JSONValue) {
         guard let record = value.objectValue,
               let id = record["id"]?.stringValue,
               let uri = record["uri"]?.stringValue
@@ -351,7 +339,7 @@ public struct HouseholdImportSummary: Sendable, Hashable {
         self.photos = photos
     }
 
-    init(wire value: WireJSON) {
+    init(wire value: JSONValue) {
         let record = value.objectValue ?? [:]
         func count(_ key: String) -> Int? { record[key]?.numberValue.flatMap { Int(exactly: $0) } }
         self.init(spaces: count("spaces"), containers: count("containers"), items: count("items"), photos: count("photos"))

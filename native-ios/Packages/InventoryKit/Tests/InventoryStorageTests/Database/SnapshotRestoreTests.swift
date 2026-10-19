@@ -1,6 +1,7 @@
 import Foundation
 import GRDB
 import InventoryCore
+import InventoryTestSupport
 import Testing
 @testable import InventoryStorage
 #if canImport(SQLite3)
@@ -15,7 +16,7 @@ struct SnapshotRestoreTests {
 
     @Test("reopens a file and still has the rows")
     func reopensFile() async throws {
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let path = scratch.path("inventory.db")
         let first = try await LocalRepositories.initialize(DatabaseStore(path: path))
         let space = try await first.spaces.create(CreateSpaceInput(name: "Garage", icon: "car", color: "#5B8DEF"))
@@ -161,7 +162,7 @@ struct SnapshotRestoreTests {
         migrations.append(Migration(version: 3, name: "broken", up: "SELECT nope FROM nowhere;"))
         struct DiskFull: Error {}
         do {
-            try store.restore(from: snapshot, migrations: migrations, rollback: { _, _ in throw DiskFull() })
+            _ = try store.restore(from: snapshot, migrations: migrations, rollback: { _, _ in throw DiskFull() })
             Issue.record("expected the restore to fail")
         } catch SnapshotError.rollbackFailed(let detail) {
             #expect(detail.contains("nowhere"))
@@ -175,7 +176,7 @@ struct SnapshotRestoreTests {
 
     @Test("a restore into the live WAL file survives closing and reopening it")
     func restoreIsDurable() async throws {
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let path = scratch.path("inventory.db")
         let first = try await LocalRepositories.initialize(DatabaseStore(path: path))
         let (space, container) = try await seedSpaceAndContainer(first)
@@ -202,7 +203,7 @@ struct SnapshotRestoreTests {
     func serializeIsAvailable() throws {
         let store = try DatabaseStore.temporary()
         try store.migrate()
-        let image = try store.queue.writeWithoutTransaction { db in DatabaseStore.serialize(db) }
+        let image = store.queue.writeWithoutTransaction { db in DatabaseStore.serialize(db) }
         let bytes = try #require(image)
         #expect(bytes.prefix(16) == DatabaseStore.sqliteHeader)
         // Header bytes 18-19 say WAL, as in the snapshots the Expo build uploaded.
@@ -231,7 +232,7 @@ struct SnapshotRestoreTests {
 
         let snapshot = try await store.snapshot()
 
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let file = scratch.path("copy.db")
         try snapshot.write(to: URL(fileURLWithPath: file))
         let copy = try DatabaseQueue(path: file)

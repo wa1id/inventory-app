@@ -1,4 +1,6 @@
 import Foundation
+import InventoryCore
+import InventoryTestSupport
 import Synchronization
 import Testing
 @testable import InventoryNetwork
@@ -148,7 +150,7 @@ func expectRequest(
         #expect(sent.header("content-type") == nil, "unexpected Content-Type", sourceLocation: sourceLocation)
     }
     if let json = exchange.request.json {
-        #expect(sent.json == WireJSON.parse(Data(json.utf8)), "JSON body", sourceLocation: sourceLocation)
+        #expect(sent.json == JSONValue.parse(Data(json.utf8)), "JSON body", sourceLocation: sourceLocation)
     } else if let base64 = exchange.request.base64 {
         #expect(sent.body == Data(base64Encoded: base64), "byte body", sourceLocation: sourceLocation)
     } else {

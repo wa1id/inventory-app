@@ -1,4 +1,5 @@
 import Foundation
+import InventoryTestSupport
 import Testing
 @testable import InventoryStorage
 
@@ -9,7 +10,7 @@ struct LegacyImportTests {
     static let storePath = LegacyAsyncStorageReaderTests.storePath
 
     func makeImport(
-        _ container: TemporaryContainer, _ defaults: TemporaryDefaults, protectedData: Bool = true
+        _ container: TemporaryDirectory, _ defaults: TemporaryDefaults, protectedData: Bool = true
     ) -> LegacyImport {
         LegacyImport(
             defaults: defaults.defaults, reader: LegacyAsyncStorageReaderTests.reader(container),
@@ -18,7 +19,7 @@ struct LegacyImportTests {
 
     @Test("imports the seven keys verbatim, including the overflow value")
     func importsSevenKeys() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         let suite = try TemporaryDefaults()
         try LegacyAsyncStorageReaderTests.installFixture(in: container)
         let expected = try LegacyAsyncStorageReaderTests.expectedFixtureValues()
@@ -34,7 +35,7 @@ struct LegacyImportTests {
 
     @Test("the imported strings read back through the preference stores with RN's rules")
     func readersAfterImport() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         let suite = try TemporaryDefaults()
         try LegacyAsyncStorageReaderTests.installFixture(in: container)
         makeImport(container, suite).runIfNeeded()
@@ -56,7 +57,7 @@ struct LegacyImportTests {
 
     @Test("ignores keys that are not one of the seven")
     func ignoresUnknownKeys() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         let suite = try TemporaryDefaults()
         try LegacyAsyncStorageReaderTests.installFixture(in: container)
         makeImport(container, suite).runIfNeeded()
@@ -66,7 +67,7 @@ struct LegacyImportTests {
 
     @Test("never overwrites a value native already has")
     func neverOverwrites() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         let suite = try TemporaryDefaults()
         try LegacyAsyncStorageReaderTests.installFixture(in: container)
         suite.defaults.set("[\"native\"]", forKey: PreferenceKey.recentPlaces)
@@ -83,7 +84,7 @@ struct LegacyImportTests {
 
     @Test("leaves the marker unset when the manifest cannot be read, and retries next launch")
     func unreadableManifestRetries() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         let suite = try TemporaryDefaults()
         try container.write(Data([0x7B, 0xFF, 0x7D]), to: Self.storePath + "/manifest.json")
 
@@ -99,7 +100,7 @@ struct LegacyImportTests {
 
     @Test("leaves the marker unset when an overflow file exists but is unreadable")
     func unreadableOverflow() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         let suite = try TemporaryDefaults()
         try LegacyAsyncStorageReaderTests.installFixture(in: container)
         try container.write(Data([0xC3, 0x28]), to: Self.storePath + "/9355fb19fd0f6f39f84680882e0638d7")
@@ -112,7 +113,7 @@ struct LegacyImportTests {
 
     @Test("an unreadable overflow file of a key that is not one of the seven does not block the import")
     func unrelatedUnreadableOverflow() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         let suite = try TemporaryDefaults()
         try container.write(
             Data(#"{"onboarding.completed.v1":"true","some.other.library.key":null}"#.utf8),
@@ -127,7 +128,7 @@ struct LegacyImportTests {
 
     @Test("reads nothing and leaves the marker unset while protected data is unavailable")
     func protectedDataUnavailable() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         let suite = try TemporaryDefaults()
         // Reading this manifest would fail; the outcome shows it was never read.
         try container.write(Data([0xFF]), to: Self.storePath + "/manifest.json")
@@ -138,7 +139,7 @@ struct LegacyImportTests {
 
     @Test("is a no-op once the marker is set")
     func noOpOnceMarked() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         let suite = try TemporaryDefaults()
         try LegacyAsyncStorageReaderTests.installFixture(in: container)
         suite.defaults.set(1, forKey: LegacyImport.markerKey)
@@ -158,7 +159,7 @@ struct LegacyImportTests {
 
     @Test("removes ExpoSystemUI.backgroundColor")
     func removesExpoSystemUIKey() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         let suite = try TemporaryDefaults()
         suite.defaults.set(15_658_734, forKey: "ExpoSystemUI.backgroundColor")
         #expect(makeImport(container, suite).runIfNeeded() == .imported(keys: []))
@@ -167,7 +168,7 @@ struct LegacyImportTests {
 
     @Test("a fresh install (no RN store) imports nothing and sets the marker")
     func freshInstall() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         let suite = try TemporaryDefaults()
         #expect(makeImport(container, suite).runIfNeeded() == .imported(keys: []))
         #expect(suite.defaults.integer(forKey: LegacyImport.markerKey) == 1)
@@ -175,7 +176,7 @@ struct LegacyImportTests {
 
     @Test("leaves the RN directory untouched")
     func leavesRNDirectory() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         let suite = try TemporaryDefaults()
         try LegacyAsyncStorageReaderTests.installFixture(in: container)
         let manifest = container.root.appending(path: Self.storePath + "/manifest.json")

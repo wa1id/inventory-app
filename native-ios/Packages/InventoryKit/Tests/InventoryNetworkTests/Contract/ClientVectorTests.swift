@@ -1,5 +1,6 @@
 import Foundation
 import InventoryCore
+import InventoryTestSupport
 import Testing
 @testable import InventoryNetwork
 
@@ -76,12 +77,12 @@ private struct ClientVectors: Decodable {
 
 /// What a call came to, in the vectors' terms.
 private enum Seen: Equatable {
-    case ok(WireJSON)
+    case ok(JSONValue)
     case http(Int, String)
     case conflict(Int64?)
 }
 
-private func seen<T>(_ work: () async throws -> T, map: (T) -> WireJSON) async -> Seen? {
+private func seen<T>(_ work: () async throws -> T, map: (T) -> JSONValue) async -> Seen? {
     do {
         return .ok(map(try await work()))
     } catch let error as HouseholdHttpError {
@@ -97,7 +98,7 @@ private func expected(_ outcome: ClientVectors.Outcome) throws -> Seen {
     switch outcome.kind {
     case "ok":
         let data = try JSONEncoder().encode(try #require(outcome.body))
-        return .ok(try #require(WireJSON.parse(data)))
+        return .ok(try #require(JSONValue.parse(data)))
     case "http":
         return .http(try #require(outcome.status), try #require(outcome.code))
     default:
@@ -115,7 +116,7 @@ struct ClientVectorTests {
     func householdRequest() async throws {
         for vector in try ClientVectors.load().household {
             let server = StubServer(reply: reply(status: vector.status, body: vector.body))
-            let client = HouseholdClient(origin: "https://inventory.example", token: "t", transport: server.transport, telemetry: TelemetryRecorder().telemetry)
+            let client = HouseholdClient(origin: "https://inventory.example", token: "t", transport: server.transport, telemetry: RecordingTelemetry().telemetry)
             let result = await seen({ try await client.object(HouseholdRequest(path: "/v1/x")) }, map: { $0.value })
             let want = try expected(vector.outcome)
             #expect(result == want, "status \(vector.status) body \(vector.body ?? "nil")")
@@ -126,7 +127,7 @@ struct ClientVectorTests {
     func devices() async throws {
         for vector in try ClientVectors.load().devices {
             let server = StubServer(reply: reply(status: 200, body: vector.body))
-            let client = HouseholdClient(origin: "https://inventory.example", token: "t", transport: server.transport, telemetry: TelemetryRecorder().telemetry)
+            let client = HouseholdClient(origin: "https://inventory.example", token: "t", transport: server.transport, telemetry: RecordingTelemetry().telemetry)
             let result = await seen({ try await client.listDevices() }) { devices in
                 .array(devices.map { device in
                     .object([
@@ -170,7 +171,7 @@ struct ClientVectorTests {
     @Test("String(), Number() and Number#toString agree with JS")
     func coercion() throws {
         for vector in try ClientVectors.load().coercion {
-            let value = try #require(WireJSON.parse(Data(vector.json.utf8)), "\(vector.json)")
+            let value = try #require(JSONValue.parse(Data(vector.json.utf8)), "\(vector.json)")
             #expect(value.jsString == vector.string, "String(\(vector.json))")
             let number = value.jsNumber
             switch vector.number {
@@ -181,7 +182,7 @@ struct ClientVectorTests {
             default: Issue.record("unexpected vector \(vector.json)")
             }
             if let numberString = vector.numberString, case .number(let raw) = value {
-                #expect(WireJSON.jsNumberString(raw) == numberString, "(\(vector.json)).toString()")
+                #expect(jsNumberString(raw) == numberString, "(\(vector.json)).toString()")
             }
         }
     }

@@ -1,6 +1,7 @@
 import Foundation
 import GRDB
 import InventoryCore
+import InventoryTestSupport
 import Testing
 @testable import InventoryStorage
 
@@ -140,7 +141,7 @@ struct MigrationTests {
 
     @Test("migrates a new file database to the latest schema")
     func migratesNewFile() throws {
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let store = try DatabaseStore(path: scratch.path("inventory.db"))
         let version = try store.migrate()
         #expect(version == Migration.latestSchemaVersion)
@@ -151,7 +152,7 @@ struct MigrationTests {
 
     @Test("a second migrate on the same file is a no-op")
     func secondMigrateIsNoOp() throws {
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let path = scratch.path("inventory.db")
         let first = try DatabaseStore(path: path)
         try first.migrate()

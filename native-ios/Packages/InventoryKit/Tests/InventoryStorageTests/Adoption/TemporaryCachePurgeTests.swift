@@ -1,11 +1,12 @@
 import Foundation
+import InventoryTestSupport
 import Testing
 @testable import InventoryStorage
 
 /// DECISIONS U11: only `Caches/{ImageManipulator,Camera,ImagePicker}` and `label-*.png` go.
 @Suite("TemporaryCachePurge")
 struct TemporaryCachePurgeTests {
-    static func populate(_ container: TemporaryContainer) throws {
+    static func populate(_ container: TemporaryDirectory) throws {
         for path in [
             "Library/Caches/ImageManipulator/2C1B0A9F.webp",
             "Library/Caches/Camera/0F1E2D3C.jpg",
@@ -27,7 +28,7 @@ struct TemporaryCachePurgeTests {
 
     @Test("purges the three RN temporary directories and the label share pictures, nothing else")
     func purgesOnlyTemporaries() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         try Self.populate(container)
 
         let removed = TemporaryCachePurge(caches: container.caches).purge()
@@ -52,13 +53,13 @@ struct TemporaryCachePurgeTests {
 
     @Test("an empty or missing Caches directory is fine")
     func nothingToPurge() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         #expect(TemporaryCachePurge(caches: container.caches).purge().isEmpty)
     }
 
     @Test("runs once per install")
     func runsOnce() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         let suite = try TemporaryDefaults()
         try Self.populate(container)
         let purge = TemporaryCachePurge(caches: container.caches)

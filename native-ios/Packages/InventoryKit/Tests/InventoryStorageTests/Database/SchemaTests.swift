@@ -1,6 +1,7 @@
 import Foundation
 import GRDB
 import InventoryCore
+import InventoryTestSupport
 import Testing
 @testable import InventoryStorage
 
@@ -103,8 +104,8 @@ struct SchemaTests {
 
     @Test("opens the live database in place, creating SQLite/ on a fresh install, and migrates it")
     func openLiveCreatesDirectory() throws {
-        let scratch = try ScratchDirectory()
-        let documents = scratch.url.appending(path: "Documents", directoryHint: .isDirectory)
+        let scratch = try TemporaryDirectory()
+        let documents = scratch.root.appending(path: "Documents", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: documents, withIntermediateDirectories: true)
 
         let store = try DatabaseStore.openLive(documents: documents)
@@ -116,8 +117,8 @@ struct SchemaTests {
 
     @Test("opens and migrates an upgraded phone's database off the caller's thread")
     func openLiveAsync() async throws {
-        let scratch = try ScratchDirectory()
-        let documents = scratch.url.appending(path: "Documents", directoryHint: .isDirectory)
+        let scratch = try TemporaryDirectory()
+        let documents = scratch.root.appending(path: "Documents", directoryHint: .isDirectory)
         let live = DatabaseStore.liveURL(documents: documents)
         try FileManager.default.createDirectory(at: live.deletingLastPathComponent(), withIntermediateDirectories: true)
         try FileManager.default.copyItem(at: DatabaseFixtures.url("historical/v6.db"), to: live)

@@ -1,5 +1,6 @@
 import Foundation
 import InventoryCore
+import InventoryTestSupport
 import Testing
 @testable import InventoryNetwork
 
@@ -14,7 +15,7 @@ private func client(_ server: StubServer, token: String? = nil, contract: Househ
         token: token ?? contract.token,
         transport: server.transport,
         reachability: hub,
-        telemetry: TelemetryRecorder().telemetry,
+        telemetry: RecordingTelemetry().telemetry,
         makeId: makeId ?? { newId() }
     )
 }
@@ -71,7 +72,7 @@ struct HouseholdPairingContractTests {
         let server = replay([try contract.exchange("pair")])
         let unpaired = HouseholdClient(
             origin: contract.origin + "//", token: nil, transport: server.transport,
-            telemetry: TelemetryRecorder().telemetry
+            telemetry: RecordingTelemetry().telemetry
         )
         let pairing = try await unpaired.pair(bootstrapSecret: "MMWKY-M2H78-ABCDE-FGHJK-MNPQR-S", deviceName: "  Kitchen iPhone  ")
         expectRequest(server.lastRequest, matches: try contract.exchange("pair"))

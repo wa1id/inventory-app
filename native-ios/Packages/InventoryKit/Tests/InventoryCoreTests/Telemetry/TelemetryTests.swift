@@ -1,18 +1,6 @@
-import Synchronization
+import InventoryTestSupport
 import Testing
 @testable import InventoryCore
-
-private final class RecordingSink: TelemetrySink {
-    let events = Mutex<[(level: String, name: String, payload: TelemetryPayload)]>([])
-
-    func event(_ name: String, _ payload: TelemetryPayload) {
-        events.withLock { $0.append(("event", name, payload)) }
-    }
-
-    func error(_ name: String, _ payload: TelemetryPayload) {
-        events.withLock { $0.append(("error", name, payload)) }
-    }
-}
 
 // RN: src/services/ai/__tests__/recognition.test.ts "keeps only allowlisted measurement keys"
 @Test func keepsOnlyAllowlistedMeasurementKeys() {
@@ -26,19 +14,53 @@ private final class RecordingSink: TelemetrySink {
     #expect(safe == ["latencyMs": .int(120), "outcome": .string("success")])
 }
 
+@Suite("TelemetryReporter")
+struct TelemetryReporterTests {
+    @Test("an injected sink gets exactly what the process-wide one would: redacted, in order")
+    func injectedSink() {
+        let sink = RecordingTelemetry()
+        let reporter = TelemetryReporter(sink: sink)
+        reporter.event("item_created", ["hasPhoto": .bool(true), "name": .string("Cordless drill")])
+        reporter.error("item_create_failed", ["errorClass": .string("offline"), "notes": .string("x")])
+        reporter.event("item_moved")
+        #expect(sink.entries == [
+            RecordingTelemetry.Entry(level: "event", name: "item_created", payload: ["hasPhoto": .bool(true)]),
+            RecordingTelemetry.Entry(level: "error", name: "item_create_failed", payload: ["errorClass": .string("offline")]),
+            RecordingTelemetry.Entry(level: "event", name: "item_moved"),
+        ])
+    }
+}
+
 @Suite(.serialized) struct TelemetrySinkTests {
     @Test func routesRedactedEventsAndErrorsToTheSink() {
-        let sink = RecordingSink()
+        let sink = RecordingTelemetry()
         Telemetry.setSink(sink)
         defer { Telemetry.setSink(DebugLogSink()) }
 
         Telemetry.logEvent("search_performed", ["termCount": .int(2), "query": .string("drill")])
         Telemetry.logError("recognition_failed", ["statusCode": .int(500), "body": .string("x")])
 
-        let events = sink.events.withLock { $0 }
-        #expect(events.count == 2)
-        #expect(events[0].level == "event" && events[0].name == "search_performed")
-        #expect(events[0].payload == ["termCount": .int(2)])
-        #expect(events[1].level == "error" && events[1].payload == ["statusCode": .int(500)])
+        // Only these two: another suite may log through the shared sink while it is swapped.
+        let mine = sink.entries.filter { ["search_performed", "recognition_failed"].contains($0.name) }
+        #expect(mine == [
+            RecordingTelemetry.Entry(level: "event", name: "search_performed", payload: ["termCount": .int(2)]),
+            RecordingTelemetry.Entry(level: "error", name: "recognition_failed", payload: ["statusCode": .int(500)]),
+        ])
+    }
+
+    @Test("the shared reporter is the process-wide sink")
+    func sharedReporter() {
+        let sink = RecordingTelemetry()
+        Telemetry.setSink(sink)
+        defer { Telemetry.setSink(DebugLogSink()) }
+
+        TelemetryReporter.shared.event("household_left", ["itemName": .string("Drill")])
+        TelemetryReporter.shared.error("restore_failed", ["durationMs": .int(4)])
+
+        let mine = sink.entries.filter { ["household_left", "restore_failed"].contains($0.name) }
+        #expect(mine == [
+            RecordingTelemetry.Entry(level: "event", name: "household_left"),
+            RecordingTelemetry.Entry(level: "error", name: "restore_failed", payload: ["durationMs": .int(4)]),
+        ])
     }
 }

@@ -122,7 +122,7 @@ public struct HouseholdClient: Sendable {
                 throw HouseholdHttpError(status: 0, code: "timeout")
             case .offline, .other:
                 reachability?.report(.offline)
-                telemetry.error("household_fetch_failed", ["errorClass": .string(errorClassName(error))])
+                telemetry.error("household_fetch_failed", ["errorClass": .string(errorClass(of: error))])
                 throw HouseholdHttpError(status: 0, code: "offline")
             }
         }
@@ -167,22 +167,25 @@ public struct HouseholdClient: Sendable {
     /// an empty body or any other value), after RN's error mapping. `data` is the
     /// body to decode keyed shapes from: the object's JSON, or `{}`.
     ///
-    /// 1. A non-empty body must parse as JSON, whatever the status, or it is
-    ///    `(status, "invalid_json")`: a Cloudflare HTML 52x page is `(530, "invalid_json")`.
+    /// 1. A non-empty body must parse as JSON (`JSON.parse`, exactly), whatever the status,
+    ///    or it is `(status, "invalid_json")`: a Cloudflare HTML 52x page is `(530, "invalid_json")`.
     /// 2. 409 throws ``ConflictError`` with JS `Number(body.updatedAt)` when finite.
     /// 3. Another non-2xx throws `(status, String(body.error))`, or `(status, "http_<status>")`
     ///    without an `error` key.
-    func object(_ request: HouseholdRequest) async throws -> (status: Int, value: WireJSON, data: Data) {
+    ///
+    /// `data` is the parsed object written back out (`JSON.stringify`), not the raw body, so
+    /// the `Decodable` pass sees exactly what `JSON.parse` saw: the last of duplicate keys,
+    /// numbers already rounded as JS rounds them, and a lone surrogate escape (which the
+    /// servers write when `slice` cuts an emoji, and `JSONDecoder` refuses) already U+FFFD.
+    func object(_ request: HouseholdRequest) async throws -> (status: Int, value: JSONValue, data: Data) {
         let response = try await send(request)
         if response.status == 204 { return (204, .object([:]), Self.emptyObject) }
-        var parsed = WireJSON.object([:])
-        var text = response.body
+        var parsed = JSONValue.object([:])
         if !response.body.isEmpty {
-            guard let body = WireJSON.parseText(response.body) else {
+            guard let body = JSONValue.parse(response.body) else {
                 throw HouseholdHttpError(status: response.status, code: "invalid_json")
             }
-            parsed = body.value
-            text = body.text
+            parsed = body
         }
         if response.status == 409 {
             throw ConflictError(updatedAt: Self.conflictUpdatedAt(parsed))
@@ -193,7 +196,7 @@ public struct HouseholdClient: Sendable {
         }
         switch parsed {
         case .object:
-            return (response.status, parsed, text.isEmpty ? Self.emptyObject : text)
+            return (response.status, parsed, Data(parsed.jsonText.utf8))
         case .array:
             // `typeof [] === 'object'`, so RN returns the array itself; its keyed
             // reads (`body.spaces`) are undefined, which decoding `{}` reproduces.
@@ -207,7 +210,7 @@ public struct HouseholdClient: Sendable {
 
     /// RN: `'updatedAt' in body ? Number(body.updatedAt) : null`, kept when finite.
     /// `null` → 0, `"11"` → 11, junk → nil.
-    static func conflictUpdatedAt(_ body: WireJSON) -> Int64? {
+    static func conflictUpdatedAt(_ body: JSONValue) -> Int64? {
         guard let value = body.objectValue?["updatedAt"] else { return nil }
         return value.jsNumber?.truncatedInt64
     }

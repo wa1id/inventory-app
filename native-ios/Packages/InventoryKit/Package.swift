@@ -16,11 +16,14 @@ let package = Package(
         .library(name: "InventoryServices", targets: ["InventoryServices"]),
         .library(name: "InventoryAppModels", targets: ["InventoryAppModels"]),
     ],
+    // Pinned exactly: the XcodeGen-generated app project resolves packages on its own and never
+    // reads this package's Package.resolved, so a range could build the app against a newer
+    // release than the one `swift test` ran.
     dependencies: [
-        .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.9.0"),
+        .package(url: "https://github.com/groue/GRDB.swift.git", exact: "7.11.1"),
         // libwebp alone (no image framework) for encoding photos as WebP: ImageIO decodes WebP
         // but cannot encode it (docs/spec/05-capture-ai.md C3). Used by InventoryServices only.
-        .package(url: "https://github.com/SDWebImage/libwebp-Xcode.git", from: "1.6.0"),
+        .package(url: "https://github.com/SDWebImage/libwebp-Xcode.git", exact: "1.6.0"),
     ],
     targets: [
         // User-facing copy: Localizable.xcstrings generated from src/i18n/strings.ts,
@@ -54,15 +57,20 @@ let package = Package(
         // @MainActor @Observable models the SwiftUI views bind to.
         .target(
             name: "InventoryAppModels",
-            dependencies: ["InventoryCore", "InventoryStorage", "InventoryNetwork", "InventoryServices"]
+            dependencies: ["InventoryStrings", "InventoryCore", "InventoryStorage", "InventoryNetwork", "InventoryServices"]
         ),
 
-        .testTarget(name: "InventoryStringsTests", dependencies: ["InventoryStrings"], resources: [.copy("Fixtures")]),
-        .testTarget(name: "InventoryCoreTests", dependencies: ["InventoryCore"], resources: [.copy("Fixtures")]),
-        .testTarget(name: "InventoryStorageTests", dependencies: ["InventoryStorage"], resources: [.copy("Fixtures")]),
-        .testTarget(name: "InventoryNetworkTests", dependencies: ["InventoryNetwork"], resources: [.copy("Fixtures")]),
-        .testTarget(name: "InventoryServicesTests", dependencies: ["InventoryServices"], resources: [.copy("Fixtures")]),
-        .testTarget(name: "InventoryAppModelsTests", dependencies: ["InventoryAppModels"], resources: [.copy("Fixtures")]),
+        // Test-only helpers shared by every test target: ManualClock, temporary directories and
+        // UserDefaults suites, RecordingTelemetry, and a URLProtocol stub server. Not a product,
+        // so the app never links it.
+        .target(name: "InventoryTestSupport", dependencies: ["InventoryCore"]),
+
+        .testTarget(name: "InventoryStringsTests", dependencies: ["InventoryStrings", "InventoryTestSupport"], resources: [.copy("Fixtures")]),
+        .testTarget(name: "InventoryCoreTests", dependencies: ["InventoryCore", "InventoryTestSupport"], resources: [.copy("Fixtures")]),
+        .testTarget(name: "InventoryStorageTests", dependencies: ["InventoryStorage", "InventoryTestSupport"], resources: [.copy("Fixtures")]),
+        .testTarget(name: "InventoryNetworkTests", dependencies: ["InventoryNetwork", "InventoryTestSupport"], resources: [.copy("Fixtures")]),
+        .testTarget(name: "InventoryServicesTests", dependencies: ["InventoryServices", "InventoryTestSupport"], resources: [.copy("Fixtures")]),
+        .testTarget(name: "InventoryAppModelsTests", dependencies: ["InventoryAppModels", "InventoryTestSupport"], resources: [.copy("Fixtures")]),
     ],
     swiftLanguageModes: [.v6]
 )

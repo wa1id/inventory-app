@@ -1,4 +1,6 @@
 import Foundation
+import InventoryCore
+import InventoryTestSupport
 import Testing
 @testable import InventoryNetwork
 
@@ -23,7 +25,7 @@ private func recognize(
         key: key ?? contract.appKey,
         transport: server.transport,
         readImage: { _ in image },
-        telemetry: TelemetryRecorder().telemetry
+        telemetry: RecordingTelemetry().telemetry
     )
     let result = await client.recognize(imageAt: URL(fileURLWithPath: "/photo.webp"), nameHint: hint)
     if checkRequest {
@@ -37,7 +39,7 @@ private func recognize(
             #expect(sent.header("x-inventory-key") == nil, sourceLocation: sourceLocation)
         }
         let json = try #require(recorded.request.json, sourceLocation: sourceLocation)
-        #expect(sent.json == WireJSON.parse(Data(json.utf8)), "JSON body", sourceLocation: sourceLocation)
+        #expect(sent.json == JSONValue.parse(Data(json.utf8)), "JSON body", sourceLocation: sourceLocation)
     }
     return result
 }
