@@ -18,6 +18,9 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.9.0"),
+        // libwebp alone (no image framework) for encoding photos as WebP: ImageIO decodes WebP
+        // but cannot encode it (docs/spec/05-capture-ai.md C3). Used by InventoryServices only.
+        .package(url: "https://github.com/SDWebImage/libwebp-Xcode.git", from: "1.6.0"),
     ],
     targets: [
         // User-facing copy: Localizable.xcstrings generated from src/i18n/strings.ts,
@@ -41,7 +44,12 @@ let package = Package(
         // Backup, photo sync, image store, household shadow and HTTP repositories.
         .target(
             name: "InventoryServices",
-            dependencies: ["InventoryCore", "InventoryStorage", "InventoryNetwork"]
+            dependencies: [
+                "InventoryCore",
+                "InventoryStorage",
+                "InventoryNetwork",
+                .product(name: "libwebp", package: "libwebp-Xcode"),
+            ]
         ),
         // @MainActor @Observable models the SwiftUI views bind to.
         .target(
