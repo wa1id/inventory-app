@@ -9,7 +9,8 @@ import InventoryCore
 /// same checks, where a strict `Codable` would turn `category: 42` into a failure
 /// instead of nil. Parsing goes through `JSONSerialization`; JSON from these
 /// servers is always `JSON.stringify` output, so the JS-exact text parser the
-/// storage layer needs for on-device values is not required here.
+/// storage layer needs for on-device values is not required here, with one
+/// exception handled below: lone surrogate escapes.
 enum WireJSON: Sendable, Equatable {
     case object([String: WireJSON])
     case array([WireJSON])
@@ -20,10 +21,103 @@ enum WireJSON: Sendable, Equatable {
 
     /// `JSON.parse` over the body, or nil where it would throw. Any value may be top level.
     static func parse(_ data: Data) -> WireJSON? {
+        parseText(data)?.value
+    }
+
+    /// ``parse(_:)``, plus the JSON text it finally parsed, for a `Decodable` pass over the same body.
+    ///
+    /// `JSON.stringify` writes a lone surrogate as a `\udXXX` escape, and the servers
+    /// do produce them: the recognition server cuts names with `slice(0, 80)`
+    /// (server/src/prompt.ts:83-85), which can split an emoji. `JSON.parse` accepts
+    /// the escape; `JSONSerialization` and `JSONDecoder` refuse the whole body, which
+    /// would turn a usable suggestion into `malformed_response`. So a body that fails
+    /// is retried with those escapes read as U+FFFD, the rule InventoryStorage's
+    /// JS-exact parser uses (a Swift String cannot hold a lone surrogate).
+    static func parseText(_ data: Data) -> (value: WireJSON, text: Data)? {
+        if let value = bridged(data) { return (value, data) }
+        guard let repaired = replacingLoneSurrogateEscapes(in: data), let value = bridged(repaired) else {
+            return nil
+        }
+        return (value, repaired)
+    }
+
+    private static func bridged(_ data: Data) -> WireJSON? {
         guard let any = try? JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]) else {
             return nil
         }
         return WireJSON(bridging: any)
+    }
+
+    /// The JSON text with every `\uXXXX` escape of an unpaired surrogate replaced by
+    /// U+FFFD, or nil when there is none. Only escapes inside strings are touched,
+    /// and every other escape is copied whole, so `\\ud800` (a backslash, then text)
+    /// stays as it is.
+    static func replacingLoneSurrogateEscapes(in data: Data) -> Data? {
+        let bytes = [UInt8](data)
+        var output: [UInt8] = []
+        output.reserveCapacity(bytes.count)
+        var index = 0
+        var inString = false
+        var changed = false
+
+        /// The code unit of a `\uXXXX` escape starting at `start`.
+        func escapedUnit(at start: Int) -> UInt16? {
+            guard start + 5 < bytes.count, bytes[start] == UInt8(ascii: "\\"), bytes[start + 1] == UInt8(ascii: "u") else {
+                return nil
+            }
+            var unit: UInt16 = 0
+            for byte in bytes[(start + 2)...(start + 5)] {
+                guard let digit = hexDigitValue(byte) else { return nil }
+                unit = unit << 4 | UInt16(digit)
+            }
+            return unit
+        }
+
+        while index < bytes.count {
+            let byte = bytes[index]
+            guard inString else {
+                if byte == UInt8(ascii: "\"") { inString = true }
+                output.append(byte)
+                index += 1
+                continue
+            }
+            if byte == UInt8(ascii: "\"") {
+                inString = false
+                output.append(byte)
+                index += 1
+            } else if byte == UInt8(ascii: "\\") {
+                if let unit = escapedUnit(at: index) {
+                    if UTF16.isLeadSurrogate(unit), let next = escapedUnit(at: index + 6), UTF16.isTrailSurrogate(next) {
+                        output.append(contentsOf: bytes[index..<(index + 12)])
+                        index += 12
+                    } else if UTF16.isLeadSurrogate(unit) || UTF16.isTrailSurrogate(unit) {
+                        output.append(contentsOf: Array("\u{FFFD}".utf8))
+                        index += 6
+                        changed = true
+                    } else {
+                        output.append(contentsOf: bytes[index..<(index + 6)])
+                        index += 6
+                    }
+                } else {
+                    // Any other escape, copied whole so an escaped quote or backslash is not misread.
+                    output.append(contentsOf: bytes[index..<min(index + 2, bytes.count)])
+                    index += 2
+                }
+            } else {
+                output.append(byte)
+                index += 1
+            }
+        }
+        return changed ? Data(output) : nil
+    }
+
+    private static func hexDigitValue(_ byte: UInt8) -> UInt8? {
+        switch byte {
+        case UInt8(ascii: "0")...UInt8(ascii: "9"): byte - UInt8(ascii: "0")
+        case UInt8(ascii: "a")...UInt8(ascii: "f"): byte - UInt8(ascii: "a") + 10
+        case UInt8(ascii: "A")...UInt8(ascii: "F"): byte - UInt8(ascii: "A") + 10
+        default: nil
+        }
     }
 
     private init?(bridging any: Any) {

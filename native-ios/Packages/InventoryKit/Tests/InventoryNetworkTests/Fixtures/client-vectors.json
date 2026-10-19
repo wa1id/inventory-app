@@ -486,6 +486,28 @@
     "status": 409,
     "code": "invalid_json"
    }
+  },
+  {
+   "status": 400,
+   "body": "{\"error\":\"\\ud83d\"}",
+   "outcome": {
+    "kind": "http",
+    "status": 400,
+    "code": "�"
+   }
+  },
+  {
+   "status": 200,
+   "body": "{\"high\":\"x\\ud83d\",\"low\":\"\\udc00y\",\"pair\":\"\\ud83d\\udd27\",\"escaped\":\"\\\\ud83d\"}",
+   "outcome": {
+    "kind": "ok",
+    "body": {
+     "high": "x�",
+     "low": "�y",
+     "pair": "🔧",
+     "escaped": "\\ud83d"
+    }
+   }
   }
  ],
  "devices": [
@@ -1067,6 +1089,22 @@
      "category": null,
      "tags": [],
      "confidence": 0.8
+    }
+   }
+  },
+  {
+   "body": "{\"contractVersion\":1,\"suggestion\":{\"name\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\ud83d\",\"category\":\"\\udc00Tools\",\"tags\":[\"a\\ud83d\",\"\\\\ud83d\"],\"confidence\":0.9}}",
+   "result": {
+    "status": "success",
+    "contractVersion": 1,
+    "suggestion": {
+     "name": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�",
+     "category": "�Tools",
+     "tags": [
+      "a�",
+      "\\ud83d"
+     ],
+     "confidence": 0.9
     }
    }
   }

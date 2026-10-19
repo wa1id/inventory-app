@@ -176,11 +176,13 @@ public struct HouseholdClient: Sendable {
         let response = try await send(request)
         if response.status == 204 { return (204, .object([:]), Self.emptyObject) }
         var parsed = WireJSON.object([:])
+        var text = response.body
         if !response.body.isEmpty {
-            guard let value = WireJSON.parse(response.body) else {
+            guard let body = WireJSON.parseText(response.body) else {
                 throw HouseholdHttpError(status: response.status, code: "invalid_json")
             }
-            parsed = value
+            parsed = body.value
+            text = body.text
         }
         if response.status == 409 {
             throw ConflictError(updatedAt: Self.conflictUpdatedAt(parsed))
@@ -191,7 +193,7 @@ public struct HouseholdClient: Sendable {
         }
         switch parsed {
         case .object:
-            return (response.status, parsed, response.body.isEmpty ? Self.emptyObject : response.body)
+            return (response.status, parsed, text.isEmpty ? Self.emptyObject : text)
         case .array:
             // `typeof [] === 'object'`, so RN returns the array itself; its keyed
             // reads (`body.spaces`) are undefined, which decoding `{}` reproduces.

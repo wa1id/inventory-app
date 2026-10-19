@@ -140,6 +140,16 @@ public struct RecognitionClient: Sendable {
 
 }
 
+extension RecognitionClient: CustomStringConvertible, CustomDebugStringConvertible, CustomReflectable {
+    /// Leaves the app key out of `print`, `dump` and string interpolation: it ships in
+    /// the bundle, but the build keeps it out of logs (DECISIONS U1), as SyncClient does.
+    public var description: String { "RecognitionClient(endpoint: \(endpoint ?? "nil"))" }
+    public var debugDescription: String { description }
+    public var customMirror: Mirror {
+        Mirror(self, children: ["endpoint": endpoint as Any, "timeout": timeout], displayStyle: .struct)
+    }
+}
+
 /// The v1 request body. `nameHint` is omitted entirely when absent, so an unhinted
 /// request stays byte-compatible with every deployed backend.
 struct RecognitionRequestBody: Encodable, Sendable {

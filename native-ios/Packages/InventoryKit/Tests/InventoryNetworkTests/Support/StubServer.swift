@@ -31,6 +31,9 @@ struct RecordedRequest: Sendable {
 enum StubReply: Sendable {
     case response(status: Int, headers: [String: String], body: Data, delay: Duration?)
     case failure(URLError.Code, delay: Duration?)
+    /// The status and headers at once, then the body only after `bodyDelay`: what a slow
+    /// download looks like, for checking that a deadline covers the body and not just the headers.
+    case slowBody(status: Int, headers: [String: String], body: Data, bodyDelay: Duration)
 
     static func json(_ status: Int, _ text: String, headers: [String: String] = [:], delay: Duration? = nil) -> StubReply {
         var merged = ["Content-Type": "application/json"]
@@ -160,11 +163,19 @@ final class StubURLProtocol: URLProtocol, @unchecked Sendable {
             let reply = await server.handle(recorded)
             let delay: Duration? = switch reply {
             case .response(_, _, _, let delay), .failure(_, let delay): delay
+            case .slowBody: nil
             }
             if let delay {
                 do { try await Task.sleep(for: delay) } catch { return }
             }
             guard !Task.isCancelled else { return }
+            if case .slowBody(let status, let headers, let body, let bodyDelay) = reply {
+                guard target.base.deliverHead(status: status, headers: headers, url: url) else { return }
+                do { try await Task.sleep(for: bodyDelay) } catch { return }
+                guard !Task.isCancelled else { return }
+                target.base.deliverBody(body)
+                return
+            }
             target.base.deliver(reply, url: url)
         }
         work.withLock { $0 = task }
@@ -172,17 +183,27 @@ final class StubURLProtocol: URLProtocol, @unchecked Sendable {
 
     private func deliver(_ reply: StubReply, url: URL) {
         switch reply {
-        case .response(let status, let headers, let body, _):
-            guard let response = HTTPURLResponse(url: url, statusCode: status, httpVersion: "HTTP/1.1", headerFields: headers) else {
-                client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
-                return
-            }
-            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-            if !body.isEmpty { client?.urlProtocol(self, didLoad: body) }
-            client?.urlProtocolDidFinishLoading(self)
+        case .response(let status, let headers, let body, _), .slowBody(let status, let headers, let body, _):
+            guard deliverHead(status: status, headers: headers, url: url) else { return }
+            deliverBody(body)
         case .failure(let code, _):
             client?.urlProtocol(self, didFailWithError: URLError(code))
         }
+    }
+
+    /// Sends the status line and headers; false (after failing the load) when they do not make a response.
+    private func deliverHead(status: Int, headers: [String: String], url: URL) -> Bool {
+        guard let response = HTTPURLResponse(url: url, statusCode: status, httpVersion: "HTTP/1.1", headerFields: headers) else {
+            client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
+            return false
+        }
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        return true
+    }
+
+    private func deliverBody(_ body: Data) {
+        if !body.isEmpty { client?.urlProtocol(self, didLoad: body) }
+        client?.urlProtocolDidFinishLoading(self)
     }
 
     /// Carries the protocol into its reply task.

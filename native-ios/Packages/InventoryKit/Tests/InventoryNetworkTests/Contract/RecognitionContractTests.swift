@@ -3,7 +3,7 @@ import Testing
 @testable import InventoryNetwork
 
 // RecognitionClient against answers recorded from server/api/recognize.ts with a
-// scripted adapter (Fixtures/generator/recognition-contract.ts). The fixture also
+// scripted adapter (Fixtures/generator/recognition-contract.mts). The fixture also
 // records what the server handed the adapter, which proves the real media type
 // the client now sends (U6) reaches the provider call.
 

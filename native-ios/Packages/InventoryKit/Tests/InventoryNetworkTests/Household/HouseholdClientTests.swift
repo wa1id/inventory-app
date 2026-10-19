@@ -272,9 +272,35 @@ struct HouseholdEndpointTests {
     @Test("the import posts the dump with a 60 s budget and reads the counts it gets back")
     func importSummary() async throws {
         let server = StubServer(reply: .json(200, #"{"ok":true,"spaces":1,"containers":"2","items":3}"#))
-        let summary = try await client(server).importDump(["spaces": [String]()])
+        let summary = try await client(server).importDump(HouseholdDump())
         #expect(summary == HouseholdImportSummary(spaces: 1, containers: nil, items: 3, photos: nil))
-        #expect(server.lastRequest?.json == .object(["spaces": .array([])]))
+        #expect(server.lastRequest?.json == .object([
+            "spaces": .array([]), "containers": .array([]), "items": .array([]), "tags": .array([]),
+            "itemTags": .array([]), "qrBindings": .array([]), "photos": .array([]),
+        ]))
+    }
+
+    @Test("the dump writes NULL columns as explicit nulls, as JSON.stringify does, never as missing keys")
+    func dumpNulls() async throws {
+        let server = StubServer(reply: .json(200, #"{"ok":true}"#))
+        let dump = HouseholdDump(
+            containers: [.init(id: "c", spaceId: "s", name: nil, visualType: .box, shortCode: "BOX-1", kind: .normal, createdAt: 1, updatedAt: 2)],
+            items: [.init(id: "i", containerId: "c", name: "", category: nil, quantity: 0, notes: nil, searchText: "", createdAt: 3, updatedAt: 4)],
+            photos: [.init(id: "p", itemId: "i", width: nil, height: nil, byteSize: nil, createdAt: 5)]
+        )
+        _ = try await client(server).importDump(dump)
+        let body = try #require(server.lastRequest).jsonObject
+        #expect(body["containers"] == .array([.object([
+            "id": .string("c"), "spaceId": .string("s"), "name": .null, "visualType": .string("box"),
+            "shortCode": .string("BOX-1"), "kind": .string("normal"), "createdAt": .number(1), "updatedAt": .number(2),
+        ])]))
+        #expect(body["items"] == .array([.object([
+            "id": .string("i"), "containerId": .string("c"), "name": .string(""), "category": .null, "quantity": .number(0),
+            "notes": .null, "searchText": .string(""), "createdAt": .number(3), "updatedAt": .number(4),
+        ])]))
+        #expect(body["photos"] == .array([.object([
+            "id": .string("p"), "itemId": .string("i"), "width": .null, "height": .null, "byteSize": .null, "createdAt": .number(5),
+        ])]))
     }
 }
 
@@ -374,6 +400,22 @@ struct HouseholdRequestRuleTests {
         }
         #expect(error == HouseholdHttpError(status: 0, code: "timeout"))
         #expect(ContinuousClock.now - started < .seconds(5))
+        var iterator = updates.makeAsyncIterator()
+        #expect(await iterator.next() == .offline)
+    }
+
+    @Test("the deadline covers the response body, not just the headers (D-7)")
+    func deadlineCoversBody() async throws {
+        let hub = ReachabilityHub()
+        let updates = hub.updates()
+        let telemetry = TelemetryRecorder()
+        let server = StubServer(reply: .slowBody(status: 200, headers: ["Content-Type": "image/webp"], body: Data([7]), bodyDelay: .seconds(10)))
+        let error = await httpError {
+            _ = try await client(server, hub: hub, telemetry: telemetry).send(HouseholdRequest(path: "/v1/photos/p", timeout: .milliseconds(200)))
+        }
+        #expect(error == HouseholdHttpError(status: 0, code: "timeout"))
+        // A timeout reports offline but, as in RN, logs nothing.
+        #expect(telemetry.entries.isEmpty)
         var iterator = updates.makeAsyncIterator()
         #expect(await iterator.next() == .offline)
     }

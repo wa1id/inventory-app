@@ -135,6 +135,16 @@ struct RecognitionClientTests {
         ]))
     }
 
+    @Test("never prints the app key")
+    func neverPrintsTheKey() {
+        let recognition = RecognitionClient(endpoint: endpoint, key: "secret-app-key")
+        var dumped = ""
+        dump(recognition, to: &dumped)
+        #expect(!String(describing: recognition).contains("secret-app-key"))
+        #expect(!String(reflecting: recognition).contains("secret-app-key"))
+        #expect(!dumped.contains("secret-app-key"))
+    }
+
     @Test("sends no x-inventory-key when the key is missing or empty", arguments: [nil, ""] as [String?])
     func sendsNoKeyWhenUnset(key: String?) async throws {
         let server = StubServer(reply: .json(200, validBody))
@@ -153,6 +163,25 @@ struct RecognitionClientTests {
         #expect(!text.contains("\n"))
         #expect(text.contains(bytes.base64EncodedString()))
         #expect(text.contains(#""mediaType":"image/jpeg""#))
+    }
+
+    @Test("the deadline covers the response body, not just the headers")
+    func theDeadlineCoversTheBody() async {
+        let server = StubServer(reply: .slowBody(status: 200, headers: ["Content-Type": "application/json"], body: Data(validBody.utf8), bodyDelay: .seconds(10)))
+        #expect(await client(server, timeout: .milliseconds(200)).recognize(imageAt: photoURL) == .failed(.timeout))
+    }
+
+    @Test("a name the server cut through an emoji is still a suggestion")
+    func loneSurrogateFromTheServerCut() async throws {
+        // server/src/prompt.ts cuts at 80 UTF-16 units; JSON.stringify writes the half pair as \ud83d.
+        let name = String(repeating: "x", count: 79)
+        let body = #"{"contractVersion":1,"suggestion":{"name":"\#(name)\ud83d","category":"Tools","tags":[],"confidence":0.9}}"#
+        let server = StubServer(reply: .json(200, body))
+        let result = await client(server).recognize(imageAt: photoURL)
+        #expect(result == .success(
+            RecognitionSuggestion(name: name + "\u{FFFD}", category: "Tools", tags: [], confidence: 0.9),
+            contractVersion: 1
+        ))
     }
 
     @Test("the deadline covers the file read")

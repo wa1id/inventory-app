@@ -261,9 +261,14 @@ struct SyncClientFailureTests {
 
     @Test("the deadline covers the whole body, not just the first byte")
     func deadlineCoversBody() async {
-        // The stub answers only after the delay, so headers and body arrive together after it.
-        let server = StubServer(reply: .response(status: 200, headers: [:], body: Data(count: 1024), delay: .milliseconds(400)))
-        #expect(await client(server, timeout: .milliseconds(100)).downloadPhoto(id: photoId) == .failure(.timeout))
+        // The 200 and its headers arrive at once; only the body is late (a slow 32 MiB snapshot download).
+        let server = StubServer(reply: .slowBody(status: 200, headers: ["x-snapshot-schema-version": "7"], body: Data(count: 1024), bodyDelay: .seconds(10)))
+        let started = ContinuousClock.now
+        #expect(await client(server, timeout: .milliseconds(200)).downloadBackup() == .failure(.timeout))
+        #expect(ContinuousClock.now - started < .seconds(5))
+        // The same body in time is a download.
+        let prompt = StubServer(reply: .slowBody(status: 200, headers: ["x-snapshot-schema-version": "7"], body: Data(count: 1024), bodyDelay: .milliseconds(10)))
+        #expect(await client(prompt).downloadBackup() == .success(BackupDownload(bytes: Data(count: 1024), schemaVersion: 7)))
     }
 
     @Test("transport failures read as offline, URLSession's own timeout included (03 Q7)", arguments: [

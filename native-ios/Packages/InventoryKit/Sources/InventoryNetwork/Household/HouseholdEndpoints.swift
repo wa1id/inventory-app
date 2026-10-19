@@ -254,7 +254,9 @@ extension HouseholdClient {
     }
 
     /// `POST /v1/import` with an id-preserving dump, 60 s (RN `importLocalInventory`).
-    public func importDump(_ dump: some Encodable & Sendable) async throws -> HouseholdImportSummary {
+    ///
+    /// Typed on purpose: the dump must carry explicit `null`s for NULL columns (see ``HouseholdDump``).
+    public func importDump(_ dump: HouseholdDump) async throws -> HouseholdImportSummary {
         let answer = try await object(HouseholdRequest(
             path: "/v1/import", method: "POST", body: try .encodedJSON(dump), timeout: Self.uploadTimeout
         ))

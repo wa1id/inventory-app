@@ -42,6 +42,19 @@ type Outcome =
   | { kind: 'http'; status: number; code: string }
   | { kind: 'conflict'; updatedAt: number | null };
 
+/**
+ * A Swift String cannot hold a lone surrogate; the Swift clients read one as U+FFFD
+ * (what `toWellFormed` gives), so expected values are written that way.
+ */
+function wellFormed<T>(value: T): T {
+  if (typeof value === 'string') return value.toWellFormed() as T;
+  if (Array.isArray(value)) return value.map(wellFormed) as T;
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, wellFormed(inner)])) as T;
+  }
+  return value;
+}
+
 async function outcomeOf(work: () => Promise<unknown>): Promise<Outcome> {
   try {
     return { kind: 'ok', body: await work() };
@@ -112,6 +125,9 @@ const HOUSEHOLD_RESPONSES: [number, string | null][] = [
   [409, '[1]'],
   [409, '12'],
   [409, 'oops'],
+  // JSON.stringify writes a lone surrogate as an escape; JSON.parse takes it.
+  [400, '{"error":"\\ud83d"}'],
+  [200, '{"high":"x\\ud83d","low":"\\udc00y","pair":"\\ud83d\\udd27","escaped":"\\\\ud83d"}'],
 ];
 
 /** `devices` arrays for listDevices' lenient entry reading (devices.ts:18-30). */
@@ -177,6 +193,8 @@ const RECOGNITION_BODIES: string[] = [
   `{"contractVersion":1,"suggestion":{"name":"${'x'.repeat(78)}🔧tail","tags":[],"confidence":0.8}}`,
   `{"contractVersion":1,"suggestion":{"name":"   ${'é'.repeat(90)}","tags":[],"confidence":0.8}}`,
   '{"contractVersion":1,"suggestion":{"name":"Drill","tags":[],"confidence":0.8},"extra":{"nested":[1]}}',
+  // The recognition server cuts names with slice(0, 80), which can split a pair (server/src/prompt.ts:83-85).
+  `{"contractVersion":1,"suggestion":{"name":"${'x'.repeat(79)}\\ud83d","category":"\\udc00Tools","tags":["a\\ud83d","\\\\ud83d"],"confidence":0.9}}`,
 ];
 
 /** List bodies for parseBackupList (sync/contract.ts:67-76). */
@@ -223,8 +241,10 @@ describe('network client vectors', () => {
       household.push({
         status,
         body: text,
-        outcome: await outcomeOf(() =>
-          householdRequest({ origin: 'https://inventory.example', path: '/v1/x', token: 't', fetchImpl: respond(status, text) }),
+        outcome: wellFormed(
+          await outcomeOf(() =>
+            householdRequest({ origin: 'https://inventory.example', path: '/v1/x', token: 't', fetchImpl: respond(status, text) }),
+          ),
         ),
       });
     }
@@ -239,7 +259,7 @@ describe('network client vectors', () => {
 
     const recognition = RECOGNITION_BODIES.map((text) => ({
       body: text,
-      result: parseRecognitionResponse(JSON.parse(text)),
+      result: wellFormed(parseRecognitionResponse(JSON.parse(text))),
     }));
 
     const backupLists = BACKUP_LISTS.map((text) => ({

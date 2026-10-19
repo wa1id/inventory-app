@@ -15,7 +15,8 @@
   "updatedAt": 1767225649000,
   "labelToken": "1ce34d781bd838d5c45007d9620203ef",
   "printedToken": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
-  "importPhotoId": "c1898fb8-08ee-4c08-ad71-5e21e292d6c5"
+  "importPhotoId": "c1898fb8-08ee-4c08-ad71-5e21e292d6c5",
+  "nullPhotoId": "2c5f0a8e-7d1b-4e3a-9f6c-0b8d7e6a5f41"
  },
  "exchanges": {
   "health": {
@@ -1297,6 +1298,46 @@
     "contentType": "text/plain; charset=UTF-8",
     "cacheControl": null,
     "text": "404 Not Found",
+    "base64": null
+   }
+  },
+  "importNullPhotoFields": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/import",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"spaces\":[],\"containers\":[],\"items\":[],\"tags\":[],\"itemTags\":[],\"qrBindings\":[],\"photos\":[{\"id\":\"2c5f0a8e-7d1b-4e3a-9f6c-0b8d7e6a5f41\",\"itemId\":\"5ea48137-6027-4ec7-849b-3c1084e460fd\",\"width\":null,\"height\":null,\"byteSize\":null,\"createdAt\":1767225600000}]}",
+    "base64": null
+   },
+   "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"ok\":true,\"spaces\":0,\"containers\":0,\"items\":0,\"photos\":1}",
+    "base64": null
+   }
+  },
+  "importOmittedPhotoFields": {
+   "request": {
+    "method": "POST",
+    "path": "/v1/import",
+    "headers": {
+     "Accept": "application/json",
+     "Content-Type": "application/json",
+     "Authorization": "Bearer 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "json": "{\"spaces\":[],\"containers\":[],\"items\":[],\"tags\":[],\"itemTags\":[],\"qrBindings\":[],\"photos\":[{\"id\":\"2c5f0a8e-7d1b-4e3a-9f6c-0b8d7e6a5f41\",\"itemId\":\"5ea48137-6027-4ec7-849b-3c1084e460fd\",\"createdAt\":1767225600000}]}",
+    "base64": null
+   },
+   "response": {
+    "status": 400,
+    "contentType": "application/json",
+    "cacheControl": null,
+    "text": "{\"error\":\"Provided value cannot be bound to SQLite parameter 5.\"}",
     "base64": null
    }
   }

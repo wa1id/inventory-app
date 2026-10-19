@@ -49,6 +49,18 @@ struct TotalTimeoutTests {
         }
     }
 
+    @Test("a body still arriving when the clock runs out is a deadline, through a real URLSession")
+    func coversTheBody() async throws {
+        let server = StubServer(reply: .slowBody(status: 200, headers: [:], body: Data(count: 64), bodyDelay: .seconds(10)))
+        let transport = server.transport
+        let request = URLRequest(url: try #require(URL(string: "https://slow.example/body")), method: "GET", deadline: .milliseconds(200))
+        let started = ContinuousClock.now
+        await #expect(throws: DeadlineExceeded.self) {
+            try await withTotalTimeout(.milliseconds(200)) { try await transport.send(request) }
+        }
+        #expect(ContinuousClock.now - started < .seconds(5))
+    }
+
     @Test("passes the operation's own error through")
     func passesErrorsThrough() async {
         await #expect(throws: URLError(.notConnectedToInternet)) {
@@ -154,6 +166,23 @@ struct WireHelperTests {
         #expect(request.timeoutInterval == 90)
         let short = URLRequest(url: try #require(URL(string: "https://a.example")), method: "GET", deadline: .milliseconds(100))
         #expect(short.timeoutInterval == 60)
+    }
+
+    @Test("lone surrogate escapes read as U+FFFD; pairs, other escapes and plain text are untouched", arguments: [
+        (#""\ud83d""#, "\u{FFFD}"), (#""\udc00""#, "\u{FFFD}"), (#""a\ud83d\u0041""#, "a\u{FFFD}A"),
+        (#""\ud83d\ud83d\udd27""#, "\u{FFFD}\u{1F527}"), (#""\ud83d\udd27""#, "\u{1F527}"), (#""\\ud83d""#, #"\ud83d"#),
+        (#""\"\ud83d""#, "\"\u{FFFD}"), (#""x\uD83D""#, "x\u{FFFD}"),
+    ])
+    func loneSurrogates(json: String, expected: String) {
+        #expect(WireJSON.parse(Data(json.utf8)) == .string(expected), "\(json)")
+    }
+
+    @Test("a body that is broken for another reason stays broken")
+    func otherBreakageStaysBroken() {
+        #expect(WireJSON.parse(Data(#"{"a":"\ud83d"#.utf8)) == nil)
+        #expect(WireJSON.parse(Data(#"{"a":"\ud83d"} x"#.utf8)) == nil)
+        #expect(WireJSON.parse(Data(#"{"a":"\q"}"#.utf8)) == nil)
+        #expect(WireJSON.replacingLoneSurrogateEscapes(in: Data(#"{"a":"\ud83d\udd27"}"#.utf8)) == nil)
     }
 
     @Test("HTTPResponse reads headers case-insensitively")

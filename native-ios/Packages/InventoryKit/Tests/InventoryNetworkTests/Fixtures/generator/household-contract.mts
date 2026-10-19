@@ -22,6 +22,7 @@ import { configureRandomBytes } from '../../../../../../../src/core/id.ts';
 import { initializeRepositories } from '../../../../../../../src/db/repositories.ts';
 import { openNodeDatabase } from '../../../../../../../src/db/nodeDatabase.ts';
 import { collectHouseholdDump } from '../../../../../../../src/services/household/collectDump.ts';
+import { emptyDump } from '../../../../../../../src/services/household/dump.ts';
 import { createApp } from '../../../../../../../home-server/src/app.ts';
 import { openControlStore } from '../../../../../../../home-server/src/control.ts';
 import { createRevisionHub } from '../../../../../../../home-server/src/hub.ts';
@@ -301,6 +302,30 @@ async function main(): Promise<void> {
     });
     await record('revokedTokenRefused', 'GET', '/v1/spaces', { token: otherToken });
     await record('unknownRoute', 'GET', '/v1/nope', { token });
+
+    // A photo row whose dimensions are NULL, as DumpPhoto allows: JSON.stringify sends
+    // explicit nulls, which the importer binds as SQL NULL. Leaving the keys out instead
+    // (what a synthesized Swift Encodable does with nil) binds `undefined`, which
+    // node:sqlite refuses, failing the whole import (importer.ts:174-176).
+    const nullPhotoId = '2c5f0a8e-7d1b-4e3a-9f6c-0b8d7e6a5f41';
+    ids.nullPhotoId = nullPhotoId;
+    const nullPhoto = {
+      id: nullPhotoId,
+      itemId: dump.items[0]?.id ?? '',
+      width: null,
+      height: null,
+      byteSize: null,
+      createdAt: 1_767_225_600_000,
+    };
+    await record('importNullPhotoFields', 'POST', '/v1/import', {
+      token,
+      json: { ...emptyDump(), photos: [nullPhoto] },
+    });
+    const { width: _w, height: _h, byteSize: _b, ...omitted } = nullPhoto;
+    await record('importOmittedPhotoFields', 'POST', '/v1/import', {
+      token,
+      json: { ...emptyDump(), photos: [omitted] },
+    });
 
     let text = JSON.stringify({ origin: ORIGIN, token: TOKEN, ids, exchanges }, null, 1);
     text = text.split(token).join(TOKEN).split(otherToken).join(OTHER_TOKEN);

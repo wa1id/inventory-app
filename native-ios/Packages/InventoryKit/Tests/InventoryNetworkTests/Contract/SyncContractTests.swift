@@ -4,7 +4,7 @@ import Testing
 @testable import InventoryNetwork
 
 // Every SyncClient call against answers recorded from worker/src/index.ts
-// (Fixtures/generator/sync-contract.ts), with the requests checked against the
+// (Fixtures/generator/sync-contract.mts), with the requests checked against the
 // headers src/services/sync/client.ts sends.
 
 private func client(_ server: StubServer, contract: SyncContract, code: String? = nil, key: String?? = nil) -> SyncClient {

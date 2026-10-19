@@ -4,7 +4,7 @@ import Testing
 @testable import InventoryNetwork
 
 // Every household endpoint against answers recorded from home-server/src
-// (Fixtures/generator/household-contract.ts). Each test sends the request through
+// (Fixtures/generator/household-contract.mts). Each test sends the request through
 // the Swift client, checks it is the request the RN client sends (method, path,
 // headers, JSON), and decodes the real server's answer.
 
@@ -502,14 +502,37 @@ struct HouseholdItemContractTests {
     @Test("imports a dump, then uploads its photo under the phone's own id")
     func importDump() async throws {
         let contract = try HouseholdContract.load()
+        // RN's collectHouseholdDump output, read into the typed dump; sending it back must
+        // give the same JSON, nulls included (the exchange checks the body).
         let dumpText = try #require(try contract.exchange("import").request.json)
-        let dump = try JSONDecoder().decode(AnyJSON.self, from: Data(dumpText.utf8))
+        let dump = try JSONDecoder().decode(HouseholdDump.self, from: Data(dumpText.utf8))
+        #expect(dump.spaces.map(\.kind) == [.system, .normal])
+        #expect(dump.containers.first?.visualType == .other)
+        #expect(dump.items.first?.category == nil)
         let photoId = try contract.id("importPhotoId")
         let (summary, stored) = try await exchange("import", "importPhoto") { client, _ in
             (try await client.importDump(dump), try await client.importPhoto(id: photoId, bytes: Self.pixel))
         }
         #expect(summary == HouseholdImportSummary(spaces: 2, containers: 2, items: 1, photos: 1))
         #expect(stored)
+    }
+
+    @Test("a photo row without dimensions goes as explicit nulls, which the server takes; missing keys fail the import")
+    func importNullPhotoFields() async throws {
+        let contract = try HouseholdContract.load()
+        let photoId = try contract.id("nullPhotoId")
+        let dumpText = try #require(try contract.exchange("import").request.json)
+        let importedItem = try #require(try JSONDecoder().decode(HouseholdDump.self, from: Data(dumpText.utf8)).items.first?.id)
+        let summary = try await exchange("importNullPhotoFields") { client, _ in
+            try await client.importDump(HouseholdDump(photos: [
+                .init(id: photoId, itemId: importedItem, width: nil, height: nil, byteSize: nil, createdAt: 1_767_225_600_000),
+            ]))
+        }
+        #expect(summary == HouseholdImportSummary(spaces: 0, containers: 0, items: 0, photos: 1))
+        // What leaving the keys out does to the real server (home-server/src/importer.ts:174-176).
+        let omitted = try contract.exchange("importOmittedPhotoFields").response
+        #expect(omitted.status == 400)
+        #expect(omitted.text == #"{"error":"Provided value cannot be bound to SQLite parameter 5."}"#)
     }
 }
 
