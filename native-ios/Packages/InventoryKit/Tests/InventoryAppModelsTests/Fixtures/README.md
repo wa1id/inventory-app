@@ -6,3 +6,4 @@ hand; regenerate with the script named below (its header has the commands).
 | File | Generator | Contents |
 | --- | --- | --- |
 | `shared-seams.json` | `generator/shared-seams-vectors.test.ts` (Jest, `logic` project) | `src/ui/motion.ts`: every `duration`, `delay` and `easing` (Bézier arguments as passed) and `motionMs` for each duration with Reduce Motion off and on; `src/ui/haptics.ts`: the expo-haptics call each event makes; `src/ui/confirm.ts`: the alert `confirm()` shows with the default and with explicit cancel label and `destructive` |
+| `capture/capture-flow.json` | `capture/generator/capture-flow-vectors.test.ts` (Jest, `logic` project) | `src/ui/capture/captureFlow.ts`: status, title, toast and count rules over a grid; `src/ui/scan/scanRules.ts`: `labelFor`, `tokenParam`, `planBind`, `linkFailureMessage` (see `capture/README.md`) |
