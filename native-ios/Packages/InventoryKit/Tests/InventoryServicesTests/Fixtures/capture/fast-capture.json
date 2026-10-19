@@ -1,0 +1,2559 @@
+{
+  "sessions": [
+    {
+      "since": 130,
+      "rows": [
+        {
+          "id": "r0-0",
+          "createdAt": 130
+        }
+      ],
+      "ids": [
+        "r0-0"
+      ]
+    },
+    {
+      "since": 110,
+      "rows": [
+        {
+          "id": "r1-0",
+          "createdAt": 110
+        },
+        {
+          "id": "r1-1",
+          "createdAt": 110
+        },
+        {
+          "id": "r1-2",
+          "createdAt": 100
+        },
+        {
+          "id": "r1-3",
+          "createdAt": 110
+        }
+      ],
+      "ids": [
+        "r1-0",
+        "r1-1",
+        "r1-3"
+      ]
+    },
+    {
+      "since": 100,
+      "rows": [
+        {
+          "id": "r2-0",
+          "createdAt": 150
+        },
+        {
+          "id": "r2-1",
+          "createdAt": 130
+        },
+        {
+          "id": "r2-2",
+          "createdAt": 130
+        },
+        {
+          "id": "r2-3",
+          "createdAt": 120
+        },
+        {
+          "id": "r2-4",
+          "createdAt": 100
+        },
+        {
+          "id": "r2-5",
+          "createdAt": 110
+        }
+      ],
+      "ids": [
+        "r2-4",
+        "r2-5",
+        "r2-3",
+        "r2-1",
+        "r2-2",
+        "r2-0"
+      ]
+    },
+    {
+      "since": 140,
+      "rows": [
+        {
+          "id": "r3-0",
+          "createdAt": 150
+        },
+        {
+          "id": "r3-1",
+          "createdAt": 130
+        },
+        {
+          "id": "r3-2",
+          "createdAt": 150
+        }
+      ],
+      "ids": [
+        "r3-0",
+        "r3-2"
+      ]
+    },
+    {
+      "since": 150,
+      "rows": [
+        {
+          "id": "r4-0",
+          "createdAt": 140
+        },
+        {
+          "id": "r4-1",
+          "createdAt": 150
+        },
+        {
+          "id": "r4-2",
+          "createdAt": 150
+        },
+        {
+          "id": "r4-3",
+          "createdAt": 130
+        },
+        {
+          "id": "r4-4",
+          "createdAt": 110
+        }
+      ],
+      "ids": [
+        "r4-1",
+        "r4-2"
+      ]
+    },
+    {
+      "since": 100,
+      "rows": [
+        {
+          "id": "r5-0",
+          "createdAt": 120
+        },
+        {
+          "id": "r5-1",
+          "createdAt": 140
+        }
+      ],
+      "ids": [
+        "r5-0",
+        "r5-1"
+      ]
+    },
+    {
+      "since": 160,
+      "rows": [
+        {
+          "id": "r6-0",
+          "createdAt": 150
+        },
+        {
+          "id": "r6-1",
+          "createdAt": 120
+        },
+        {
+          "id": "r6-2",
+          "createdAt": 140
+        },
+        {
+          "id": "r6-3",
+          "createdAt": 120
+        },
+        {
+          "id": "r6-4",
+          "createdAt": 120
+        },
+        {
+          "id": "r6-5",
+          "createdAt": 130
+        }
+      ],
+      "ids": []
+    },
+    {
+      "since": 130,
+      "rows": [
+        {
+          "id": "r7-0",
+          "createdAt": 110
+        },
+        {
+          "id": "r7-1",
+          "createdAt": 140
+        },
+        {
+          "id": "r7-2",
+          "createdAt": 120
+        }
+      ],
+      "ids": [
+        "r7-1"
+      ]
+    },
+    {
+      "since": 120,
+      "rows": [
+        {
+          "id": "r8-0",
+          "createdAt": 150
+        },
+        {
+          "id": "r8-1",
+          "createdAt": 140
+        },
+        {
+          "id": "r8-2",
+          "createdAt": 110
+        }
+      ],
+      "ids": [
+        "r8-1",
+        "r8-0"
+      ]
+    },
+    {
+      "since": 140,
+      "rows": [
+        {
+          "id": "r9-0",
+          "createdAt": 110
+        },
+        {
+          "id": "r9-1",
+          "createdAt": 150
+        },
+        {
+          "id": "r9-2",
+          "createdAt": 140
+        }
+      ],
+      "ids": [
+        "r9-2",
+        "r9-1"
+      ]
+    },
+    {
+      "since": 150,
+      "rows": [
+        {
+          "id": "r10-0",
+          "createdAt": 100
+        },
+        {
+          "id": "r10-1",
+          "createdAt": 150
+        },
+        {
+          "id": "r10-2",
+          "createdAt": 110
+        },
+        {
+          "id": "r10-3",
+          "createdAt": 140
+        }
+      ],
+      "ids": [
+        "r10-1"
+      ]
+    },
+    {
+      "since": 130,
+      "rows": [
+        {
+          "id": "r11-0",
+          "createdAt": 150
+        },
+        {
+          "id": "r11-1",
+          "createdAt": 100
+        },
+        {
+          "id": "r11-2",
+          "createdAt": 130
+        },
+        {
+          "id": "r11-3",
+          "createdAt": 140
+        },
+        {
+          "id": "r11-4",
+          "createdAt": 100
+        },
+        {
+          "id": "r11-5",
+          "createdAt": 150
+        }
+      ],
+      "ids": [
+        "r11-2",
+        "r11-3",
+        "r11-0",
+        "r11-5"
+      ]
+    },
+    {
+      "since": 100,
+      "rows": [
+        {
+          "id": "r12-0",
+          "createdAt": 100
+        },
+        {
+          "id": "r12-1",
+          "createdAt": 100
+        },
+        {
+          "id": "r12-2",
+          "createdAt": 100
+        }
+      ],
+      "ids": [
+        "r12-0",
+        "r12-1",
+        "r12-2"
+      ]
+    },
+    {
+      "since": 100,
+      "rows": [
+        {
+          "id": "r13-0",
+          "createdAt": 130
+        },
+        {
+          "id": "r13-1",
+          "createdAt": 100
+        },
+        {
+          "id": "r13-2",
+          "createdAt": 150
+        },
+        {
+          "id": "r13-3",
+          "createdAt": 130
+        },
+        {
+          "id": "r13-4",
+          "createdAt": 150
+        }
+      ],
+      "ids": [
+        "r13-1",
+        "r13-0",
+        "r13-3",
+        "r13-2",
+        "r13-4"
+      ]
+    },
+    {
+      "since": 140,
+      "rows": [
+        {
+          "id": "r14-0",
+          "createdAt": 100
+        },
+        {
+          "id": "r14-1",
+          "createdAt": 150
+        },
+        {
+          "id": "r14-2",
+          "createdAt": 130
+        },
+        {
+          "id": "r14-3",
+          "createdAt": 120
+        },
+        {
+          "id": "r14-4",
+          "createdAt": 140
+        },
+        {
+          "id": "r14-5",
+          "createdAt": 130
+        }
+      ],
+      "ids": [
+        "r14-4",
+        "r14-1"
+      ]
+    },
+    {
+      "since": 110,
+      "rows": [
+        {
+          "id": "r15-0",
+          "createdAt": 140
+        },
+        {
+          "id": "r15-1",
+          "createdAt": 140
+        },
+        {
+          "id": "r15-2",
+          "createdAt": 120
+        },
+        {
+          "id": "r15-3",
+          "createdAt": 140
+        },
+        {
+          "id": "r15-4",
+          "createdAt": 110
+        }
+      ],
+      "ids": [
+        "r15-4",
+        "r15-2",
+        "r15-0",
+        "r15-1",
+        "r15-3"
+      ]
+    },
+    {
+      "since": 140,
+      "rows": [
+        {
+          "id": "r16-0",
+          "createdAt": 120
+        },
+        {
+          "id": "r16-1",
+          "createdAt": 130
+        },
+        {
+          "id": "r16-2",
+          "createdAt": 130
+        },
+        {
+          "id": "r16-3",
+          "createdAt": 120
+        },
+        {
+          "id": "r16-4",
+          "createdAt": 130
+        },
+        {
+          "id": "r16-5",
+          "createdAt": 120
+        }
+      ],
+      "ids": []
+    },
+    {
+      "since": 140,
+      "rows": [
+        {
+          "id": "r17-0",
+          "createdAt": 130
+        },
+        {
+          "id": "r17-1",
+          "createdAt": 150
+        },
+        {
+          "id": "r17-2",
+          "createdAt": 100
+        },
+        {
+          "id": "r17-3",
+          "createdAt": 120
+        },
+        {
+          "id": "r17-4",
+          "createdAt": 110
+        },
+        {
+          "id": "r17-5",
+          "createdAt": 100
+        }
+      ],
+      "ids": [
+        "r17-1"
+      ]
+    },
+    {
+      "since": 130,
+      "rows": [
+        {
+          "id": "r18-0",
+          "createdAt": 140
+        },
+        {
+          "id": "r18-1",
+          "createdAt": 130
+        },
+        {
+          "id": "r18-2",
+          "createdAt": 140
+        },
+        {
+          "id": "r18-3",
+          "createdAt": 120
+        },
+        {
+          "id": "r18-4",
+          "createdAt": 120
+        }
+      ],
+      "ids": [
+        "r18-1",
+        "r18-0",
+        "r18-2"
+      ]
+    },
+    {
+      "since": 140,
+      "rows": [],
+      "ids": []
+    },
+    {
+      "since": 130,
+      "rows": [
+        {
+          "id": "r20-0",
+          "createdAt": 120
+        },
+        {
+          "id": "r20-1",
+          "createdAt": 150
+        },
+        {
+          "id": "r20-2",
+          "createdAt": 130
+        },
+        {
+          "id": "r20-3",
+          "createdAt": 100
+        },
+        {
+          "id": "r20-4",
+          "createdAt": 110
+        },
+        {
+          "id": "r20-5",
+          "createdAt": 150
+        }
+      ],
+      "ids": [
+        "r20-2",
+        "r20-1",
+        "r20-5"
+      ]
+    },
+    {
+      "since": 160,
+      "rows": [
+        {
+          "id": "r21-0",
+          "createdAt": 100
+        },
+        {
+          "id": "r21-1",
+          "createdAt": 100
+        },
+        {
+          "id": "r21-2",
+          "createdAt": 140
+        },
+        {
+          "id": "r21-3",
+          "createdAt": 140
+        },
+        {
+          "id": "r21-4",
+          "createdAt": 130
+        },
+        {
+          "id": "r21-5",
+          "createdAt": 120
+        }
+      ],
+      "ids": []
+    },
+    {
+      "since": 140,
+      "rows": [
+        {
+          "id": "r22-0",
+          "createdAt": 150
+        },
+        {
+          "id": "r22-1",
+          "createdAt": 140
+        },
+        {
+          "id": "r22-2",
+          "createdAt": 150
+        },
+        {
+          "id": "r22-3",
+          "createdAt": 150
+        },
+        {
+          "id": "r22-4",
+          "createdAt": 100
+        },
+        {
+          "id": "r22-5",
+          "createdAt": 100
+        }
+      ],
+      "ids": [
+        "r22-1",
+        "r22-0",
+        "r22-2",
+        "r22-3"
+      ]
+    },
+    {
+      "since": 100,
+      "rows": [
+        {
+          "id": "r23-0",
+          "createdAt": 100
+        },
+        {
+          "id": "r23-1",
+          "createdAt": 120
+        }
+      ],
+      "ids": [
+        "r23-0",
+        "r23-1"
+      ]
+    },
+    {
+      "since": 120,
+      "rows": [
+        {
+          "id": "r24-0",
+          "createdAt": 140
+        },
+        {
+          "id": "r24-1",
+          "createdAt": 130
+        },
+        {
+          "id": "r24-2",
+          "createdAt": 110
+        },
+        {
+          "id": "r24-3",
+          "createdAt": 110
+        },
+        {
+          "id": "r24-4",
+          "createdAt": 130
+        },
+        {
+          "id": "r24-5",
+          "createdAt": 110
+        },
+        {
+          "id": "r24-6",
+          "createdAt": 120
+        }
+      ],
+      "ids": [
+        "r24-6",
+        "r24-1",
+        "r24-4",
+        "r24-0"
+      ]
+    },
+    {
+      "since": 150,
+      "rows": [],
+      "ids": []
+    },
+    {
+      "since": 160,
+      "rows": [],
+      "ids": []
+    },
+    {
+      "since": 150,
+      "rows": [
+        {
+          "id": "r27-0",
+          "createdAt": 110
+        },
+        {
+          "id": "r27-1",
+          "createdAt": 140
+        },
+        {
+          "id": "r27-2",
+          "createdAt": 110
+        },
+        {
+          "id": "r27-3",
+          "createdAt": 140
+        }
+      ],
+      "ids": []
+    },
+    {
+      "since": 160,
+      "rows": [
+        {
+          "id": "r28-0",
+          "createdAt": 120
+        },
+        {
+          "id": "r28-1",
+          "createdAt": 110
+        }
+      ],
+      "ids": []
+    },
+    {
+      "since": 100,
+      "rows": [
+        {
+          "id": "r29-0",
+          "createdAt": 150
+        },
+        {
+          "id": "r29-1",
+          "createdAt": 120
+        },
+        {
+          "id": "r29-2",
+          "createdAt": 110
+        },
+        {
+          "id": "r29-3",
+          "createdAt": 120
+        },
+        {
+          "id": "r29-4",
+          "createdAt": 110
+        },
+        {
+          "id": "r29-5",
+          "createdAt": 100
+        }
+      ],
+      "ids": [
+        "r29-5",
+        "r29-2",
+        "r29-4",
+        "r29-1",
+        "r29-3",
+        "r29-0"
+      ]
+    },
+    {
+      "since": 130,
+      "rows": [],
+      "ids": []
+    },
+    {
+      "since": 160,
+      "rows": [
+        {
+          "id": "r31-0",
+          "createdAt": 140
+        },
+        {
+          "id": "r31-1",
+          "createdAt": 110
+        },
+        {
+          "id": "r31-2",
+          "createdAt": 140
+        }
+      ],
+      "ids": []
+    },
+    {
+      "since": 120,
+      "rows": [
+        {
+          "id": "r32-0",
+          "createdAt": 100
+        },
+        {
+          "id": "r32-1",
+          "createdAt": 130
+        },
+        {
+          "id": "r32-2",
+          "createdAt": 120
+        },
+        {
+          "id": "r32-3",
+          "createdAt": 100
+        }
+      ],
+      "ids": [
+        "r32-2",
+        "r32-1"
+      ]
+    },
+    {
+      "since": 140,
+      "rows": [],
+      "ids": []
+    },
+    {
+      "since": 110,
+      "rows": [
+        {
+          "id": "r34-0",
+          "createdAt": 140
+        }
+      ],
+      "ids": [
+        "r34-0"
+      ]
+    },
+    {
+      "since": 160,
+      "rows": [
+        {
+          "id": "r35-0",
+          "createdAt": 140
+        }
+      ],
+      "ids": []
+    },
+    {
+      "since": 120,
+      "rows": [],
+      "ids": []
+    },
+    {
+      "since": 110,
+      "rows": [
+        {
+          "id": "r37-0",
+          "createdAt": 100
+        },
+        {
+          "id": "r37-1",
+          "createdAt": 150
+        },
+        {
+          "id": "r37-2",
+          "createdAt": 140
+        },
+        {
+          "id": "r37-3",
+          "createdAt": 150
+        }
+      ],
+      "ids": [
+        "r37-2",
+        "r37-1",
+        "r37-3"
+      ]
+    },
+    {
+      "since": 160,
+      "rows": [
+        {
+          "id": "r38-0",
+          "createdAt": 130
+        },
+        {
+          "id": "r38-1",
+          "createdAt": 110
+        },
+        {
+          "id": "r38-2",
+          "createdAt": 110
+        },
+        {
+          "id": "r38-3",
+          "createdAt": 110
+        }
+      ],
+      "ids": []
+    },
+    {
+      "since": 140,
+      "rows": [
+        {
+          "id": "r39-0",
+          "createdAt": 120
+        },
+        {
+          "id": "r39-1",
+          "createdAt": 130
+        }
+      ],
+      "ids": []
+    }
+  ],
+  "summaries": [
+    {
+      "names": [
+        "᠎",
+        "\t\n",
+        " ",
+        "Dr ill"
+      ],
+      "expected": 5,
+      "summary": {
+        "saved": 4,
+        "named": 2,
+        "unnamed": 2,
+        "pending": 1
+      }
+    },
+    {
+      "names": [
+        "",
+        "​",
+        "Drill",
+        " Drill　",
+        ""
+      ],
+      "expected": 4,
+      "summary": {
+        "saved": 5,
+        "named": 5,
+        "unnamed": 0,
+        "pending": 0
+      }
+    },
+    {
+      "names": [
+        "\t\n"
+      ],
+      "expected": 4,
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 3
+      }
+    },
+    {
+      "names": [
+        " ",
+        "  Drill  ",
+        "",
+        "",
+        "​Drill"
+      ],
+      "expected": 4,
+      "summary": {
+        "saved": 5,
+        "named": 3,
+        "unnamed": 2,
+        "pending": 0
+      }
+    },
+    {
+      "names": [
+        "﻿",
+        "᠎",
+        " "
+      ],
+      "expected": 3,
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 0
+      }
+    },
+    {
+      "names": [
+        "　"
+      ],
+      "expected": 7,
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 6
+      }
+    },
+    {
+      "names": [
+        "  ",
+        "​Drill",
+        "\t\n"
+      ],
+      "expected": 3,
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 0
+      }
+    },
+    {
+      "names": [
+        " ",
+        "é",
+        " Drill　",
+        "Dr ill"
+      ],
+      "expected": 6,
+      "summary": {
+        "saved": 4,
+        "named": 3,
+        "unnamed": 1,
+        "pending": 2
+      }
+    },
+    {
+      "names": [],
+      "expected": 3,
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 3
+      }
+    },
+    {
+      "names": [
+        "​Drill",
+        " Drill　",
+        "  ",
+        "﻿"
+      ],
+      "expected": 6,
+      "summary": {
+        "saved": 4,
+        "named": 2,
+        "unnamed": 2,
+        "pending": 2
+      }
+    },
+    {
+      "names": [
+        " ",
+        "Drill",
+        "",
+        "  "
+      ],
+      "expected": 0,
+      "summary": {
+        "saved": 4,
+        "named": 2,
+        "unnamed": 2,
+        "pending": 0
+      }
+    },
+    {
+      "names": [
+        " Drill　",
+        "​Drill",
+        "Drill",
+        "Drill",
+        ""
+      ],
+      "expected": 1,
+      "summary": {
+        "saved": 5,
+        "named": 5,
+        "unnamed": 0,
+        "pending": 0
+      }
+    },
+    {
+      "names": [
+        "﻿Drill﻿",
+        "  Drill  "
+      ],
+      "expected": 0,
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 0
+      }
+    },
+    {
+      "names": [],
+      "expected": 0,
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 0
+      }
+    },
+    {
+      "names": [
+        "  Drill  ",
+        "\t\n",
+        "﻿Drill﻿",
+        " "
+      ],
+      "expected": 3,
+      "summary": {
+        "saved": 4,
+        "named": 2,
+        "unnamed": 2,
+        "pending": 0
+      }
+    },
+    {
+      "names": [],
+      "expected": 0,
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 0
+      }
+    },
+    {
+      "names": [],
+      "expected": 4,
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 4
+      }
+    },
+    {
+      "names": [
+        "​Drill",
+        "﻿Drill﻿",
+        " ",
+        "Dr ill",
+        "﻿"
+      ],
+      "expected": 4,
+      "summary": {
+        "saved": 5,
+        "named": 3,
+        "unnamed": 2,
+        "pending": 0
+      }
+    },
+    {
+      "names": [],
+      "expected": 1,
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 1
+      }
+    },
+    {
+      "names": [
+        "Dr ill",
+        "Dr ill",
+        "　"
+      ],
+      "expected": 3,
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 0
+      }
+    },
+    {
+      "names": [
+        "",
+        "",
+        "Drill",
+        "Dr ill",
+        "é"
+      ],
+      "expected": 6,
+      "summary": {
+        "saved": 5,
+        "named": 4,
+        "unnamed": 1,
+        "pending": 1
+      }
+    },
+    {
+      "names": [
+        "᠎",
+        " ",
+        "",
+        "é"
+      ],
+      "expected": 1,
+      "summary": {
+        "saved": 4,
+        "named": 3,
+        "unnamed": 1,
+        "pending": 0
+      }
+    },
+    {
+      "names": [],
+      "expected": 2,
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 2
+      }
+    },
+    {
+      "names": [],
+      "expected": 0,
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 0
+      }
+    },
+    {
+      "names": [
+        "Drill",
+        "é"
+      ],
+      "expected": 0,
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 0
+      }
+    },
+    {
+      "names": [
+        "﻿",
+        "  ",
+        "﻿Drill﻿"
+      ],
+      "expected": 2,
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 0
+      }
+    },
+    {
+      "names": [
+        "﻿Drill﻿",
+        " ",
+        " Drill　",
+        "Drill"
+      ],
+      "expected": 3,
+      "summary": {
+        "saved": 4,
+        "named": 3,
+        "unnamed": 1,
+        "pending": 0
+      }
+    },
+    {
+      "names": [
+        "Dr ill",
+        "﻿",
+        "",
+        "\t\n"
+      ],
+      "expected": 2,
+      "summary": {
+        "saved": 4,
+        "named": 1,
+        "unnamed": 3,
+        "pending": 0
+      }
+    },
+    {
+      "names": [],
+      "expected": 2,
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 2
+      }
+    },
+    {
+      "names": [],
+      "expected": 3,
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 3
+      }
+    },
+    {
+      "names": [
+        "​",
+        "\t\n"
+      ],
+      "expected": 1,
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 0
+      }
+    },
+    {
+      "names": [
+        "​Drill",
+        "",
+        "　",
+        "᠎"
+      ],
+      "expected": 2,
+      "summary": {
+        "saved": 4,
+        "named": 3,
+        "unnamed": 1,
+        "pending": 0
+      }
+    },
+    {
+      "names": [
+        ""
+      ],
+      "expected": 2,
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 1
+      }
+    },
+    {
+      "names": [],
+      "expected": 3,
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 3
+      }
+    },
+    {
+      "names": [
+        " Drill　",
+        "Drill",
+        "​",
+        "Drill"
+      ],
+      "expected": 5,
+      "summary": {
+        "saved": 4,
+        "named": 4,
+        "unnamed": 0,
+        "pending": 1
+      }
+    },
+    {
+      "names": [
+        " Drill　",
+        " ",
+        "Drill"
+      ],
+      "expected": 2,
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 0
+      }
+    },
+    {
+      "names": [
+        "  ",
+        "",
+        "​Drill",
+        "",
+        "Dr ill"
+      ],
+      "expected": 3,
+      "summary": {
+        "saved": 5,
+        "named": 2,
+        "unnamed": 3,
+        "pending": 0
+      }
+    },
+    {
+      "names": [
+        "  Drill  ",
+        "",
+        " Drill　",
+        "　"
+      ],
+      "expected": 4,
+      "summary": {
+        "saved": 4,
+        "named": 2,
+        "unnamed": 2,
+        "pending": 0
+      }
+    },
+    {
+      "names": [],
+      "expected": 0,
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 0
+      }
+    },
+    {
+      "names": [],
+      "expected": 7,
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 7
+      }
+    }
+  ],
+  "pipeline": [
+    {
+      "name": "",
+      "category": "Tools",
+      "outcome": {
+        "status": "unrecognized",
+        "itemId": "item-1",
+        "reason": "unrecognized"
+      },
+      "updates": [
+        {
+          "category": "Tools",
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": false
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "",
+      "category": null,
+      "outcome": {
+        "status": "unrecognized",
+        "itemId": "item-1",
+        "reason": "unrecognized"
+      },
+      "updates": [
+        {
+          "category": null,
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": false
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": " ",
+      "category": "Tools",
+      "outcome": {
+        "status": "unrecognized",
+        "itemId": "item-1",
+        "reason": "unrecognized"
+      },
+      "updates": [
+        {
+          "category": "Tools",
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": false
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": " ",
+      "category": null,
+      "outcome": {
+        "status": "unrecognized",
+        "itemId": "item-1",
+        "reason": "unrecognized"
+      },
+      "updates": [
+        {
+          "category": null,
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": false
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "\t\n",
+      "category": "Tools",
+      "outcome": {
+        "status": "unrecognized",
+        "itemId": "item-1",
+        "reason": "unrecognized"
+      },
+      "updates": [
+        {
+          "category": "Tools",
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": false
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "\t\n",
+      "category": null,
+      "outcome": {
+        "status": "unrecognized",
+        "itemId": "item-1",
+        "reason": "unrecognized"
+      },
+      "updates": [
+        {
+          "category": null,
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": false
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": " ",
+      "category": "Tools",
+      "outcome": {
+        "status": "unrecognized",
+        "itemId": "item-1",
+        "reason": "unrecognized"
+      },
+      "updates": [
+        {
+          "category": "Tools",
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": false
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": " ",
+      "category": null,
+      "outcome": {
+        "status": "unrecognized",
+        "itemId": "item-1",
+        "reason": "unrecognized"
+      },
+      "updates": [
+        {
+          "category": null,
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": false
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "﻿",
+      "category": "Tools",
+      "outcome": {
+        "status": "unrecognized",
+        "itemId": "item-1",
+        "reason": "unrecognized"
+      },
+      "updates": [
+        {
+          "category": "Tools",
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": false
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "﻿",
+      "category": null,
+      "outcome": {
+        "status": "unrecognized",
+        "itemId": "item-1",
+        "reason": "unrecognized"
+      },
+      "updates": [
+        {
+          "category": null,
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": false
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "  ",
+      "category": "Tools",
+      "outcome": {
+        "status": "unrecognized",
+        "itemId": "item-1",
+        "reason": "unrecognized"
+      },
+      "updates": [
+        {
+          "category": "Tools",
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": false
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "  ",
+      "category": null,
+      "outcome": {
+        "status": "unrecognized",
+        "itemId": "item-1",
+        "reason": "unrecognized"
+      },
+      "updates": [
+        {
+          "category": null,
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": false
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "　",
+      "category": "Tools",
+      "outcome": {
+        "status": "unrecognized",
+        "itemId": "item-1",
+        "reason": "unrecognized"
+      },
+      "updates": [
+        {
+          "category": "Tools",
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": false
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "　",
+      "category": null,
+      "outcome": {
+        "status": "unrecognized",
+        "itemId": "item-1",
+        "reason": "unrecognized"
+      },
+      "updates": [
+        {
+          "category": null,
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": false
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "​",
+      "category": "Tools",
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": "​"
+      },
+      "updates": [
+        {
+          "name": "​",
+          "category": "Tools",
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "​",
+      "category": null,
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": "​"
+      },
+      "updates": [
+        {
+          "name": "​",
+          "category": null,
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "",
+      "category": "Tools",
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": ""
+      },
+      "updates": [
+        {
+          "name": "",
+          "category": "Tools",
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "",
+      "category": null,
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": ""
+      },
+      "updates": [
+        {
+          "name": "",
+          "category": null,
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "᠎",
+      "category": "Tools",
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": "᠎"
+      },
+      "updates": [
+        {
+          "name": "᠎",
+          "category": "Tools",
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "᠎",
+      "category": null,
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": "᠎"
+      },
+      "updates": [
+        {
+          "name": "᠎",
+          "category": null,
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "Drill",
+      "category": "Tools",
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": "Drill"
+      },
+      "updates": [
+        {
+          "name": "Drill",
+          "category": "Tools",
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "Drill",
+      "category": null,
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": "Drill"
+      },
+      "updates": [
+        {
+          "name": "Drill",
+          "category": null,
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "  Drill  ",
+      "category": "Tools",
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": "Drill"
+      },
+      "updates": [
+        {
+          "name": "Drill",
+          "category": "Tools",
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "  Drill  ",
+      "category": null,
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": "Drill"
+      },
+      "updates": [
+        {
+          "name": "Drill",
+          "category": null,
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": " Drill　",
+      "category": "Tools",
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": "Drill"
+      },
+      "updates": [
+        {
+          "name": "Drill",
+          "category": "Tools",
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": " Drill　",
+      "category": null,
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": "Drill"
+      },
+      "updates": [
+        {
+          "name": "Drill",
+          "category": null,
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "﻿Drill﻿",
+      "category": "Tools",
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": "Drill"
+      },
+      "updates": [
+        {
+          "name": "Drill",
+          "category": "Tools",
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "﻿Drill﻿",
+      "category": null,
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": "Drill"
+      },
+      "updates": [
+        {
+          "name": "Drill",
+          "category": null,
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "Dr ill",
+      "category": "Tools",
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": "Dr ill"
+      },
+      "updates": [
+        {
+          "name": "Dr ill",
+          "category": "Tools",
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "Dr ill",
+      "category": null,
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": "Dr ill"
+      },
+      "updates": [
+        {
+          "name": "Dr ill",
+          "category": null,
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "​Drill",
+      "category": "Tools",
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": "​Drill"
+      },
+      "updates": [
+        {
+          "name": "​Drill",
+          "category": "Tools",
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "​Drill",
+      "category": null,
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": "​Drill"
+      },
+      "updates": [
+        {
+          "name": "​Drill",
+          "category": null,
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "é",
+      "category": "Tools",
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": "é"
+      },
+      "updates": [
+        {
+          "name": "é",
+          "category": "Tools",
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": "é",
+      "category": null,
+      "outcome": {
+        "status": "recognized",
+        "itemId": "item-1",
+        "name": "é"
+      },
+      "updates": [
+        {
+          "name": "é",
+          "category": null,
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": true
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": null,
+      "category": "Tools",
+      "outcome": {
+        "status": "unrecognized",
+        "itemId": "item-1",
+        "reason": "unrecognized"
+      },
+      "updates": [
+        {
+          "category": "Tools",
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": false
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    },
+    {
+      "name": null,
+      "category": null,
+      "outcome": {
+        "status": "unrecognized",
+        "itemId": "item-1",
+        "reason": "unrecognized"
+      },
+      "updates": [
+        {
+          "category": null,
+          "tags": [
+            "dewalt"
+          ],
+          "expectedUpdatedAt": 5,
+          "hasName": false
+        }
+      ],
+      "created": [
+        {
+          "containerId": "drop-zone",
+          "photo": {
+            "uri": "file:///p.webp",
+            "thumbUri": "file:///p-thumb.webp",
+            "width": 646,
+            "height": 1400
+          },
+          "hasName": false
+        }
+      ]
+    }
+  ]
+}

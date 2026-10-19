@@ -1,0 +1,8277 @@
+{
+  "fast": [
+    {
+      "captured": 0,
+      "completed": 0,
+      "recognized": 0,
+      "text": "0 identified",
+      "settled": true
+    },
+    {
+      "captured": 1,
+      "completed": 0,
+      "recognized": 0,
+      "text": "Identifying 1…",
+      "settled": false
+    },
+    {
+      "captured": 1,
+      "completed": 1,
+      "recognized": 0,
+      "text": "1 saved · name it later",
+      "settled": true
+    },
+    {
+      "captured": 1,
+      "completed": 1,
+      "recognized": 1,
+      "text": "1 identified",
+      "settled": true
+    },
+    {
+      "captured": 2,
+      "completed": 0,
+      "recognized": 0,
+      "text": "Identifying 2…",
+      "settled": false
+    },
+    {
+      "captured": 2,
+      "completed": 1,
+      "recognized": 0,
+      "text": "Identifying 1…",
+      "settled": false
+    },
+    {
+      "captured": 2,
+      "completed": 1,
+      "recognized": 1,
+      "text": "Identifying 1…",
+      "settled": false
+    },
+    {
+      "captured": 2,
+      "completed": 2,
+      "recognized": 0,
+      "text": "2 saved · name them later",
+      "settled": true
+    },
+    {
+      "captured": 2,
+      "completed": 2,
+      "recognized": 1,
+      "text": "1 identified · 1 to name",
+      "settled": true
+    },
+    {
+      "captured": 2,
+      "completed": 2,
+      "recognized": 2,
+      "text": "2 identified",
+      "settled": true
+    },
+    {
+      "captured": 3,
+      "completed": 0,
+      "recognized": 0,
+      "text": "Identifying 3…",
+      "settled": false
+    },
+    {
+      "captured": 3,
+      "completed": 1,
+      "recognized": 0,
+      "text": "Identifying 2…",
+      "settled": false
+    },
+    {
+      "captured": 3,
+      "completed": 1,
+      "recognized": 1,
+      "text": "Identifying 2…",
+      "settled": false
+    },
+    {
+      "captured": 3,
+      "completed": 2,
+      "recognized": 0,
+      "text": "Identifying 1…",
+      "settled": false
+    },
+    {
+      "captured": 3,
+      "completed": 2,
+      "recognized": 1,
+      "text": "Identifying 1…",
+      "settled": false
+    },
+    {
+      "captured": 3,
+      "completed": 2,
+      "recognized": 2,
+      "text": "Identifying 1…",
+      "settled": false
+    },
+    {
+      "captured": 3,
+      "completed": 3,
+      "recognized": 0,
+      "text": "3 saved · name them later",
+      "settled": true
+    },
+    {
+      "captured": 3,
+      "completed": 3,
+      "recognized": 1,
+      "text": "1 identified · 2 to name",
+      "settled": true
+    },
+    {
+      "captured": 3,
+      "completed": 3,
+      "recognized": 2,
+      "text": "2 identified · 1 to name",
+      "settled": true
+    },
+    {
+      "captured": 3,
+      "completed": 3,
+      "recognized": 3,
+      "text": "3 identified",
+      "settled": true
+    },
+    {
+      "captured": 4,
+      "completed": 0,
+      "recognized": 0,
+      "text": "Identifying 4…",
+      "settled": false
+    },
+    {
+      "captured": 4,
+      "completed": 1,
+      "recognized": 0,
+      "text": "Identifying 3…",
+      "settled": false
+    },
+    {
+      "captured": 4,
+      "completed": 1,
+      "recognized": 1,
+      "text": "Identifying 3…",
+      "settled": false
+    },
+    {
+      "captured": 4,
+      "completed": 2,
+      "recognized": 0,
+      "text": "Identifying 2…",
+      "settled": false
+    },
+    {
+      "captured": 4,
+      "completed": 2,
+      "recognized": 1,
+      "text": "Identifying 2…",
+      "settled": false
+    },
+    {
+      "captured": 4,
+      "completed": 2,
+      "recognized": 2,
+      "text": "Identifying 2…",
+      "settled": false
+    },
+    {
+      "captured": 4,
+      "completed": 3,
+      "recognized": 0,
+      "text": "Identifying 1…",
+      "settled": false
+    },
+    {
+      "captured": 4,
+      "completed": 3,
+      "recognized": 1,
+      "text": "Identifying 1…",
+      "settled": false
+    },
+    {
+      "captured": 4,
+      "completed": 3,
+      "recognized": 2,
+      "text": "Identifying 1…",
+      "settled": false
+    },
+    {
+      "captured": 4,
+      "completed": 3,
+      "recognized": 3,
+      "text": "Identifying 1…",
+      "settled": false
+    },
+    {
+      "captured": 4,
+      "completed": 4,
+      "recognized": 0,
+      "text": "4 saved · name them later",
+      "settled": true
+    },
+    {
+      "captured": 4,
+      "completed": 4,
+      "recognized": 1,
+      "text": "1 identified · 3 to name",
+      "settled": true
+    },
+    {
+      "captured": 4,
+      "completed": 4,
+      "recognized": 2,
+      "text": "2 identified · 2 to name",
+      "settled": true
+    },
+    {
+      "captured": 4,
+      "completed": 4,
+      "recognized": 3,
+      "text": "3 identified · 1 to name",
+      "settled": true
+    },
+    {
+      "captured": 4,
+      "completed": 4,
+      "recognized": 4,
+      "text": "4 identified",
+      "settled": true
+    }
+  ],
+  "leave": [
+    {
+      "mode": "single",
+      "captured": 0,
+      "result": "back"
+    },
+    {
+      "mode": "single",
+      "captured": 1,
+      "result": "back"
+    },
+    {
+      "mode": "single",
+      "captured": 2,
+      "result": "back"
+    },
+    {
+      "mode": "fast",
+      "captured": 0,
+      "result": "back"
+    },
+    {
+      "mode": "fast",
+      "captured": 1,
+      "result": "review"
+    },
+    {
+      "mode": "fast",
+      "captured": 2,
+      "result": "review"
+    }
+  ],
+  "review": [
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "0 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "0 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "0 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "0 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "0 saved to "
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "0 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "0 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "0 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "0 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "0 saved to "
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "They appear here as they are saved.",
+      "title": "Saving 1 photo…"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "They appear here as they are saved.",
+      "title": "Saving 1 photo…"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "They appear here as they are saved.",
+      "title": "Saving 1 photo…"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "They appear here as they are saved.",
+      "title": "Saving 1 photo…"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "They appear here as they are saved.",
+      "title": "Saving 1 photo…"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "They appear here as they are saved.",
+      "title": "Saving 1 photo…"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "0 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "0 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "0 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "0 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "0 saved to "
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "They appear here as they are saved.",
+      "title": "Saving 2 photos…"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "They appear here as they are saved.",
+      "title": "Saving 2 photos…"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "They appear here as they are saved.",
+      "title": "Saving 2 photos…"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "They appear here as they are saved.",
+      "title": "Saving 2 photos…"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "They appear here as they are saved.",
+      "title": "Saving 2 photos…"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "They appear here as they are saved.",
+      "title": "Saving 2 photos…"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "0 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "0 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "0 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "0 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "0 saved to "
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "They appear here as they are saved.",
+      "title": "Saving 3 photos…"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "They appear here as they are saved.",
+      "title": "Saving 3 photos…"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "They appear here as they are saved.",
+      "title": "Saving 3 photos…"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "They appear here as they are saved.",
+      "title": "Saving 3 photos…"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "They appear here as they are saved.",
+      "title": "Saving 3 photos…"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "They appear here as they are saved.",
+      "title": "Saving 3 photos…"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "0 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "0 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "0 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "0 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 0,
+        "named": 0,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "0 saved to "
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "1 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "1 saved to "
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "1 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "1 saved to "
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "1 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "1 saved to "
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to "
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "1 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "1 saved to "
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to "
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "1 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "1 saved to "
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 1,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to "
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "1 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "1 saved to "
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "1 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "1 saved to "
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "1 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "1 saved to "
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to "
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "1 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "1 saved to "
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to "
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "1 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "1 saved to "
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 1,
+        "named": 0,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "1 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 2,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 1,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 2,
+        "named": 0,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "2 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "allNamed",
+      "statusText": "All named",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 3,
+        "unnamed": 0,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "toName",
+      "statusText": "1 still needs a name",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 2,
+        "unnamed": 1,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "toName",
+      "statusText": "2 still need a name",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 1,
+        "unnamed": 2,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "toName",
+      "statusText": "3 still need a name",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "3 still need a name",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "toName",
+      "statusText": "3 still need a name",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "toName",
+      "statusText": "3 still need a name",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "3 still need a name",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 0
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "toName",
+      "statusText": "3 still need a name",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "toName",
+      "statusText": "3 still need a name",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "3 still need a name",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "toName",
+      "statusText": "3 still need a name",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "toName",
+      "statusText": "3 still need a name",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "toName",
+      "statusText": "3 still need a name",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 0
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "toName",
+      "statusText": "3 still need a name",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 1
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 1 more…",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 1
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 2
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 2 more…",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 2
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": null,
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 3
+      },
+      "stalled": false,
+      "containerId": "c1",
+      "label": "",
+      "status": "pending",
+      "statusText": "Saving 3 more…",
+      "title": "3 saved to "
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "drop-zone",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to the drop zone"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": null,
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": null
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to Tool chest"
+    },
+    {
+      "summary": {
+        "saved": 3,
+        "named": 0,
+        "unnamed": 3,
+        "pending": 3
+      },
+      "stalled": true,
+      "containerId": "c1",
+      "label": "",
+      "status": "maybeLost",
+      "statusText": "Some photos may not have been saved.",
+      "title": "3 saved to "
+    }
+  ],
+  "toasts": [
+    {
+      "saved": 0,
+      "containerId": "drop-zone",
+      "label": null,
+      "toast": null
+    },
+    {
+      "saved": 0,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "toast": null
+    },
+    {
+      "saved": 0,
+      "containerId": "c1",
+      "label": null,
+      "toast": null
+    },
+    {
+      "saved": 0,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "toast": null
+    },
+    {
+      "saved": 1,
+      "containerId": "drop-zone",
+      "label": null,
+      "toast": {
+        "message": "1 item is in the drop zone.",
+        "viewDropZone": true
+      }
+    },
+    {
+      "saved": 1,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "toast": {
+        "message": "1 item is in the drop zone.",
+        "viewDropZone": true
+      }
+    },
+    {
+      "saved": 1,
+      "containerId": "c1",
+      "label": null,
+      "toast": null
+    },
+    {
+      "saved": 1,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "toast": {
+        "message": "1 item added to Tool chest.",
+        "viewDropZone": false
+      }
+    },
+    {
+      "saved": 2,
+      "containerId": "drop-zone",
+      "label": null,
+      "toast": {
+        "message": "2 items are in the drop zone.",
+        "viewDropZone": true
+      }
+    },
+    {
+      "saved": 2,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "toast": {
+        "message": "2 items are in the drop zone.",
+        "viewDropZone": true
+      }
+    },
+    {
+      "saved": 2,
+      "containerId": "c1",
+      "label": null,
+      "toast": null
+    },
+    {
+      "saved": 2,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "toast": {
+        "message": "2 items added to Tool chest.",
+        "viewDropZone": false
+      }
+    },
+    {
+      "saved": 12,
+      "containerId": "drop-zone",
+      "label": null,
+      "toast": {
+        "message": "12 items are in the drop zone.",
+        "viewDropZone": true
+      }
+    },
+    {
+      "saved": 12,
+      "containerId": "drop-zone",
+      "label": "Tool chest",
+      "toast": {
+        "message": "12 items are in the drop zone.",
+        "viewDropZone": true
+      }
+    },
+    {
+      "saved": 12,
+      "containerId": "c1",
+      "label": null,
+      "toast": null
+    },
+    {
+      "saved": 12,
+      "containerId": "c1",
+      "label": "Tool chest",
+      "toast": {
+        "message": "12 items added to Tool chest.",
+        "viewDropZone": false
+      }
+    }
+  ],
+  "expected": [
+    {
+      "expected": 0,
+      "landed": 0,
+      "shown": 0,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 0,
+      "shown": 1,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 0,
+      "shown": 2,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 0,
+      "shown": 3,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 0,
+      "shown": 4,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 1,
+      "shown": 0,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 1,
+      "shown": 1,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 1,
+      "shown": 2,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 1,
+      "shown": 3,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 1,
+      "shown": 4,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 2,
+      "shown": 0,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 2,
+      "shown": 1,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 2,
+      "shown": 2,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 2,
+      "shown": 3,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 2,
+      "shown": 4,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 3,
+      "shown": 0,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 3,
+      "shown": 1,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 3,
+      "shown": 2,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 3,
+      "shown": 3,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 3,
+      "shown": 4,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 4,
+      "shown": 0,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 4,
+      "shown": 1,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 4,
+      "shown": 2,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 4,
+      "shown": 3,
+      "result": 0
+    },
+    {
+      "expected": 0,
+      "landed": 4,
+      "shown": 4,
+      "result": 0
+    },
+    {
+      "expected": 1,
+      "landed": 0,
+      "shown": 0,
+      "result": 1
+    },
+    {
+      "expected": 1,
+      "landed": 0,
+      "shown": 1,
+      "result": 1
+    },
+    {
+      "expected": 1,
+      "landed": 0,
+      "shown": 2,
+      "result": 1
+    },
+    {
+      "expected": 1,
+      "landed": 0,
+      "shown": 3,
+      "result": 1
+    },
+    {
+      "expected": 1,
+      "landed": 0,
+      "shown": 4,
+      "result": 1
+    },
+    {
+      "expected": 1,
+      "landed": 1,
+      "shown": 0,
+      "result": 0
+    },
+    {
+      "expected": 1,
+      "landed": 1,
+      "shown": 1,
+      "result": 1
+    },
+    {
+      "expected": 1,
+      "landed": 1,
+      "shown": 2,
+      "result": 1
+    },
+    {
+      "expected": 1,
+      "landed": 1,
+      "shown": 3,
+      "result": 1
+    },
+    {
+      "expected": 1,
+      "landed": 1,
+      "shown": 4,
+      "result": 1
+    },
+    {
+      "expected": 1,
+      "landed": 2,
+      "shown": 0,
+      "result": 0
+    },
+    {
+      "expected": 1,
+      "landed": 2,
+      "shown": 1,
+      "result": 0
+    },
+    {
+      "expected": 1,
+      "landed": 2,
+      "shown": 2,
+      "result": 1
+    },
+    {
+      "expected": 1,
+      "landed": 2,
+      "shown": 3,
+      "result": 1
+    },
+    {
+      "expected": 1,
+      "landed": 2,
+      "shown": 4,
+      "result": 1
+    },
+    {
+      "expected": 1,
+      "landed": 3,
+      "shown": 0,
+      "result": 0
+    },
+    {
+      "expected": 1,
+      "landed": 3,
+      "shown": 1,
+      "result": 0
+    },
+    {
+      "expected": 1,
+      "landed": 3,
+      "shown": 2,
+      "result": 0
+    },
+    {
+      "expected": 1,
+      "landed": 3,
+      "shown": 3,
+      "result": 1
+    },
+    {
+      "expected": 1,
+      "landed": 3,
+      "shown": 4,
+      "result": 1
+    },
+    {
+      "expected": 1,
+      "landed": 4,
+      "shown": 0,
+      "result": 0
+    },
+    {
+      "expected": 1,
+      "landed": 4,
+      "shown": 1,
+      "result": 0
+    },
+    {
+      "expected": 1,
+      "landed": 4,
+      "shown": 2,
+      "result": 0
+    },
+    {
+      "expected": 1,
+      "landed": 4,
+      "shown": 3,
+      "result": 0
+    },
+    {
+      "expected": 1,
+      "landed": 4,
+      "shown": 4,
+      "result": 1
+    },
+    {
+      "expected": 2,
+      "landed": 0,
+      "shown": 0,
+      "result": 2
+    },
+    {
+      "expected": 2,
+      "landed": 0,
+      "shown": 1,
+      "result": 2
+    },
+    {
+      "expected": 2,
+      "landed": 0,
+      "shown": 2,
+      "result": 2
+    },
+    {
+      "expected": 2,
+      "landed": 0,
+      "shown": 3,
+      "result": 2
+    },
+    {
+      "expected": 2,
+      "landed": 0,
+      "shown": 4,
+      "result": 2
+    },
+    {
+      "expected": 2,
+      "landed": 1,
+      "shown": 0,
+      "result": 1
+    },
+    {
+      "expected": 2,
+      "landed": 1,
+      "shown": 1,
+      "result": 2
+    },
+    {
+      "expected": 2,
+      "landed": 1,
+      "shown": 2,
+      "result": 2
+    },
+    {
+      "expected": 2,
+      "landed": 1,
+      "shown": 3,
+      "result": 2
+    },
+    {
+      "expected": 2,
+      "landed": 1,
+      "shown": 4,
+      "result": 2
+    },
+    {
+      "expected": 2,
+      "landed": 2,
+      "shown": 0,
+      "result": 0
+    },
+    {
+      "expected": 2,
+      "landed": 2,
+      "shown": 1,
+      "result": 1
+    },
+    {
+      "expected": 2,
+      "landed": 2,
+      "shown": 2,
+      "result": 2
+    },
+    {
+      "expected": 2,
+      "landed": 2,
+      "shown": 3,
+      "result": 2
+    },
+    {
+      "expected": 2,
+      "landed": 2,
+      "shown": 4,
+      "result": 2
+    },
+    {
+      "expected": 2,
+      "landed": 3,
+      "shown": 0,
+      "result": 0
+    },
+    {
+      "expected": 2,
+      "landed": 3,
+      "shown": 1,
+      "result": 0
+    },
+    {
+      "expected": 2,
+      "landed": 3,
+      "shown": 2,
+      "result": 1
+    },
+    {
+      "expected": 2,
+      "landed": 3,
+      "shown": 3,
+      "result": 2
+    },
+    {
+      "expected": 2,
+      "landed": 3,
+      "shown": 4,
+      "result": 2
+    },
+    {
+      "expected": 2,
+      "landed": 4,
+      "shown": 0,
+      "result": 0
+    },
+    {
+      "expected": 2,
+      "landed": 4,
+      "shown": 1,
+      "result": 0
+    },
+    {
+      "expected": 2,
+      "landed": 4,
+      "shown": 2,
+      "result": 0
+    },
+    {
+      "expected": 2,
+      "landed": 4,
+      "shown": 3,
+      "result": 1
+    },
+    {
+      "expected": 2,
+      "landed": 4,
+      "shown": 4,
+      "result": 2
+    },
+    {
+      "expected": 3,
+      "landed": 0,
+      "shown": 0,
+      "result": 3
+    },
+    {
+      "expected": 3,
+      "landed": 0,
+      "shown": 1,
+      "result": 3
+    },
+    {
+      "expected": 3,
+      "landed": 0,
+      "shown": 2,
+      "result": 3
+    },
+    {
+      "expected": 3,
+      "landed": 0,
+      "shown": 3,
+      "result": 3
+    },
+    {
+      "expected": 3,
+      "landed": 0,
+      "shown": 4,
+      "result": 3
+    },
+    {
+      "expected": 3,
+      "landed": 1,
+      "shown": 0,
+      "result": 2
+    },
+    {
+      "expected": 3,
+      "landed": 1,
+      "shown": 1,
+      "result": 3
+    },
+    {
+      "expected": 3,
+      "landed": 1,
+      "shown": 2,
+      "result": 3
+    },
+    {
+      "expected": 3,
+      "landed": 1,
+      "shown": 3,
+      "result": 3
+    },
+    {
+      "expected": 3,
+      "landed": 1,
+      "shown": 4,
+      "result": 3
+    },
+    {
+      "expected": 3,
+      "landed": 2,
+      "shown": 0,
+      "result": 1
+    },
+    {
+      "expected": 3,
+      "landed": 2,
+      "shown": 1,
+      "result": 2
+    },
+    {
+      "expected": 3,
+      "landed": 2,
+      "shown": 2,
+      "result": 3
+    },
+    {
+      "expected": 3,
+      "landed": 2,
+      "shown": 3,
+      "result": 3
+    },
+    {
+      "expected": 3,
+      "landed": 2,
+      "shown": 4,
+      "result": 3
+    },
+    {
+      "expected": 3,
+      "landed": 3,
+      "shown": 0,
+      "result": 0
+    },
+    {
+      "expected": 3,
+      "landed": 3,
+      "shown": 1,
+      "result": 1
+    },
+    {
+      "expected": 3,
+      "landed": 3,
+      "shown": 2,
+      "result": 2
+    },
+    {
+      "expected": 3,
+      "landed": 3,
+      "shown": 3,
+      "result": 3
+    },
+    {
+      "expected": 3,
+      "landed": 3,
+      "shown": 4,
+      "result": 3
+    },
+    {
+      "expected": 3,
+      "landed": 4,
+      "shown": 0,
+      "result": 0
+    },
+    {
+      "expected": 3,
+      "landed": 4,
+      "shown": 1,
+      "result": 0
+    },
+    {
+      "expected": 3,
+      "landed": 4,
+      "shown": 2,
+      "result": 1
+    },
+    {
+      "expected": 3,
+      "landed": 4,
+      "shown": 3,
+      "result": 2
+    },
+    {
+      "expected": 3,
+      "landed": 4,
+      "shown": 4,
+      "result": 3
+    },
+    {
+      "expected": 4,
+      "landed": 0,
+      "shown": 0,
+      "result": 4
+    },
+    {
+      "expected": 4,
+      "landed": 0,
+      "shown": 1,
+      "result": 4
+    },
+    {
+      "expected": 4,
+      "landed": 0,
+      "shown": 2,
+      "result": 4
+    },
+    {
+      "expected": 4,
+      "landed": 0,
+      "shown": 3,
+      "result": 4
+    },
+    {
+      "expected": 4,
+      "landed": 0,
+      "shown": 4,
+      "result": 4
+    },
+    {
+      "expected": 4,
+      "landed": 1,
+      "shown": 0,
+      "result": 3
+    },
+    {
+      "expected": 4,
+      "landed": 1,
+      "shown": 1,
+      "result": 4
+    },
+    {
+      "expected": 4,
+      "landed": 1,
+      "shown": 2,
+      "result": 4
+    },
+    {
+      "expected": 4,
+      "landed": 1,
+      "shown": 3,
+      "result": 4
+    },
+    {
+      "expected": 4,
+      "landed": 1,
+      "shown": 4,
+      "result": 4
+    },
+    {
+      "expected": 4,
+      "landed": 2,
+      "shown": 0,
+      "result": 2
+    },
+    {
+      "expected": 4,
+      "landed": 2,
+      "shown": 1,
+      "result": 3
+    },
+    {
+      "expected": 4,
+      "landed": 2,
+      "shown": 2,
+      "result": 4
+    },
+    {
+      "expected": 4,
+      "landed": 2,
+      "shown": 3,
+      "result": 4
+    },
+    {
+      "expected": 4,
+      "landed": 2,
+      "shown": 4,
+      "result": 4
+    },
+    {
+      "expected": 4,
+      "landed": 3,
+      "shown": 0,
+      "result": 1
+    },
+    {
+      "expected": 4,
+      "landed": 3,
+      "shown": 1,
+      "result": 2
+    },
+    {
+      "expected": 4,
+      "landed": 3,
+      "shown": 2,
+      "result": 3
+    },
+    {
+      "expected": 4,
+      "landed": 3,
+      "shown": 3,
+      "result": 4
+    },
+    {
+      "expected": 4,
+      "landed": 3,
+      "shown": 4,
+      "result": 4
+    },
+    {
+      "expected": 4,
+      "landed": 4,
+      "shown": 0,
+      "result": 0
+    },
+    {
+      "expected": 4,
+      "landed": 4,
+      "shown": 1,
+      "result": 1
+    },
+    {
+      "expected": 4,
+      "landed": 4,
+      "shown": 2,
+      "result": 2
+    },
+    {
+      "expected": 4,
+      "landed": 4,
+      "shown": 3,
+      "result": 3
+    },
+    {
+      "expected": 4,
+      "landed": 4,
+      "shown": 4,
+      "result": 4
+    }
+  ],
+  "into": [
+    {
+      "containerId": "drop-zone",
+      "name": null,
+      "code": "CAB-J92R",
+      "result": "Photos go into the drop zone"
+    },
+    {
+      "containerId": "drop-zone",
+      "name": null,
+      "code": "BOX1",
+      "result": "Photos go into the drop zone"
+    },
+    {
+      "containerId": "drop-zone",
+      "name": null,
+      "code": "-AB--C-",
+      "result": "Photos go into the drop zone"
+    },
+    {
+      "containerId": "drop-zone",
+      "name": null,
+      "code": " DRW - 7K2M ",
+      "result": "Photos go into the drop zone"
+    },
+    {
+      "containerId": "drop-zone",
+      "name": "",
+      "code": "CAB-J92R",
+      "result": "Photos go into the drop zone"
+    },
+    {
+      "containerId": "drop-zone",
+      "name": "",
+      "code": "BOX1",
+      "result": "Photos go into the drop zone"
+    },
+    {
+      "containerId": "drop-zone",
+      "name": "",
+      "code": "-AB--C-",
+      "result": "Photos go into the drop zone"
+    },
+    {
+      "containerId": "drop-zone",
+      "name": "",
+      "code": " DRW - 7K2M ",
+      "result": "Photos go into the drop zone"
+    },
+    {
+      "containerId": "drop-zone",
+      "name": " ",
+      "code": "CAB-J92R",
+      "result": "Photos go into the drop zone"
+    },
+    {
+      "containerId": "drop-zone",
+      "name": " ",
+      "code": "BOX1",
+      "result": "Photos go into the drop zone"
+    },
+    {
+      "containerId": "drop-zone",
+      "name": " ",
+      "code": "-AB--C-",
+      "result": "Photos go into the drop zone"
+    },
+    {
+      "containerId": "drop-zone",
+      "name": " ",
+      "code": " DRW - 7K2M ",
+      "result": "Photos go into the drop zone"
+    },
+    {
+      "containerId": "drop-zone",
+      "name": "Tool chest",
+      "code": "CAB-J92R",
+      "result": "Photos go into the drop zone"
+    },
+    {
+      "containerId": "drop-zone",
+      "name": "Tool chest",
+      "code": "BOX1",
+      "result": "Photos go into the drop zone"
+    },
+    {
+      "containerId": "drop-zone",
+      "name": "Tool chest",
+      "code": "-AB--C-",
+      "result": "Photos go into the drop zone"
+    },
+    {
+      "containerId": "drop-zone",
+      "name": "Tool chest",
+      "code": " DRW - 7K2M ",
+      "result": "Photos go into the drop zone"
+    },
+    {
+      "containerId": "drop-zone",
+      "name": null,
+      "code": null,
+      "result": "Photos go into the drop zone"
+    },
+    {
+      "containerId": "c1",
+      "name": null,
+      "code": "CAB-J92R",
+      "result": "Photos go into the container in Garage, label C A B, J 9 2 R"
+    },
+    {
+      "containerId": "c1",
+      "name": null,
+      "code": "BOX1",
+      "result": "Photos go into the container in Garage, label B O X 1"
+    },
+    {
+      "containerId": "c1",
+      "name": null,
+      "code": "-AB--C-",
+      "result": "Photos go into the container in Garage, label A B, C"
+    },
+    {
+      "containerId": "c1",
+      "name": null,
+      "code": " DRW - 7K2M ",
+      "result": "Photos go into the container in Garage, label D R W, 7 K 2 M"
+    },
+    {
+      "containerId": "c1",
+      "name": "",
+      "code": "CAB-J92R",
+      "result": "Photos go into the container in Garage, label C A B, J 9 2 R"
+    },
+    {
+      "containerId": "c1",
+      "name": "",
+      "code": "BOX1",
+      "result": "Photos go into the container in Garage, label B O X 1"
+    },
+    {
+      "containerId": "c1",
+      "name": "",
+      "code": "-AB--C-",
+      "result": "Photos go into the container in Garage, label A B, C"
+    },
+    {
+      "containerId": "c1",
+      "name": "",
+      "code": " DRW - 7K2M ",
+      "result": "Photos go into the container in Garage, label D R W, 7 K 2 M"
+    },
+    {
+      "containerId": "c1",
+      "name": " ",
+      "code": "CAB-J92R",
+      "result": "Photos go into  , in Garage, label C A B, J 9 2 R"
+    },
+    {
+      "containerId": "c1",
+      "name": " ",
+      "code": "BOX1",
+      "result": "Photos go into  , in Garage, label B O X 1"
+    },
+    {
+      "containerId": "c1",
+      "name": " ",
+      "code": "-AB--C-",
+      "result": "Photos go into  , in Garage, label A B, C"
+    },
+    {
+      "containerId": "c1",
+      "name": " ",
+      "code": " DRW - 7K2M ",
+      "result": "Photos go into  , in Garage, label D R W, 7 K 2 M"
+    },
+    {
+      "containerId": "c1",
+      "name": "Tool chest",
+      "code": "CAB-J92R",
+      "result": "Photos go into Tool chest, in Garage, label C A B, J 9 2 R"
+    },
+    {
+      "containerId": "c1",
+      "name": "Tool chest",
+      "code": "BOX1",
+      "result": "Photos go into Tool chest, in Garage, label B O X 1"
+    },
+    {
+      "containerId": "c1",
+      "name": "Tool chest",
+      "code": "-AB--C-",
+      "result": "Photos go into Tool chest, in Garage, label A B, C"
+    },
+    {
+      "containerId": "c1",
+      "name": "Tool chest",
+      "code": " DRW - 7K2M ",
+      "result": "Photos go into Tool chest, in Garage, label D R W, 7 K 2 M"
+    },
+    {
+      "containerId": "c1",
+      "name": null,
+      "code": null,
+      "result": "Photos go into the drop zone"
+    }
+  ],
+  "labels": [
+    {
+      "name": "",
+      "result": "BOX-7K2M"
+    },
+    {
+      "name": " ",
+      "result": "BOX-7K2M"
+    },
+    {
+      "name": " ",
+      "result": "BOX-7K2M"
+    },
+    {
+      "name": "﻿",
+      "result": "BOX-7K2M"
+    },
+    {
+      "name": "　",
+      "result": "BOX-7K2M"
+    },
+    {
+      "name": "​",
+      "result": "​"
+    },
+    {
+      "name": " ",
+      "result": "BOX-7K2M"
+    },
+    {
+      "name": "Tool chest",
+      "result": "Tool chest"
+    },
+    {
+      "name": " Tool chest ",
+      "result": " Tool chest "
+    },
+    {
+      "name": " Box ",
+      "result": " Box "
+    },
+    {
+      "name": null,
+      "result": "BOX-7K2M"
+    }
+  ],
+  "tokens": [
+    {
+      "value": " abc ",
+      "result": "abc"
+    },
+    {
+      "value": " abc﻿",
+      "result": "abc"
+    },
+    {
+      "value": "",
+      "result": ""
+    },
+    {
+      "value": "　",
+      "result": ""
+    },
+    {
+      "value": "a b",
+      "result": "a b"
+    }
+  ],
+  "plans": [
+    {
+      "existing": null,
+      "label": "Tool chest",
+      "plan": {
+        "write": true,
+        "confirm": null
+      }
+    },
+    {
+      "existing": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "label": "Tool chest",
+      "plan": {
+        "write": false,
+        "confirm": null
+      }
+    },
+    {
+      "existing": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "label": "Tool chest",
+      "plan": {
+        "write": false,
+        "confirm": null
+      }
+    },
+    {
+      "existing": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "label": "Tool chest",
+      "plan": {
+        "write": true,
+        "confirm": {
+          "title": "Replace the label on Tool chest?",
+          "body": "Tool chest already has a label. Its old sticker will stop opening it.",
+          "confirmLabel": "Replace"
+        }
+      }
+    },
+    {
+      "existing": "İİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİ",
+      "label": "Tool chest",
+      "plan": {
+        "write": true,
+        "confirm": {
+          "title": "Replace the label on Tool chest?",
+          "body": "Tool chest already has a label. Its old sticker will stop opening it.",
+          "confirmLabel": "Replace"
+        }
+      }
+    }
+  ],
+  "failures": [
+    {
+      "status": 0,
+      "code": "offline",
+      "message": "The label was not linked. Check the connection and try again."
+    },
+    {
+      "status": 0,
+      "code": "timeout",
+      "message": "The label was not linked. Check the connection and try again."
+    },
+    {
+      "status": 502,
+      "code": "http_502",
+      "message": "The label was not linked. Check the connection and try again."
+    },
+    {
+      "status": 520,
+      "code": "origin_down",
+      "message": "The label was not linked. Check the connection and try again."
+    },
+    {
+      "status": 530,
+      "code": "http_530",
+      "message": "The label was not linked. Check the connection and try again."
+    },
+    {
+      "status": 531,
+      "code": "http_531",
+      "message": "The label was not linked. Try again."
+    },
+    {
+      "status": 404,
+      "code": "not_found",
+      "message": "That container is not in the household any more. Choose another one."
+    },
+    {
+      "status": 410,
+      "code": "gone",
+      "message": "The label was not linked. Try again."
+    },
+    {
+      "status": 401,
+      "code": "unauthorized",
+      "message": "The label was not linked. Try again."
+    },
+    {
+      "status": 403,
+      "code": "unauthorized",
+      "message": "The label was not linked. Try again."
+    },
+    {
+      "status": 409,
+      "code": "conflict",
+      "message": "The label was not linked. Try again."
+    },
+    {
+      "status": 500,
+      "code": "http_500",
+      "message": "The label was not linked. Try again."
+    },
+    {
+      "status": 400,
+      "code": "system_record",
+      "message": "The label was not linked. Try again."
+    },
+    {
+      "status": 200,
+      "code": "photo_missing",
+      "message": "The label was not linked. Try again."
+    }
+  ],
+  "local": "The label was not linked. Try again."
+}
