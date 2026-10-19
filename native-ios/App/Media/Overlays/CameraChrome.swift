@@ -72,6 +72,9 @@ struct CameraTitlePill: View {
                 .multilineTextAlignment(.center)
         }
         .font(.subheadline.weight(.semibold))
+        // RN's `meta` text stops at 2× (`maxScale`), which is AX1 (08 §6). Past it, two lines of
+        // the sticker-link title ("Scan the sticker for Tool chest") cut off the container's name.
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         .foregroundStyle(.white)
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
