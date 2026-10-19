@@ -8,40 +8,69 @@ import Testing
 struct StringsParityTests {
     static let fixture = StringsFixture.shared
 
-    /// Under `swift test` the catalog is not compiled, so this checks the English
-    /// fallback path, including the plural variants resolved in L10nRuntime.
-    @Test("every accessor reproduces strings.ts", arguments: StringsFixture.shared.entries.map(\.path))
-    func accessorMatchesStringsTs(path: String) throws {
-        let entry = try #require(Self.fixture.entries.first { $0.path == path })
+    static func expectParity(_ entry: StringsFixture.Entry) throws {
         for testCase in entry.cases {
-            let actual = try callStringsAccessor(path, testCase.args)
-            #expect(actual == testCase.expected, "\(path)(\(testCase.args.map(\.description).joined(separator: ", ")))")
+            let actual = try callStringsAccessor(entry.path, testCase.args)
+            #expect(actual == testCase.expected, "\(entry.path)(\(testCase.args.map(\.description).joined(separator: ", ")))")
         }
     }
 
-    #if os(macOS)
-    /// The app path: the catalog compiled by xcstringstool, resolved through Foundation,
-    /// with no English fallback. Also proves every catalog key is reachable from an
-    /// accessor and every accessor's key exists.
-    @Test("the compiled catalog reproduces strings.ts through every accessor")
-    func compiledCatalogMatchesStringsTs() throws {
-        let compiled = try CompiledCatalog.result.get()
+    /// Runs every accessor (and `Format.ago`) against `bundle` with the English
+    /// fallback switched off, and returns the catalog keys they read.
+    static func expectStrictParity(_ bundle: Bundle) throws -> Set<String> {
         let log = L10nRuntime.KeyLog()
-        try L10nRuntime.$override.withValue(.init(bundle: compiled.bundle, strict: true, log: log)) {
-            for entry in Self.fixture.entries {
-                for testCase in entry.cases {
-                    let actual = try callStringsAccessor(entry.path, testCase.args)
-                    #expect(actual == testCase.expected, "\(entry.path)(\(testCase.args.map(\.description).joined(separator: ", ")))")
-                }
+        try L10nRuntime.$override.withValue(.init(bundle: bundle, strict: true, log: log)) {
+            for entry in fixture.entries {
+                try expectParity(entry)
             }
-            for vector in Self.fixture.format.ago {
+            for vector in fixture.format.ago {
                 #expect(Format.ago(vector.ms, now: vector.now) == vector.expected, "ago(\(vector.ms), now: \(vector.now))")
             }
         }
-        let resolved = log.keys
-        let expected = Set(Self.fixture.catalogKeys)
+        return log.keys
+    }
+
+    /// Every catalog key is reachable from an accessor, and every key an accessor reads exists.
+    static func expectKeyCoverage(_ resolved: Set<String>) {
+        let expected = Set(fixture.catalogKeys)
         #expect(expected.subtracting(resolved).sorted() == [], "catalog keys no accessor reads")
         #expect(resolved.subtracting(expected).sorted() == [], "keys accessors read that the catalog lacks")
+    }
+
+    /// First the default path, as the app calls it: `Bundle.module` with the English
+    /// fallback (under `swift test` the catalog is only copied, so this is the
+    /// fallback; in an Xcode build it is the compiled catalog). Then the fallback on
+    /// its own, against a bundle with no catalog, so it is checked in either build.
+    @Test("every accessor reproduces strings.ts", arguments: StringsFixture.shared.entries.map(\.path))
+    func accessorMatchesStringsTs(path: String) throws {
+        let entry = try #require(Self.fixture.entries.first { $0.path == path })
+        try Self.expectParity(entry)
+        try #require(NoCatalog.holdsNoCatalog, "the test bundle must not hold a Localizable table")
+        try L10nRuntime.$override.withValue(.init(bundle: NoCatalog.bundle, strict: false, log: nil)) {
+            try Self.expectParity(entry)
+        }
+    }
+
+    /// The app's own lookup with the fallback switched off: `Bundle.module` as Xcode
+    /// builds it, in the app or in the package tests run by xcodebuild on a simulator
+    /// (see scripts/strings/README.md). `swift test` only copies the catalog, so it
+    /// skips this; the xcstringstool test below covers the same files there.
+    @Test(
+        "the module's compiled catalog reproduces strings.ts through every accessor",
+        .enabled(if: L10nRuntime.bundle.url(forResource: "Localizable", withExtension: "strings") != nil,
+                 "Bundle.module holds a compiled catalog only in Xcode builds")
+    )
+    func moduleCatalogMatchesStringsTs() throws {
+        Self.expectKeyCoverage(try Self.expectStrictParity(L10nRuntime.bundle))
+    }
+
+    #if os(macOS)
+    /// The app path: the catalog compiled by xcstringstool (the same files Xcode puts
+    /// in the app), resolved through Foundation, with no English fallback.
+    @Test("the compiled catalog reproduces strings.ts through every accessor")
+    func compiledCatalogMatchesStringsTs() throws {
+        let compiled = try CompiledCatalog.result.get()
+        Self.expectKeyCoverage(try Self.expectStrictParity(compiled.bundle))
     }
 
     @Test("xcstringstool compiles the catalog without warnings")

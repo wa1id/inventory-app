@@ -78,23 +78,46 @@ bundle**, so every lookup there misses. To make both work:
   the exact English as the fallback value. For plural entries the fallback is
   resolved in Swift first (`one` for exactly 1, like the TS), so under
   `swift test` the output is still exactly the strings.ts output.
-- Arguments are formatted with `String(format:locale:arguments:)` and the
-  `en_US_POSIX` locale. This matters: with any other locale Foundation groups
-  numbers (`1,234`, `1.234`, Arabic digits) and takes the plural rule from that
-  locale (French reads 0 as singular). JS template literals never group, so
-  `POSIX` is the only locale that matches. Revisit it when the app is localised.
+- Arguments are formatted with `String(format:locale:arguments:)` and **no
+  locale** (`nil`). This matters, because JS template literals neither group
+  digits nor touch the text:
+  - With any locale, `en_US_POSIX` included, Foundation wraps each `%@` argument
+    in U+2068…U+2069 bidi isolates once right-to-left text is involved (a Hebrew
+    or Arabic name, a bidi mark). On iOS the other arguments of that sentence are
+    wrapped too: `In ⁨שלום⁩, label ⁨Garage⁩`.
+  - Every locale except `en_US_POSIX` also groups digits (`1,234`, `1 234`).
+  - With no locale, a compiled plural entry takes the plural rule of its own
+    table's language (English here, so `one` is exactly 1), not the device's. A
+    French phone still reads "0 items" and a Russian one "21 items"; with
+    `locale: .current` they would read "0 item" and "21 item".
+  - Measured with Xcode 26.3 on macOS 15.7 and the iOS 26 simulator.
 - `String(localized:)` is not used. Its interpolated integers are always grouped
   by locale, and its arguments come from the default value, which cannot hold
   plural variants.
 
-The tests cover both paths. `StringsParityTests` checks every accessor against
-the TS output (the fallback path under `swift test`), and then compiles the
-catalog with Xcode's own `xcstringstool` into a temporary bundle and runs every
-accessor again against it with the fallback turned off. That second run also
-checks that every catalog key is read by some accessor and that every key an
-accessor reads exists. The same strict run inside the app on the simulator
-(against the app's real bundle) passed all 2424 cases and resolved all 742 keys
-when this was set up.
+The tests in `StringsParityTests` cover every path:
+
+- `every accessor reproduces strings.ts` runs each accessor as the app does
+  (`Bundle.module` with the fallback), then again against a bundle without a
+  catalog, so the English fallback is checked in every build.
+- `the compiled catalog reproduces strings.ts through every accessor` (macOS
+  only) compiles the catalog with Xcode's own `xcstringstool` into a temporary
+  bundle and runs every accessor against it with the fallback turned off. It also
+  checks that every catalog key is read by some accessor, and that every key an
+  accessor reads exists. The app's `InventoryKit_InventoryStrings.bundle` holds
+  the same `.strings` and `.stringsdict` content as this output.
+- `the module's compiled catalog reproduces strings.ts through every accessor`
+  makes the same strict run against `Bundle.module` itself, when Xcode built it.
+  `swift test` skips it. To run it on this checkout's iOS simulator, optionally
+  under another device language:
+
+  ```sh
+  native-ios/scripts/mac.sh shell 'cd Packages/InventoryKit && xcodebuild test \
+    -scheme InventoryKit-Package -destination "id=$udid" \
+    -only-testing:InventoryStringsTests -testLanguage ru -testRegion RU'
+  ```
+
+  It passes under the simulator's default locale, `ru_RU` and `fr_FR`.
 
 Xcode 26 also generates internal `LocalizedStringResource` symbols for the
 catalog in the InventoryStrings target. They are unused and harmless.

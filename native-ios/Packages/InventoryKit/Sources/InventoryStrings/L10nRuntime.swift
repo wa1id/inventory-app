@@ -11,11 +11,15 @@ import Synchronization
 enum L10nRuntime {
     static let bundle: Bundle = .module
 
-    /// Arguments are formatted like JS template literals: ASCII digits, no grouping
-    /// separator. Foundation also takes the plural rule from this locale, so English
-    /// `one` (exactly 1) applies whatever the device locale. Revisit when the app is
-    /// localised.
-    static let locale = Locale(identifier: "en_US_POSIX")
+    /// Arguments are formatted with no locale, which is what matches a JS template
+    /// literal. With a locale, any locale, Foundation wraps each `%@` argument that
+    /// holds right-to-left text (a Hebrew or Arabic name, a bidi mark) in U+2068 …
+    /// U+2069 isolates, and every locale but en_US_POSIX also groups digits
+    /// ("1,234"). With none, digits are plain ASCII, text is copied as is, and a
+    /// compiled plural entry takes the plural rule of its own table's language
+    /// (English: `one` is exactly 1), not the device's, so a French phone still
+    /// reads "0 items". The parity tests cover all of this.
+    static let locale: Locale? = nil
 
     /// One `%n$#@name@` token of a format: the count is argument `argNum` (1-based),
     /// and `%arg` in a variant stands for it.

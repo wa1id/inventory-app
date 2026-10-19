@@ -114,6 +114,18 @@ struct StringsFixture: Decodable, Sendable {
     }()
 }
 
+/// A bundle with no Localizable table: the test target's own, which holds only
+/// Fixtures. Every lookup in it misses, so the English fallback answers.
+enum NoCatalog {
+    static var bundle: Bundle { .module }
+
+    static var holdsNoCatalog: Bool {
+        ["strings", "stringsdict", "xcstrings"].allSatisfy {
+            bundle.url(forResource: "Localizable", withExtension: $0) == nil
+        }
+    }
+}
+
 /// The source Localizable.xcstrings, read from the checkout.
 enum CatalogSource {
     static let url = URL(fileURLWithPath: #filePath)

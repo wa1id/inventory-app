@@ -514,7 +514,7 @@ function derive(fn, params, fixed, where) {
   return { kind: 'subst', value, subs, args: items.map((item) => item.param) };
 }
 
-/** Renders an entry the way Foundation does with en_US_POSIX: ungrouped digits, `one` only for 1. */
+/** Renders an entry the way Foundation does with no locale: ungrouped digits, text as is, `one` only for 1. */
 function renderEntry(entry, values) {
   const args = (entry.args ?? []).map((name) => values[name]);
   const printf = (fmt) => {
@@ -562,12 +562,26 @@ const VALUES = {
       '🛋️ Sofa',
       'two\nlines',
       '  padded  ',
+      // Right-to-left names: Foundation wraps such arguments in bidi isolates
+      // (U+2068…U+2069) when it formats with a locale; JS never does.
+      'שלום עולם',
+      'مرحبا',
+      'Box שלום 12',
+      // Text that must pass through formatting untouched: NUL, line and paragraph
+      // separators, bidi controls, a leading combining mark, escapes and quotes,
+      // and printf directives that would misbehave if ever read as a format.
+      'nul\u0000inside',
+      'line para end',
+      '‮right-to-left‬',
+      '́leading mark',
+      'back\\slash "double" \'single\'',
+      '%n%s%x%p %',
     ],
     boolean: [true, false],
   },
   several: {
-    number: [0, 1, 2, 1234],
-    string: ['Garage', '', '100% %@ *x*'],
+    number: [0, 1, 2, 21, 1234],
+    string: ['Garage', '', '100% %@ *x*', 'שלום'],
     boolean: [true, false],
   },
 };
@@ -851,6 +865,58 @@ const longDateVectors = [
   Date.UTC(2038, 0, 19, 3, 14, 8),
   Date.UTC(2100, 11, 31, 23, 59, 59, 999),
 ].map((ms) => ({ ms, timeZone: 'UTC', expected: format.longDate(ms) }));
+
+/**
+ * longDate() formats in the device time zone. format.ts builds its formatter
+ * once, when the module loads, so it is evaluated afresh under each zone (Node
+ * applies a runtime TZ change to Intl objects created after it).
+ */
+function longDateIn(timeZone, instants) {
+  process.env.TZ = timeZone;
+  try {
+    const zoned = evaluate(SOURCES.format, {});
+    const resolved = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (resolved !== timeZone) fail(`longDate vectors: Node resolved TZ=${timeZone} as ${resolved}`);
+    return instants.map((ms) => ({ ms, timeZone, expected: zoned.longDate(ms) }));
+  } finally {
+    process.env.TZ = 'UTC';
+  }
+}
+
+// Midnight on either side of a date in each zone, both DST changes in Europe and
+// the US, and zones at the extremes (UTC+14, UTC-11) and on half hours.
+const ZONED_INSTANTS = [
+  Date.UTC(2026, 8, 2, 12),
+  Date.UTC(2026, 8, 1, 9, 59, 59, 999),
+  Date.UTC(2026, 8, 1, 10),
+  Date.UTC(2026, 8, 1, 21, 59, 59, 999),
+  Date.UTC(2026, 8, 1, 22),
+  Date.UTC(2026, 8, 2, 6, 59, 59, 999),
+  Date.UTC(2026, 8, 2, 7),
+  Date.UTC(2026, 8, 2, 10, 59, 59, 999),
+  Date.UTC(2026, 8, 2, 11),
+  Date.UTC(2026, 2, 28, 22, 59, 59, 999),
+  Date.UTC(2026, 2, 28, 23),
+  Date.UTC(2026, 2, 29, 1),
+  Date.UTC(2026, 2, 8, 10),
+  Date.UTC(2026, 9, 3, 15, 30),
+  Date.UTC(2026, 9, 24, 22, 59, 59, 999),
+  Date.UTC(2026, 9, 25, 1),
+  Date.UTC(2026, 10, 1, 9),
+  Date.UTC(2026, 11, 31, 12),
+];
+for (const zone of [
+  'Europe/Brussels',
+  'Europe/London',
+  'America/Los_Angeles',
+  'America/St_Johns',
+  'Pacific/Kiritimati',
+  'Pacific/Pago_Pago',
+  'Australia/Lord_Howe',
+  'Asia/Tokyo',
+]) {
+  longDateVectors.push(...longDateIn(zone, ZONED_INSTANTS));
+}
 
 const pluralVectors = [0, 1, 2, 3, 21, 1234].flatMap((count) => [
   { count, one: 'item', other: 'items', expected: format.plural(count, 'item', 'items') },
