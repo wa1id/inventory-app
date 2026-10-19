@@ -1,4 +1,5 @@
 import Foundation
+import InventoryCore
 
 /// The household session as persisted in the keychain under `household.session.v1` (04 §5):
 /// the device's bearer token for the home server and the names shown in Settings.
@@ -50,7 +51,7 @@ public struct StoredHouseholdSession: Sendable, Equatable, Hashable {
             ("origin", origin), ("token", token), ("deviceId", deviceId),
             ("deviceName", deviceName), ("householdName", householdName),
         ]
-        return "{" + fields.map { "\(JSONText.quote($0.0)):\(JSONText.quote($0.1))" }.joined(separator: ",") + "}"
+        return "{" + fields.map { "\(JSONValue.quote($0.0)):\(JSONValue.quote($0.1))" }.joined(separator: ",") + "}"
     }
 }
 

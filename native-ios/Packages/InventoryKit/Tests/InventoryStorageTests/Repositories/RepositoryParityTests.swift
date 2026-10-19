@@ -1,6 +1,7 @@
 import Foundation
 import GRDB
 import InventoryCore
+import InventoryTestSupport
 import Testing
 @testable import InventoryStorage
 
@@ -11,7 +12,7 @@ import Testing
 // same order, field for field.
 
 /// Opens a private copy of the search fixture database.
-private func openSearchFixture(_ scratch: ScratchDirectory) throws -> LocalRepositories {
+private func openSearchFixture(_ scratch: TemporaryDirectory) throws -> LocalRepositories {
     let path = try DatabaseFixtures.copy("search/inventory.db", into: scratch)
     let store = try DatabaseStore(path: path)
     try store.migrate()
@@ -54,7 +55,7 @@ struct SearchParityTests {
     @Test("returns the same terms, locations and items in the same order", arguments: SearchVectors.loaded?.queries ?? [])
     func sameResults(_ vector: SearchVectors.Query) async throws {
         let vectors = try #require(SearchVectors.loaded)
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let repos = try openSearchFixture(scratch)
 
         let results = try await repos.search.search(vector.query)
@@ -69,7 +70,7 @@ struct SearchParityTests {
 
     @Test("searchSpaces and searchContainers take terms directly")
     func searchLocationsByTerms() async throws {
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let repos = try openSearchFixture(scratch)
         let vector = try #require(SearchVectors.loaded?.queries.first { $0.query == "garage" })
         let spaces = try await repos.search.searchSpaces(vector.terms)
@@ -161,7 +162,7 @@ struct ReadParityTests {
     @Test("lists, counts and recents match")
     func listsMatch() async throws {
         let vectors = try ReadVectors.load()
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let repos = try openSearchFixture(scratch)
 
         #expect(try await repos.spaces.listWithCounts() == vectors.listWithCounts)
@@ -177,7 +178,7 @@ struct ReadParityTests {
     @Test("every space read matches")
     func spacesMatch() async throws {
         let vectors = try ReadVectors.load()
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let repos = try openSearchFixture(scratch)
         for space in vectors.spaces {
             #expect(try await repos.spaces.getById(space.id) == space.getById, "getById \(space.id)")
@@ -189,7 +190,7 @@ struct ReadParityTests {
     @Test("every container read matches")
     func containersMatch() async throws {
         let vectors = try ReadVectors.load()
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let repos = try openSearchFixture(scratch)
         for container in vectors.containers {
             let id = container.id
@@ -204,7 +205,7 @@ struct ReadParityTests {
     @Test("every item read matches")
     func itemsMatch() async throws {
         let vectors = try ReadVectors.load()
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let repos = try openSearchFixture(scratch)
         for item in vectors.items {
             #expect(try await repos.items.getById(item.id) == item.getById, "getById \(item.id)")
@@ -215,7 +216,7 @@ struct ReadParityTests {
     @Test("scans and token lookups match")
     func scansMatch() async throws {
         let vectors = try ReadVectors.load()
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let repos = try openSearchFixture(scratch)
         for scan in vectors.scans {
             #expect(try await repos.qr.resolveScan(scan.raw) == scan.outcome, "resolveScan \(scan.raw)")

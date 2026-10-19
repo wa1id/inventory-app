@@ -1,6 +1,7 @@
 import Foundation
 import GRDB
 import InventoryCore
+import InventoryTestSupport
 import Testing
 @testable import InventoryStorage
 
@@ -25,7 +26,7 @@ struct WALTests {
     ])
     func walOnlyRowsSurvive(sidecars: [String]) throws {
         let fixture = try DatabaseFixtures.decode(Fixture.self, from: "wal.json")
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let path = try DatabaseFixtures.copy("wal/v4.db", sidecars: sidecars, into: scratch)
 
         let store = try DatabaseStore(path: path)
@@ -51,7 +52,7 @@ struct WALTests {
 
     @Test("the fixture's main file alone does not have those rows")
     func mainFileAloneLacksRows() throws {
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let path = try DatabaseFixtures.copy("wal/v4.db", into: scratch)
         let queue = try DatabaseQueue(path: path)
         let found = try queue.read { db in try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM items WHERE id = 'it-wal'") }
@@ -60,8 +61,8 @@ struct WALTests {
 
     @Test("rows a GRDB writer left uncheckpointed survive a copy-and-reopen, as after a crash")
     func grdbWalRowsSurvive() async throws {
-        let live = try ScratchDirectory()
-        let crashed = try ScratchDirectory()
+        let live = try TemporaryDirectory()
+        let crashed = try TemporaryDirectory()
         let livePath = live.path("inventory.db")
 
         let writer = try DatabaseStore(path: livePath)

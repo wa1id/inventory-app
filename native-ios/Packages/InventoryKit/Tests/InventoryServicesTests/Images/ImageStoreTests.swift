@@ -2,6 +2,7 @@ import CoreGraphics
 import Foundation
 import ImageIO
 import InventoryCore
+import InventoryTestSupport
 import Synchronization
 import Testing
 import UniformTypeIdentifiers
@@ -193,7 +194,7 @@ struct StoreItemPhotoTests {
         let stored = try await container.store(telemetry: telemetry)
             .storeItemPhoto(.image(TestImages.marked(width: 640, height: 480)))
 
-        let logged = telemetry.logged
+        let logged = telemetry.entries
         try #require(logged.count == 1)
         #expect(logged[0].level == "event" && logged[0].name == "photo_stored")
         #expect(Set(logged[0].payload.keys) == ["durationMs", "byteSize"])
@@ -214,7 +215,7 @@ struct StoreItemPhotoTests {
             try await store.storeItemPhoto(.data(Data("not an image".utf8)))
         }
 
-        let logged = telemetry.logged
+        let logged = telemetry.entries
         try #require(logged.count == 1)
         #expect(logged[0].level == "error" && logged[0].name == "photo_store_failed")
         #expect(Set(logged[0].payload.keys) == ["durationMs", "errorClass"])

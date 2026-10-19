@@ -55,21 +55,19 @@ public enum Telemetry {
     }
 }
 
-/// Prints events in debug builds and discards them in release builds.
+/// Prints events to ``InventoryLog/telemetry`` in debug builds and discards them in release builds.
 public struct DebugLogSink: TelemetrySink {
-    private static let logger = Logger(subsystem: "com.wystudio.inventory", category: "telemetry")
-
     public init() {}
 
     public func event(_ name: String, _ payload: TelemetryPayload) {
         #if DEBUG
-        Self.logger.debug("[telemetry] \(name, privacy: .public) \(String(describing: payload), privacy: .public)")
+        InventoryLog.telemetry.debug("[telemetry] \(name, privacy: .public) \(String(describing: payload), privacy: .public)")
         #endif
     }
 
     public func error(_ name: String, _ payload: TelemetryPayload) {
         #if DEBUG
-        Self.logger.error("[telemetry:error] \(name, privacy: .public) \(String(describing: payload), privacy: .public)")
+        InventoryLog.telemetry.error("[telemetry:error] \(name, privacy: .public) \(String(describing: payload), privacy: .public)")
         #endif
     }
 }

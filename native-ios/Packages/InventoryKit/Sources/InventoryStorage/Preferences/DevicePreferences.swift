@@ -1,4 +1,5 @@
 import Foundation
+import InventoryCore
 
 /// Whether onboarding has been completed (06 §11.1). RN: src/services/onboarding.ts.
 public struct OnboardingPreference: Sendable {
@@ -58,7 +59,7 @@ public struct LastBackupPreference: Sendable {
     /// nil while whitespace alone is 0, and hex or exponent forms parse (backup.ts:29-37).
     public var lastBackupAt: Double? {
         guard let stored = preferences.storedString(forKey: PreferenceKey.lastBackupAt), !stored.isEmpty,
-              let value = JSNumber.parse(stored), value.isFinite else { return nil }
+              let value = jsNumber(stored.jsTrimmed()), value.isFinite else { return nil }
         return value
     }
 

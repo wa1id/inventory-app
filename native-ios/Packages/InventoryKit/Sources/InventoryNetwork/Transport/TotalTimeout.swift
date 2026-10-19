@@ -73,13 +73,6 @@ enum TransportFailure: Equatable {
     ]
 }
 
-/// RN telemetry's `errorClass`: the error's type name, never its message (09 §9.1).
-/// URLSession's errors arrive bridged from `NSError`; they are named `URLError`.
-func errorClassName(_ error: any Error) -> String {
-    if error is URLError { return "URLError" }
-    return String(describing: type(of: error))
-}
-
 /// Whole milliseconds since `start`, like RN's `Date.now() - startedAt`.
 func elapsedMilliseconds(since start: ContinuousClock.Instant) -> Int {
     let elapsed = ContinuousClock.now - start

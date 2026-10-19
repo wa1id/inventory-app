@@ -1,5 +1,6 @@
 import Foundation
 import InventoryCore
+import InventoryTestSupport
 import Synchronization
 import Testing
 @testable import InventoryNetwork
@@ -9,7 +10,7 @@ import Testing
 
 private let origin = "https://inventory.wystudio.be"
 
-private func client(_ server: StubServer, origin: String = origin, token: String? = "tok", hub: ReachabilityHub? = nil, telemetry: TelemetryRecorder = TelemetryRecorder(), makeId: (@Sendable () -> String)? = nil) -> HouseholdClient {
+private func client(_ server: StubServer, origin: String = origin, token: String? = "tok", hub: ReachabilityHub? = nil, telemetry: RecordingTelemetry = RecordingTelemetry(), makeId: (@Sendable () -> String)? = nil) -> HouseholdClient {
     HouseholdClient(
         origin: origin, token: token, transport: server.transport, reachability: hub,
         telemetry: telemetry.telemetry, makeId: makeId ?? { newId() }
@@ -236,6 +237,17 @@ struct HouseholdEndpointTests {
         #expect(await httpError { _ = try await client(notAList).listUnsortedItems() } == HouseholdHttpError(status: 200, code: "invalid_response"))
     }
 
+    @Test("typed answers decode what JSON.parse saw: a lone surrogate as U+FFFD, the last of duplicate keys")
+    func decodesWhatJSONParseSaw() async throws {
+        // The server cuts names with slice(), which can leave half an emoji; JSONDecoder alone refuses that body.
+        let cut = ##"{"spaces":[{"id":"s1","name":"Tools \ud83d","icon":"🧰","color":"#7A9E7E","createdAt":1,"updatedAt":1,"containerCount":0,"itemCount":0}]}"##
+        let spaces = try await client(StubServer(reply: .json(200, cut))).listSpaces()
+        #expect(spaces.map(\.name) == ["Tools \u{FFFD}"])
+        let twice = ##"{"id":"s1","name":"Old","name":"New","icon":"x","color":"y","createdAt":1,"updatedAt":2}"##
+        let space = try await client(StubServer(reply: .json(200, twice))).space(id: "s1")
+        #expect(space?.name == "New")
+    }
+
     @Test("search keeps items only when they are an array")
     func searchFallbacks() async throws {
         let server = StubServer(reply: .json(200, #"{"terms":["x"],"items":"nope"}"#))
@@ -408,7 +420,7 @@ struct HouseholdRequestRuleTests {
     func deadlineCoversBody() async throws {
         let hub = ReachabilityHub()
         let updates = hub.updates()
-        let telemetry = TelemetryRecorder()
+        let telemetry = RecordingTelemetry()
         let server = StubServer(reply: .slowBody(status: 200, headers: ["Content-Type": "image/webp"], body: Data([7]), bodyDelay: .seconds(10)))
         let error = await httpError {
             _ = try await client(server, hub: hub, telemetry: telemetry).send(HouseholdRequest(path: "/v1/photos/p", timeout: .milliseconds(200)))
@@ -426,7 +438,7 @@ struct HouseholdRequestRuleTests {
     func transportFailure(code: URLError.Code) async throws {
         let hub = ReachabilityHub()
         let updates = hub.updates()
-        let telemetry = TelemetryRecorder()
+        let telemetry = RecordingTelemetry()
         let server = StubServer(reply: .failure(code, delay: nil))
         let error = await httpError { _ = try await client(server, hub: hub, telemetry: telemetry).listSpaces() }
         #expect(error == HouseholdHttpError(status: 0, code: "offline"))
@@ -438,7 +450,7 @@ struct HouseholdRequestRuleTests {
     @Test("a cancelled caller gets CancellationError and nothing is reported")
     func cancellation() async throws {
         let hub = ReachabilityHub()
-        let telemetry = TelemetryRecorder()
+        let telemetry = RecordingTelemetry()
         let server = StubServer(reply: .json(200, "{}", delay: .seconds(10)))
         let household = client(server, hub: hub, telemetry: telemetry)
         let reported = Mutex<[Reachability]>([])

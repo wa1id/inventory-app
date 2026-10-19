@@ -1,5 +1,6 @@
 import Foundation
 import InventoryCore
+import InventoryTestSupport
 import Testing
 @testable import InventoryNetwork
 
@@ -18,7 +19,7 @@ private func client(
     key: String? = nil,
     timeout: Duration = .seconds(5),
     image: Data = webpBytes,
-    telemetry: TelemetryRecorder = TelemetryRecorder()
+    telemetry: RecordingTelemetry = RecordingTelemetry()
 ) -> RecognitionClient {
     RecognitionClient(
         endpoint: endpoint,
@@ -106,7 +107,7 @@ struct RecognitionClientTests {
     @Test("reports not_configured when no endpoint is set, without calling fetch", arguments: [nil, ""] as [String?])
     func reportsNotConfiguredWhenNoEndpointIsSetWithoutCallingFetch(endpoint: String?) async {
         let server = StubServer(reply: .json(200, validBody))
-        let telemetry = TelemetryRecorder()
+        let telemetry = RecordingTelemetry()
         let result = await client(server, endpoint: endpoint, telemetry: telemetry).recognize(imageAt: photoURL)
         #expect(result == .failed(.notConfigured))
         #expect(server.requests.isEmpty)
@@ -193,7 +194,7 @@ struct RecognitionClientTests {
                 try await Task.sleep(for: .seconds(10))
                 return webpBytes
             },
-            telemetry: TelemetryRecorder().telemetry
+            telemetry: RecordingTelemetry().telemetry
         )
         #expect(await slowRead.recognize(imageAt: photoURL) == .failed(.timeout))
         #expect(server.requests.isEmpty)
@@ -205,7 +206,7 @@ struct RecognitionClientTests {
         let missing = RecognitionClient(
             endpoint: endpoint, key: nil, transport: server.transport,
             readImage: { try Data(contentsOf: $0) },
-            telemetry: TelemetryRecorder().telemetry
+            telemetry: RecordingTelemetry().telemetry
         )
         #expect(await missing.recognize(imageAt: URL(fileURLWithPath: "/nonexistent/\(UUID()).webp")) == .failed(.serverError))
         #expect(server.requests.isEmpty)
@@ -224,7 +225,7 @@ struct RecognitionClientTests {
     func mapsBadServerResponseToServerError() async {
         let recognition = RecognitionClient(
             endpoint: endpoint, key: nil, transport: ThrowingTransport(error: URLError(.badServerResponse)),
-            readImage: { _ in webpBytes }, telemetry: TelemetryRecorder().telemetry
+            readImage: { _ in webpBytes }, telemetry: RecordingTelemetry().telemetry
         )
         #expect(await recognition.recognize(imageAt: photoURL) == .failed(.serverError))
     }
@@ -243,7 +244,7 @@ struct RecognitionClientTests {
 
     @Test("logs completion with outcome, confidence and whether a hint was sent, never the text")
     func logsCompletion() async throws {
-        let telemetry = TelemetryRecorder()
+        let telemetry = RecordingTelemetry()
         let server = StubServer(reply: .json(200, validBody))
         _ = await client(server, telemetry: telemetry).recognize(imageAt: photoURL, nameHint: "Angle grinder")
         let entry = try #require(telemetry.entries.first)
@@ -259,7 +260,7 @@ struct RecognitionClientTests {
 
     @Test("logs a parsed failure as completed with a null confidence")
     func logsParsedFailure() async throws {
-        let telemetry = TelemetryRecorder()
+        let telemetry = RecordingTelemetry()
         let server = StubServer(reply: .json(200, #"{"contractVersion":1,"status":"unrecognized"}"#))
         _ = await client(server, telemetry: telemetry).recognize(imageAt: photoURL)
         let entry = try #require(telemetry.entries.first)
@@ -271,7 +272,7 @@ struct RecognitionClientTests {
 
     @Test("logs an HTTP failure as an error with its status")
     func logsHTTPFailure() async throws {
-        let telemetry = TelemetryRecorder()
+        let telemetry = RecordingTelemetry()
         let server = StubServer(reply: .json(429, #"{"error":"rate_limited"}"#))
         _ = await client(server, telemetry: telemetry).recognize(imageAt: photoURL)
         let entry = try #require(telemetry.entries.first)
@@ -284,7 +285,7 @@ struct RecognitionClientTests {
 
     @Test("logs a non-JSON body and a transport failure as errors without a status")
     func logsOtherFailures() async throws {
-        let telemetry = TelemetryRecorder()
+        let telemetry = RecordingTelemetry()
         _ = await client(StubServer(reply: .text(200, "nope")), telemetry: telemetry).recognize(imageAt: photoURL)
         _ = await client(StubServer(reply: .failure(.notConnectedToInternet, delay: nil)), telemetry: telemetry)
             .recognize(imageAt: photoURL)

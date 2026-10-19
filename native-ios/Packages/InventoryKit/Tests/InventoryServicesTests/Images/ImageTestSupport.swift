@@ -2,7 +2,7 @@ import CoreGraphics
 import Foundation
 import ImageIO
 import InventoryCore
-import Synchronization
+import InventoryTestSupport
 import Testing
 import UniformTypeIdentifiers
 @testable import InventoryServices
@@ -22,20 +22,15 @@ enum ImageFixtures {
 
 /// A throwaway app data container, so no test touches the real `Documents`.
 final class PhotoContainer: Sendable {
-    let root: URL
+    private let directory: TemporaryDirectory
 
     init() throws {
-        root = FileManager.default.temporaryDirectory
-            .appending(path: "image-store-\(UUID().uuidString)", directoryHint: .isDirectory)
-        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        directory = try TemporaryDirectory(prefix: "image-store")
     }
 
-    deinit {
-        try? FileManager.default.removeItem(at: root)
-    }
-
-    var documents: URL { root.appending(path: "Documents", directoryHint: .isDirectory) }
-    var caches: URL { root.appending(path: "Library/Caches", directoryHint: .isDirectory) }
+    var root: URL { directory.root }
+    var documents: URL { directory.documents }
+    var caches: URL { directory.caches }
     var resolver: PhotoPathResolver { PhotoPathResolver(documents: documents, caches: caches) }
     var photoDirectory: URL { resolver.itemPhotosDirectory }
 
@@ -57,31 +52,7 @@ final class PhotoContainer: Sendable {
     /// Writes `data` at `relativePath` under the container root.
     @discardableResult
     func write(_ data: Data, to relativePath: String) throws -> URL {
-        let url = root.appending(path: relativePath)
-        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try data.write(to: url)
-        return url
-    }
-}
-
-/// Records what the image store logs.
-final class RecordingTelemetry: TelemetrySink {
-    struct Entry: Sendable, Equatable {
-        var level: String
-        var name: String
-        var payload: TelemetryPayload
-    }
-
-    private let entries = Mutex<[Entry]>([])
-
-    var logged: [Entry] { entries.withLock { $0 } }
-
-    func event(_ name: String, _ payload: TelemetryPayload) {
-        entries.withLock { $0.append(Entry(level: "event", name: name, payload: payload)) }
-    }
-
-    func error(_ name: String, _ payload: TelemetryPayload) {
-        entries.withLock { $0.append(Entry(level: "error", name: name, payload: payload)) }
+        try directory.write(data, to: relativePath)
     }
 }
 

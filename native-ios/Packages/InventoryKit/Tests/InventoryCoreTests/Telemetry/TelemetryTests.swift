@@ -1,18 +1,6 @@
-import Synchronization
+import InventoryTestSupport
 import Testing
 @testable import InventoryCore
-
-private final class RecordingSink: TelemetrySink {
-    let events = Mutex<[(level: String, name: String, payload: TelemetryPayload)]>([])
-
-    func event(_ name: String, _ payload: TelemetryPayload) {
-        events.withLock { $0.append(("event", name, payload)) }
-    }
-
-    func error(_ name: String, _ payload: TelemetryPayload) {
-        events.withLock { $0.append(("error", name, payload)) }
-    }
-}
 
 // RN: src/services/ai/__tests__/recognition.test.ts "keeps only allowlisted measurement keys"
 @Test func keepsOnlyAllowlistedMeasurementKeys() {
@@ -28,17 +16,18 @@ private final class RecordingSink: TelemetrySink {
 
 @Suite(.serialized) struct TelemetrySinkTests {
     @Test func routesRedactedEventsAndErrorsToTheSink() {
-        let sink = RecordingSink()
+        let sink = RecordingTelemetry()
         Telemetry.setSink(sink)
         defer { Telemetry.setSink(DebugLogSink()) }
 
         Telemetry.logEvent("search_performed", ["termCount": .int(2), "query": .string("drill")])
         Telemetry.logError("recognition_failed", ["statusCode": .int(500), "body": .string("x")])
 
-        let events = sink.events.withLock { $0 }
-        #expect(events.count == 2)
-        #expect(events[0].level == "event" && events[0].name == "search_performed")
-        #expect(events[0].payload == ["termCount": .int(2)])
-        #expect(events[1].level == "error" && events[1].payload == ["statusCode": .int(500)])
+        // Only these two: another suite may log through the shared sink while it is swapped.
+        let mine = sink.entries.filter { ["search_performed", "recognition_failed"].contains($0.name) }
+        #expect(mine == [
+            RecordingTelemetry.Entry(level: "event", name: "search_performed", payload: ["termCount": .int(2)]),
+            RecordingTelemetry.Entry(level: "error", name: "recognition_failed", payload: ["statusCode": .int(500)]),
+        ])
     }
 }

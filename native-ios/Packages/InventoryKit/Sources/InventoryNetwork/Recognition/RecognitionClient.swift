@@ -81,7 +81,7 @@ public struct RecognitionClient: Sendable {
                 return .failed(reason)
             }
 
-            guard let body = WireJSON.parse(response.body) else {
+            guard let body = JSONValue.parse(response.body) else {
                 telemetry.error("recognition_failed", [
                     "outcome": .string(RecognitionFailureReason.malformedResponse.rawValue),
                     "latencyMs": latencyMs(),

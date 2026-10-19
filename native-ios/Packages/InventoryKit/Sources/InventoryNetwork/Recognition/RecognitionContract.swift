@@ -63,12 +63,12 @@ public enum RecognitionResult: Sendable, Hashable {
 ///
 /// A body that is not JSON reads as `malformed_response`, as `response.json()` throwing does in RN.
 public func parseRecognitionResponse(_ body: Data) -> RecognitionResult {
-    guard let value = WireJSON.parse(body) else { return .failed(.malformedResponse) }
+    guard let value = JSONValue.parse(body) else { return .failed(.malformedResponse) }
     return parseRecognitionResponse(value)
 }
 
 /// RN `parseRecognitionResponse(body)`, in its order: the checks are not independent.
-func parseRecognitionResponse(_ body: WireJSON) -> RecognitionResult {
+func parseRecognitionResponse(_ body: JSONValue) -> RecognitionResult {
     guard let payload = body.objectValue else { return .failed(.malformedResponse) }
 
     // typeof === 'number': a boolean or numeric string is malformed; 1.0 is 1.
@@ -100,7 +100,7 @@ func parseRecognitionResponse(_ body: WireJSON) -> RecognitionResult {
 }
 
 /// RN `cleanText`: strings only, JS-trimmed, cut to 80 UTF-16 units (not re-trimmed); empty → nil.
-private func cleanText(_ value: WireJSON?) -> String? {
+private func cleanText(_ value: JSONValue?) -> String? {
     guard let string = value?.stringValue else { return nil }
     var units = Array(string.jsTrimmed().utf16.prefix(maximumSuggestionTextLength))
     // JS keeps a lone high surrogate when the cut splits a pair; a Swift String cannot hold one.
@@ -109,7 +109,7 @@ private func cleanText(_ value: WireJSON?) -> String? {
 }
 
 /// RN `cleanNumber`: a finite, non-negative JS number, else nil.
-private func cleanNumber(_ value: WireJSON?) -> Double? {
+private func cleanNumber(_ value: JSONValue?) -> Double? {
     guard let number = value?.numberValue, number.isFinite, !(number < 0) else { return nil }
     return number
 }

@@ -1,4 +1,5 @@
 import Foundation
+import InventoryTestSupport
 import Testing
 @testable import InventoryStorage
 
@@ -8,14 +9,14 @@ import Testing
 struct LegacyAsyncStorageReaderTests {
     static let storePath = "Library/Application Support/com.wystudio.inventory/RCTAsyncLocalStorage_V1"
 
-    static func reader(_ container: TemporaryContainer) -> LegacyAsyncStorageReader {
+    static func reader(_ container: TemporaryDirectory) -> LegacyAsyncStorageReader {
         LegacyAsyncStorageReader(
             applicationSupport: container.applicationSupport, documents: container.documents,
             bundleIdentifier: "com.wystudio.inventory")
     }
 
     /// Copies the committed RN store into the container's Application Support directory.
-    static func installFixture(in container: TemporaryContainer, at path: String = storePath) throws {
+    static func installFixture(in container: TemporaryDirectory, at path: String = storePath) throws {
         let source = try AdoptionFixtures.url("RCTAsyncLocalStorage_V1")
         let destination = container.root.appending(path: path, directoryHint: .isDirectory)
         try FileManager.default.createDirectory(
@@ -55,7 +56,7 @@ struct LegacyAsyncStorageReaderTests {
 
     @Test("reads inline values and the overflow file of the committed fixture")
     func committedFixture() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         try Self.installFixture(in: container)
         let values = try Self.reader(container).readAll()
         #expect(values == (try Self.expectedFixtureValues()))
@@ -79,7 +80,7 @@ struct LegacyAsyncStorageReaderTests {
     // MARK: Manifest cases
 
     func read(manifest: Data?, files: [String: Data] = [:]) throws(LegacyAsyncStorageReader.Failure) -> [String: String] {
-        let container = try! TemporaryContainer()
+        let container = try! TemporaryDirectory()
         try! container.createDirectory(Self.storePath)
         if let manifest { try! container.write(manifest, to: Self.storePath + "/manifest.json") }
         for (name, data) in files { try! container.write(data, to: Self.storePath + "/" + name) }
@@ -116,7 +117,7 @@ struct LegacyAsyncStorageReaderTests {
 
     @Test("an overflow file that exists but cannot be read throws unreadableValue")
     func overflowUnreadable() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         try container.write(Data(#"{"categories.recent.v1":null}"#.utf8), to: Self.storePath + "/manifest.json")
         // A directory in place of the file: it exists, and reading it fails.
         try container.createDirectory(Self.storePath + "/9355fb19fd0f6f39f84680882e0638d7")
@@ -128,7 +129,7 @@ struct LegacyAsyncStorageReaderTests {
     @Test("missing manifest reads as empty")
     func missingManifest() throws {
         #expect(try read(manifest: nil).isEmpty)
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         #expect(try Self.reader(container).readAll().isEmpty)
     }
 
@@ -148,7 +149,7 @@ struct LegacyAsyncStorageReaderTests {
 
     @Test("a manifest that exists but cannot be read throws")
     func manifestUnreadable() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         try container.createDirectory(Self.storePath + "/manifest.json")
         let error = #expect(throws: LegacyAsyncStorageReader.Failure.self) {
             try Self.reader(container).readAll()
@@ -174,7 +175,7 @@ struct LegacyAsyncStorageReaderTests {
             try read(manifest: manifest, files: unreadable)
         }
         // ...but a read of other keys never touches it.
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         try container.write(manifest, to: Self.storePath + "/manifest.json")
         try container.write(Data([0xC3, 0x28]), to: Self.storePath + "/" + LegacyAsyncStorageReader.md5Hex("other.key"))
         let values = try Self.reader(container).read(keys: ["onboarding.completed.v1", "missing.key"])
@@ -185,7 +186,7 @@ struct LegacyAsyncStorageReaderTests {
     func canonicallyEquivalentKeys() throws {
         // "é" precomposed and decomposed: distinct keys to RN, equal Strings to Swift.
         let manifest = Data("{\"caf\u{E9}\":\"composed\",\"cafe\u{301}\":\"decomposed\",\"onboarding.completed.v1\":\"true\"}".utf8)
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         try container.write(manifest, to: Self.storePath + "/manifest.json")
         let reader = Self.reader(container)
         #expect(try reader.read(keys: ["onboarding.completed.v1"]) == ["onboarding.completed.v1": "true"])
@@ -206,7 +207,7 @@ struct LegacyAsyncStorageReaderTests {
 
     @Test("falls back to Documents/RCTAsyncLocalStorage_V1 only when Application Support has no store")
     func documentsFallback() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         try Self.installFixture(in: container, at: "Documents/RCTAsyncLocalStorage_V1")
         #expect(try Self.reader(container).readAll() == (try Self.expectedFixtureValues()))
 
@@ -241,7 +242,7 @@ struct LegacyAsyncStorageReaderTests {
 
     @Test("reads back what RN's writer produces, at and past the inline threshold")
     func roundTripWithRNWriter() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         let exactly1024 = String(repeating: "é", count: 1024)  // 1024 UTF-16 units, 2048 bytes
         let past = String(repeating: "📦", count: 513)          // 1026 UTF-16 units
         let values = [

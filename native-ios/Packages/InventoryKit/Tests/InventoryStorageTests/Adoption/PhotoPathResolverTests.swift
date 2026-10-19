@@ -1,4 +1,5 @@
 import Foundation
+import InventoryTestSupport
 import Testing
 @testable import InventoryStorage
 
@@ -16,14 +17,14 @@ struct PhotoPathResolverTests {
         let cases: [Case]
     }
 
-    static func resolver(_ container: TemporaryContainer) -> PhotoPathResolver {
+    static func resolver(_ container: TemporaryDirectory) -> PhotoPathResolver {
         PhotoPathResolver(documents: container.documents, caches: container.caches)
     }
 
     @Test("resolves every stored shape by file name in the current container")
     func fixtureCases() throws {
         let fixture = try AdoptionFixtures.decode(Cases.self, from: "photo-path-cases.json")
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         for file in fixture.files {
             try container.write(Data(file.utf8), to: file)
         }
@@ -43,20 +44,20 @@ struct PhotoPathResolverTests {
 
     @Test("nil is not a photo")
     func nilStored() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         #expect(Self.resolver(container).resolve(nil) == nil)
     }
 
     @Test("prefers the stored path when it exists, even outside the photo directories")
     func sameContainerAnywhere() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         let file = try container.write(Data("x".utf8), to: "Documents/elsewhere/x.webp")
         #expect(Self.resolver(container).resolve(file.absoluteString)?.path == file.path)
     }
 
     @Test("a directory is never a photo, so a caller that deletes what resolves cannot remove one")
     func directoriesAreNotPhotos() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         try container.write(Data("x".utf8), to: "Documents/item-photos/a.webp")
         try container.createDirectory("Documents/item-photos/sub.webp")
         try container.write(Data("db".utf8), to: "Documents/SQLite/inventory.db")
@@ -81,7 +82,7 @@ struct PhotoPathResolverTests {
 
     @Test("dot segments are standardized away like expo's File(uri) does")
     func standardizesDotSegments() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         try container.write(Data("x".utf8), to: "Documents/item-photos/a.webp")
         let resolver = Self.resolver(container)
         let expected = container.documents.appending(path: "item-photos/a.webp").path
@@ -94,7 +95,7 @@ struct PhotoPathResolverTests {
 
     @Test("a rebased file that is gone is nil, so callers treat the bytes as missing")
     func goneAfterRebase() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         try container.createDirectory("Documents/item-photos")
         let stored = "file:///var/mobile/Containers/Data/Application/OLD/Documents/item-photos/gone.webp"
         #expect(Self.resolver(container).resolve(stored) == nil)
@@ -102,7 +103,7 @@ struct PhotoPathResolverTests {
 
     @Test("storedURI is the absolute shape-1 URI in the current container")
     func storedURI() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         let resolver = Self.resolver(container)
         let uri = resolver.storedURI(forPhotoNamed: "x.webp")
         #expect(uri == container.documents.appending(path: "item-photos/x.webp").absoluteString)
@@ -121,7 +122,7 @@ struct PhotoPathResolverTests {
 
     @Test("the photo directories sit where RN put them")
     func directories() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryDirectory()
         let resolver = Self.resolver(container)
         #expect(resolver.itemPhotosDirectory.path == container.root.appending(path: "Documents/item-photos").path)
         #expect(resolver.householdPhotosDirectory.path

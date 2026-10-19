@@ -1,5 +1,6 @@
 import Foundation
 import InventoryCore
+import InventoryTestSupport
 import Testing
 @testable import InventoryNetwork
 
@@ -13,7 +14,7 @@ private func client(_ server: StubServer, contract: SyncContract, code: String? 
         endpoint: contract.origin,
         key: key ?? contract.appKey,
         transport: server.transport,
-        telemetry: TelemetryRecorder().telemetry
+        telemetry: RecordingTelemetry().telemetry
     )
 }
 

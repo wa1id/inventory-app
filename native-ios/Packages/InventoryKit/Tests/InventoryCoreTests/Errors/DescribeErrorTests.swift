@@ -267,6 +267,17 @@ struct ErrorClassTests {
         #expect(errorClass(of: CancellationError()) == "CancellationError")
     }
 
+    @Test("names URLSession's errors URLError, whether they arrive as URLError or as a bridged NSError")
+    func namesURLErrors() {
+        #expect(errorClass(of: URLError(.timedOut)) == "URLError")
+        #expect(errorClass(of: URLError(.notConnectedToInternet)) == "URLError")
+        #expect(errorClass(of: NSError(domain: NSURLErrorDomain, code: -1009)) == "URLError")
+        let withMessage = NSError(domain: NSURLErrorDomain, code: NSURLErrorCancelled, userInfo: [NSLocalizedDescriptionKey: "Cordless drill"])
+        #expect(errorClass(of: withMessage) == "URLError")
+        #expect(errorClass(of: NSError(domain: NSCocoaErrorDomain, code: 4)) == "NSError")
+        #expect(errorClass(of: CocoaError(.fileNoSuchFile)) != "URLError")
+    }
+
     @Test("never carries the error's message")
     func neverCarriesTheMessage() {
         let secret = PlainError(message: "Cordless drill in /var/mobile/Documents/item-photos/a.webp")

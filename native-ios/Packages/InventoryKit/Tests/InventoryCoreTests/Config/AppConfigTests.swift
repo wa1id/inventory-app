@@ -1,4 +1,5 @@
 import Foundation
+import InventoryTestSupport
 import Testing
 @testable import InventoryCore
 
@@ -247,11 +248,9 @@ struct AppConfigTests {
     #if os(macOS)
     @Test("loads from a bundle's Info.plist")
     func loadsFromABundle() throws {
-        let root = FileManager.default.temporaryDirectory
-            .appendingPathComponent("AppConfigTests-\(UUID().uuidString)/Probe.bundle", isDirectory: true)
-        let contents = root.appendingPathComponent("Contents", isDirectory: true)
-        try FileManager.default.createDirectory(at: contents, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: root.deletingLastPathComponent()) }
+        let directory = try TemporaryDirectory(prefix: "AppConfigTests")
+        let root = directory.root.appendingPathComponent("Probe.bundle", isDirectory: true)
+        let contents = try directory.createDirectory("Probe.bundle/Contents")
         let plist: [String: Any] = [
             "CFBundleIdentifier": "com.wystudio.inventory.probe-\(UUID().uuidString)",
             "CFBundleShortVersionString": "0.2.0",

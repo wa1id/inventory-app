@@ -1,4 +1,5 @@
 import Foundation
+import InventoryCore
 
 /// Containers this phone last added to, moved to, filed in or bound a label to, most recent
 /// first (01 §8.2). A preference, not inventory. RN: src/services/places/recentPlaces.ts.
@@ -54,6 +55,6 @@ public struct RecentPlacesStore: Sendable {
     public func remember(_ containerId: String) {
         guard JS.Key(containerId) != JS.Key(Self.dropZoneContainerId) else { return }
         let next = Self.merge(read(), containerId)
-        preferences.setString(JSONText.array(next), forKey: PreferenceKey.recentPlaces)
+        preferences.setString(JSONValue.array(next.map(JSONValue.string)).jsonText, forKey: PreferenceKey.recentPlaces)
     }
 }

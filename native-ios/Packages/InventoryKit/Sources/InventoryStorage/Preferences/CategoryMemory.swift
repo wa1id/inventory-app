@@ -1,4 +1,5 @@
 import Foundation
+import InventoryCore
 import Observation
 
 /// Categories the person has used, for the chips under the Category field (01 §8.3).
@@ -50,7 +51,7 @@ public final class CategoryMemory {
         var changed = false
         for raw in categories {
             guard let raw else { continue }
-            let category = JS.trim(raw)
+            let category = raw.jsTrimmed()
             let key = Self.key(category)
             guard !category.isEmpty, !seenKeys.contains(key) else { continue }
             seen.append((key, category))
@@ -64,13 +65,13 @@ public final class CategoryMemory {
     /// list is persisted (RN: `recordCategory`, :88-100).
     public func record(_ category: String?) {
         guard let category else { return }
-        let trimmed = JS.trim(category)
+        let trimmed = category.jsTrimmed()
         guard !trimmed.isEmpty else { return }
         loadIfNeeded()
         let saved = Self.mergeSaved([trimmed] + (savedStorage ?? []))
         savedStorage = saved
         publish()
-        preferences.setString(JSONText.array(saved), forKey: PreferenceKey.recentCategories)
+        preferences.setString(JSONValue.array(saved.map(JSONValue.string)).jsonText, forKey: PreferenceKey.recentCategories)
     }
 
     /// Known categories that start with `prefix` (case-insensitively), without an exact match,
@@ -85,7 +86,7 @@ public final class CategoryMemory {
             let k = key(category)
             guard !k.isEmpty, k != typed, !offered.contains(k), k.hasPrefix(typed) else { continue }
             offered.insert(k)
-            matches.append(JS.trim(category))
+            matches.append(category.jsTrimmed())
             if matches.count == max { break }
         }
         return matches
@@ -93,7 +94,7 @@ public final class CategoryMemory {
 
     /// `category.trim().toLowerCase()`, compared as JavaScript compares strings.
     nonisolated static func key(_ category: String) -> JS.Key {
-        JS.Key(JS.lowercase(JS.trim(category)))
+        JS.Key(JS.lowercase(category.jsTrimmed()))
     }
 
     /// Dedupes by key, skipping empty keys, keeps the trimmed spelling first seen, caps at 20.
@@ -105,7 +106,7 @@ public final class CategoryMemory {
             let k = key(category)
             guard !k.isEmpty, !keys.contains(k) else { continue }
             keys.insert(k)
-            out.append(JS.trim(category))
+            out.append(category.jsTrimmed())
         }
         return Array(out.prefix(maxSaved))
     }

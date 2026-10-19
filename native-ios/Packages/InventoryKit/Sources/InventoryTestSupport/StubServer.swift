@@ -1,84 +1,109 @@
 import Foundation
 import InventoryCore
 import Synchronization
-import Testing
-@testable import InventoryNetwork
 
 /// A request as the stub server received it, after URLSession built it.
-struct RecordedRequest: Sendable {
-    let method: String
-    let url: String
+public struct RecordedRequest: Sendable {
+    public let method: String
+    public let url: String
     /// Header fields with lowercased names; the routing header is left out.
-    let headers: [String: String]
-    let body: Data
+    public let headers: [String: String]
+    public let body: Data
 
-    var path: String {
+    public init(method: String, url: String, headers: [String: String], body: Data) {
+        self.method = method
+        self.url = url
+        self.headers = headers
+        self.body = body
+    }
+
+    /// The percent-encoded path, with the query when there is one.
+    public var path: String {
         guard let components = URLComponents(string: url) else { return url }
         return components.percentEncodedPath + (components.percentEncodedQuery.map { "?\($0)" } ?? "")
     }
 
-    var line: String { "\(method) \(url)" }
+    /// `METHOD url`, for readable expectations.
+    public var line: String { "\(method) \(url)" }
 
-    func header(_ name: String) -> String? { headers[name.lowercased()] }
+    /// A header value by case-insensitive name.
+    public func header(_ name: String) -> String? { headers[name.lowercased()] }
 
-    /// The body parsed as JSON.
-    var json: WireJSON? { WireJSON.parse(body) }
+    /// The body parsed as JSON (`JSON.parse`).
+    public var json: JSONValue? { JSONValue.parse(body) }
 
-    var jsonObject: [String: WireJSON] { json?.objectValue ?? [:] }
+    /// The body's members when it is a JSON object, otherwise empty.
+    public var jsonObject: [String: JSONValue] { json?.objectValue ?? [:] }
 }
 
 /// What the stub answers.
-enum StubReply: Sendable {
+public enum StubReply: Sendable {
+    /// Status, headers and body at once, after an optional delay.
     case response(status: Int, headers: [String: String], body: Data, delay: Duration?)
+    /// The load fails with this `URLError` code, after an optional delay.
     case failure(URLError.Code, delay: Duration?)
     /// The status and headers at once, then the body only after `bodyDelay`: what a slow
     /// download looks like, for checking that a deadline covers the body and not just the headers.
     case slowBody(status: Int, headers: [String: String], body: Data, bodyDelay: Duration)
 
-    static func json(_ status: Int, _ text: String, headers: [String: String] = [:], delay: Duration? = nil) -> StubReply {
+    /// A JSON body with `Content-Type: application/json` (overridable through `headers`).
+    public static func json(_ status: Int, _ text: String, headers: [String: String] = [:], delay: Duration? = nil) -> StubReply {
         var merged = ["Content-Type": "application/json"]
         merged.merge(headers) { _, new in new }
         return .response(status: status, headers: merged, body: Data(text.utf8), delay: delay)
     }
 
-    static func status(_ status: Int, delay: Duration? = nil) -> StubReply {
+    /// A status with no headers and no body.
+    public static func status(_ status: Int, delay: Duration? = nil) -> StubReply {
         .response(status: status, headers: [:], body: Data(), delay: delay)
     }
 
-    static func bytes(_ status: Int, _ body: Data, headers: [String: String] = [:]) -> StubReply {
+    /// Raw bytes.
+    public static func bytes(_ status: Int, _ body: Data, headers: [String: String] = [:]) -> StubReply {
         .response(status: status, headers: headers, body: body, delay: nil)
     }
 
-    static func text(_ status: Int, _ text: String, contentType: String = "text/plain; charset=UTF-8") -> StubReply {
+    /// A text body, plain text by default.
+    public static func text(_ status: Int, _ text: String, contentType: String = "text/plain; charset=UTF-8") -> StubReply {
         .response(status: status, headers: ["Content-Type": contentType], body: Data(text.utf8), delay: nil)
     }
 }
 
-/// An in-process HTTP server for one test, reached through a real `URLSession`
-/// whose configuration routes every request to ``StubURLProtocol``.
+/// An in-process HTTP server for one test, reached through a real `URLSession` whose
+/// configuration routes every request to ``StubURLProtocol``.
 ///
-/// Each server registers under its own id, which the session sends in a routing
-/// header, so tests stay independent and can run in parallel.
-final class StubServer: Sendable {
-    typealias Handler = @Sendable (RecordedRequest) async -> StubReply
+/// Each server registers under its own id, which its session sends in a routing header, so
+/// tests stay independent and can run in parallel. It records every request it receives
+/// (``requests``) and answers each with whatever its handler returns: one fixed reply, or a
+/// script that looks at the request (or at how many came before).
+public final class StubServer: Sendable {
+    public typealias Handler = @Sendable (RecordedRequest) async -> StubReply
 
-    let id = UUID().uuidString
+    public let id = UUID().uuidString
     private let handler: Handler
     private let recorded = Mutex<[RecordedRequest]>([])
-    let session: URLSession
+    /// The session to hand to the code under test.
+    public let session: URLSession
 
-    init(_ handler: @escaping Handler) {
+    /// - Parameters:
+    ///   - configuration: the session configuration to start from (``makeConfiguration()``
+    ///     by default); the stub protocol and routing header are added to it.
+    ///   - handler: answers each request.
+    public init(configuration base: URLSessionConfiguration = StubServer.makeConfiguration(), _ handler: @escaping Handler) {
         self.handler = handler
-        let configuration = URLSessionTransport.makeConfiguration()
+        // A copy, so a configuration the caller keeps is not rerouted behind its back.
+        let configuration = (base.copy() as? URLSessionConfiguration) ?? base
         configuration.protocolClasses = [StubURLProtocol.self]
-        configuration.httpAdditionalHeaders = [StubURLProtocol.routeHeader: id]
+        var headers = configuration.httpAdditionalHeaders ?? [:]
+        headers[StubURLProtocol.routeHeader] = id
+        configuration.httpAdditionalHeaders = headers
         session = URLSession(configuration: configuration)
         StubRegistry.shared.register(self)
     }
 
     /// Answers every request with `reply`.
-    convenience init(reply: StubReply) {
-        self.init { _ in reply }
+    public convenience init(configuration: URLSessionConfiguration = StubServer.makeConfiguration(), reply: StubReply) {
+        self.init(configuration: configuration) { _ in reply }
     }
 
     deinit {
@@ -86,12 +111,26 @@ final class StubServer: Sendable {
         session.finishTasksAndInvalidate()
     }
 
-    /// The production ``URLSessionTransport`` over this server's session; it keeps the server alive.
-    var transport: StubTransport { StubTransport(server: self, inner: URLSessionTransport(session: session)) }
+    /// An ephemeral configuration that never caches and never stores cookies, so every request
+    /// reaches the handler, with idle timeouts long enough that the code under test, not
+    /// URLSession, decides when a slow answer has taken too long.
+    public static func makeConfiguration() -> URLSessionConfiguration {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.urlCache = nil
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        configuration.httpCookieStorage = nil
+        configuration.httpShouldSetCookies = false
+        configuration.httpCookieAcceptPolicy = .never
+        configuration.waitsForConnectivity = false
+        configuration.timeoutIntervalForRequest = 120
+        configuration.timeoutIntervalForResource = 3600
+        return configuration
+    }
 
-    var requests: [RecordedRequest] { recorded.withLock { $0 } }
+    /// Every request received so far, oldest first.
+    public var requests: [RecordedRequest] { recorded.withLock { $0 } }
 
-    var lastRequest: RecordedRequest? { requests.last }
+    public var lastRequest: RecordedRequest? { requests.last }
 
     fileprivate func handle(_ request: RecordedRequest) async -> StubReply {
         recorded.withLock { $0.append(request) }
@@ -126,20 +165,21 @@ final class StubRegistry: Sendable {
 ///
 /// `@unchecked Sendable`: URLProtocol is an Objective-C class URLSession drives
 /// from its own queue; the only mutable state, `work`, is guarded by a Mutex.
-final class StubURLProtocol: URLProtocol, @unchecked Sendable {
-    static let routeHeader = "X-Stub-Route"
+public final class StubURLProtocol: URLProtocol, @unchecked Sendable {
+    /// The header a ``StubServer``'s session sends to name its server.
+    public static let routeHeader = "X-Stub-Route"
 
     private let work = Mutex<Task<Void, Never>?>(nil)
 
-    override class func canInit(with request: URLRequest) -> Bool {
+    override public class func canInit(with request: URLRequest) -> Bool {
         request.value(forHTTPHeaderField: routeHeader) != nil
     }
 
-    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+    override public class func canonicalRequest(for request: URLRequest) -> URLRequest {
         request
     }
 
-    override func startLoading() {
+    override public func startLoading() {
         let request = self.request
         guard let id = request.value(forHTTPHeaderField: Self.routeHeader),
               let server = StubRegistry.shared.server(for: id),
@@ -213,7 +253,7 @@ final class StubURLProtocol: URLProtocol, @unchecked Sendable {
         let base: StubURLProtocol
     }
 
-    override func stopLoading() {
+    override public func stopLoading() {
         work.withLock { $0?.cancel() }
     }
 
@@ -234,51 +274,7 @@ final class StubURLProtocol: URLProtocol, @unchecked Sendable {
     }
 }
 
-/// Records telemetry after InventoryCore's redaction, as the process-wide sink would see it.
-final class TelemetryRecorder: Sendable {
-    struct Entry: Sendable, Equatable {
-        let level: String
-        let name: String
-        let payload: TelemetryPayload
-    }
-
-    private let storage = Mutex<[Entry]>([])
-
-    var entries: [Entry] { storage.withLock { $0 } }
-
-    var telemetry: NetworkTelemetry {
-        NetworkTelemetry(
-            event: { [self] name, payload in
-                storage.withLock { $0.append(Entry(level: "event", name: name, payload: Telemetry.redact(payload))) }
-            },
-            error: { [self] name, payload in
-                storage.withLock { $0.append(Entry(level: "error", name: name, payload: Telemetry.redact(payload))) }
-            }
-        )
-    }
-}
-
-/// ``URLSessionTransport`` plus a strong reference to its stub server, which a
-/// client holding only the transport would otherwise let go mid-test.
-struct StubTransport: HTTPTransport {
-    let server: StubServer
-    let inner: URLSessionTransport
-
-    func send(_ request: URLRequest) async throws -> HTTPResponse {
-        try await inner.send(request)
-    }
-}
-
-/// A client-side transport that never touches the network, for failures URLSession cannot stage.
-struct ThrowingTransport: HTTPTransport {
-    let error: any Error & Sendable
-
-    func send(_ request: URLRequest) async throws -> HTTPResponse {
-        throw error
-    }
-}
-
 extension Data {
     /// UTF-8 text, for readable expectations.
-    var utf8Text: String { String(decoding: self, as: UTF8.self) }
+    public var utf8Text: String { String(decoding: self, as: UTF8.self) }
 }

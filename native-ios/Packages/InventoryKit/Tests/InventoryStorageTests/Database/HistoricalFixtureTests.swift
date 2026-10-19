@@ -1,6 +1,7 @@
 import Foundation
 import GRDB
 import InventoryCore
+import InventoryTestSupport
 import Testing
 @testable import InventoryStorage
 
@@ -34,7 +35,7 @@ struct HistoricalFixtureTests {
 
     @Test("each fixture is at its version before opening", arguments: fixtures)
     func fixtureIsAtItsVersion(_ fixture: Fixture) throws {
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let path = try DatabaseFixtures.copy("historical/\(fixture.file)", into: scratch)
         let queue = try DatabaseQueue(path: path)
         let (version, schema) = try queue.read { db in (try MigrationRunner.userVersion(db), try sqliteMaster(db)) }
@@ -44,7 +45,7 @@ struct HistoricalFixtureTests {
 
     @Test("migrates to 7 without losing a row, exactly as the TypeScript runner does", arguments: fixtures)
     func migratesWithoutLoss(_ fixture: Fixture) throws {
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let path = try DatabaseFixtures.copy("historical/\(fixture.file)", into: scratch)
         let store = try DatabaseStore(path: path)
 
@@ -85,7 +86,7 @@ struct HistoricalFixtureTests {
 
     @Test("keeps the photo and tag rows of a v6 phone through the v7 items rebuild")
     func v6RebuildKeepsPhotosAndTags() async throws {
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let path = try DatabaseFixtures.copy("historical/v6.db", into: scratch)
         let store = try DatabaseStore(path: path)
         #expect(try await store.schemaVersion() == 6)
@@ -111,7 +112,7 @@ struct HistoricalFixtureTests {
 
     @Test("a missing file starts empty and migrates like a fresh install")
     func missingFileIsFreshInstall() throws {
-        let scratch = try ScratchDirectory()
+        let scratch = try TemporaryDirectory()
         let store = try DatabaseStore(path: scratch.path("inventory.db"))
         #expect(try store.schemaVersion() == 0)
         #expect(try store.migrate() == 7)
