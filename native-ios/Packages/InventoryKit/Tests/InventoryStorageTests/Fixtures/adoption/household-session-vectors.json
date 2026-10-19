@@ -1,0 +1,194 @@
+{
+  "decode": [
+    {
+      "input": "{\"origin\":\"https://inventory.wystudio.be\",\"token\":\"tok\",\"deviceId\":\"dev-1\",\"deviceName\":\"Anna’s iPhone\",\"householdName\":\"Home\"}",
+      "expected": {
+        "origin": "https://inventory.wystudio.be",
+        "token": "tok",
+        "deviceId": "dev-1",
+        "deviceName": "Anna’s iPhone",
+        "householdName": "Home"
+      }
+    },
+    {
+      "input": "{\"origin\":\"https://h\",\"token\":\"t\",\"deviceId\":\"d\"}",
+      "expected": {
+        "origin": "https://h",
+        "token": "t",
+        "deviceId": "d",
+        "deviceName": "This phone",
+        "householdName": "Home"
+      }
+    },
+    {
+      "input": "{\"origin\":\"https://h\",\"token\":\"t\",\"deviceId\":\"d\",\"deviceName\":null,\"householdName\":7}",
+      "expected": {
+        "origin": "https://h",
+        "token": "t",
+        "deviceId": "d",
+        "deviceName": "This phone",
+        "householdName": "Home"
+      }
+    },
+    {
+      "input": "{\"origin\":\"https://h\",\"token\":\"t\",\"deviceId\":\"d\",\"deviceName\":\"\",\"householdName\":\"\"}",
+      "expected": {
+        "origin": "https://h",
+        "token": "t",
+        "deviceId": "d",
+        "deviceName": "",
+        "householdName": ""
+      }
+    },
+    {
+      "input": "{\"origin\":\"https://h\",\"deviceId\":\"d\"}",
+      "expected": null
+    },
+    {
+      "input": "{\"origin\":\"https://h\",\"token\":\"t\",\"deviceId\":42}",
+      "expected": null
+    },
+    {
+      "input": "{\"origin\":5,\"token\":\"t\",\"deviceId\":\"d\"}",
+      "expected": null
+    },
+    {
+      "input": "{\"origin\":\"\",\"token\":\"\",\"deviceId\":\"\"}",
+      "expected": {
+        "origin": "",
+        "token": "",
+        "deviceId": "",
+        "deviceName": "This phone",
+        "householdName": "Home"
+      }
+    },
+    {
+      "input": "{\"token\":\"t\",\"deviceId\":\"d\",\"origin\":\"https:\\/\\/h\",\"extra\":true}",
+      "expected": {
+        "origin": "https://h",
+        "token": "t",
+        "deviceId": "d",
+        "deviceName": "This phone",
+        "householdName": "Home"
+      }
+    },
+    {
+      "input": "{\"origin\":\"https://h\",\"token\":\"t\",\"deviceId\":\"d\",\"deviceName\":\"x\",\"deviceName\":\"y\"}",
+      "expected": {
+        "origin": "https://h",
+        "token": "t",
+        "deviceId": "d",
+        "deviceName": "y",
+        "householdName": "Home"
+      }
+    },
+    {
+      "input": "[]",
+      "expected": null
+    },
+    {
+      "input": "null",
+      "expected": null
+    },
+    {
+      "input": "\"session\"",
+      "expected": null
+    },
+    {
+      "input": "42",
+      "expected": null
+    },
+    {
+      "input": "not json",
+      "expected": null
+    },
+    {
+      "input": "{\"origin\":\"https://h\",\"token\":\"t\",\"deviceId\":\"d\"",
+      "expected": null
+    },
+    {
+      "input": "",
+      "expected": null
+    },
+    {
+      "input": " {\"origin\":\"h\",\"token\":\"t\",\"deviceId\":\"d\"} ",
+      "expected": {
+        "origin": "h",
+        "token": "t",
+        "deviceId": "d",
+        "deviceName": "This phone",
+        "householdName": "Home"
+      }
+    },
+    {
+      "input": "{\"origin\":\"h\\u00e9\",\"token\":\"t\\n\",\"deviceId\":\"d\\\"q\"}",
+      "expected": {
+        "origin": "hé",
+        "token": "t\n",
+        "deviceId": "d\"q",
+        "deviceName": "This phone",
+        "householdName": "Home"
+      }
+    },
+    {
+      "input": "﻿{\"origin\":\"h\",\"token\":\"t\",\"deviceId\":\"d\"}",
+      "expected": null
+    },
+    {
+      "input": " {\"origin\":\"h\",\"token\":\"t\",\"deviceId\":\"d\"}",
+      "expected": null
+    },
+    {
+      "input": "{\"origin\":\"h\",\"token\":\"t\",\"deviceId\":\"d\",}",
+      "expected": null
+    },
+    {
+      "input": "{origin:\"h\",\"token\":\"t\",\"deviceId\":\"d\"}",
+      "expected": null
+    },
+    {
+      "input": "{\"origin\":\"h\",\"token\":\"t\",\"deviceId\":\"d\",\"__proto__\":{\"x\":1}}",
+      "expected": {
+        "origin": "h",
+        "token": "t",
+        "deviceId": "d",
+        "deviceName": "This phone",
+        "householdName": "Home"
+      }
+    },
+    {
+      "input": "{\"origin\":\"h\",\"token\":\"t\",\"deviceId\":\"d\"} trailing",
+      "expected": null
+    },
+    {
+      "input": "{\"origin\":\"h\",\"token\":\"t\",\"deviceId\":\"d\",\"deviceName\":\"tab\there\"}",
+      "expected": null
+    },
+    {
+      "input": "<absent>",
+      "expected": null
+    }
+  ],
+  "encode": [
+    {
+      "session": {
+        "origin": "https://inventory.wystudio.be",
+        "token": "abc",
+        "deviceId": "dev-1",
+        "deviceName": "Kitchen iPad",
+        "householdName": "Home"
+      },
+      "json": "{\"origin\":\"https://inventory.wystudio.be\",\"token\":\"abc\",\"deviceId\":\"dev-1\",\"deviceName\":\"Kitchen iPad\",\"householdName\":\"Home\"}"
+    },
+    {
+      "session": {
+        "origin": "http://192.168.1.5:8788",
+        "token": "a/b+c=",
+        "deviceId": "3f1c2a9e-8b7d-4c1e-9f00-1a2b3c4d5e6f",
+        "deviceName": "Anna’s \"work\" iPhone \\ 📱",
+        "householdName": "Café\tΚουζίνα\n\u0001\u001f  "
+      },
+      "json": "{\"origin\":\"http://192.168.1.5:8788\",\"token\":\"a/b+c=\",\"deviceId\":\"3f1c2a9e-8b7d-4c1e-9f00-1a2b3c4d5e6f\",\"deviceName\":\"Anna’s \\\"work\\\" iPhone \\\\ 📱\",\"householdName\":\"Café\\tΚουζίνα\\n\\u0001\\u001f  \"}"
+    }
+  ]
+}

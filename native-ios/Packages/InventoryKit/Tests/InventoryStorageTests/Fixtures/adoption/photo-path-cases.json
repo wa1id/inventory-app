@@ -1,0 +1,85 @@
+{
+  "about": "Stored item_photos URIs (02 §3.2 shapes) resolved against a fresh container. {container} is replaced with the test container's file URL. 'files' exist in the test container; 'expected' is the container-relative path the resolver must return, or null.",
+  "files": [
+    "Documents/item-photos/3f1c2a9e-8b7d-4c1e-9f00-1a2b3c4d5e6f.webp",
+    "Documents/item-photos/3f1c2a9e-8b7d-4c1e-9f00-1a2b3c4d5e6f-thumb.webp",
+    "Documents/item-photos/9b2e4c71-0d3a-4f8e-b5c6-7a1d2e3f4a5b.jpg",
+    "Documents/item-photos/photo-row-7.webp",
+    "Documents/item-photos/My Photo.webp",
+    "Library/Caches/household-photos/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.webp",
+    "Library/Caches/household-photos/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d-thumb.webp",
+    "Documents/elsewhere/loose.webp"
+  ],
+  "cases": [
+    {
+      "name": "same container (shape 1)",
+      "stored": "{container}/Documents/item-photos/3f1c2a9e-8b7d-4c1e-9f00-1a2b3c4d5e6f.webp",
+      "expected": "Documents/item-photos/3f1c2a9e-8b7d-4c1e-9f00-1a2b3c4d5e6f.webp"
+    },
+    {
+      "name": "stale container UUID, full image",
+      "stored": "file:///var/mobile/Containers/Data/Application/0E7C3B5A-1F2D-4E6A-9B8C-7D6E5F4A3B2C/Documents/item-photos/3f1c2a9e-8b7d-4c1e-9f00-1a2b3c4d5e6f.webp",
+      "expected": "Documents/item-photos/3f1c2a9e-8b7d-4c1e-9f00-1a2b3c4d5e6f.webp"
+    },
+    {
+      "name": "stale container UUID, thumbnail",
+      "stored": "file:///var/mobile/Containers/Data/Application/0E7C3B5A-1F2D-4E6A-9B8C-7D6E5F4A3B2C/Documents/item-photos/3f1c2a9e-8b7d-4c1e-9f00-1a2b3c4d5e6f-thumb.webp",
+      "expected": "Documents/item-photos/3f1c2a9e-8b7d-4c1e-9f00-1a2b3c4d5e6f-thumb.webp"
+    },
+    {
+      "name": "stale container UUID, MVP-era jpg (shape 2)",
+      "stored": "file:///var/mobile/Containers/Data/Application/0E7C3B5A-1F2D-4E6A-9B8C-7D6E5F4A3B2C/Documents/item-photos/9b2e4c71-0d3a-4f8e-b5c6-7a1d2e3f4a5b.jpg",
+      "expected": "Documents/item-photos/9b2e4c71-0d3a-4f8e-b5c6-7a1d2e3f4a5b.jpg"
+    },
+    {
+      "name": "stale container UUID, file gone",
+      "stored": "file:///var/mobile/Containers/Data/Application/0E7C3B5A-1F2D-4E6A-9B8C-7D6E5F4A3B2C/Documents/item-photos/00000000-0000-4000-8000-000000000000.webp",
+      "expected": null
+    },
+    {
+      "name": "stale container UUID, household photo cache",
+      "stored": "file:///var/mobile/Containers/Data/Application/0E7C3B5A-1F2D-4E6A-9B8C-7D6E5F4A3B2C/Library/Caches/household-photos/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d-thumb.webp",
+      "expected": "Library/Caches/household-photos/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d-thumb.webp"
+    },
+    {
+      "name": "household shadow row (shape 3)",
+      "stored": "r2:household/primary/photos/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.webp",
+      "expected": null
+    },
+    {
+      "name": "http URI",
+      "stored": "https://inventory.wystudio.be/v1/photos/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+      "expected": null
+    },
+    {
+      "name": "Android-restored path with the file present (shape 4)",
+      "stored": "file:///data/user/0/com.wystudio.inventory/files/item-photos/photo-row-7.webp",
+      "expected": "Documents/item-photos/photo-row-7.webp"
+    },
+    {
+      "name": "Android-restored path without the file",
+      "stored": "file:///data/user/0/com.wystudio.inventory/files/item-photos/photo-row-8.webp",
+      "expected": null
+    },
+    {
+      "name": "percent-encoded simulator path from another device",
+      "stored": "file:///Users/someone/Library/Developer/CoreSimulator/Devices/5C1D2E3F-0A1B-4C2D-8E3F-4A5B6C7D8E9F/data/Containers/Data/Application/1A2B3C4D-5E6F-4A7B-8C9D-0E1F2A3B4C5D/Documents/item-photos/My%20Photo.webp",
+      "expected": "Documents/item-photos/My Photo.webp"
+    },
+    {
+      "name": "a file outside the photo directories is not rebased",
+      "stored": "file:///var/mobile/Containers/Data/Application/0E7C3B5A-1F2D-4E6A-9B8C-7D6E5F4A3B2C/Documents/elsewhere/loose.webp",
+      "expected": null
+    },
+    {
+      "name": "not a URI",
+      "stored": "",
+      "expected": null
+    },
+    {
+      "name": "a bare path is not a file URI",
+      "stored": "/var/mobile/Containers/Data/Application/0E7C3B5A-1F2D-4E6A-9B8C-7D6E5F4A3B2C/Documents/item-photos/3f1c2a9e-8b7d-4c1e-9f00-1a2b3c4d5e6f.webp",
+      "expected": null
+    }
+  ]
+}

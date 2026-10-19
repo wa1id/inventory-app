@@ -1,0 +1,309 @@
+[
+  {
+    "name": "loads a stored list",
+    "stored": "[\"Tools\",\"Kitchen\"]",
+    "steps": [
+      {
+        "op": "mount"
+      }
+    ],
+    "expected": {
+      "known": [
+        "Tools",
+        "Kitchen"
+      ],
+      "persisted": "[\"Tools\",\"Kitchen\"]"
+    }
+  },
+  {
+    "name": "trims, dedupes case-insensitively, drops non-strings and empties",
+    "stored": "[\" Tools \",\"tools\",2,\"\",\"Toys\",null,\"  \",\"TOYS\",\"Garden\"]",
+    "steps": [
+      {
+        "op": "mount"
+      }
+    ],
+    "expected": {
+      "known": [
+        "Tools",
+        "Toys",
+        "Garden"
+      ],
+      "persisted": "[\" Tools \",\"tools\",2,\"\",\"Toys\",null,\"  \",\"TOYS\",\"Garden\"]"
+    }
+  },
+  {
+    "name": "caps the stored list at twenty",
+    "stored": "[\"Cat 1\",\"Cat 2\",\"Cat 3\",\"Cat 4\",\"Cat 5\",\"Cat 6\",\"Cat 7\",\"Cat 8\",\"Cat 9\",\"Cat 10\",\"Cat 11\",\"Cat 12\",\"Cat 13\",\"Cat 14\",\"Cat 15\",\"Cat 16\",\"Cat 17\",\"Cat 18\",\"Cat 19\",\"Cat 20\",\"Cat 21\",\"Cat 22\",\"Cat 23\",\"Cat 24\",\"Cat 25\"]",
+    "steps": [
+      {
+        "op": "mount"
+      }
+    ],
+    "expected": {
+      "known": [
+        "Cat 1",
+        "Cat 2",
+        "Cat 3",
+        "Cat 4",
+        "Cat 5",
+        "Cat 6",
+        "Cat 7",
+        "Cat 8",
+        "Cat 9",
+        "Cat 10",
+        "Cat 11",
+        "Cat 12",
+        "Cat 13",
+        "Cat 14",
+        "Cat 15",
+        "Cat 16",
+        "Cat 17",
+        "Cat 18",
+        "Cat 19",
+        "Cat 20"
+      ],
+      "persisted": "[\"Cat 1\",\"Cat 2\",\"Cat 3\",\"Cat 4\",\"Cat 5\",\"Cat 6\",\"Cat 7\",\"Cat 8\",\"Cat 9\",\"Cat 10\",\"Cat 11\",\"Cat 12\",\"Cat 13\",\"Cat 14\",\"Cat 15\",\"Cat 16\",\"Cat 17\",\"Cat 18\",\"Cat 19\",\"Cat 20\",\"Cat 21\",\"Cat 22\",\"Cat 23\",\"Cat 24\",\"Cat 25\"]"
+    }
+  },
+  {
+    "name": "ignores an object",
+    "stored": "{\"a\":1}",
+    "steps": [
+      {
+        "op": "mount"
+      }
+    ],
+    "expected": {
+      "known": [],
+      "persisted": "{\"a\":1}"
+    }
+  },
+  {
+    "name": "ignores a string",
+    "stored": "\"Tools\"",
+    "steps": [
+      {
+        "op": "mount"
+      }
+    ],
+    "expected": {
+      "known": [],
+      "persisted": "\"Tools\""
+    }
+  },
+  {
+    "name": "ignores unparsable text",
+    "stored": "not json",
+    "steps": [
+      {
+        "op": "mount"
+      }
+    ],
+    "expected": {
+      "known": [],
+      "persisted": "not json"
+    }
+  },
+  {
+    "name": "nothing stored",
+    "stored": null,
+    "steps": [
+      {
+        "op": "mount"
+      }
+    ],
+    "expected": {
+      "known": [],
+      "persisted": null
+    }
+  },
+  {
+    "name": "empty string stored",
+    "stored": "",
+    "steps": [
+      {
+        "op": "mount"
+      }
+    ],
+    "expected": {
+      "known": [],
+      "persisted": ""
+    }
+  },
+  {
+    "name": "saved first, then seen alphabetically",
+    "stored": "[\"Tools\"]",
+    "steps": [
+      {
+        "op": "mount"
+      },
+      {
+        "op": "seen",
+        "categories": [
+          "zebra",
+          "Apple",
+          null,
+          "  ",
+          " banana ",
+          "tools",
+          "apple",
+          "Éclair",
+          "eclair pans",
+          "Cherry"
+        ]
+      }
+    ],
+    "expected": {
+      "known": [
+        "Tools",
+        "Apple",
+        "banana",
+        "Cherry",
+        "Éclair",
+        "eclair pans",
+        "zebra"
+      ],
+      "persisted": "[\"Tools\"]"
+    }
+  },
+  {
+    "name": "equal at base strength keeps first-seen order",
+    "stored": null,
+    "steps": [
+      {
+        "op": "mount"
+      },
+      {
+        "op": "seen",
+        "categories": [
+          "Café",
+          "Cafe",
+          "cafe",
+          "Bar"
+        ]
+      }
+    ],
+    "expected": {
+      "known": [
+        "Bar",
+        "Café",
+        "Cafe"
+      ],
+      "persisted": null
+    }
+  },
+  {
+    "name": "recording puts a category first and persists the list",
+    "stored": "[\"Tools\",\"Kitchen\"]",
+    "steps": [
+      {
+        "op": "mount"
+      },
+      {
+        "op": "record",
+        "category": "  kitchen "
+      },
+      {
+        "op": "record",
+        "category": "Garden"
+      }
+    ],
+    "expected": {
+      "known": [
+        "Garden",
+        "kitchen",
+        "Tools"
+      ],
+      "persisted": "[\"Garden\",\"kitchen\",\"Tools\"]"
+    }
+  },
+  {
+    "name": "recording empty or null does nothing",
+    "stored": "[\"Tools\"]",
+    "steps": [
+      {
+        "op": "mount"
+      },
+      {
+        "op": "record",
+        "category": "   "
+      },
+      {
+        "op": "record",
+        "category": null
+      }
+    ],
+    "expected": {
+      "known": [
+        "Tools"
+      ],
+      "persisted": "[\"Tools\"]"
+    }
+  },
+  {
+    "name": "recorded categories stay ahead of seen ones",
+    "stored": null,
+    "steps": [
+      {
+        "op": "mount"
+      },
+      {
+        "op": "seen",
+        "categories": [
+          "Books",
+          "Art"
+        ]
+      },
+      {
+        "op": "record",
+        "category": "books"
+      }
+    ],
+    "expected": {
+      "known": [
+        "books",
+        "Art"
+      ],
+      "persisted": "[\"books\"]"
+    }
+  },
+  {
+    "name": "recording caps the saved list at twenty",
+    "stored": "[\"Cat 1\",\"Cat 2\",\"Cat 3\",\"Cat 4\",\"Cat 5\",\"Cat 6\",\"Cat 7\",\"Cat 8\",\"Cat 9\",\"Cat 10\",\"Cat 11\",\"Cat 12\",\"Cat 13\",\"Cat 14\",\"Cat 15\",\"Cat 16\",\"Cat 17\",\"Cat 18\",\"Cat 19\",\"Cat 20\"]",
+    "steps": [
+      {
+        "op": "mount"
+      },
+      {
+        "op": "record",
+        "category": "New"
+      }
+    ],
+    "expected": {
+      "known": [
+        "New",
+        "Cat 1",
+        "Cat 2",
+        "Cat 3",
+        "Cat 4",
+        "Cat 5",
+        "Cat 6",
+        "Cat 7",
+        "Cat 8",
+        "Cat 9",
+        "Cat 10",
+        "Cat 11",
+        "Cat 12",
+        "Cat 13",
+        "Cat 14",
+        "Cat 15",
+        "Cat 16",
+        "Cat 17",
+        "Cat 18",
+        "Cat 19"
+      ],
+      "persisted": "[\"New\",\"Cat 1\",\"Cat 2\",\"Cat 3\",\"Cat 4\",\"Cat 5\",\"Cat 6\",\"Cat 7\",\"Cat 8\",\"Cat 9\",\"Cat 10\",\"Cat 11\",\"Cat 12\",\"Cat 13\",\"Cat 14\",\"Cat 15\",\"Cat 16\",\"Cat 17\",\"Cat 18\",\"Cat 19\"]"
+    }
+  }
+]

@@ -1,0 +1,242 @@
+[
+  {
+    "input": "1754236800000",
+    "expected": 1754236800000
+  },
+  {
+    "input": " 1754236800000 ",
+    "expected": 1754236800000
+  },
+  {
+    "input": "\n1754236800000\t",
+    "expected": 1754236800000
+  },
+  {
+    "input": " 1000 ",
+    "expected": 1000
+  },
+  {
+    "input": "﻿1000",
+    "expected": 1000
+  },
+  {
+    "input": " 1000 ",
+    "expected": 1000
+  },
+  {
+    "input": "1000",
+    "expected": null
+  },
+  {
+    "input": "1000",
+    "expected": null
+  },
+  {
+    "input": "　1000",
+    "expected": 1000
+  },
+  {
+    "input": "",
+    "expected": null
+  },
+  {
+    "input": " ",
+    "expected": 0
+  },
+  {
+    "input": "   \n ",
+    "expected": 0
+  },
+  {
+    "input": "abc",
+    "expected": null
+  },
+  {
+    "input": "12abc",
+    "expected": null
+  },
+  {
+    "input": "1_000",
+    "expected": null
+  },
+  {
+    "input": "1,000",
+    "expected": null
+  },
+  {
+    "input": "0",
+    "expected": 0
+  },
+  {
+    "input": "-0",
+    "expected": 0
+  },
+  {
+    "input": "-5",
+    "expected": -5
+  },
+  {
+    "input": "+5",
+    "expected": 5
+  },
+  {
+    "input": "1.5",
+    "expected": 1.5
+  },
+  {
+    "input": ".5",
+    "expected": 0.5
+  },
+  {
+    "input": "5.",
+    "expected": 5
+  },
+  {
+    "input": ".",
+    "expected": null
+  },
+  {
+    "input": "+",
+    "expected": null
+  },
+  {
+    "input": "-",
+    "expected": null
+  },
+  {
+    "input": "1e3",
+    "expected": 1000
+  },
+  {
+    "input": "1E3",
+    "expected": 1000
+  },
+  {
+    "input": "1e-3",
+    "expected": 0.001
+  },
+  {
+    "input": "1e+3",
+    "expected": 1000
+  },
+  {
+    "input": "e3",
+    "expected": null
+  },
+  {
+    "input": "1e",
+    "expected": null
+  },
+  {
+    "input": "1e21",
+    "expected": 1e+21
+  },
+  {
+    "input": "1e400",
+    "expected": null
+  },
+  {
+    "input": "-1e400",
+    "expected": null
+  },
+  {
+    "input": "Infinity",
+    "expected": null
+  },
+  {
+    "input": "-Infinity",
+    "expected": null
+  },
+  {
+    "input": "+Infinity",
+    "expected": null
+  },
+  {
+    "input": "infinity",
+    "expected": null
+  },
+  {
+    "input": "inf",
+    "expected": null
+  },
+  {
+    "input": "NaN",
+    "expected": null
+  },
+  {
+    "input": "nan",
+    "expected": null
+  },
+  {
+    "input": "0x10",
+    "expected": 16
+  },
+  {
+    "input": "0X1f",
+    "expected": 31
+  },
+  {
+    "input": "-0x10",
+    "expected": null
+  },
+  {
+    "input": "0x",
+    "expected": null
+  },
+  {
+    "input": "0xg",
+    "expected": null
+  },
+  {
+    "input": "0b101",
+    "expected": 5
+  },
+  {
+    "input": "0B11",
+    "expected": 3
+  },
+  {
+    "input": "0o17",
+    "expected": 15
+  },
+  {
+    "input": "0O7",
+    "expected": 7
+  },
+  {
+    "input": "0b2",
+    "expected": null
+  },
+  {
+    "input": "00012",
+    "expected": 12
+  },
+  {
+    "input": "1.2.3",
+    "expected": null
+  },
+  {
+    "input": "١٢",
+    "expected": null
+  },
+  {
+    "input": "null",
+    "expected": null
+  },
+  {
+    "input": "true",
+    "expected": null
+  },
+  {
+    "input": "9007199254740993",
+    "expected": 9007199254740992
+  },
+  {
+    "input": "1754236800000.0",
+    "expected": 1754236800000
+  },
+  {
+    "input": "<absent>",
+    "expected": null
+  }
+]
