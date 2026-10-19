@@ -183,6 +183,8 @@ public final class TapToFocusModel {
             } catch {
                 return
             }
+            // A newer tap cancelled this one after its wait ended: its square stays.
+            guard !Task.isCancelled else { return }
             self?.spot = nil
         }
     }

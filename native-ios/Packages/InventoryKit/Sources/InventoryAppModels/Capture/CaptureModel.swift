@@ -84,7 +84,10 @@ public final class CaptureModel {
     @ObservationIgnored private var shutterBusy = false
     @ObservationIgnored private var picking = false
     @ObservationIgnored private var sessionStart: Int64?
-    @ObservationIgnored private var pipelines: [Task<Void, Never>] = []
+    /// Quick Snap pipelines still running, by shot number; each removes itself when it finishes,
+    /// so a long session does not keep every finished task.
+    @ObservationIgnored private var pipelines: [Int: Task<Void, Never>] = [:]
+    @ObservationIgnored private var shotsStarted = 0
 
     /// - Parameters:
     ///   - route: The container, the asked-for mode, and (after Keep shooting) the set's start and
@@ -203,6 +206,12 @@ public final class CaptureModel {
     /// The permission screen offers "Type it instead" (never in request mode).
     public var permissionOffersManual: Bool { !isRequest }
 
+    /// The permission screen's copy: "Choose a photo instead" always, "Type it instead" except in
+    /// request mode (RN `onLibrary` / `onManual`, `index.tsx:377-392`).
+    public func permissionCopy(isPaired: Bool) -> CameraPermissionCopy {
+        permission.copy(isPaired: isPaired, offersLibrary: true, offersManual: permissionOffersManual)
+    }
+
     // MARK: Inputs from the view
 
     /// The capture session started running.
@@ -250,7 +259,9 @@ public final class CaptureModel {
     }
 
     /// The library button (or "Choose a photo instead"): true when the picker may open. False while
-    /// a photo is processed or the picker is already open.
+    /// a photo is processed or the picker is already open. Every `true` must be answered with
+    /// ``finishLibraryPick(_:)``, `.cancelled` when the picker closes without a choice, or the
+    /// picker stays locked.
     public func beginLibraryPick() -> Bool {
         guard !processing, !picking else { return false }
         picking = true
@@ -258,7 +269,8 @@ public final class CaptureModel {
     }
 
     /// The picker closed (RN `pickFromLibrary` after `launchImageLibraryAsync`). A picked photo goes
-    /// through the single-photo path, whatever the mode.
+    /// through the single-photo path, whatever the mode. A `.file` source stays the caller's: the
+    /// store never deletes it, so delete the picker's copy once this returns (05 §9.2).
     // RN: app/capture/index.tsx:348-373
     public func finishLibraryPick(_ result: CaptureLibraryPick) async {
         picking = false
@@ -321,6 +333,10 @@ public final class CaptureModel {
     }
 
     /// The screen went away: anything still being stored is no longer wanted.
+    ///
+    /// Call it when the camera is dismissed (RN's unmount), not whenever it is covered: a photo
+    /// picked from the library while it was covered by the picker would otherwise be dropped.
+    // RN: app/capture/index.tsx:145-150
     public func disappeared() {
         closed = true
         isSessionRunning = false
@@ -329,10 +345,8 @@ public final class CaptureModel {
 
     /// Waits for every Quick Snap pipeline this camera started (tests; the screen never waits).
     public func waitForPipelines() async {
-        while !pipelines.isEmpty {
-            let running = pipelines
-            pipelines.removeAll()
-            for task in running { await task.value }
+        while let running = pipelines.values.first {
+            await running.value
         }
     }
 
@@ -437,7 +451,12 @@ public final class CaptureModel {
         let fastCapture = fastCapture
         let items = items
         let containerId = containerId
-        pipelines.append(Task { [self] in
+        shotsStarted += 1
+        let shot = shotsStarted
+        // The task runs on the main actor, so it cannot start, let alone end, before it is
+        // registered here.
+        pipelines[shot] = Task { [self] in
+            defer { pipelines[shot] = nil }
             do {
                 let outcome = try await fastCapture.capture(
                     containerId: containerId,
@@ -460,7 +479,7 @@ public final class CaptureModel {
                 captured = max(0, captured - 1)
                 dropped += 1
             }
-        })
+        }
     }
 
     // MARK: Notices

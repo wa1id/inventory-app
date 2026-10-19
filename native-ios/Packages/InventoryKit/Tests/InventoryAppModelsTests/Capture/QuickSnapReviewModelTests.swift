@@ -41,7 +41,7 @@ final class QuickSnapReviewHarness {
     }
 }
 
-@Suite("QuickSnapReviewModel: reading and status (app/capture/review.tsx)")
+@Suite("QuickSnapReviewModel: reading and status (app/capture/review.tsx)", .timeLimit(.minutes(1)))
 @MainActor
 struct QuickSnapReviewStatusTests {
     @Test("reads the container's rows from the session start, oldest first")
@@ -223,7 +223,7 @@ struct QuickSnapReviewStatusTests {
     }
 }
 
-@Suite("QuickSnapReviewModel: rows and actions (05 §6.5)")
+@Suite("QuickSnapReviewModel: rows and actions (05 §6.5)", .timeLimit(.minutes(1)))
 @MainActor
 struct QuickSnapReviewActionTests {
     @Test("a drop-zone row opens a filing run; a container's row opens the item")

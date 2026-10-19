@@ -104,11 +104,25 @@ public final class QrScannerModel {
         mountFailed = true
     }
 
+    /// The host took the scanner off screen and put it back (the Scan tab's code list in between):
+    /// a fresh scanner, as RN's newly mounted `QrScanner` was. The torch is off, a camera failure
+    /// is forgotten (the camera is tried again), and the scan guard starts over with a new arming
+    /// and no code handed over or ignored.
+    // RN: app/(tabs)/scan.tsx:271-291 (the code phase renders no QrScanner)
+    public func reset() {
+        torchOn = false
+        mountFailed = false
+        isLocked = false
+        scanGuard.reset()
+    }
+
     /// A payload the camera recognised. Accepted at most once per arming: the reticle locks, holds
     /// for 250 ms (0 under Reduce Motion), then ``onScan`` runs; the lock clears when it finishes.
-    // RN: src/ui/components/QrScanner.tsx:113-137
+    /// Ignored while the camera should not be running (RN mounted no camera then, so no callback
+    /// could arrive; a scanner's late delivery after stopping must not count).
+    // RN: src/ui/components/QrScanner.tsx:113-137, :160-169
     public func codeDetected(_ raw: String) async {
-        guard scanGuard.accept(raw) else { return }
+        guard cameraRuns, scanGuard.accept(raw) else { return }
         isLocked = true
         let wait = Motion.motionMs(Motion.duration.reticleLock, reduced: reduceMotion)
         if wait > 0 {

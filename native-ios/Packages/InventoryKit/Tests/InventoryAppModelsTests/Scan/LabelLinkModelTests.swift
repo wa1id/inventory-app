@@ -56,7 +56,7 @@ private extension LabelLinkState {
     }
 }
 
-@Suite("LabelLinkModel: lookup (app/c/[token].tsx, 06 §9.1-9.2)")
+@Suite("LabelLinkModel: lookup (app/c/[token].tsx, 06 §9.1-9.2)", .timeLimit(.minutes(1)))
 @MainActor
 struct LabelLinkLookupTests {
     @Test("a linked label replaces the screen with its container")
@@ -159,7 +159,7 @@ struct LabelLinkLookupTests {
     }
 }
 
-@Suite("LabelLinkModel: linking (06 §9.3)")
+@Suite("LabelLinkModel: linking (06 §9.3)", .timeLimit(.minutes(1)))
 @MainActor
 struct LabelLinkLinkTests {
     @Test("a container without a label is linked at once: bind, qr_bound, invalidate, remember, open it, say so")

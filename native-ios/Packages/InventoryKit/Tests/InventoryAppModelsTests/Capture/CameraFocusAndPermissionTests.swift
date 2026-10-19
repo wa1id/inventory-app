@@ -4,7 +4,7 @@ import InventoryTestSupport
 import Testing
 @testable import InventoryAppModels
 
-@Suite("TapToFocus (TapToFocusLayer.test.tsx)")
+@Suite("TapToFocus (TapToFocusLayer.test.tsx)", .timeLimit(.minutes(1)))
 struct TapToFocusTests {
     @Test("centres the square on the tap rather than hanging it from the corner")
     func centres() {

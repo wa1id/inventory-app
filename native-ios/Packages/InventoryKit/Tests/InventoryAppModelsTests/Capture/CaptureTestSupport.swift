@@ -47,6 +47,26 @@ struct CaptureTestError: Error, Equatable {
     var name = "boom"
 }
 
+/// Epoch ms the test moves by hand (a model's `now`).
+final class CaptureTestNow: Sendable {
+    private let value: Mutex<Int64>
+
+    init(_ start: Int64) {
+        value = Mutex(start)
+    }
+
+    var current: Int64 { value.withLock { $0 } }
+
+    func advance(by milliseconds: Int64) {
+        value.withLock { $0 += milliseconds }
+    }
+
+    /// Pass as the model's `now`.
+    var read: @Sendable () -> Int64 {
+        { [self] in current }
+    }
+}
+
 /// A `PhotoStoring` for camera tests: room on demand, stores answered at once or held, deletes
 /// recorded.
 final class CaptureTestPhotos: PhotoStoring {

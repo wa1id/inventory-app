@@ -64,8 +64,19 @@ public final class ScanGuard {
         arming += 1
     }
 
+    /// The scanner was taken down and shown again (RN unmounted `QrScanner` and mounted a fresh
+    /// one, e.g. around the Scan tab's code list): a new arming, and nothing handed over or
+    /// ignored any more, as the new instance's refs started empty.
+    // RN: app/(tabs)/scan.tsx:271-291 (no QrScanner in the code phase)
+    public func reset() {
+        arming += 1
+        handed = nil
+        ignore = nil
+    }
+
     /// Whether a sighting of `data` should be handed over. True at most once per arming; marks the
-    /// arming used and remembers `data` as handed.
+    /// arming used and remembers `data` as handed. While disarmed nothing happens at all, not even
+    /// a refresh of the ignored code's sighting time (RN passed the camera no scan callback then).
     // RN: src/ui/components/QrScanner.tsx:113-128
     public func accept(_ data: String) -> Bool {
         // RN passes no scan callback to the camera while disarmed, so nothing else happens.

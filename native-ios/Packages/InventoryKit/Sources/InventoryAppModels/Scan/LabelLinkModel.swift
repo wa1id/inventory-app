@@ -103,6 +103,12 @@ public final class LabelLinkModel {
     }
 
     /// The screen went away: a late answer changes nothing, and a link still running opens nothing.
+    ///
+    /// Call it when the route leaves its stack (popped or replaced), as RN's `openRef` turned false
+    /// only on unmount, never from `onDisappear`: the bind-mode picker's "New container in …"
+    /// covers this screen with the container form and then picks the new container here, and
+    /// that pick must still link.
+    // RN: app/c/[token].tsx:56-67
     public func close() {
         isOpen = false
         lookup?.cancel()

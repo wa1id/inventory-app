@@ -43,7 +43,7 @@ private extension ScanResult {
     }
 }
 
-@Suite("ScanModel (app/(tabs)/scan.tsx, 06 §8)")
+@Suite("ScanModel (app/(tabs)/scan.tsx, 06 §8)", .timeLimit(.minutes(1)))
 @MainActor
 struct ScanModelTests {
     @Test("a linked label opens its container, with the success haptic and qr_scan bound")
@@ -242,6 +242,84 @@ struct ScanModelTests {
         model.focusGained()
         model.openTyped(containerId: DropZone.containerId)
         #expect(harness.navigation.destinations == [.openContainer(id: "c1"), .openContainer(id: DropZone.containerId)])
+    }
+
+    @Test("a scan whose lookup the code list dropped does not leave the camera disarmed afterwards")
+    func codeListDuringLookupRearms() async {
+        let harness = ScanModelHarness(holdResolves: true)
+        let model = harness.model()
+        let first = Task { await model.scanner.codeDetected("first") }
+        await harness.qr.resolveLatch?.waitForArrivals(1)
+        // The hint (with Type a code) still shows during the first 180 ms of the lookup.
+        #expect(model.panel.actions == [.typeCode])
+        model.typeCode()
+        #expect(!model.scannerActive)
+        #expect(!model.scanner.cameraRuns)
+        await harness.qr.resolveLatch?.release()
+        await first.value
+
+        // RN mounted a fresh QrScanner on the way back, so the next label is read.
+        model.backToCamera()
+        #expect(model.scannerActive)
+        #expect(model.scanner.scanGuard.isArmed)
+        let second = Task { await model.scanner.codeDetected("second") }
+        // Bounded, so a scanner left disarmed fails here rather than hanging on the latch.
+        await captureTestEventually { harness.qr.resolved.count == 2 }
+        if harness.qr.resolved.count == 2 { await harness.qr.resolveLatch?.release() }
+        await second.value
+        #expect(harness.qr.resolved == ["first", "second"])
+        #expect(model.result.name == "notOurs")
+    }
+
+    @Test("the code list takes the scanner down: back at the camera the torch is off and a failed camera is tried again")
+    func codeListRemountsScanner() {
+        let harness = ScanModelHarness()
+        let model = harness.model()
+        model.scanner.toggleTorch()
+        model.scanner.cameraFailedToStart()
+        #expect(model.scanner.torchOn)
+        #expect(!model.scanner.showsFooter)
+
+        model.typeCode()
+        model.backToCamera()
+        #expect(!model.scanner.torchOn)
+        #expect(model.scanner.showsFooter && model.scanner.showsTorch)
+        #expect(model.scanner.cameraRuns)
+
+        // Leaving the tab from the code list and coming back is a fresh scanner too, and nothing
+        // handed over before is ignored.
+        model.scanner.toggleTorch()
+        model.typeCode()
+        model.focusLost()
+        model.focusGained()
+        #expect(model.phase == .camera)
+        #expect(!model.scanner.torchOn)
+        #expect(model.scanner.scanGuard.ignoredCode == nil)
+        // Re-tapping Scan on the code list does the same.
+        model.scanner.toggleTorch()
+        model.typeCode()
+        model.tabReselected()
+        #expect(model.phase == .camera)
+        #expect(!model.scanner.torchOn)
+        #expect(model.scannerActive)
+    }
+
+    @Test("leaving and coming back in the camera phase keeps a failed camera's panel, as RN did")
+    func cameraPhaseKeepsFailure() {
+        let harness = ScanModelHarness()
+        let model = harness.model()
+        model.scanner.cameraFailedToStart()
+        model.focusLost()
+        model.focusGained()
+        #expect(model.scanner.mountFailed)
+    }
+
+    @Test("the permission screen offers typing a code")
+    func permissionCopy() {
+        let model = ScanModelHarness().model()
+        let copy = model.permissionCopy(isPaired: true)
+        #expect(copy.body == "Point it at the label on a box and the box opens straight away.")
+        #expect(copy.alternatives == [.typeCode])
     }
 
     @Test("one label held in view opens one container")

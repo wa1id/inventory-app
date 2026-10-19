@@ -99,7 +99,7 @@ actor CapturePipelineRecognitionGate {
     var heldCount: Int { held.count }
 }
 
-@Suite("FastCapturePipeline")
+@Suite("FastCapturePipeline", .timeLimit(.minutes(1)))
 struct FastCapturePipelineTests {
     @Test("keeps at most two recognitions in flight, and lets the rest in as slots free up")
     func capsRecognitions() async throws {

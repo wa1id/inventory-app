@@ -23,6 +23,8 @@ final class CaptureModelHarness {
     var deliveryAccepted = true
     let clock = ManualClock()
     nonisolated static let now: Int64 = 1_760_000_000_000
+    /// The models' epoch ms; starts at ``now`` and moves only when a test says so.
+    let wallClock = CaptureTestNow(CaptureModelHarness.now)
 
     init(authorization: CameraAuthorization = .authorized, holdStores: Bool = false) {
         photos = CaptureTestPhotos(holdStores: holdStores)
@@ -49,7 +51,7 @@ final class CaptureModelHarness {
             haptics: haptics.player,
             telemetry: TelemetryReporter(sink: telemetry),
             clock: clock,
-            now: { CaptureModelHarness.now },
+            now: wallClock.read,
             navigate: navigation.navigate
         )
         if running { model.sessionStarted() }
@@ -59,7 +61,7 @@ final class CaptureModelHarness {
 
 private let captureShot = CapturedPhoto(data: Data("heic".utf8), cropAspect: CGSize(width: 393, height: 852))
 
-@Suite("CaptureModel: modes and chrome (app/capture/index.tsx)")
+@Suite("CaptureModel: modes and chrome (app/capture/index.tsx)", .timeLimit(.minutes(1)))
 @MainActor
 struct CaptureModelChromeTests {
     @Test("opens fast only when asked for and not for a request; a request has no mode picker or Type it instead")
@@ -122,7 +124,7 @@ struct CaptureModelChromeTests {
     }
 }
 
-@Suite("CaptureModel: single mode (05 §4.4-4.5)")
+@Suite("CaptureModel: single mode (05 §4.4-4.5)", .timeLimit(.minutes(1)))
 @MainActor
 struct CaptureModelSingleTests {
     @Test("ignores the shutter until the session runs, so an early press never shows noPhoto")
@@ -282,7 +284,7 @@ struct CaptureModelSingleTests {
     }
 }
 
-@Suite("CaptureModel: library import (05 §4.8)")
+@Suite("CaptureModel: library import (05 §4.8)", .timeLimit(.minutes(1)))
 @MainActor
 struct CaptureModelLibraryTests {
     @Test("one picker at a time, never while a photo is processed")
@@ -342,7 +344,7 @@ struct CaptureModelLibraryTests {
     }
 }
 
-@Suite("CaptureModel: Quick Snap (05 §4.6-4.7)")
+@Suite("CaptureModel: Quick Snap (05 §4.6-4.7)", .timeLimit(.minutes(1)))
 @MainActor
 struct CaptureModelFastTests {
     @Test("a shot lands at once: count, haptic, last shot, flash, and a pipeline with the crop")
@@ -526,10 +528,61 @@ struct CaptureModelFastTests {
         let harness = CaptureModelHarness()
         harness.photos.hasRoom = false
         let model = harness.model(CaptureRoute(containerId: "c1", mode: .fast))
+        let firstPress = harness.wallClock.current
         await model.shutterPressed { captureShot }
+        harness.wallClock.advance(by: 4_000)
         harness.photos.hasRoom = true
+        await model.shutterPressed {
+            // The photo comes into being after the press, and its row after that.
+            harness.wallClock.advance(by: 300)
+            return captureShot
+        }
+        harness.wallClock.advance(by: 10_000)
+        model.finishFast()
+        #expect(harness.navigation.destinations == [.review(QuickSnapReviewRoute(containerId: "c1", since: firstPress, expected: 1))])
+    }
+
+    @Test("the first shot of a set stamps the start before the capture, so its row sorts after it")
+    func sessionStartBeforeCapture() async {
+        let harness = CaptureModelHarness()
+        let model = harness.model(CaptureRoute(containerId: "c1", mode: .fast))
+        let press = harness.wallClock.current
+        await model.shutterPressed {
+            harness.wallClock.advance(by: 250)
+            return captureShot
+        }
+        await model.shutterPressed { captureShot }
+        harness.wallClock.advance(by: 5_000)
+        model.finishFast()
+        #expect(harness.navigation.destinations == [.review(QuickSnapReviewRoute(containerId: "c1", since: press, expected: 2))])
+    }
+
+    @Test("Keep shooting keeps the set's start: a resumed camera never stamps a new one")
+    func resumedKeepsStart() async {
+        let harness = CaptureModelHarness()
+        let since: Int64 = 1_700_000_000_000
+        let model = harness.model(CaptureRoute(containerId: "c1", mode: .fast, since: since))
+        harness.wallClock.advance(by: 60_000)
         await model.shutterPressed { captureShot }
         model.finishFast()
-        #expect(harness.navigation.destinations == [.review(QuickSnapReviewRoute(containerId: "c1", since: CaptureModelHarness.now, expected: 1))])
+        #expect(harness.navigation.destinations == [.review(QuickSnapReviewRoute(containerId: "c1", since: since, expected: 1))])
+    }
+}
+
+@Suite("CaptureModel: permission screen copy (05 §16.1)", .timeLimit(.minutes(1)))
+@MainActor
+struct CaptureModelPermissionCopyTests {
+    @Test("the camera offers a library photo always, and typing except for a photo the Add sheet waits for")
+    func copy() {
+        let harness = CaptureModelHarness(authorization: .notDetermined)
+        let model = harness.model()
+        #expect(model.permission.screen == .rationale)
+        let local = model.permissionCopy(isPaired: false)
+        #expect(local.body == "Photos of items stay in this app, not in your photo library.")
+        #expect(local.alternatives == [.choosePhoto, .typeItem])
+
+        let request = harness.model(request: true).permissionCopy(isPaired: true)
+        #expect(request.body == "Photos of items are shared with your household, not saved to your photo library.")
+        #expect(request.alternatives == [.choosePhoto])
     }
 }

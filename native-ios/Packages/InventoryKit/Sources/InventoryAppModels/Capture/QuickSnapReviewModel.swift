@@ -327,6 +327,8 @@ public final class QuickSnapReviewModel {
             } catch {
                 return
             }
+            // Re-armed after this wait ended but before it ran: the set changed, so it is not quiet.
+            guard !Task.isCancelled else { return }
             self?.quietSignature = signature
         }
     }

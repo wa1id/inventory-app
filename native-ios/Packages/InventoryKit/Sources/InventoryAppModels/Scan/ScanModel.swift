@@ -143,8 +143,15 @@ public final class ScanModel {
 
     // MARK: Derived state
 
-    /// The scanner is on: not under the removed-phone layer, and not while a notice waits.
-    public var scannerActive: Bool { !isRevoked && result.keepsScanning }
+    /// The scanner is on: in the camera phase (RN rendered no `QrScanner` in the code phase), not
+    /// under the removed-phone layer, and not while a notice waits for an answer.
+    // RN: app/(tabs)/scan.tsx:271-291, :336-338
+    public var scannerActive: Bool { phase == .camera && !isRevoked && result.keepsScanning }
+
+    /// The permission screen's copy for the Scan tab, which always offers typing a code instead.
+    public func permissionCopy(isPaired: Bool) -> CameraPermissionCopy {
+        scanner.permission.copy(isPaired: isPaired, offersLibrary: false, offersManual: true)
+    }
 
     /// The footer panel for the camera phase (06 §8.2).
     public var panel: ScanPanel {
@@ -168,7 +175,7 @@ public final class ScanModel {
     // RN: app/(tabs)/scan.tsx:179-189
     public func focusGained() {
         isFocused = true
-        phase = .camera
+        showCamera()
         setResult(.idle)
         scanner.focusGained()
     }
@@ -185,8 +192,12 @@ public final class ScanModel {
     // RN: app/(tabs)/scan.tsx:191-201
     public func tabReselected() {
         guard isFocused else { return }
-        phase = .camera
-        if !result.isOpening { setResult(.idle) }
+        showCamera()
+        if result.isOpening {
+            syncScanner()
+        } else {
+            setResult(.idle)
+        }
     }
 
     /// The removed-phone layer came or went (the tab stays focused under it).
@@ -240,15 +251,17 @@ public final class ScanModel {
     }
 
     /// "Type a code instead": the code list; a label still being looked up must not open over it.
+    /// The scanner goes away with the camera phase.
     public func typeCode() {
         lookupGeneration += 1
-        setResult(.idle)
         phase = .code
+        setResult(.idle)
     }
 
-    /// "Back to the camera".
+    /// "Back to the camera": a fresh scanner, as RN mounted a new `QrScanner`.
     public func backToCamera() {
-        phase = .camera
+        showCamera()
+        syncScanner()
     }
 
     /// A container picked from the code list. Once it opens, this tab is no longer in front, so a
@@ -260,6 +273,15 @@ public final class ScanModel {
     }
 
     // MARK: Internals
+
+    /// Shows the camera phase. Coming back from the code list puts up a fresh scanner (torch off,
+    /// new arming): RN unmounted `QrScanner` for the code phase, so a scan accepted before it
+    /// (say, during a lookup the code list then dropped) cannot leave the camera disarmed.
+    private func showCamera() {
+        guard phase != .camera else { return }
+        phase = .camera
+        scanner.reset()
+    }
 
     /// Navigates away: the pushed screen covers the tab at once, as `navigation.isFocused()` turned
     /// false in RN, so codes and rows that arrive before the view reports it are ignored.
@@ -282,6 +304,8 @@ public final class ScanModel {
                     } catch {
                         return
                     }
+                    // Cancelled after the wait ended but before this ran: the lookup is over.
+                    guard !Task.isCancelled else { return }
                     self?.showsOpening = true
                 }
             }

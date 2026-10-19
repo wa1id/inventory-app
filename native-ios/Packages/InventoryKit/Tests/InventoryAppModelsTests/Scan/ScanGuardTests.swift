@@ -71,7 +71,7 @@ struct ScanGuardTests {
         #expect(ScanGuard.sameCodeGap == .milliseconds(1500))
     }
 
-    @Test("a disarmed scanner takes no codes, and does not refresh the ignore")
+    @Test("a disarmed scanner takes no codes, not even a different one")
     func disarmed() async {
         let clock = ManualClock()
         let scanGuard = ScanGuard(clock: clock)
@@ -80,9 +80,26 @@ struct ScanGuardTests {
         #expect(!scanGuard.accept("other"))
         #expect(scanGuard.handed == "code")
     }
+
+    @Test("reset starts over like a newly mounted scanner: armed, nothing handed over or ignored")
+    func reset() {
+        let scanGuard = ScanGuard(clock: ManualClock())
+        scanGuard.focused()
+        #expect(scanGuard.accept("code"))
+        scanGuard.focused()
+        #expect(scanGuard.ignoredCode == "code")
+
+        scanGuard.reset()
+        #expect(scanGuard.isArmed)
+        #expect(scanGuard.handed == nil)
+        #expect(scanGuard.ignoredCode == nil)
+        // A later focus has nothing to ignore, so the same label is taken at once.
+        scanGuard.focused()
+        #expect(scanGuard.accept("code"))
+    }
 }
 
-@Suite("QrScannerModel (QrScanner.tsx)")
+@Suite("QrScannerModel (QrScanner.tsx)", .timeLimit(.minutes(1)))
 @MainActor
 struct QrScannerModelTests {
     @Test("runs the camera only while in front, active and granted")
@@ -120,6 +137,58 @@ struct QrScannerModelTests {
         await read.value
         #expect(handed == ["code"])
         #expect(!scanner.isLocked)
+    }
+
+    @Test("a code that arrives while the camera should be off is ignored and does not use up the arming")
+    func ignoredWhileOff() async {
+        let scanner = QrScannerModel(title: "Scan a label", permission: ScanTestData.permission(), clock: ManualClock())
+        scanner.reduceMotion = true
+        var handed: [String] = []
+        scanner.onScan = { handed.append($0) }
+
+        // Not focused yet, then focused but inactive, then out of focus again.
+        await scanner.codeDetected("early")
+        scanner.focusGained()
+        scanner.setActive(false)
+        await scanner.codeDetected("inactive")
+        scanner.setActive(true)
+        scanner.focusLost()
+        await scanner.codeDetected("late")
+        #expect(handed.isEmpty)
+        #expect(scanner.scanGuard.isArmed)
+        #expect(scanner.scanGuard.handed == nil)
+
+        scanner.focusGained()
+        await scanner.codeDetected("late")
+        #expect(handed == ["late"])
+
+        let denied = QrScannerModel(title: "Scan a label", permission: ScanTestData.permission(.denied), clock: ManualClock())
+        denied.reduceMotion = true
+        var deniedHanded: [String] = []
+        denied.onScan = { deniedHanded.append($0) }
+        denied.focusGained()
+        await denied.codeDetected("code")
+        #expect(deniedHanded.isEmpty)
+    }
+
+    @Test("reset is a freshly mounted scanner: torch off, the camera tried again, a new arming")
+    func scannerReset() async {
+        let scanner = QrScannerModel(title: "Scan a label", permission: ScanTestData.permission(), clock: ManualClock())
+        scanner.reduceMotion = true
+        var handed: [String] = []
+        scanner.onScan = { handed.append($0) }
+        scanner.focusGained()
+        await scanner.codeDetected("code")
+        scanner.toggleTorch()
+        scanner.cameraFailedToStart()
+
+        scanner.reset()
+        #expect(!scanner.torchOn)
+        #expect(!scanner.mountFailed)
+        #expect(!scanner.isLocked)
+        #expect(scanner.scanGuard.isArmed)
+        await scanner.codeDetected("code")
+        #expect(handed == ["code", "code"])
     }
 
     @Test("under Reduce Motion the code goes over without the wait")
