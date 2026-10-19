@@ -159,8 +159,9 @@ public enum BackupNowOutcome: Sendable, Equatable {
 
 /// What a restore came to (RN `restoreFromCode` result).
 public enum RestoreOutcome: Sendable, Equatable {
-    /// The backup is on this phone and its account is this phone's account. RN showed the toast
-    /// `backup.restored` and played the success haptic.
+    /// The backup is on this phone. RN showed the toast `backup.restored` and played the success
+    /// haptic. Its account is now this phone's account (``SyncModel/status`` is `idle`), unless
+    /// the keychain refused to store the code afterwards, in which case backup stays `off`.
     case restored
     /// Shown under the code field with ``BackupFailureReason/message``; the code stays.
     case failed(BackupFailureReason)

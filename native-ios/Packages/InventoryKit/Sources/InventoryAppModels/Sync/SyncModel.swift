@@ -20,7 +20,7 @@ import Observation
 /// - ``activityChanged(_:)`` with every scene-phase change.
 ///
 /// **Automatic passes** (photos, then a backup if 15 minutes have passed) start when the
-/// database is ready and an account is loaded, whichever comes last, after a successful Turn on,
+/// database is ready and an account is loaded, whichever comes last, after Turn on made one,
 /// and on every return to `.active`. A pass that finds anything else running is skipped.
 ///
 /// **What a finished automatic pass does to the status** (RN always set `idle`, which cleared a
@@ -142,8 +142,10 @@ public final class SyncModel {
     /// `error` (the account is kept either way, so backups keep retrying under it).
     ///
     /// The first backup holds the coordinator, so no automatic pass uploads a second snapshot
-    /// beside it (03 B6); after it is stored, a normal pass follows (its own backup is skipped,
-    /// the marker being fresh). After a failure, the next automatic pass retries. An account
+    /// beside it (03 B6). Once the account exists a normal pass follows, whatever the first
+    /// backup came to, as RN's pass on publishing the account did (SyncProvider.tsx:114-123):
+    /// it uploads the photos, and its own backup is skipped when the marker is fresh, retried
+    /// when the first one failed (the error stays unless that retry is stored). An account
     /// already stored is used, never replaced, and an unreadable keychain creates nothing (03 B8).
     public func enable() async -> EnableBackupOutcome {
         guard isConfigured, let store else { return .notStarted(.notConfigured) }
@@ -161,11 +163,13 @@ public final class SyncModel {
         case .account(let created, let backup):
             account = created
             isAccountUnreadable = false
+            // 03 B6 step 2: the coordinator is already released, and the pass starts after this
+            // call has published its outcome.
+            defer { startAutomaticPass() }
             switch backup {
             case .uploaded(let summary):
                 status = .idle(account: created, lastBackupAt: summary.capturedAt)
                 suggestsRestore = false
-                startAutomaticPass()
                 return .enabled(created)
             case .failed(let reason):
                 status = .error(account: created, reason: reason)
@@ -209,9 +213,10 @@ public final class SyncModel {
     /// Backup screen keeps its form and the status stays `off` meanwhile. On success every screen
     /// re-reads, the photos the backup references start downloading, every screen re-reads
     /// again, and the status is `idle` with the stored marker. No pass is started; the next
-    /// foreground runs one (its backup is due unless a marker is stored). On failure a code
-    /// written for this restore is forgotten again and the status is `off`. An unreadable
-    /// keychain or a different account already stored stops it before anything is written (03 B8).
+    /// foreground runs one (its backup is due unless a marker is stored). The code is stored
+    /// only once the snapshot is in place, so a failed (or interrupted) restore never leaves it
+    /// behind, and the status stays `off`. An unreadable keychain or a different account
+    /// already stored stops it before anything is written or downloaded (03 B8).
     public func restoreFromCode(_ code: String) async -> RestoreOutcome {
         guard isConfigured, let store else { return .failed(.sync(.notConfigured)) }
         manualOperations += 1
@@ -226,8 +231,11 @@ public final class SyncModel {
         case .keychainUnreadable:
             isAccountUnreadable = true
             return .failed(.sync(.notConfigured))
-        case .keychainWriteFailed:
-            return .failed(.sync(.notConfigured))
+        case .restoredCodeNotStored:
+            // The inventory is back, but this phone holds no account: backup stays off.
+            suggestsRestore = false
+            if account == nil { status = .off }
+            return .restored
         case .accountAlreadyStored(let existing):
             adoptLoadedAccount(existing)
             return .accountAlreadyOnThisPhone
@@ -258,7 +266,7 @@ public final class SyncModel {
             await self?.invalidateInventory()
         }
         switch result {
-        case .restored:
+        case .restored, .restoredCodeNotStored:
             suggestsRestore = false
             status = .idle(account: account, lastBackupAt: lastBackupAt)
             return .restored
@@ -266,7 +274,7 @@ public final class SyncModel {
             if localDataReplaced { invalidator.invalidate() }
             status = previous
             return .failed(.sync(reason))
-        case .malformed, .keychainUnreadable, .keychainWriteFailed, .accountAlreadyStored:
+        case .malformed, .keychainUnreadable, .accountAlreadyStored:
             // restoreLatest never touches the keychain or parses a code.
             status = previous
             return .failed(.sync(.serverError))
@@ -299,7 +307,9 @@ public final class SyncModel {
         case .absent:
             isAccountUnreadable = false
         case .unreadable:
-            isAccountUnreadable = true
+            // A Turn on or restore that finished meanwhile has an account; a late failed read
+            // must not put the screen into its "cannot read the keychain" state over it.
+            if account == nil { isAccountUnreadable = true }
         }
     }
 

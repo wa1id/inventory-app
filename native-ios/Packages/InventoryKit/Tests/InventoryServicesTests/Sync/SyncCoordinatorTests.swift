@@ -10,7 +10,8 @@ import Testing
 
 // SyncCoordinator: the exclusivity RN raced on (03 §8.7, 09 §13.4, DECISIONS U6), and the
 // restore orchestration of SyncProvider.restoreFromCode with the 03 B8 fix. Races are staged by
-// parking a request inside the fake Worker until the test releases it.
+// parking a request inside the fake Worker until the test releases it; the suites carry a time
+// limit so a regression that never lets a parked request arrive fails instead of hanging.
 
 private struct SyncCoordinatorHarness {
     let inventory: SyncTestInventory
@@ -62,7 +63,7 @@ private func pause() async throws {
     try await Task.sleep(for: .milliseconds(150))
 }
 
-@Suite("SyncCoordinator exclusivity")
+@Suite("SyncCoordinator exclusivity", .timeLimit(.minutes(1)))
 struct SyncCoordinatorExclusivityTests {
     @Test("an automatic pass is skipped while another pass runs")
     func passSkipsWhilePassRuns() async throws {
@@ -208,7 +209,7 @@ struct SyncCoordinatorExclusivityTests {
     }
 }
 
-@Suite("SyncCoordinator restore and Turn on")
+@Suite("SyncCoordinator restore and Turn on", .timeLimit(.minutes(1)))
 struct SyncCoordinatorRestoreTests {
     @Test("a malformed code is refused before anything else")
     func malformed() async throws {
@@ -239,8 +240,8 @@ struct SyncCoordinatorRestoreTests {
         #expect(harness.files.files[SyncFakePhotoStore.uri(photo)] != nil)
     }
 
-    @Test("a failed restore forgets the code it wrote and changes nothing")
-    func failedRestoreForgets() async throws {
+    @Test("a failed restore stores no code and changes nothing")
+    func failedRestoreStoresNoCode() async throws {
         let harness = try await SyncCoordinatorHarness()
 
         let result = await harness.coordinator.restore(code: SyncFakeWorker.defaultCode, store: harness.store, afterRestore: {})
@@ -287,16 +288,43 @@ struct SyncCoordinatorRestoreTests {
         #expect(harness.worker.server.requests.isEmpty)
     }
 
-    @Test("a code the keychain refuses to store downloads nothing")
+    @Test("the code is stored only once the snapshot is in place, never during the download")
+    func codeStoredAfterRestore() async throws {
+        let harness = try await SyncCoordinatorHarness()
+        let account = try harness.account
+        _ = await harness.coordinator.backupNow(store: harness.store, account: account)
+        let hold = harness.worker.hold("GET", "/v1/backups/latest")
+
+        let restoring = Task {
+            await harness.coordinator.restore(code: SyncFakeWorker.defaultCode, store: harness.store, afterRestore: {})
+        }
+        await hold.arrived()
+        // RN had written it already: an app terminated here came back with this account adopted
+        // over the old inventory, and its next pass backed that inventory up under the account.
+        #expect(harness.keychain.values.isEmpty)
+        hold.release()
+
+        #expect(await restoring.value == .restored(account, schemaVersion: 7))
+        #expect(harness.keychain.values == [KeychainKey.recoveryCode: SyncFakeWorker.defaultCode])
+    }
+
+    @Test("a code the keychain refuses to store after the restore leaves the inventory restored and no account")
     func restoreWithUnwritableKeychain() async throws {
         let keychain = InMemoryKeychain()
         let harness = try await SyncCoordinatorHarness(keychain: keychain)
+        _ = await harness.coordinator.backupNow(store: harness.store, account: try harness.account)
+        try await harness.store.queue.write { db in try db.execute(sql: "DELETE FROM items") }
+        let invalidations = SyncCallCounter()
         keychain.failNextWrite()
 
-        let result = await harness.coordinator.restore(code: SyncFakeWorker.defaultCode, store: harness.store, afterRestore: {})
+        let result = await harness.coordinator.restore(code: SyncFakeWorker.defaultCode, store: harness.store) {
+            invalidations.increment()
+        }
 
-        #expect(result == .keychainWriteFailed)
-        #expect(harness.worker.server.requests.isEmpty)
+        #expect(result == .restoredCodeNotStored(schemaVersion: 7))
+        #expect(keychain.values.isEmpty)
+        #expect(try await harness.inventory.count("items") == 1)
+        #expect(invalidations.count == 2)
     }
 
     @Test("an unreadable keychain: Turn on creates and uploads nothing (03 B8)")

@@ -48,7 +48,8 @@ public struct PhotoSyncOutcome: Sendable, Equatable {
 ///   presence checks), and an unsynced row is deleted only when no file is found under the
 ///   current container either; a file that exists but cannot be read is left alone.
 /// - **B13** A row deleted while its upload was in flight gets a tombstone, so the orphaned
-///   remote copy is deleted on the next pass.
+///   remote copy is deleted on the next pass; a row deleted while its file was downloading
+///   has the files just written removed again.
 public actor PhotoSyncService {
     /// RN `BATCH_SIZE`: photos per direction per pass.
     public static let batchSize = 10
@@ -331,15 +332,23 @@ public actor PhotoSyncService {
                 continue
             }
 
+            let repointed: Bool
             do {
-                try await store.queue.write { db in
+                repointed = try await store.queue.write { db in
                     try db.execute(
                         sql: "UPDATE item_photos SET uri = ?, thumb_uri = ?, byte_size = ? WHERE id = ?",
                         arguments: [stored.uri, stored.thumbUri, stored.byteSize, photo.id])
+                    return db.changesCount > 0
                 }
             } catch {
                 logDatabaseFailure(error)
                 return Rehydrations(restored: restored, interrupted: true)
+            }
+            guard repointed else {
+                // Deleted while it downloaded: the files just written (named after this row's id)
+                // belong to nothing now. RN left them on disk for good.
+                photos.deleteStoredPhotos([stored.uri, stored.thumbUri])
+                continue
             }
             restored += 1
         }

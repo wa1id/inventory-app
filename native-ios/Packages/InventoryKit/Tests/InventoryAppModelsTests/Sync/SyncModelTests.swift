@@ -11,7 +11,8 @@ import Testing
 
 // SyncModel (09 §4.4, §14.2 SyncModelLifecycleTests; 03 §8) over a real coordinator, a
 // temporary database and a fake Worker, with the U6 rules: the automatic-pass status rule,
-// exclusivity as the model sees it, 03 B8 and 03 B12.
+// exclusivity as the model sees it, 03 B8 and 03 B12. Suites that park requests in the fake
+// Worker carry a time limit, so a regression that never lets one arrive fails instead of hanging.
 
 private let otherCode = CrockfordBase32.encode([UInt8](repeating: 0x11, count: 16))
 
@@ -23,7 +24,7 @@ private func seededSnapshot() async throws -> Data {
 }
 
 @MainActor
-@Suite("SyncModel lifecycle")
+@Suite("SyncModel lifecycle", .timeLimit(.minutes(1)))
 struct SyncModelLifecycleTests {
     @Test("initial status from config")
     func initialStatus() async throws {
@@ -157,6 +158,27 @@ struct SyncModelLifecycleTests {
         #expect(harness.model.status == .idle(account: SyncModelHarness.account, lastBackupAt: 1000))
     }
 
+    @Test("while the database is unavailable nothing runs; ready again, passes resume")
+    func databaseUnavailableStopsWork() async throws {
+        let harness = try await SyncModelHarness(keychain: [KeychainKey.recoveryCode: SyncModelHarness.code])
+        await harness.startReady()
+        let passes = { harness.telemetry.events.filter { $0.name == "photo_sync_pass" }.count }
+        #expect(passes() == 1)
+
+        harness.model.databaseUnavailable()
+        harness.model.activityChanged(.active)
+        await harness.model.waitForBackgroundWork()
+        #expect(passes() == 1)
+        #expect(await harness.model.backupNow() == .notStarted)
+        #expect(await harness.model.restoreFromCode(otherCode) == .failed(.sync(.notConfigured)))
+
+        // A retry hands the database back (RN: `repos` changing identity re-ran the pass).
+        harness.model.databaseReady(harness.store)
+        await harness.model.waitForBackgroundWork()
+        #expect(passes() == 2)
+        #expect(harness.worker.requestLines == ["PUT /v1/backups"])
+    }
+
     @Test("retryAccountLoad reads the keychain again")
     func retryAccountLoad() async throws {
         let harness = try await SyncModelHarness(keychain: [KeychainKey.recoveryCode: SyncModelHarness.code])
@@ -170,7 +192,7 @@ struct SyncModelLifecycleTests {
 }
 
 @MainActor
-@Suite("SyncModel automatic passes and a failed backup's error (DECISIONS U6)")
+@Suite("SyncModel automatic passes and a failed backup's error (DECISIONS U6)", .timeLimit(.minutes(1)))
 struct SyncModelErrorRuleTests {
     @Test("a completed automatic pass shows idle with the stored marker")
     func passShowsIdle() async throws {
@@ -259,7 +281,7 @@ struct SyncModelErrorRuleTests {
 }
 
 @MainActor
-@Suite("SyncModel Turn on and Back up now")
+@Suite("SyncModel Turn on and Back up now", .timeLimit(.minutes(1)))
 struct SyncModelEnableTests {
     @Test("Turn on shows the new account working, then idle, then syncs the photos")
     func enableSucceeds() async throws {
@@ -284,10 +306,12 @@ struct SyncModelEnableTests {
         #expect(harness.worker.state.backups.count == 1)
     }
 
-    @Test("a failed first backup keeps the account and shows the error")
+    @Test("a failed first backup keeps the account, shows the error, and the photos still go up")
     func enableBackupFails() async throws {
         let harness = try await SyncModelHarness()
         await harness.startReady()
+        let photo = syncModelPhotoId(1)
+        try await harness.addPendingPhoto(photo)
         harness.worker.update { $0.offlineBackups = true }
 
         let outcome = await harness.model.enable()
@@ -296,6 +320,57 @@ struct SyncModelEnableTests {
         #expect(outcome == .backupFailed(created, .offline))
         #expect(harness.model.status == .error(account: created, reason: .offline))
         #expect(harness.keychain.values[KeychainKey.recoveryCode] == created.recoveryCode)
+        // RN's pass on publishing the account ran whatever the first backup came to (03 B6).
+        await harness.model.waitForBackgroundWork()
+        #expect(harness.worker.state.photos[photo] != nil)
+        // Its own backup failed too, so the error and its copy stay.
+        #expect(harness.model.status == .error(account: created, reason: .offline))
+        #expect(harness.worker.state.backups.isEmpty)
+    }
+
+    @Test("the pass after a failed Turn on retries the backup, and clears the error once it is stored")
+    func enableRetriedByFollowUpPass() async throws {
+        let harness = try await SyncModelHarness()
+        await harness.startReady()
+        let first = harness.worker.hold("PUT", "/v1/backups")
+
+        let enabling = Task { await harness.model.enable() }
+        await first.arrived()
+        harness.worker.update { $0.offlineBackups = true }
+        let second = harness.worker.hold("PUT", "/v1/backups")
+        first.release()
+        let outcome = await enabling.value
+        let created = try #require(outcome.account)
+        #expect(outcome == .backupFailed(created, .offline))
+
+        await second.arrived()
+        #expect(harness.model.status == .error(account: created, reason: .offline))
+        harness.worker.update { $0.offlineBackups = false }
+        second.release()
+        await harness.model.waitForBackgroundWork()
+
+        #expect(harness.model.status == .idle(account: created, lastBackupAt: 1000))
+        #expect(harness.worker.state.backups.count == 1)
+    }
+
+    @Test("Turn on finding a stored account on an empty phone holds the backup back and offers Restore (03 B8, B12)")
+    func enableHeldBack() async throws {
+        let harness = try await SyncModelHarness(keychain: [KeychainKey.recoveryCode: SyncModelHarness.code], empty: true)
+        let snapshot = try await seededSnapshot()
+        harness.worker.update { $0.backups = [.init(bytes: snapshot, schemaVersion: "7", capturedAt: 1000)] }
+        harness.keychain.inner.failNextRead()
+        await harness.startReady()
+        #expect(harness.model.isAccountUnreadable)
+
+        let outcome = await harness.model.enable()
+
+        #expect(outcome == .backupHeldBack(SyncModelHarness.account))
+        #expect(harness.model.suggestsRestore)
+        #expect(harness.model.status == .idle(account: SyncModelHarness.account, lastBackupAt: nil))
+        await harness.model.waitForBackgroundWork()
+        // The follow-up pass held its backup back too: the real one is still the newest.
+        #expect(harness.worker.state.backups.count == 1)
+        #expect(harness.keychain.values == [KeychainKey.recoveryCode: SyncModelHarness.code])
     }
 
     @Test("Turn on before the database is open creates nothing")
@@ -366,7 +441,7 @@ struct SyncModelEnableTests {
 }
 
 @MainActor
-@Suite("SyncModel restore")
+@Suite("SyncModel restore", .timeLimit(.minutes(1)))
 struct SyncModelRestoreTests {
     @Test("a restore re-reads every screen twice, adopts the account and starts no pass")
     func restoreSucceeds() async throws {
@@ -389,7 +464,25 @@ struct SyncModelRestoreTests {
         #expect(harness.worker.requestLines == ["GET /v1/backups/latest"])
     }
 
-    @Test("a failed restore forgets the code and leaves backup off")
+    @Test("a keychain that refuses the code after the restore leaves the inventory back and backup off")
+    func restoreCodeNotStored() async throws {
+        let harness = try await SyncModelHarness()
+        await harness.startReady()
+        let snapshot = try await seededSnapshot()
+        harness.worker.update { $0.backups = [.init(bytes: snapshot, schemaVersion: "7", capturedAt: 1000)] }
+        try await harness.store.queue.write { db in try db.execute(sql: "DELETE FROM items") }
+        harness.keychain.inner.failNextWrite()
+
+        #expect(await harness.model.restoreFromCode(SyncModelHarness.code) == .restored)
+
+        #expect(try await harness.itemCount() == 1)
+        #expect(harness.invalidations.count == 2)
+        #expect(harness.model.status == .off)
+        #expect(harness.model.account == nil)
+        #expect(harness.keychain.values.isEmpty)
+    }
+
+    @Test("a failed restore stores no code and leaves backup off")
     func restoreFails() async throws {
         let harness = try await SyncModelHarness()
         await harness.startReady()
@@ -459,7 +552,7 @@ struct SyncModelRestoreTests {
 }
 
 @MainActor
-@Suite("SyncModel: an empty inventory never replaces existing backups (03 B12)")
+@Suite("SyncModel: an empty inventory never replaces existing backups (03 B12)", .timeLimit(.minutes(1)))
 struct SyncModelEmptyInventoryTests {
     @Test("a reinstall with a surviving code holds the backup back and offers Restore")
     func reinstallOffersRestore() async throws {

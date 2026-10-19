@@ -130,6 +130,8 @@ final class SyncModelRequestHold: Sendable {
     private struct State {
         var arrived = false
         var released = false
+        /// A waiting test was cancelled (its time limit ran out): stop waiting for arrivals.
+        var abandoned = false
         var arrivalWaiters: [CheckedContinuation<Void, Never>] = []
         var releaseWaiters: [CheckedContinuation<Void, Never>] = []
     }
@@ -153,14 +155,25 @@ final class SyncModelRequestHold: Sendable {
         }
     }
 
+    /// Returns once the parked request has arrived, or once the waiting test is cancelled, so a
+    /// suite's time limit ends a test whose request never comes.
     func arrived() async {
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            let now = state.withLock { state -> Bool in
-                if state.arrived { return true }
-                state.arrivalWaiters.append(continuation)
-                return false
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                let now = state.withLock { state -> Bool in
+                    if state.arrived || state.abandoned { return true }
+                    state.arrivalWaiters.append(continuation)
+                    return false
+                }
+                if now { continuation.resume() }
             }
-            if now { continuation.resume() }
+        } onCancel: {
+            let waiters = state.withLock { state -> [CheckedContinuation<Void, Never>] in
+                state.abandoned = true
+                defer { state.arrivalWaiters = [] }
+                return state.arrivalWaiters
+            }
+            for waiter in waiters { waiter.resume() }
         }
     }
 

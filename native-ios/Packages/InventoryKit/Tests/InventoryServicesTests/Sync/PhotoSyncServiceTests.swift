@@ -454,7 +454,7 @@ struct SyncRehydrationFailureTests {
     }
 }
 
-@Suite("photoSync: a row deleted mid-upload leaves a tombstone (03 B13)")
+@Suite("photoSync: a row deleted mid-transfer (03 B13)", .timeLimit(.minutes(1)))
 struct SyncUploadRaceTests {
     @Test("the remote copy of a photo deleted during its upload is deleted on the next pass")
     func deletedDuringUpload() async throws {
@@ -477,6 +477,26 @@ struct SyncUploadRaceTests {
         _ = await harness.service.processPhotoDeletions(client: harness.client)
         #expect(harness.worker.state.photos[photoA] == nil)
         #expect(try await harness.tombstones().isEmpty)
+    }
+
+    @Test("a row deleted while its file downloads leaves no files behind")
+    func deletedDuringRehydration() async throws {
+        let harness = try await SyncPhotoHarness()
+        try await harness.addPhoto(photoA, synced: true)
+        harness.worker.update { $0.photos[photoA] = jpegLike(1) }
+        harness.files.removeAll()
+        let hold = harness.worker.hold("GET", "/v1/photos/\(photoA)")
+
+        let rehydrating = Task { await harness.service.rehydrateMissingPhotos(client: harness.client) }
+        await hold.arrived()
+        _ = try await harness.inventory.repos.items.delete(harness.inventory.itemId)
+        hold.release()
+
+        #expect(await rehydrating.value == .init(restored: 0, interrupted: false))
+        // RN wrote <id>.webp and its thumbnail for a row that no longer existed, for good.
+        #expect(harness.files.files.isEmpty)
+        // Synced when deleted: the trigger queued the remote copy's deletion.
+        #expect(try await harness.tombstones() == [photoA])
     }
 }
 

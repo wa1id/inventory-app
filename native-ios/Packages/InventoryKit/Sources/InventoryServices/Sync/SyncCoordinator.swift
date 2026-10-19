@@ -30,18 +30,18 @@ public enum SyncEnableResult: Sendable, Equatable {
 public enum SyncRestoreResult: Sendable, Equatable {
     /// The snapshot is in place and this account is stored as the device's account.
     case restored(SyncAccount, schemaVersion: Int)
+    /// The snapshot is in place, but the keychain refused to store the code afterwards, so
+    /// this device still has no account (backup stays off; the code can be typed again).
+    case restoredCodeNotStored(schemaVersion: Int)
     /// The code does not decode to 16 bytes. Nothing was written.
     case malformed
     /// The keychain could not be read, so a real code may be there; nothing was written or
     /// deleted and nothing was downloaded (03 B8; RN overwrote it).
     case keychainUnreadable
-    /// The code could not be stored, so nothing was downloaded (RN `importAccount` →
-    /// `unavailable`, reported as `not_configured`).
-    case keychainWriteFailed
     /// A different account is already stored on this device: the device's state was stale
     /// (the read had failed or not finished). Nothing was overwritten or restored (03 B8).
     case accountAlreadyStored(SyncAccount)
-    /// The download or the restore failed. A code written for it was forgotten again.
+    /// The download or the restore failed. No code was stored for it.
     case failed(SyncFailureReason, localDataReplaced: Bool)
 }
 
@@ -201,10 +201,16 @@ public actor SyncCoordinator {
     /// RN `restoreFromCode(code)`: adopts a typed code and restores its newest snapshot.
     ///
     /// Waits for an in-flight pass, then holds the flag for the whole restore (RN set it without
-    /// waiting, and the pass's `finally` cleared it early). With no account stored, the canonical
-    /// code is written before the download and forgotten again if the restore fails, as in RN.
-    /// An unreadable keychain or a different stored account stops it before anything is written
-    /// (03 B8); the same account already stored is kept whatever happens.
+    /// waiting, and the pass's `finally` cleared it early). An unreadable keychain or a different
+    /// stored account stops it before anything is written or downloaded (03 B8); the same
+    /// account already stored is kept whatever happens.
+    ///
+    /// With no account stored, the canonical code is stored only once the snapshot is in place.
+    /// RN stored it before the download and forgot it on failure, so an app terminated during
+    /// the download (suspended in the background, then jettisoned) came back with the code
+    /// adopted over the old inventory, whose next pass backed that inventory up as the newest
+    /// backup of the account being restored, with no Restore offered any more. A code that did
+    /// not restore therefore never becomes this phone's account, even across a termination.
     ///
     /// On success, `afterRestore` runs (every screen re-reads), the photos are synced under the
     /// adopted account (rehydrating what the snapshot references), and `afterRestore` runs again.
@@ -219,30 +225,42 @@ public actor SyncCoordinator {
         await acquire()
         defer { release() }
 
-        let wrote: Bool
         switch accounts.lookup() {
         case .unreadable:
             return .keychainUnreadable
         case .found(let existing) where existing.id != adopted.id:
             return .accountAlreadyStored(existing)
-        case .found:
-            wrote = false
+        case .found, .absent:
+            break
+        }
+
+        var codeStored = true
+        let result = await restoreLocked(account: adopted, store: store, afterRestore: afterRestore) {
+            codeStored = self.storeRestoredCode(adopted)
+        }
+        if case .restored(_, let schemaVersion) = result, !codeStored {
+            return .restoredCodeNotStored(schemaVersion: schemaVersion)
+        }
+        return result
+    }
+
+    /// Stores a restored account's code unless that account is already stored. Re-reads first,
+    /// so a code that appeared meanwhile is never overwritten (03 B8). False when nothing holds it.
+    private func storeRestoredCode(_ adopted: SyncAccount) -> Bool {
+        switch accounts.lookup() {
+        case .found(let existing):
+            return existing.id == adopted.id
+        case .unreadable:
+            return false
         case .absent:
             do {
                 try accounts.save(adopted)
+                return true
             } catch {
-                return .keychainWriteFailed
+                InventoryLog.sync.error("Restored, but the recovery code could not be stored: \(errorClass(of: error), privacy: .public)")
+                return false
             }
-            wrote = true
         }
-
-        let result = await restoreLocked(account: adopted, store: store, afterRestore: afterRestore)
-        if case .failed = result, wrote {
-            // Restore is only offered while backup is off, so a code that did not restore must
-            // not become this phone's account.
-            accounts.forget()
-        }
-        return result
     }
 
     /// Restores the newest snapshot of the account already on this device: what the Backup
@@ -255,13 +273,16 @@ public actor SyncCoordinator {
     ) async -> SyncRestoreResult {
         await acquire()
         defer { release() }
-        return await restoreLocked(account: account, store: store, afterRestore: afterRestore)
+        return await restoreLocked(account: account, store: store, afterRestore: afterRestore) {}
     }
 
+    /// The restore itself; `onRestored` runs as soon as the snapshot is in place, before
+    /// anything else (``restore(code:store:afterRestore:)`` stores the code there).
     private func restoreLocked(
         account: SyncAccount,
         store: DatabaseStore,
-        afterRestore: @Sendable () async -> Void
+        afterRestore: @Sendable () async -> Void,
+        onRestored: () -> Void
     ) async -> SyncRestoreResult {
         let services = services(for: store)
         let client = makeClient(account.recoveryCode)
@@ -269,6 +290,7 @@ public actor SyncCoordinator {
         case .failed(let reason, let replaced):
             return .failed(reason, localDataReplaced: replaced)
         case .restored(let schemaVersion):
+            onRestored()
             // Every screen reads SQLite, so the restored rows are announced before the photos
             // start arriving behind them.
             await afterRestore()
