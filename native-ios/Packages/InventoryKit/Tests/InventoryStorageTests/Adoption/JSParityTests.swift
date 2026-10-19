@@ -31,6 +31,19 @@ struct JSParityTests {
         #expect(JSONValue.parse("-1e-400") == .number(-0.0))
     }
 
+    @Test("JSON.parse refuses absurd nesting instead of overflowing the stack")
+    func nesting() {
+        func nested(_ depth: Int) -> String {
+            String(repeating: "[", count: depth) + String(repeating: "]", count: depth)
+        }
+        #expect(JSONValue.parse(nested(256)) != nil)
+        #expect(JSONValue.parse(nested(257)) == nil)
+        #expect(JSONValue.parse(String(repeating: "{\"a\":", count: 300) + "1" + String(repeating: "}", count: 300)) == nil)
+        #expect(JSONValue.parse(String(repeating: "[", count: 200_000)) == nil)
+        // Depth is nesting, not the number of containers.
+        #expect(JSONValue.parse("[" + Array(repeating: "[]", count: 1_000).joined(separator: ",") + "]") != nil)
+    }
+
     @Test("JSON.stringify quoting")
     func quote() {
         #expect(JSONText.quote("a/b\"c\\d\u{8}\u{C}\n\r\t\u{1F}\u{7F}\u{2028}é📦")

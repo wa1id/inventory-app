@@ -18,7 +18,8 @@ enum JSONValue: Equatable, Sendable {
     /// whitespace is only tab, LF, CR and space (a BOM is an error), any value may be top level,
     /// duplicate object keys keep the last value, and numbers past the Double range become
     /// infinities instead of failing. Escaped lone surrogates become U+FFFD (a Swift String
-    /// cannot hold them).
+    /// cannot hold them). Nesting deeper than 256 levels fails, as Hermes' JSON.parse throws a
+    /// RangeError on deep nesting, rather than overflowing the stack.
     static func parse(_ text: String) -> JSONValue? {
         var parser = JSONTextParser(units: Array(text.utf16))
         guard let value = parser.parseValue() else { return nil }
@@ -28,8 +29,12 @@ enum JSONValue: Equatable, Sendable {
 }
 
 private struct JSONTextParser {
+    /// Far beyond anything the app stores (flat arrays and objects), well within the stack.
+    static let maxDepth = 256
+
     let units: [UInt16]
     var index = 0
+    var depth = 0
 
     var isAtEnd: Bool { index == units.count }
 
@@ -53,8 +58,11 @@ private struct JSONTextParser {
         skipWhitespace()
         guard let unit = peek() else { return nil }
         switch unit {
-        case 0x7B: return parseObject()
-        case 0x5B: return parseArray()
+        case 0x7B, 0x5B:
+            guard depth < Self.maxDepth else { return nil }
+            depth += 1
+            defer { depth -= 1 }
+            return unit == 0x7B ? parseObject() : parseArray()
         case 0x22: return parseString().map(JSONValue.string)
         case 0x74: return consume("true") ? .bool(true) : nil
         case 0x66: return consume("false") ? .bool(false) : nil
@@ -322,9 +330,15 @@ enum JSNumber {
         return negative ? -magnitude : magnitude
     }
 
+    /// `0x`, `0o` and `0b` digits as the nearest Double (ties to even), as StringToNumber rounds
+    /// them. Accumulating in a Double would round at every step and drift above 2^53.
     private static func integer(_ digits: String, radix: Int) -> Double? {
         guard !digits.isEmpty else { return nil }
-        var value = 0.0
+        let bitsPerDigit = radix.trailingZeroBitCount  // radix is 16, 8 or 2
+        var leading: UInt64 = 0  // the first 64 significant bits
+        var kept = 0
+        var dropped = 0          // significant bits after those
+        var sticky = false       // whether any dropped bit is set
         for unit in digits.utf8 {
             let digit: Int
             switch unit {
@@ -334,8 +348,21 @@ enum JSNumber {
             default: return nil
             }
             guard digit < radix else { return nil }
-            value = value * Double(radix) + Double(digit)
+            for shift in stride(from: bitsPerDigit - 1, through: 0, by: -1) {
+                let bit = UInt64((digit >> shift) & 1)
+                if kept == 0 && bit == 0 { continue }
+                if kept < 64 {
+                    leading = leading << 1 | bit
+                    kept += 1
+                } else {
+                    dropped += 1
+                    sticky = sticky || bit == 1
+                }
+            }
         }
-        return value
+        // 64 bits leave ten below the rounding position, so folding the dropped bits into the
+        // lowest one breaks exact ties the right way without creating false ones.
+        if sticky { leading |= 1 }
+        return Double(sign: .plus, exponent: dropped, significand: Double(leading))
     }
 }

@@ -35,20 +35,28 @@ public struct PhotoPathResolver: Sendable {
         caches.appending(path: Self.householdPhotosDirectoryName, directoryHint: .isDirectory)
     }
 
-    /// A URL that exists on disk now, or nil when the URI is not a local file or the bytes are
-    /// gone.
+    /// A regular file that exists on disk now, or nil when the URI is not a local file or the
+    /// bytes are gone.
     ///
     /// The stored path is tried first (the common case, same container). Otherwise a file in an
     /// `item-photos` or `household-photos` directory is looked up by name in the current
     /// container's directory of that name, which covers a moved container, an Android path and
     /// the MVP-era `.jpg` files alike.
+    ///
+    /// Like expo-file-system's `File`, the URL is standardized (`.` and `..` removed), a directory
+    /// path is refused and a directory never counts as an existing file
+    /// (RN: node_modules/expo-file-system/ios/FileSystemModule.swift:135-142,
+    /// FileSystemFile.swift:35-51). Callers delete what this returns, so it must never be a
+    /// directory such as `item-photos` or `Documents`.
     public func resolve(_ stored: String?) -> URL? {
         // URL(string:) also decodes percent-escaped simulator paths into `.path`.
-        guard let stored, let url = URL(string: stored), url.isFileURL else { return nil }
-        let fileManager = FileManager.default
-        if fileManager.fileExists(atPath: url.path) { return url }
+        guard let stored, let parsed = URL(string: stored), parsed.isFileURL, !parsed.hasDirectoryPath else {
+            return nil
+        }
+        let url = parsed.standardizedFileURL
+        if Self.isRegularFile(url) { return url }
         let name = url.lastPathComponent
-        guard !name.isEmpty, name != "/" else { return nil }
+        guard !name.isEmpty, name != "/", name != ".", name != ".." else { return nil }
         let candidate: URL
         switch url.deletingLastPathComponent().lastPathComponent {
         case Self.itemPhotosDirectoryName:
@@ -58,7 +66,12 @@ public struct PhotoPathResolver: Sendable {
         default:
             return nil
         }
-        return fileManager.fileExists(atPath: candidate.path) ? candidate : nil
+        return Self.isRegularFile(candidate) ? candidate : nil
+    }
+
+    private static func isRegularFile(_ url: URL) -> Bool {
+        var isDirectory: ObjCBool = false
+        return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) && !isDirectory.boolValue
     }
 
     /// The URI to store for an item photo in the current container: the absolute `file://` URI

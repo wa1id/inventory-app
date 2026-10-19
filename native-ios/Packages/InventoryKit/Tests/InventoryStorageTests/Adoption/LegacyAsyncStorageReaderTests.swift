@@ -165,6 +165,38 @@ struct LegacyAsyncStorageReaderTests {
         #expect(try read(manifest: Data(manifest.utf8)) == ["k": "https://h/x é \"q\""])
     }
 
+    @Test("read(keys:) reads only the requested keys, like RN's multiGet")
+    func readRequestedKeys() throws {
+        let manifest = Data(#"{"onboarding.completed.v1":"true","other.key":null,"places.recent.v1":"[]"}"#.utf8)
+        // other.key's overflow file exists but is not UTF-8: reading everything fails on it...
+        let unreadable = ["\(LegacyAsyncStorageReader.md5Hex("other.key"))": Data([0xC3, 0x28])]
+        #expect(throws: LegacyAsyncStorageReader.Failure.unreadableValue(key: "other.key")) {
+            try read(manifest: manifest, files: unreadable)
+        }
+        // ...but a read of other keys never touches it.
+        let container = try TemporaryContainer()
+        try container.write(manifest, to: Self.storePath + "/manifest.json")
+        try container.write(Data([0xC3, 0x28]), to: Self.storePath + "/" + LegacyAsyncStorageReader.md5Hex("other.key"))
+        let values = try Self.reader(container).read(keys: ["onboarding.completed.v1", "missing.key"])
+        #expect(values == ["onboarding.completed.v1": "true"])
+    }
+
+    @Test("keys that are canonically equivalent but different code units stay apart and never trap")
+    func canonicallyEquivalentKeys() throws {
+        // "é" precomposed and decomposed: distinct keys to RN, equal Strings to Swift.
+        let manifest = Data("{\"caf\u{E9}\":\"composed\",\"cafe\u{301}\":\"decomposed\",\"onboarding.completed.v1\":\"true\"}".utf8)
+        let container = try TemporaryContainer()
+        try container.write(manifest, to: Self.storePath + "/manifest.json")
+        let reader = Self.reader(container)
+        #expect(try reader.read(keys: ["onboarding.completed.v1"]) == ["onboarding.completed.v1": "true"])
+        let composed = try reader.read(keys: ["caf\u{E9}"])
+        #expect(composed.values.first == "composed")
+        let decomposed = try reader.read(keys: ["cafe\u{301}"])
+        #expect(decomposed.values.first == "decomposed")
+        // Reading everything folds the two into one entry instead of crashing.
+        #expect(try reader.readAll().count == 2)
+    }
+
     @Test("values that are neither strings nor null are skipped")
     func otherValueTypes() throws {
         #expect(try read(manifest: Data(#"{"a":1,"b":true,"c":{"d":"e"},"f":"g"}"#.utf8)) == ["f": "g"])

@@ -56,7 +56,8 @@ public struct LegacyImport {
         guard isProtectedDataAvailable() else { return .protectedDataUnavailable }
         let legacy: [String: String]
         do {
-            legacy = try reader.readAll()
+            // Only the seven: another key's unreadable overflow file must not block them forever.
+            legacy = try reader.read(keys: PreferenceKey.legacyKeys)
         } catch {
             return .failed(error)
         }

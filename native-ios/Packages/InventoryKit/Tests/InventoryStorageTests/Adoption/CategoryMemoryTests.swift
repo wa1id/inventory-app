@@ -32,6 +32,8 @@ struct CategoryMemoryTests {
         for vector in try AdoptionFixtures.decode([SuggestVector].self, from: "suggest-categories-vectors.json") {
             let result = CategoryMemory.suggest(vector.known, prefix: vector.prefix, max: vector.max ?? CategoryMemory.maxSuggestions)
             #expect(result == vector.expected, "prefix \(vector.prefix.debugDescription)")
+            // Swift's == folds canonically equivalent strings; JS compares code units.
+            #expect(result.map { Array($0.utf16) } == vector.expected.map { Array($0.utf16) })
         }
     }
 

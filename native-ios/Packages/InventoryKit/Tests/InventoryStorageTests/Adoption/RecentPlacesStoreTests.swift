@@ -73,6 +73,44 @@ struct RecentPlacesStoreTests {
         #expect(store.read() == expected)
     }
 
+    struct MergeVector: Decodable {
+        let list: [String]
+        let id: String
+        let max: Int?
+        let expected: [String]
+    }
+
+    @Test("merge matches mergeRecent (TS vectors: duplicates, drop zone, negative max, code units)")
+    func mergeVectors() throws {
+        for vector in try AdoptionFixtures.decode([MergeVector].self, from: "merge-recent-vectors.json") {
+            let merged = vector.max.map { RecentPlacesStore.merge(vector.list, vector.id, max: $0) }
+                ?? RecentPlacesStore.merge(vector.list, vector.id)
+            #expect(merged == vector.expected, "\(vector.list) + \(vector.id.debugDescription) max \(String(describing: vector.max))")
+            // Swift's == folds canonically equivalent strings; JS compares code units.
+            #expect(merged.map { Array($0.utf16) } == vector.expected.map { Array($0.utf16) })
+        }
+    }
+
+    struct RememberScenario: Decodable {
+        struct Expected: Decodable { let read: [String]; let persisted: String? }
+        let name: String
+        let stored: String?
+        let remember: [String]
+        let expected: Expected
+    }
+
+    @Test("remember persists exactly what rememberPlace persists (TS vectors, JSON.stringify escaping)")
+    func rememberVectors() throws {
+        for scenario in try AdoptionFixtures.decode([RememberScenario].self, from: "remember-place-vectors.json") {
+            let preferences = InMemoryPreferences(scenario.stored.map { [PreferenceKey.recentPlaces: $0] } ?? [:])
+            let store = RecentPlacesStore(preferences: preferences)
+            for id in scenario.remember { store.remember(id) }
+            #expect(store.read() == scenario.expected.read, "\(scenario.name)")
+            let persisted = preferences.values[PreferenceKey.recentPlaces]
+            #expect(persisted.map { Array($0.utf16) } == scenario.expected.persisted.map { Array($0.utf16) }, "\(scenario.name)")
+        }
+    }
+
     @Test("nothing stored reads as empty; remembering the drop zone writes nothing")
     func emptyAndDropZone() {
         let preferences = InMemoryPreferences()

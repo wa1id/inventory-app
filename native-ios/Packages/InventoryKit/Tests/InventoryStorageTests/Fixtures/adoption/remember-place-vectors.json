@@ -1,0 +1,132 @@
+[
+  {
+    "name": "nothing stored",
+    "stored": null,
+    "remember": [
+      "a",
+      "b",
+      "drop-zone",
+      "a"
+    ],
+    "expected": {
+      "read": [
+        "a",
+        "b"
+      ],
+      "persisted": "[\"a\",\"b\"]"
+    }
+  },
+  {
+    "name": "malformed stored value",
+    "stored": "{\"a\":1}",
+    "remember": [
+      "x"
+    ],
+    "expected": {
+      "read": [
+        "x"
+      ],
+      "persisted": "[\"x\"]"
+    }
+  },
+  {
+    "name": "unparsable stored value",
+    "stored": "not json",
+    "remember": [
+      "x"
+    ],
+    "expected": {
+      "read": [
+        "x"
+      ],
+      "persisted": "[\"x\"]"
+    }
+  },
+  {
+    "name": "stored duplicates are kept until merged",
+    "stored": "[\"a\",\"a\",\"b\"]",
+    "remember": [
+      "c"
+    ],
+    "expected": {
+      "read": [
+        "c",
+        "a",
+        "a",
+        "b"
+      ],
+      "persisted": "[\"c\",\"a\",\"a\",\"b\"]"
+    }
+  },
+  {
+    "name": "stored drop zone is dropped by the next merge",
+    "stored": "[\"drop-zone\",\"a\"]",
+    "remember": [
+      "b"
+    ],
+    "expected": {
+      "read": [
+        "b",
+        "a"
+      ],
+      "persisted": "[\"b\",\"a\"]"
+    }
+  },
+  {
+    "name": "more than six stored",
+    "stored": "[\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\"8\"]",
+    "remember": [
+      "8"
+    ],
+    "expected": {
+      "read": [
+        "8",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "persisted": "[\"8\",\"1\",\"2\",\"3\",\"4\",\"5\"]"
+    }
+  },
+  {
+    "name": "non-strings stored",
+    "stored": "[1,\"a\",null,\"b\"]",
+    "remember": [
+      "b"
+    ],
+    "expected": {
+      "read": [
+        "b",
+        "a"
+      ],
+      "persisted": "[\"b\",\"a\"]"
+    }
+  },
+  {
+    "name": "ids that need escaping",
+    "stored": null,
+    "remember": [
+      "quote\"d",
+      "back\\slash",
+      "slash/ok",
+      "ctrl\u0001\u001f\b\f\n\r\t",
+      "del",
+      "ls ps ",
+      "emoji 📦",
+      "é composed"
+    ],
+    "expected": {
+      "read": [
+        "é composed",
+        "emoji 📦",
+        "ls ps ",
+        "del",
+        "ctrl\u0001\u001f\b\f\n\r\t",
+        "slash/ok"
+      ],
+      "persisted": "[\"é composed\",\"emoji 📦\",\"ls ps \",\"del\",\"ctrl\\u0001\\u001f\\b\\f\\n\\r\\t\",\"slash/ok\"]"
+    }
+  }
+]

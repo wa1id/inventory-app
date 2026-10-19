@@ -54,6 +54,44 @@ struct PhotoPathResolverTests {
         #expect(Self.resolver(container).resolve(file.absoluteString)?.path == file.path)
     }
 
+    @Test("a directory is never a photo, so a caller that deletes what resolves cannot remove one")
+    func directoriesAreNotPhotos() throws {
+        let container = try TemporaryContainer()
+        try container.write(Data("x".utf8), to: "Documents/item-photos/a.webp")
+        try container.createDirectory("Documents/item-photos/sub.webp")
+        try container.write(Data("db".utf8), to: "Documents/SQLite/inventory.db")
+        let resolver = Self.resolver(container)
+        let documents = container.documents.absoluteString  // ends with "/"
+        for stored in [
+            documents + "item-photos",              // the photo directory itself
+            documents + "item-photos/",             // a directory path (expo's File refuses it)
+            documents + "item-photos/..",           // standardizes to Documents
+            documents + "item-photos/a.webp/..",    // standardizes to item-photos
+            documents + "item-photos/.",
+            documents + "item-photos/sub.webp",     // a directory with a photo's name
+            "file:///var/mobile/Containers/Data/Application/OLD/Documents/item-photos/sub.webp",
+            "file:///var/mobile/Containers/Data/Application/OLD/Documents/item-photos/..",
+            "file:///var/mobile/Containers/Data/Application/OLD/Documents/item-photos/.",
+            "file:///data/user/0/com.wystudio.inventory/files/item-photos/",
+        ] {
+            #expect(resolver.resolve(stored) == nil, "\(stored)")
+        }
+        #expect(container.exists("Documents/item-photos/a.webp"))
+    }
+
+    @Test("dot segments are standardized away like expo's File(uri) does")
+    func standardizesDotSegments() throws {
+        let container = try TemporaryContainer()
+        try container.write(Data("x".utf8), to: "Documents/item-photos/a.webp")
+        let resolver = Self.resolver(container)
+        let expected = container.documents.appending(path: "item-photos/a.webp").path
+        let documents = container.documents.absoluteString
+        #expect(resolver.resolve(documents + "item-photos/./a.webp")?.path == expected)
+        #expect(resolver.resolve(documents + "elsewhere/../item-photos/a.webp")?.path == expected)
+        #expect(resolver.resolve(
+            "file:///var/mobile/Containers/Data/Application/OLD/Documents/x/../item-photos/a.webp")?.path == expected)
+    }
+
     @Test("a rebased file that is gone is nil, so callers treat the bytes as missing")
     func goneAfterRebase() throws {
         let container = try TemporaryContainer()

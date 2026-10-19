@@ -55,6 +55,19 @@ public struct LegacyAsyncStorageReader: Sendable {
     /// Throws when the manifest, or an overflow file that exists, cannot be read. An overflow file
     /// that is missing means the key is absent (RNCAsyncStorage.mm:598-617).
     public func readAll() throws(Failure) -> [String: String] {
+        try read(only: nil)
+    }
+
+    /// The stored values of `keys`; keys with no value are left out.
+    ///
+    /// Like RN's `multiGet` (RNCAsyncStorage.mm:673-703), only the requested keys are read, so
+    /// another key's unreadable overflow file cannot fail the read. Throws when the manifest, or
+    /// the overflow file of a requested key that exists, cannot be read.
+    public func read(keys: [String]) throws(Failure) -> [String: String] {
+        try read(only: keys)
+    }
+
+    private func read(only requested: [String]?) throws(Failure) -> [String: String] {
         let fileManager = FileManager.default
         let storeDirectory = isDirectory(directory) || !isDirectory(legacyDirectory) ? directory : legacyDirectory
         let manifestURL = storeDirectory.appending(path: Self.manifestName, directoryHint: .notDirectory)
@@ -67,13 +80,16 @@ public struct LegacyAsyncStorageReader: Sendable {
             throw .unreadableManifest(String(describing: error))
         }
         guard String(data: data, encoding: .utf8) != nil else { throw .manifestNotUTF8 }
-        // RN parses with NSJSONSerialization, fragments allowed (RCTUtils.mm:129-185).
+        // RN parses with NSJSONSerialization, fragments allowed (RCTUtils.mm:129-185). Kept as an
+        // NSDictionary, so keys compare by UTF-16 code units as RN's do: bridging to
+        // [String: Any] would trap on two keys that are canonically equivalent Swift strings.
         guard let manifest = (try? JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed))
-            as? [String: Any]
+            as? NSDictionary
         else { return [:] }
 
         var values: [String: String] = [:]
-        for (key, raw) in manifest {
+        for key in requested ?? manifest.allKeys.compactMap({ $0 as? String }) {
+            guard let raw = manifest.object(forKey: key) else { continue }
             if let string = raw as? String {
                 values[key] = string
             } else if raw is NSNull {

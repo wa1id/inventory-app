@@ -20,13 +20,15 @@ public struct RecentPlacesStore: Sendable {
     }
 
     /// `id` moved to the front of `list`, without duplicates and never the drop zone, capped at
-    /// `max`. RN: `mergeRecent`, recentPlaces.ts:16-23.
+    /// `max`. Other duplicates already in `list` stay. RN: `mergeRecent`, recentPlaces.ts:16-23.
     public static func merge(_ list: [String], _ id: String, max: Int = maxCount) -> [String] {
         let idKey = JS.Key(id)
         let dropZone = JS.Key(dropZoneContainerId)
         let rest = list.filter { JS.Key($0) != idKey && JS.Key($0) != dropZone }
         let merged = idKey == dropZone ? rest : [id] + rest
-        return Array(merged.prefix(Swift.max(0, max)))
+        // `slice(0, max)`: a negative end counts back from the end.
+        let end = max >= 0 ? Swift.min(max, merged.count) : Swift.max(merged.count + max, 0)
+        return Array(merged.prefix(end))
     }
 
     /// RN's read rule: parse; anything but an array is empty; keep only the strings, without

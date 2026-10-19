@@ -110,6 +110,21 @@ struct LegacyImportTests {
         #expect(suite.defaults.object(forKey: PreferenceKey.onboardingCompleted) == nil)
     }
 
+    @Test("an unreadable overflow file of a key that is not one of the seven does not block the import")
+    func unrelatedUnreadableOverflow() throws {
+        let container = try TemporaryContainer()
+        let suite = try TemporaryDefaults()
+        try container.write(
+            Data(#"{"onboarding.completed.v1":"true","some.other.library.key":null}"#.utf8),
+            to: Self.storePath + "/manifest.json")
+        try container.write(
+            Data([0xC3, 0x28]), to: Self.storePath + "/" + LegacyAsyncStorageReader.md5Hex("some.other.library.key"))
+
+        #expect(makeImport(container, suite).runIfNeeded() == .imported(keys: [PreferenceKey.onboardingCompleted]))
+        #expect(suite.defaults.object(forKey: PreferenceKey.onboardingCompleted) as? String == "true")
+        #expect(suite.defaults.integer(forKey: LegacyImport.markerKey) == 1)
+    }
+
     @Test("reads nothing and leaves the marker unset while protected data is unavailable")
     func protectedDataUnavailable() throws {
         let container = try TemporaryContainer()
