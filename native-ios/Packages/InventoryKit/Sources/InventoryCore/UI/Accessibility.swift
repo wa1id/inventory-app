@@ -1,5 +1,7 @@
-// RN: src/ui/a11y.ts. Spoken forms for VoiceOver labels. The copy itself comes
-// from the strings layer and is passed in, so this logic stays pure and testable.
+import InventoryStrings
+
+// RN: src/ui/a11y.ts. Spoken forms for VoiceOver labels. The copy defaults to the
+// String Catalog (`SpokenCopy.standard`); tests can pass their own.
 
 /// Where something is, in the shape every location renderer needs (RN `PlaceLike`).
 public protocol PlaceLike {
@@ -37,6 +39,17 @@ public struct SpokenCopy: Sendable {
         self.noneLeft = noneLeft
         self.quantity = quantity
     }
+
+    /// The app's copy: `strings.a11y.inDropZone`, `.inPlace`, `.inSpace`, `strings.rows.noneLeft`, `.quantity`.
+    public static var standard: SpokenCopy {
+        SpokenCopy(
+            inDropZone: L10n.A11y.inDropZone,
+            inPlace: { L10n.A11y.inPlace(space: $0, container: $1, spelled: $2) },
+            inSpace: { L10n.A11y.inSpace(space: $0, spelled: $1) },
+            noneLeft: L10n.Rows.noneLeft,
+            quantity: { L10n.Rows.quantity(count: $0) }
+        )
+    }
 }
 
 /// A code spelled out for screen readers: `DRW-7K2M` → `D R W, 7 K 2 M` (RN `spellCode`).
@@ -58,7 +71,7 @@ public func spellCode(_ code: String) -> String {
 ///
 /// The drop zone is never read by its internal code. A container name counts
 /// only when non-empty (JS truthiness): `""` reads as unnamed, `" "` as named.
-public func whereSpoken(_ place: some PlaceLike, copy: SpokenCopy) -> String {
+public func whereSpoken(_ place: some PlaceLike, copy: SpokenCopy = .standard) -> String {
     if place.containerId == DropZone.containerId { return copy.inDropZone }
     let spelled = spellCode(place.containerShortCode)
     if let name = place.containerName, !name.isEmpty {
@@ -68,6 +81,6 @@ public func whereSpoken(_ place: some PlaceLike, copy: SpokenCopy) -> String {
 }
 
 /// "Quantity 12", or "None left" at zero (RN `quantitySpoken`).
-public func quantitySpoken(_ quantity: Int, copy: SpokenCopy) -> String {
+public func quantitySpoken(_ quantity: Int, copy: SpokenCopy = .standard) -> String {
     quantity == 0 ? copy.noneLeft : copy.quantity(quantity)
 }

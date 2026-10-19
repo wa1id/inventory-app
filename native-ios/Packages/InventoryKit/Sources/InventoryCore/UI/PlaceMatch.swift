@@ -1,3 +1,5 @@
+import InventoryStrings
+
 // RN: src/ui/placeMatch.ts. Filtering the place picker by what was typed, with
 // the same folding as Home search (`compactAlphanumeric`).
 
@@ -61,12 +63,13 @@ public func placeTerms(_ query: String) -> [String] {
 /// code-point substring test and is case-sensitive after folding, like JS
 /// `includes` (a typed `™` folds to `TM` and does not match `tm`).
 ///
-/// - Parameter typeName: the display name of a visual type (RN `strings.entities.typeNames[t]`),
-///   or `nil` for a type without one; an unknown type adds nothing to the haystack.
+/// - Parameter typeName: the display name of a visual type, or `nil` for a type without one;
+///   an unknown type adds nothing to the haystack. Defaults to `strings.entities.typeNames[t]`
+///   with no fallback to `other`, as in RN.
 public func matchesPlace(
     _ option: some PlaceMatchFields,
     terms: [String],
-    typeName: (ContainerVisualType) -> String?
+    typeName: (ContainerVisualType) -> String? = { L10n.Entities.TypeNames[$0.rawValue] }
 ) -> Bool {
     if terms.isEmpty { return true }
     let haystack = Array(
