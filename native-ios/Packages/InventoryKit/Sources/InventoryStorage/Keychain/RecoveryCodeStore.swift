@@ -1,11 +1,12 @@
 import Foundation
+import InventoryCore
 
 /// The keychain half of the backup account (03 §3.7): the recovery code stored under
 /// `sync.accountSecret.v1` as the 26-character canonical Crockford base32 string.
 ///
-/// This type keeps RN's keychain error mapping. The account layer still decodes what ``load()``
-/// returns and treats anything that does not decode to exactly 16 bytes as "no account"
-/// (RN: src/services/account/identity.ts:64-66), and stores only canonical codes.
+/// This type keeps RN's keychain error mapping, and like RN it treats a stored value that does
+/// not decode to exactly 16 bytes as "no code" (RN: src/services/account/identity.ts:63-66).
+/// The account layer (`SyncAccountStore`) derives the account id and stores only canonical codes.
 public struct RecoveryCodeStore: Sendable {
     private let keychain: any KeychainStore
 
@@ -13,9 +14,9 @@ public struct RecoveryCodeStore: Sendable {
         self.keychain = keychain
     }
 
-    /// The stored code exactly as written, or nil when there is none or it is empty.
-    /// Any keychain error also reads as nil: an unreadable keystore must never look like an
-    /// invitation to mint a second account (RN: identity.ts:52-63).
+    /// The stored code exactly as written, or nil when there is none, it is empty, or it does not
+    /// decode to exactly 16 bytes. Any keychain error also reads as nil: an unreadable keystore
+    /// must never look like an invitation to mint a second account (RN: identity.ts:52-66).
     public func load() -> String? {
         try? loadReportingErrors()
     }
@@ -24,9 +25,9 @@ public struct RecoveryCodeStore: Sendable {
     /// caller that wants to wait for protected data rather than treat the account as absent
     /// (09 §3.2).
     public func loadReportingErrors() throws(KeychainError) -> String? {
-        guard let stored = try keychain.string(forKey: KeychainKey.recoveryCode), !stored.isEmpty else {
-            return nil
-        }
+        guard let stored = try keychain.string(forKey: KeychainKey.recoveryCode), !stored.isEmpty,
+              RecoveryCode.secret(from: stored) != nil
+        else { return nil }
         return stored
     }
 
