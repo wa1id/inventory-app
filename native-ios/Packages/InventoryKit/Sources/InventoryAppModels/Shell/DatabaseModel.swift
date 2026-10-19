@@ -53,7 +53,7 @@ public final class DatabaseModel: InventoryInvalidating {
 
     @ObservationIgnored private let opener: Opener
     @ObservationIgnored private let environment: RepositoryEnvironment
-    @ObservationIgnored private let stopwatch: ShellStopwatch
+    @ObservationIgnored private let stopwatch: Stopwatch
     @ObservationIgnored private let telemetry: TelemetryReporter
     /// The open in flight; nil again in the same turn the open settles.
     @ObservationIgnored private var opening: Task<Void, Never>?
@@ -73,7 +73,7 @@ public final class DatabaseModel: InventoryInvalidating {
     ) {
         opener = open
         self.environment = environment
-        stopwatch = ShellStopwatch(clock)
+        stopwatch = Stopwatch(clock)
         self.telemetry = telemetry
     }
 
@@ -157,7 +157,7 @@ public final class DatabaseModel: InventoryInvalidating {
         } catch {
             outcome = .failure(error)
         }
-        let durationMs = ShellStopwatch.milliseconds(stopwatch.now - startedAt)
+        let durationMs = Stopwatch.milliseconds(stopwatch.now - startedAt)
         opening = nil
         switch outcome {
         case .success(let store):

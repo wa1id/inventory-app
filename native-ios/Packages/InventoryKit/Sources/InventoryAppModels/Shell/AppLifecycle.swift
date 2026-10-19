@@ -23,7 +23,7 @@ import Observation
 public final class AppLifecycle {
     /// Where a handler runs relative to the others.
     public enum Stage: Int, Comparable, Sendable, CaseIterable {
-        /// The sync pass on `.active` (`SyncModel.onActive()`).
+        /// The sync pass on `.active` (``SyncModel/activityChanged(_:)``).
         case sync
         /// The connection's resume refresh and ping gating (`ConnectionModel`).
         case connection

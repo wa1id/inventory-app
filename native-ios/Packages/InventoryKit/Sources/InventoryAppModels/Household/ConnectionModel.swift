@@ -77,7 +77,7 @@ public final class ConnectionModel {
     @ObservationIgnored private let invalidator: any InventoryInvalidating
     @ObservationIgnored private let joinPreferences: HouseholdJoinPreferences
     @ObservationIgnored private let clock: any Clock<Duration>
-    @ObservationIgnored private let elapsed: @Sendable () -> Duration
+    @ObservationIgnored private let stopwatch: Stopwatch
     @ObservationIgnored private let announce: @MainActor @Sendable (String) -> Void
 
     @ObservationIgnored private var session: HouseholdSession?
@@ -117,7 +117,7 @@ public final class ConnectionModel {
         self.joinPreferences = joinPreferences
         self.activity = activity
         self.clock = clock
-        self.elapsed = Self.stopwatch(clock)
+        self.stopwatch = Stopwatch(clock)
         self.announce = announce
     }
 
@@ -182,7 +182,7 @@ public final class ConnectionModel {
             // keeps failing cannot loop it.
             let recovering = tracked != .online
             set(.online)
-            let now = elapsed()
+            let now = stopwatch.now
             if recovering, tracked == .online, lastRecovery.map({ now - $0 >= Self.resumeRefreshInterval }) ?? true {
                 lastRecovery = now
                 invalidator.invalidate()
@@ -250,7 +250,7 @@ public final class ConnectionModel {
     /// resolving at launch) only starts the clock: the screens read anyway.
     private func evaluateResume() {
         guard activity.isActive, sessionKey != nil else { return }
-        let now = elapsed()
+        let now = stopwatch.now
         if let lastResume, now - lastResume < Self.resumeRefreshInterval { return }
         let first = lastResume == nil
         lastResume = now
@@ -291,12 +291,6 @@ public final class ConnectionModel {
     }
 
     // MARK: - Clock helpers
-
-    /// Time since the model started, on `clock`.
-    private nonisolated static func stopwatch<C: Clock>(_ clock: C) -> @Sendable () -> Duration where C.Duration == Duration {
-        let start = clock.now
-        return { start.duration(to: clock.now) }
-    }
 
     /// Opens the existential so the generic `Clock.sleep(for:tolerance:)` can be called.
     private nonisolated static func sleep<C: Clock>(on clock: C, for duration: C.Duration) async throws {

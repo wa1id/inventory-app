@@ -52,7 +52,7 @@ struct HomeModelTests {
                     search: { try searches.call($0) }),
                 dropZone: dropZone,
                 context: context.value,
-                unpairedNotice: UnpairedNoticePreference(preferences: preferences),
+                unpairedNotice: UnpairedNoticeModel(preference: UnpairedNoticePreference(preferences: preferences)),
                 clock: clock,
                 telemetry: TelemetryReporter(sink: RecordingTelemetry()),
                 rememberCategories: { categories.record($0.map { $0 ?? "nil" }.joined(separator: ",")) })
@@ -245,7 +245,7 @@ struct HomeModelTests {
             reads: HomeReads(
                 spaces: { [] }, recent: { _ in [] }, containers: { [] },
                 search: { try await held.call($0) }),
-            dropZone: dropZone, context: .local, unpairedNotice: nil, clock: clock,
+            dropZone: dropZone, context: .local, unpairedNotice: UnpairedNoticeModel(preference: UnpairedNoticePreference(preferences: InMemoryPreferences())), clock: clock,
             telemetry: TelemetryReporter(sink: RecordingTelemetry()))
         model.focusChanged(true)
         model.setQuery("glue")
@@ -356,7 +356,7 @@ struct HomeModelTests {
         let model = HomeModel(
             reads: HomeReads(repositories: repositories),
             dropZone: DropZoneModel(repositories: repositories),
-            context: .local, unpairedNotice: nil,
+            context: .local, unpairedNotice: UnpairedNoticeModel(preference: UnpairedNoticePreference(preferences: InMemoryPreferences())),
             telemetry: TelemetryReporter(sink: RecordingTelemetry()))
         model.focusChanged(true)
         model.dropZone.focusChanged(true)

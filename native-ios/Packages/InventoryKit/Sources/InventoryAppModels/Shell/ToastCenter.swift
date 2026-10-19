@@ -99,7 +99,7 @@ public final class ToastCenter: ToastPresenting {
     private var chrome: [(token: Int, height: Double)] = []
 
     @ObservationIgnored private let clock: any Clock<Duration>
-    @ObservationIgnored private let stopwatch: ShellStopwatch
+    @ObservationIgnored private let stopwatch: Stopwatch
     @ObservationIgnored private let announce: @MainActor @Sendable (String) -> Void
     @ObservationIgnored private var nextNumber = 0
     @ObservationIgnored private var nextChromeToken = 0
@@ -124,7 +124,7 @@ public final class ToastCenter: ToastPresenting {
         announce: @escaping @MainActor @Sendable (String) -> Void = { _ in }
     ) {
         self.clock = clock
-        stopwatch = ShellStopwatch(clock)
+        stopwatch = Stopwatch(clock)
         self.isVoiceOverRunning = isVoiceOverRunning
         self.announce = announce
     }

@@ -104,7 +104,7 @@ public final class ScanModel {
     public private(set) var phase: ScanPhase = .camera
     public private(set) var result: ScanResult = .idle
     /// "Opening that label…" shows only once a lookup has run 180 ms (RN `useDelayedFlag`).
-    public private(set) var showsOpening = false
+    public var showsOpening: Bool { openingDelay.value }
     /// The removed-phone layer is up: the scanner is off under it.
     public private(set) var isRevoked = false
     /// The camera part.
@@ -113,12 +113,12 @@ public final class ScanModel {
     private let qr: @MainActor @Sendable () -> any QrRepository
     private let haptics: HapticPlayer
     private let telemetry: TelemetryReporter
-    private let clock: any Clock<Duration>
     private let navigate: @MainActor @Sendable (ScanNavigation) -> Void
 
     @ObservationIgnored private var lookupGeneration = 0
     @ObservationIgnored private var isFocused = false
-    @ObservationIgnored private var openingTask: Task<Void, Never>?
+    /// True once a lookup has been opening for 180 ms (`Motion.delay.skeleton`).
+    @ObservationIgnored private let openingDelay: DelayedFlag
 
     /// - Parameters:
     ///   - permission: The tab's camera permission (purpose `scan`).
@@ -135,8 +135,8 @@ public final class ScanModel {
         self.qr = qr
         self.haptics = haptics
         self.telemetry = telemetry
-        self.clock = clock
         self.navigate = navigate
+        openingDelay = DelayedFlag(clock: clock)
         scanner = QrScannerModel(title: L10n.Scan.title, permission: permission, clock: clock)
         scanner.onScan = { [weak self] raw in await self?.open(raw) }
     }
@@ -291,25 +291,8 @@ public final class ScanModel {
     }
 
     private func setResult(_ next: ScanResult) {
-        let wasOpening = result.isOpening
         result = next
-        if next.isOpening != wasOpening {
-            openingTask?.cancel()
-            openingTask = nil
-            showsOpening = false
-            if next.isOpening {
-                openingTask = Task { [weak self, clock] in
-                    do {
-                        try await clock.sleep(for: .milliseconds(Motion.delay.skeleton))
-                    } catch {
-                        return
-                    }
-                    // Cancelled after the wait ended but before this ran: the lookup is over.
-                    guard !Task.isCancelled else { return }
-                    self?.showsOpening = true
-                }
-            }
-        }
+        openingDelay.setActive(next.isOpening)
         syncScanner()
     }
 

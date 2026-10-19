@@ -44,13 +44,15 @@ let package = Package(
         ),
         // HTTP clients for the household hub, the sync worker and recognition.
         .target(name: "InventoryNetwork", dependencies: ["InventoryCore"]),
-        // Backup, photo sync, image store, household shadow and HTTP repositories.
+        // Backup, photo sync, image store, household shadow and HTTP repositories. GRDB directly
+        // for the backup snapshot, the photo queue and the household shadow's transactions.
         .target(
             name: "InventoryServices",
             dependencies: [
                 "InventoryCore",
                 "InventoryStorage",
                 "InventoryNetwork",
+                .product(name: "GRDB", package: "GRDB.swift"),
                 .product(name: "libwebp", package: "libwebp-Xcode"),
             ]
         ),
@@ -67,10 +69,10 @@ let package = Package(
 
         .testTarget(name: "InventoryStringsTests", dependencies: ["InventoryStrings", "InventoryTestSupport"], resources: [.copy("Fixtures")]),
         .testTarget(name: "InventoryCoreTests", dependencies: ["InventoryCore", "InventoryTestSupport"], resources: [.copy("Fixtures")]),
-        .testTarget(name: "InventoryStorageTests", dependencies: ["InventoryStorage", "InventoryTestSupport"], resources: [.copy("Fixtures")]),
+        .testTarget(name: "InventoryStorageTests", dependencies: ["InventoryStorage", "InventoryTestSupport", .product(name: "GRDB", package: "GRDB.swift")], resources: [.copy("Fixtures")]),
         .testTarget(name: "InventoryNetworkTests", dependencies: ["InventoryNetwork", "InventoryTestSupport"], resources: [.copy("Fixtures")]),
-        .testTarget(name: "InventoryServicesTests", dependencies: ["InventoryServices", "InventoryTestSupport"], resources: [.copy("Fixtures")]),
-        .testTarget(name: "InventoryAppModelsTests", dependencies: ["InventoryAppModels", "InventoryTestSupport"], resources: [.copy("Fixtures")]),
+        .testTarget(name: "InventoryServicesTests", dependencies: ["InventoryServices", "InventoryTestSupport", .product(name: "GRDB", package: "GRDB.swift")], resources: [.copy("Fixtures")]),
+        .testTarget(name: "InventoryAppModelsTests", dependencies: ["InventoryAppModels", "InventoryTestSupport", .product(name: "GRDB", package: "GRDB.swift")], resources: [.copy("Fixtures")]),
     ],
     swiftLanguageModes: [.v6]
 )

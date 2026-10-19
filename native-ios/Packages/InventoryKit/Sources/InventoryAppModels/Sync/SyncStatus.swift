@@ -69,22 +69,9 @@ public enum SyncStatus: Sendable, Equatable {
     }
 }
 
-/// Settings' backup row value and how it reads (RN `Summary`).
-public struct BackupSettingsSummary: Sendable, Equatable {
-    /// RN `'ink' | 'signal'`: signal marks a failed backup.
-    public enum Tone: Sendable, Equatable {
-        case ink
-        case signal
-    }
-
-    public let value: String
-    public let tone: Tone
-
-    public init(value: String, tone: Tone) {
-        self.value = value
-        self.tone = tone
-    }
-}
+/// Settings' backup row value and how it reads (RN `Summary`): the same value-and-tone pair as
+/// every settings row, so the Settings view draws it like the household's connection row.
+public typealias BackupSettingsSummary = HouseholdStatus.Summary
 
 /// Why a backup or restore failed, as the Backup screen words it (RN `SyncFailureReason |
 /// 'malformed'`).

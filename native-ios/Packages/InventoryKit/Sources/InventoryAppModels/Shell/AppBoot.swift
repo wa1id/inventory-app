@@ -30,12 +30,13 @@ public final class AppBoot {
         public var waitForProtectedData: @MainActor @Sendable () async -> Void
         /// The one-time AsyncStorage → `UserDefaults` copy (`LegacyImport().runIfNeeded()`).
         public var importLegacyPreferences: @MainActor @Sendable () -> Void
-        /// Reads the household session from the keychain (`HouseholdModel.load()`, next wave).
+        /// Reads the household session from the keychain (``HouseholdModel/load()``).
         /// The gate waits for it, paired or not.
         public var loadHouseholdSession: @MainActor @Sendable () async -> Void
-        /// Reads the backup account (`SyncModel.loadAccount()`, next wave); nil when sync is not
-        /// configured, so the keychain is never read and the status stays unavailable. Never
-        /// waited for.
+        /// Reads the backup account (``SyncModel/start()``); nil when sync is not configured
+        /// (`!SyncModel.isConfigured`), so the keychain is never read and the status stays
+        /// unavailable. Never waited for. Set it with an `if`: a closure literal in a ternary is
+        /// not typed from context, so `cond ? { await sync.start() } : nil` does not compile.
         public var loadSyncAccount: (@MainActor @Sendable () async -> Void)?
         /// Deletes the RN temporary caches once per install (`TemporaryCachePurge`). Runs in
         /// the background after the gate inputs are known.

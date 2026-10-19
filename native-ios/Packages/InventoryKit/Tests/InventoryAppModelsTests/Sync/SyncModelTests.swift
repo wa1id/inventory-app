@@ -665,9 +665,23 @@ struct SyncStatusReasonTests {
     @Test("never shows a raw reason code")
     func neverRaw() {
         let reasons = [BackupFailureReason.malformed] + SyncFailureReason.allCases.map(BackupFailureReason.sync)
+        #expect(reasons.count == 12)
         for reason in reasons {
-            #expect(!reason.message.contains("_"))
+            #expect(!reason.message.contains("_"), "\(reason)")
         }
+    }
+
+    // status.ts:51-76, one by one.
+    @Test("each reason has its own words", arguments: [
+        (SyncFailureReason.offline, L10n.Backup.Reasons.offline),
+        (.timeout, L10n.Backup.Reasons.timeout),
+        (.unauthorized, L10n.Backup.Reasons.unauthorized),
+        (.tooLarge, L10n.Backup.Reasons.tooLarge),
+        (.corrupted, L10n.Backup.Reasons.corrupted),
+        (.notConfigured, L10n.Backup.Reasons.notConfigured),
+    ])
+    func reasons(reason: SyncFailureReason, words: String) {
+        #expect(BackupFailureReason.sync(reason).message == words)
     }
 }
 

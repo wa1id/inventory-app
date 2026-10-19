@@ -104,12 +104,11 @@ public final class HomeModel {
     public private(set) var scrollToTopRequests = 0
     /// The last recent rows read, kept while a "Show more" read fails (06 §5.1).
     private var shownRecent: [ItemWithContext]?
-    /// The unpaired notice was put away; nil until the preference has been read.
-    private var noticeDismissed: Bool?
+    /// The "This phone keeps its own inventory" notice and its "Not now".
+    public let unpairedNotice: UnpairedNoticeModel
 
     @ObservationIgnored private var reads: HomeReads
     @ObservationIgnored private let context: HomeContext
-    @ObservationIgnored private let unpairedNotice: UnpairedNoticePreference?
     @ObservationIgnored private let rememberCategories: @MainActor @Sendable ([String?]) -> Void
 
     /// - Parameters:
@@ -117,7 +116,7 @@ public final class HomeModel {
     ///   - reads: the reads, local or household.
     ///   - dropZone: the shared drop-zone read.
     ///   - context: the household name and the connection state.
-    ///   - unpairedNotice: where "Not now" on the unpaired notice is remembered; nil keeps it in memory.
+    ///   - unpairedNotice: the unpaired notice; read when Home is first focused.
     ///   - clock: the debounce's and the delayed flags' clock.
     ///   - telemetry: where `search_performed` goes.
     ///   - rememberCategories: feeds categories of loaded items to the category memory.
@@ -127,7 +126,7 @@ public final class HomeModel {
         reads: HomeReads,
         dropZone: DropZoneModel,
         context: HomeContext,
-        unpairedNotice: UnpairedNoticePreference?,
+        unpairedNotice: UnpairedNoticeModel,
         clock: any Clock<Duration> = ContinuousClock(),
         telemetry: TelemetryReporter = .shared,
         rememberCategories: @escaping @MainActor @Sendable ([String?]) -> Void = { _ in },
@@ -155,9 +154,8 @@ public final class HomeModel {
 
     /// Home gained or lost focus (or a sheet went over it).
     public func focusChanged(_ focused: Bool, revision: Int? = nil) {
-        if focused && noticeDismissed == nil {
-            noticeDismissed = unpairedNotice?.isDismissed ?? false
-        }
+        // Preferences are read only once Home shows, after the legacy import (09 §3.2).
+        if focused { unpairedNotice.load() }
         spaces.focusChanged(focused, revision: revision)
         recent.focusChanged(focused, revision: revision)
         containers.focusChanged(focused, revision: revision)
@@ -209,8 +207,7 @@ public final class HomeModel {
 
     /// "Not now" on the unpaired notice: hidden at once, remembered on this phone.
     public func dismissNotice() {
-        noticeDismissed = true
-        unpairedNotice?.dismiss()
+        unpairedNotice.dismiss()
     }
 
     /// The search key.
@@ -303,7 +300,7 @@ public final class HomeModel {
     public var recentRows: [ItemWithContext]? { recent.data ?? shownRecent }
 
     /// The "This phone keeps its own inventory" notice may show (not joined, not put away).
-    public var noticeVisible: Bool { !paired && noticeDismissed == false }
+    public var noticeVisible: Bool { unpairedNotice.isVisible(paired: paired) }
 
     public var idleBody: HomeList.IdleBody {
         HomeDerivation.idleBody(

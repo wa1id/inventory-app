@@ -1,18 +1,3 @@
-/// Time since a fixed origin on an injected clock, as a plain `Duration`, so the scan guard can
-/// compare sightings without knowing the clock's instant type.
-struct ScanGuardStopwatch: Sendable {
-    let elapsed: @Sendable () -> Duration
-
-    init(_ clock: any Clock<Duration>) {
-        elapsed = Self.make(clock)
-    }
-
-    private static func make<C: Clock<Duration>>(_ clock: C) -> @Sendable () -> Duration {
-        let origin = clock.now
-        return { origin.duration(to: clock.now) }
-    }
-}
-
 /// One label, one answer: the QR scanner's arming rules (06 §8.4; RN `QrScanner.tsx:86-137`).
 ///
 /// - **One scan per arming.** Each focus, and each time the host re-activates the scanner, is a
@@ -39,10 +24,10 @@ public final class ScanGuard {
     public private(set) var handed: String?
     /// After a refocus, the code to ignore and when it was last seen (RN `ignoreRef`).
     private var ignore: (data: String, seen: Duration)?
-    private let stopwatch: ScanGuardStopwatch
+    private let stopwatch: Stopwatch
 
     public init(clock: any Clock<Duration> = ContinuousClock()) {
-        stopwatch = ScanGuardStopwatch(clock)
+        stopwatch = Stopwatch(clock)
     }
 
     /// The scanner takes codes now: nothing was accepted in this arming yet (RN `armed`).
@@ -55,7 +40,7 @@ public final class ScanGuard {
     // RN: src/ui/components/QrScanner.tsx:102-109
     public func focused() {
         arming += 1
-        ignore = handed.map { (data: $0, seen: stopwatch.elapsed()) }
+        ignore = handed.map { (data: $0, seen: stopwatch.now) }
     }
 
     /// The host turned the scanner back on (`active` false → true): a new arming, no ignore.
@@ -82,7 +67,7 @@ public final class ScanGuard {
         // RN passes no scan callback to the camera while disarmed, so nothing else happens.
         guard isArmed else { return false }
         if let ignore {
-            let now = stopwatch.elapsed()
+            let now = stopwatch.now
             // Still in view (seen within the gap): keep ignoring it. A different code, or the same
             // one after it left the frame, ends the ignore.
             if ignore.data == data && now - ignore.seen < Self.sameCodeGap {
