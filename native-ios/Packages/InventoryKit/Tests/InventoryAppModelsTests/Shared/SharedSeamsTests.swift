@@ -128,11 +128,11 @@ struct SharedHapticEventTests {
     @Test("a model plays haptics through an injected player")
     @MainActor
     func player() {
-        let played = SharedSeamsLog<HapticEvent>()
-        let player: HapticPlayer = { played.items.append($0) }
+        let haptics = SharedSeamsHapticRecorder()
+        let player: HapticPlayer = haptics.player
         player(.success)
         player(.reachedZero)
-        #expect(played.items == [.success, .reachedZero])
+        #expect(haptics.played == [.success, .reachedZero])
     }
 }
 
@@ -157,44 +157,21 @@ struct SharedConfirmOptionsTests {
         #expect(vector.buttons.map(\.style) == ["cancel", options.destructive ? "destructive" : "default"])
     }
 
-    @Test("a presenter answers a model's question")
+    @Test("a presenter answers a model's questions, in order, then cancels")
     @MainActor
     func presenter() async {
-        @MainActor
-        final class ScriptedConfirm: ConfirmPresenting {
-            var asked: [ConfirmOptions] = []
-            let answer: Bool
-            init(answer: Bool) { self.answer = answer }
-            func confirm(_ options: ConfirmOptions) async -> Bool {
-                asked.append(options)
-                return answer
-            }
-        }
-        let presenter = ScriptedConfirm(answer: false)
-        let presenting: any ConfirmPresenting = presenter
-        let options = ConfirmOptions(title: "Delete?", body: "Gone.", confirmLabel: "Delete")
-        #expect(await presenting.confirm(options) == false)
-        #expect(presenter.asked == [options])
+        let script = SharedSeamsConfirmScript(answers: [true])
+        let presenting: any ConfirmPresenting = script
+        let delete = ConfirmOptions(title: "Delete?", body: "Gone.", confirmLabel: "Delete")
+        let discard = ConfirmOptions(title: "Discard?", body: "Changes go.", confirmLabel: "Discard", cancelLabel: "Keep editing")
+        #expect(await presenting.confirm(delete) == true)
+        #expect(await presenting.confirm(discard) == false)
+        #expect(script.asked == [delete, discard])
     }
 }
 
 @Suite("Toast seam (src/providers/ToastProvider.tsx)")
 struct SharedToastSeamTests {
-    @MainActor
-    final class RecordingToasts: ToastPresenting {
-        var shown: [ToastOptions] = []
-        var dismissed: [String] = []
-
-        func show(_ options: ToastOptions) -> String {
-            shown.append(options)
-            return "toast-\(shown.count)"
-        }
-
-        func dismiss(_ id: String) {
-            dismissed.append(id)
-        }
-    }
-
     @Test("options default to an info toast living 5 s, 9 s with an action, or what the caller says")
     func defaults() {
         let plain = ToastOptions(message: "Saved")
@@ -211,7 +188,7 @@ struct SharedToastSeamTests {
     @Test("show returns the id, dismiss takes it, and the action runs on the main actor")
     @MainActor
     func presenting() {
-        let toasts = RecordingToasts()
+        let toasts = SharedSeamsToastRecorder()
         let presenter: any ToastPresenting = toasts
         let undone = SharedSeamsLog<String>()
         let id = presenter.show(ToastOptions(
@@ -221,31 +198,39 @@ struct SharedToastSeamTests {
         presenter.dismiss(id)
         #expect(id == "toast-1")
         #expect(toasts.dismissed == ["toast-1"])
-        let action = toasts.shown.first?.action
+        let action = toasts.shown.first?.options.action
         #expect(action?.accessibilityLabel == "Undo moving Cordless drill")
         action?.handler()
         #expect(undone.items == ["undo"])
-        presenter.show(ToastOptions(message: "Error", tone: .error))
-        #expect(toasts.shown.map(\.tone) == [.info, .error])
+        #expect(presenter.show(ToastOptions(message: "Error", tone: .error)) == "toast-2")
+        #expect(toasts.shown.map(\.options.tone) == [.info, .error])
+        #expect(toasts.messages == ["Moved to Tool chest (Garage)", "Error"])
+    }
+
+    @Test("pressing a recorded toast's action runs it and dismisses that toast")
+    @MainActor
+    func pressAction() {
+        let toasts = SharedSeamsToastRecorder()
+        let undone = SharedSeamsLog<String>()
+        let first = toasts.show(ToastOptions(message: "Moved", action: ToastAction(label: "Undo") { undone.items.append("first") }))
+        toasts.show(ToastOptions(message: "Saved"))
+        #expect(!toasts.pressAction())
+        #expect(toasts.pressAction(of: first))
+        #expect(undone.items == ["first"])
+        #expect(toasts.dismissed == [first])
     }
 }
 
 @Suite("Invalidation and app activity")
 struct SharedInvalidationAndActivityTests {
-    @MainActor
-    final class CountingInvalidator: InventoryInvalidating {
-        var revision = 0
-        func invalidate() { revision &+= 1 }
-    }
-
     @Test("a writer bumps the revision through the protocol")
     @MainActor
     func invalidates() {
-        let counter = CountingInvalidator()
+        let counter = SharedSeamsInvalidationCounter()
         let invalidator: any InventoryInvalidating = counter
         invalidator.invalidate()
         invalidator.invalidate()
-        #expect(counter.revision == 2)
+        #expect(counter.count == 2)
     }
 
     @Test("only active is active")
