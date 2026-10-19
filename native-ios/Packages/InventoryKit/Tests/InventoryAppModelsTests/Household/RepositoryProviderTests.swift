@@ -17,7 +17,7 @@ private final class LocalSlot {
 
 @MainActor
 @Suite("RepositoryProvider")
-struct RepositoryProviderTests {
+struct HouseholdRepositoryProviderTests {
     @Test("nothing before the database is ready; local while unpaired; shadowed household while paired")
     func composition() async throws {
         let household = try HouseholdModelFixture(keychain: InMemoryKeychain([KeychainKey.householdSession: householdModelSession.jsonString])) { request in
@@ -55,7 +55,7 @@ struct RepositoryProviderTests {
 
 @MainActor
 @Suite("UnpairedNoticeModel")
-struct UnpairedNoticeModelTests {
+struct HouseholdUnpairedNoticeModelTests {
     @Test("hidden until the preference is read, so it never flashes")
     func hiddenUntilRead() {
         let notice = UnpairedNoticeModel(preference: UnpairedNoticePreference(preferences: InMemoryPreferences()))

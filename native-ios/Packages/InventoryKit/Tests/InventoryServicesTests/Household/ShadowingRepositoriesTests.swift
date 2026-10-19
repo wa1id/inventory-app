@@ -68,6 +68,21 @@ struct ShadowingRepositoriesRulesTests {
         #expect(fixture.shadowFailures.isEmpty)
     }
 
+    // RN never cancelled a request. A cancelled caller must not abort a write the home server may
+    // already have applied, nor skip its mirror.
+    @Test("a caller that goes away does not abort a household write: it finishes and is mirrored")
+    func cancelledCallerStillMirrors() async throws {
+        let fixture = try ShadowFixture { _ in .json(201, spaceJSON, delay: .milliseconds(300)) }
+        let (repos, server) = (fixture.repos, fixture.server)
+        let write = Task { try await repos.spaces.create(CreateSpaceInput(name: "Garage", icon: "🚗", color: "#5B8DEF")) }
+        #expect(await householdEventually { server.requests.count == 1 })
+        write.cancel()
+        let space = try await write.value
+        #expect(space.id == "space-server")
+        #expect(try await fixture.local.spaces.getById("space-server")?.name == "Garage")
+        #expect(fixture.shadowFailures.isEmpty)
+    }
+
     @Test("reads and search go to the household only")
     func readsPassThrough() async throws {
         let fixture = try ShadowFixture { request in

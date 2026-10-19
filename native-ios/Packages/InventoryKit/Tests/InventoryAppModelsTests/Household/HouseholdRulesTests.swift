@@ -12,7 +12,7 @@ import Testing
 private let code = "MMWKY-M2H78-ABCDE-FGHJK-MNPQR-S"
 
 @Suite("validateJoin")
-struct ValidateJoinTests {
+struct HouseholdValidateJoinTests {
     @Test("passes a full code and a name")
     func passesAFullCodeAndAName() {
         #expect(validateJoin(normaliseCode(code), name: "Kitchen iPhone") == JoinErrors())
@@ -39,7 +39,7 @@ struct ValidateJoinTests {
 }
 
 @Suite("suggestedPhoneName")
-struct SuggestedPhoneNameTests {
+struct HouseholdSuggestedPhoneNameTests {
     @Test("keeps a real phone name")
     func keepsARealPhoneName() {
         #expect(suggestedPhoneName("Anna’s iPhone") == "Anna’s iPhone")
@@ -69,7 +69,7 @@ private let working = HouseholdStatus.BackupState.working
 private let failed = HouseholdStatus.BackupState.error
 
 @Suite("backupSummary")
-struct BackupSummaryTests {
+struct HouseholdBackupSummaryTests {
     @Test("always has a value, including Off")
     func alwaysHasAValueIncludingOff() {
         typealias Copy = L10n.Settings.BackupSummary
@@ -87,7 +87,7 @@ struct BackupSummaryTests {
 }
 
 @Suite("showBackupRow")
-struct ShowBackupRowTests {
+struct HouseholdShowBackupRowTests {
     @Test("always shows backup on a phone that keeps its own inventory")
     func alwaysShowsBackupOnAPhoneThatKeepsItsOwnInventory() {
         for state in [off, unavailable, idle, failed] {
@@ -110,7 +110,7 @@ struct ShowBackupRowTests {
 }
 
 @Suite("backupReason")
-struct BackupReasonTests {
+struct HouseholdBackupReasonTests {
     @Test("has plain words for every failure")
     func hasPlainWordsForEveryFailure() {
         typealias Copy = L10n.Backup.Reasons
@@ -146,7 +146,7 @@ struct BackupReasonTests {
 }
 
 @Suite("devices")
-struct DeviceStatusTests {
+struct HouseholdDeviceStatusTests {
     private let mine = HouseholdDevice(id: "b", name: "Anna’s iPhone", createdAt: 2, lastSeenAt: now)
     private let owner = HouseholdDevice(id: "a", name: "Kitchen iPhone", createdAt: 1, lastSeenAt: now - 3 * day)
     private let spare = HouseholdDevice(id: "c", name: "Old iPad", createdAt: 3, lastSeenAt: nil)

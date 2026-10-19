@@ -9,9 +9,9 @@ import InventoryStorage
 /// The SQL is shadow.ts's, statement for statement, with the same arguments, so the shadow rows
 /// are the ones the RN build wrote (`ShadowParityTests` replays a script through both). Two
 /// harmless differences: each mirror runs in one transaction, so a failure leaves nothing half
-/// written where RN could keep the first statements of a multi-statement mirror; and the
-/// mirror runs in a task of its own, so a caller that goes away after the server write does
-/// not cancel it.
+/// written where RN could keep the first statements of a multi-statement mirror; and a write
+/// with its mirror runs in a task of its own (``complete(_:)``), so a caller that goes away
+/// neither aborts the request half way nor skips the mirror.
 ///
 /// A mirror never fails the household write: the home server is the source of truth. A failure
 /// (a foreign key the local database lacks, a short code another local container holds) only
@@ -23,6 +23,18 @@ struct HouseholdShadowMirror: Sendable {
     /// RN `newId()` for a new tag.
     let makeId: @Sendable () -> String
     let telemetry: TelemetryReporter
+
+    /// Runs a household write and its mirror to the end, whatever happens to the caller's task.
+    ///
+    /// RN never cancelled a request: once sent, a write finished and was mirrored. A cancelled
+    /// Swift task would cancel its URLSession request, and the home server may already have
+    /// applied the write when the abort reaches it; the caller would then get a
+    /// `CancellationError` for a write that happened, and the shadow copy (what the phone backup
+    /// and a phone that leaves keep) would silently miss it. So the work runs in an unstructured
+    /// task, which a caller's cancellation does not reach, and its outcome is handed back.
+    func complete<Value: Sendable>(_ work: @escaping @Sendable () async throws -> Value) async throws -> Value {
+        try await Task { try await work() }.value
+    }
 
     /// RN `shadow(work)`: runs the mirror, swallows and reports any error.
     func run(_ work: @escaping @Sendable (Database) throws -> Void) async {

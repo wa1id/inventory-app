@@ -159,14 +159,22 @@ public final class HouseholdModel {
     /// which swaps the Household screen to its paired view before the join form has finished
     /// (04 §5), so the caller's join task must not belong to the form's view.
     ///
+    /// The request and the save run to the end even when the caller's task is cancelled (a join
+    /// screen going away), as RN's did: aborting `POST /v1/pair` after the server registered the
+    /// phone would leave a device row this phone has no token for, and the next attempt would
+    /// register it a second time.
+    ///
     /// - Throws: the pairing's ``HouseholdHttpError`` (a 401 is a refused code), or the
     ///   keychain's error when the session could not be saved. In that last case the server has
     ///   already registered the phone, which then shows in the household's list (RN parity).
     public func pair(bootstrapSecret: String, deviceName: String) async throws {
-        let pairing = try await client.pair(bootstrapSecret: bootstrapSecret, deviceName: deviceName)
-        let next = HouseholdSession(pairing: pairing)
-        let store = store
-        try await Task.detached { try store.save(next) }.value
+        let (client, store) = (client, store)
+        let next = try await Task.detached {
+            let pairing = try await client.pair(bootstrapSecret: bootstrapSecret, deviceName: deviceName)
+            let session = HouseholdSession(pairing: pairing)
+            try store.save(session)
+            return session
+        }.value
         sessionChanges += 1
         apply(next)
     }

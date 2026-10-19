@@ -51,7 +51,7 @@ private struct JoinFixture {
 
 @MainActor
 @Suite("JoinFormModel")
-struct JoinFormModelTests {
+struct HouseholdJoinFormModelTests {
     @Test("starts from the draft or the phone's own name; the caption names the build's server")
     func initialState() async throws {
         let fresh = try await JoinFixture(deviceName: "  Anna’s iPhone ")
@@ -140,6 +140,24 @@ struct JoinFormModelTests {
         #expect(joined?.hasImportOffer == true)
         // The drop-zone space is not counted; its items are.
         #expect(fixture.preferences.values[PreferenceKey.householdImportOffer] == #"{"spaces":1,"items":2}"#)
+    }
+
+    // A join whose task is cancelled still pairs (the request is never aborted), so the count
+    // before it must not fail either: once paired, the offer can never be made again.
+    @Test("a cancelled join still counts the phone's own inventory for the offer, then pairs")
+    func cancelledJoinKeepsTheOffer() async throws {
+        let local = try householdModelLocal()
+        _ = try await local.spaces.create(CreateSpaceInput(name: "Garage", icon: "", color: ""))
+        let fixture = try await JoinFixture(local: local)
+        fixture.form.updateCode(validCode)
+        fixture.form.updateName("Kitchen")
+        let form = fixture.form
+        let join = Task { await form.join() }
+        join.cancel()
+        let joined = await join.value
+        #expect(joined == HouseholdJoined(householdName: "Cabin", hasImportOffer: true))
+        #expect(fixture.preferences.values[PreferenceKey.householdImportOffer] == #"{"spaces":1,"items":0}"#)
+        #expect(fixture.household.household.session?.deviceId == "dev-9")
     }
 
     @Test("an empty phone, a phone that joined before, and a database not ready get no offer")

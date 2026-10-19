@@ -45,7 +45,8 @@ public struct HouseholdJoined: Sendable, Hashable {
 /// ``name`` / ``updateName(_:)``, shows ``errors`` under the fields and ``failure`` as a warning
 /// banner (`L10n.Join.offline` / `.other`, assertive), and runs ``join()`` from both the button
 /// and the name field's return key in a task the form does not own: pairing swaps the Household
-/// screen to its paired view before `join()` returns.
+/// screen to its paired view before `join()` returns. Once validation passed, a cancelled task
+/// does not stop a join half way: the offer count and the pairing run to the end, as in RN.
 @MainActor
 @Observable
 public final class JoinFormModel {
@@ -161,11 +162,16 @@ public final class JoinFormModel {
         defer { isJoining = false }
         do {
             // The local database, never the shadowed repositories: what the phone holds of its
-            // own, before any household write lands in it.
+            // own, before any household write lands in it. In a task of its own, like the pairing
+            // after it: a cancelled caller would fail the count (GRDB reads are cancellable), and
+            // once paired the offer can never be made again.
             if let local = localRepositories() {
-                await joinPreferences.snapshotBeforeJoin {
-                    (spaces: try await local.spaces.listWithCounts().count, items: try await local.items.countAll())
-                }
+                let joinPreferences = joinPreferences
+                await Task {
+                    await joinPreferences.snapshotBeforeJoin {
+                        (spaces: try await local.spaces.listWithCounts().count, items: try await local.items.countAll())
+                    }
+                }.value
             }
             try await household.pair(bootstrapSecret: code, deviceName: name.jsTrimmed())
             joinPreferences.markJoinedBefore()

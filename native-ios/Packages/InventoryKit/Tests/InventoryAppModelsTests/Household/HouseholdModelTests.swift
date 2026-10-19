@@ -160,6 +160,22 @@ struct HouseholdModelPairTests {
         #expect(fixture.storedSession == nil)
     }
 
+    // RN never cancelled a request: an aborted pairing could leave a device row this phone has no
+    // token for, and the next attempt would register the phone again.
+    @Test("a join screen going away does not abort the pairing: the phone is paired and saved, once")
+    func cancelledCallerStillPairs() async throws {
+        let fixture = try HouseholdModelFixture { _ in .json(200, Self.pairAnswer, delay: .milliseconds(300)) }
+        await fixture.household.load()
+        let household = fixture.household
+        let join = Task { try await household.pair(bootstrapSecret: "code", deviceName: "Pixel") }
+        #expect(await householdWaitUntil { fixture.server.requests.count == 1 })
+        join.cancel()
+        try await join.value
+        #expect(fixture.household.session?.deviceId == "dev-9")
+        #expect(fixture.storedSession?.contains(#""deviceId":"dev-9""#) == true)
+        #expect(fixture.server.requests.count == 1)
+    }
+
     @Test("a session the keychain refuses to save fails the join and stays unpaired")
     func saveFailure() async throws {
         let keychain = InMemoryKeychain()

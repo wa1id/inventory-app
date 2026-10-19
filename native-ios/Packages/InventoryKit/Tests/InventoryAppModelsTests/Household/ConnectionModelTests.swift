@@ -450,6 +450,43 @@ struct ConnectionModelEffectsTests {
     }
 }
 
+@MainActor
+@Suite("ConnectionModel: timing (04 §3.1, §9.1)")
+struct ConnectionModelTimingTests {
+    @Test("the offline delay, ping interval, health deadline, refresh throttle and leave deadline are RN's")
+    func constants() {
+        #expect(ConnectionModel.offlineDelay == .milliseconds(2500))
+        #expect(ConnectionModel.healthPingInterval == .seconds(10))
+        #expect(ConnectionModel.healthTimeout == .seconds(5))
+        #expect(ConnectionModel.resumeRefreshInterval == .seconds(5))
+        #expect(HouseholdModel.leaveRevokeTimeout == .seconds(5))
+    }
+
+    @Test("a health ping gets 5 s; one that gets no answer by then reports offline")
+    func pingDeadline() async throws {
+        let clock = ManualClock()
+        let hub = ReachabilityHub()
+        let server = StubServer { _ in .json(200, #"{"ok":true,"contractVersion":1}"#, delay: .seconds(60)) }
+        let client = HouseholdClient(
+            origin: "https://inventory.wystudio.be", token: nil, transport: HouseholdModelStubTransport(server),
+            reachability: hub, clock: clock, telemetry: NetworkTelemetry(event: { _, _ in }, error: { _, _ in })
+        )
+        let model = ConnectionModel(
+            reachability: hub, client: client, invalidator: SharedSeamsInvalidationCounter(),
+            joinPreferences: HouseholdJoinPreferences(preferences: InMemoryPreferences()), clock: clock
+        )
+        model.sessionChanged(householdModelSession)
+        model.retry()
+        try await clock.waitForSleepers(1)
+        #expect(clock.nextDeadline == ManualClock.Instant(offset: .seconds(5)))
+        await clock.advance(by: .milliseconds(4999))
+        await householdSettle()
+        #expect(model.state == .online)
+        await clock.advance(by: .milliseconds(1))
+        #expect(await householdWaitUntil { model.state == .unsure })
+    }
+}
+
 /// What the model asked VoiceOver to say.
 @MainActor
 private final class HouseholdAnnouncementRecorder {
