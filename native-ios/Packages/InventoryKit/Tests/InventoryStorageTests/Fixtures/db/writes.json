@@ -1,0 +1,2458 @@
+{
+ "seeds": {
+  "clockStart": 1770000000000,
+  "clockStep": 3,
+  "idSeed": 1924845,
+  "codeSeed": 3235823838
+ },
+ "steps": [
+  {
+   "op": "sql",
+   "sql": "UPDATE spaces SET created_at = 0, updated_at = 0 WHERE kind = 'system'",
+   "ok": null
+  },
+  {
+   "op": "sql",
+   "sql": "UPDATE containers SET created_at = 0, updated_at = 0 WHERE kind = 'system'",
+   "ok": null
+  },
+  {
+   "op": "spaces.create",
+   "as": "attic",
+   "input": {
+    "name": "  Attic  ",
+    "icon": "box",
+    "color": "#E4572E"
+   },
+   "ok": {
+    "id": "36f71d6f-a025-4116-8907-570415467993",
+    "name": "Attic",
+    "icon": "box",
+    "color": "#E4572E",
+    "createdAt": 1770000000003,
+    "updatedAt": 1770000000003
+   }
+  },
+  {
+   "op": "spaces.create",
+   "as": "loft",
+   "input": {
+    "name": "﻿Loft　",
+    "icon": "🏠",
+    "color": "#2E9E4F"
+   },
+   "ok": {
+    "id": "d38eb618-d9d0-42c2-ad20-8d6e026e826c",
+    "name": "Loft",
+    "icon": "🏠",
+    "color": "#2E9E4F",
+    "createdAt": 1770000000006,
+    "updatedAt": 1770000000006
+   }
+  },
+  {
+   "op": "spaces.create",
+   "as": "nel",
+   "input": {
+    "name": "Nel",
+    "icon": "",
+    "color": ""
+   },
+   "ok": {
+    "id": "77db4e83-c57a-4aaf-a0af-3765ac891c5e",
+    "name": "Nel",
+    "icon": "",
+    "color": "",
+    "createdAt": 1770000000009,
+    "updatedAt": 1770000000009
+   }
+  },
+  {
+   "op": "spaces.create",
+   "as": "blank",
+   "input": {
+    "name": " \t\n ",
+    "icon": "x",
+    "color": "#000"
+   },
+   "ok": {
+    "id": "46b8ce24-160e-41fa-98a5-34ca0e0c5134",
+    "name": "",
+    "icon": "x",
+    "color": "#000",
+    "createdAt": 1770000000012,
+    "updatedAt": 1770000000012
+   }
+  },
+  {
+   "op": "spaces.create",
+   "as": "greek",
+   "input": {
+    "name": "ΑΠΟΘΗΚΗ ΣΑΣ",
+    "icon": "g",
+    "color": "#111111"
+   },
+   "ok": {
+    "id": "993243ec-68d2-4702-a6ae-77c337d08d45",
+    "name": "ΑΠΟΘΗΚΗ ΣΑΣ",
+    "icon": "g",
+    "color": "#111111",
+    "createdAt": 1770000000015,
+    "updatedAt": 1770000000015
+   }
+  },
+  {
+   "op": "spaces.update",
+   "id": "@loft",
+   "input": {
+    "name": "  "
+   },
+   "ok": {
+    "id": "d38eb618-d9d0-42c2-ad20-8d6e026e826c",
+    "name": "",
+    "icon": "🏠",
+    "color": "#2E9E4F",
+    "createdAt": 1770000000006,
+    "updatedAt": 1770000000018
+   }
+  },
+  {
+   "op": "spaces.update",
+   "id": "@attic",
+   "input": {
+    "icon": "📦"
+   },
+   "ok": {
+    "id": "36f71d6f-a025-4116-8907-570415467993",
+    "name": "Attic",
+    "icon": "📦",
+    "color": "#E4572E",
+    "createdAt": 1770000000003,
+    "updatedAt": 1770000000021
+   }
+  },
+  {
+   "op": "spaces.update",
+   "id": "@attic",
+   "input": {
+    "name": " Attic ",
+    "color": "#123456"
+   },
+   "ok": {
+    "id": "36f71d6f-a025-4116-8907-570415467993",
+    "name": "Attic",
+    "icon": "📦",
+    "color": "#123456",
+    "createdAt": 1770000000003,
+    "updatedAt": 1770000000024
+   }
+  },
+  {
+   "op": "spaces.update",
+   "id": "drop-zone-space",
+   "input": {
+    "name": "Mine"
+   },
+   "error": "system_record"
+  },
+  {
+   "op": "spaces.update",
+   "id": "no-such-space",
+   "input": {
+    "name": "x"
+   },
+   "ok": null
+  },
+  {
+   "op": "containers.create",
+   "as": "box",
+   "input": {
+    "spaceId": "@attic",
+    "visualType": "box",
+    "name": " Tool Box "
+   },
+   "ok": {
+    "id": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+    "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+    "name": "Tool Box",
+    "visualType": "box",
+    "shortCode": "BOX-MTKW",
+    "createdAt": 1770000000027,
+    "updatedAt": 1770000000027
+   }
+  },
+  {
+   "op": "containers.create",
+   "as": "drawer",
+   "input": {
+    "spaceId": "@attic",
+    "visualType": "drawer",
+    "name": "   "
+   },
+   "ok": {
+    "id": "2194ef90-e914-4177-83be-bbcd4cb2a089",
+    "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+    "name": null,
+    "visualType": "drawer",
+    "shortCode": "DRW-HAGN",
+    "createdAt": 1770000000030,
+    "updatedAt": 1770000000030
+   }
+  },
+  {
+   "op": "containers.create",
+   "as": "shelf",
+   "input": {
+    "spaceId": "@greek",
+    "visualType": "shelf",
+    "name": " ΡΑΦΙ "
+   },
+   "ok": {
+    "id": "e22c58d6-ae64-4ffe-995c-399b7bef912d",
+    "spaceId": "993243ec-68d2-4702-a6ae-77c337d08d45",
+    "name": "ΡΑΦΙ",
+    "visualType": "shelf",
+    "shortCode": "SHF-YGM7",
+    "createdAt": 1770000000033,
+    "updatedAt": 1770000000033
+   }
+  },
+  {
+   "op": "containers.create",
+   "as": "trunk",
+   "input": {
+    "spaceId": "@loft",
+    "visualType": "Trunk",
+    "name": null
+   },
+   "ok": {
+    "id": "e5debc39-3ea8-4298-b35c-989796c95e0e",
+    "spaceId": "d38eb618-d9d0-42c2-ad20-8d6e026e826c",
+    "name": null,
+    "visualType": "Trunk",
+    "shortCode": "CTR-9N8Y",
+    "createdAt": 1770000000036,
+    "updatedAt": 1770000000036
+   }
+  },
+  {
+   "op": "containers.create",
+   "input": {
+    "spaceId": "no-such-space",
+    "visualType": "bin"
+   },
+   "error": "Could not allocate a unique container code. Please try again."
+  },
+  {
+   "op": "containers.create",
+   "as": "bag",
+   "input": {
+    "spaceId": "@nel",
+    "visualType": "bag"
+   },
+   "ok": {
+    "id": "85903fce-8643-4164-a943-18707ca93125",
+    "spaceId": "77db4e83-c57a-4aaf-a0af-3765ac891c5e",
+    "name": null,
+    "visualType": "bag",
+    "shortCode": "BAG-DTCU",
+    "createdAt": 1770000000042,
+    "updatedAt": 1770000000042
+   }
+  },
+  {
+   "op": "containers.update",
+   "id": "@drawer",
+   "input": {
+    "name": " Cutlery "
+   },
+   "ok": {
+    "id": "2194ef90-e914-4177-83be-bbcd4cb2a089",
+    "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+    "name": "Cutlery",
+    "visualType": "drawer",
+    "shortCode": "DRW-HAGN",
+    "createdAt": 1770000000030,
+    "updatedAt": 1770000000045
+   }
+  },
+  {
+   "op": "containers.update",
+   "id": "@drawer",
+   "input": {
+    "visualType": "cabinet"
+   },
+   "ok": {
+    "id": "2194ef90-e914-4177-83be-bbcd4cb2a089",
+    "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+    "name": "Cutlery",
+    "visualType": "cabinet",
+    "shortCode": "DRW-HAGN",
+    "createdAt": 1770000000030,
+    "updatedAt": 1770000000048
+   }
+  },
+  {
+   "op": "containers.update",
+   "id": "@drawer",
+   "input": {
+    "name": null
+   },
+   "ok": {
+    "id": "2194ef90-e914-4177-83be-bbcd4cb2a089",
+    "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+    "name": null,
+    "visualType": "cabinet",
+    "shortCode": "DRW-HAGN",
+    "createdAt": 1770000000030,
+    "updatedAt": 1770000000051
+   }
+  },
+  {
+   "op": "containers.update",
+   "id": "@box",
+   "input": {
+    "name": "  ",
+    "visualType": "crate"
+   },
+   "ok": {
+    "id": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+    "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+    "name": null,
+    "visualType": "crate",
+    "shortCode": "BOX-MTKW",
+    "createdAt": 1770000000027,
+    "updatedAt": 1770000000054
+   }
+  },
+  {
+   "op": "containers.update",
+   "id": "@box",
+   "input": {
+    "name": "Tool Box"
+   },
+   "ok": {
+    "id": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+    "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+    "name": "Tool Box",
+    "visualType": "crate",
+    "shortCode": "BOX-MTKW",
+    "createdAt": 1770000000027,
+    "updatedAt": 1770000000057
+   }
+  },
+  {
+   "op": "containers.update",
+   "id": "@bag",
+   "input": {
+    "spaceId": "drop-zone-space"
+   },
+   "ok": {
+    "id": "85903fce-8643-4164-a943-18707ca93125",
+    "spaceId": "drop-zone-space",
+    "name": null,
+    "visualType": "bag",
+    "shortCode": "BAG-DTCU",
+    "createdAt": 1770000000042,
+    "updatedAt": 1770000000060
+   }
+  },
+  {
+   "op": "containers.update",
+   "id": "@bag",
+   "input": {
+    "spaceId": "no-such-space"
+   },
+   "error": "Error: FOREIGN KEY constraint failed"
+  },
+  {
+   "op": "containers.update",
+   "id": "drop-zone",
+   "input": {
+    "name": "x"
+   },
+   "error": "system_record"
+  },
+  {
+   "op": "containers.update",
+   "id": "no-such-container",
+   "input": {},
+   "ok": null
+  },
+  {
+   "op": "items.create",
+   "as": "drill",
+   "input": {
+    "containerId": "@box",
+    "name": " Cordless Drill ",
+    "category": " Power Tools ",
+    "quantity": 2,
+    "notes": "\n Charger \t",
+    "tags": [
+     "  DeWalt ",
+     "dewalt",
+     "DEWALT",
+     "",
+     "   ",
+     "18V"
+    ],
+    "photo": {
+     "uri": "file:///p/drill.webp",
+     "thumbUri": "file:///p/drill-thumb.webp",
+     "width": 1400,
+     "height": 1050,
+     "byteSize": 1234
+    }
+   },
+   "ok": {
+    "id": "d4886d19-44f6-478f-a5cd-6477db8268fe",
+    "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+    "name": "Cordless Drill",
+    "category": "Power Tools",
+    "quantity": 2,
+    "notes": "Charger",
+    "createdAt": 1770000000066,
+    "updatedAt": 1770000000066
+   }
+  },
+  {
+   "op": "items.create",
+   "as": "sigma",
+   "input": {
+    "containerId": "@shelf",
+    "name": "ΟΔΟΣ ΣΑΣ Σ",
+    "category": "aΣ.",
+    "tags": [
+     "ΣΑΣ",
+     "σας",
+     "İstanbul",
+     "i̇stanbul"
+    ]
+   },
+   "ok": {
+    "id": "9d31c5fd-bd88-4d49-9e16-2bc525a89670",
+    "containerId": "e22c58d6-ae64-4ffe-995c-399b7bef912d",
+    "name": "ΟΔΟΣ ΣΑΣ Σ",
+    "category": "aΣ.",
+    "quantity": 1,
+    "notes": null,
+    "createdAt": 1770000000075,
+    "updatedAt": 1770000000075
+   }
+  },
+  {
+   "op": "items.create",
+   "as": "misc",
+   "input": {
+    "containerId": "@drawer",
+    "name": "Straße ǅ ﬁle ™ ẞ",
+    "category": "Küche",
+    "tags": [
+     "Ölkanne",
+     "ölkanne",
+     "café",
+     "café",
+     "﻿ "
+    ],
+    "photo": {
+     "id": "given-photo",
+     "uri": "r2:x"
+    }
+   },
+   "ok": {
+    "id": "cdb851da-b4d5-4cf1-8c58-faca62736b7a",
+    "containerId": "2194ef90-e914-4177-83be-bbcd4cb2a089",
+    "name": "Straße ǅ ﬁle ™ ẞ",
+    "category": "Küche",
+    "quantity": 1,
+    "notes": null,
+    "createdAt": 1770000000084,
+    "updatedAt": 1770000000084
+   }
+  },
+  {
+   "op": "items.create",
+   "as": "unnamed",
+   "input": {
+    "containerId": "drop-zone"
+   },
+   "ok": {
+    "id": "acb0e075-4fcf-4c83-88a5-021cb3071b4d",
+    "containerId": "drop-zone",
+    "name": "",
+    "category": null,
+    "quantity": 1,
+    "notes": null,
+    "createdAt": 1770000000096,
+    "updatedAt": 1770000000096
+   }
+  },
+  {
+   "op": "items.create",
+   "as": "zero",
+   "input": {
+    "containerId": "@box",
+    "name": "Nails",
+    "quantity": 0,
+    "category": "  ",
+    "notes": "  "
+   },
+   "ok": {
+    "id": "3b21e21a-71a7-4cdd-b47f-b10486475e3c",
+    "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+    "name": "Nails",
+    "category": null,
+    "quantity": 0,
+    "notes": null,
+    "createdAt": 1770000000099,
+    "updatedAt": 1770000000099
+   }
+  },
+  {
+   "op": "items.create",
+   "input": {
+    "containerId": "@box",
+    "name": "  "
+   },
+   "error": "Item name is required."
+  },
+  {
+   "op": "items.create",
+   "input": {
+    "containerId": "@box",
+    "name": "  ",
+    "quantity": -1
+   },
+   "error": "Quantity must be a whole number of 0 or more."
+  },
+  {
+   "op": "items.create",
+   "input": {
+    "containerId": "no-such-container",
+    "name": "Ghost",
+    "photo": {
+     "uri": "file:///ghost"
+    },
+    "tags": [
+     "ghost"
+    ]
+   },
+   "error": "Error: FOREIGN KEY constraint failed"
+  },
+  {
+   "op": "items.create",
+   "as": "big",
+   "input": {
+    "containerId": "@trunk",
+    "name": "Screws",
+    "quantity": 12345,
+    "tags": [
+     "dewalt"
+    ],
+    "category": null,
+    "notes": null
+   },
+   "ok": {
+    "id": "d5ab042c-f18d-4e0d-8b83-801eb822657b",
+    "containerId": "e5debc39-3ea8-4298-b35c-989796c95e0e",
+    "name": "Screws",
+    "category": null,
+    "quantity": 12345,
+    "notes": null,
+    "createdAt": 1770000000111,
+    "updatedAt": 1770000000111
+   }
+  },
+  {
+   "op": "sql",
+   "sql": "UPDATE item_photos SET remote_synced_at = 5",
+   "ok": null
+  },
+  {
+   "op": "items.update",
+   "id": "@drill",
+   "input": {
+    "name": "Impact Drill",
+    "tags": [
+     "DeWalt",
+     "new tag",
+     "NEW TAG"
+    ]
+   },
+   "ok": {
+    "id": "d4886d19-44f6-478f-a5cd-6477db8268fe",
+    "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+    "name": "Impact Drill",
+    "category": "Power Tools",
+    "quantity": 2,
+    "notes": "Charger",
+    "createdAt": 1770000000066,
+    "updatedAt": 1770000000114
+   }
+  },
+  {
+   "op": "items.update",
+   "id": "@drill",
+   "input": {
+    "category": null,
+    "notes": "  "
+   },
+   "ok": {
+    "id": "d4886d19-44f6-478f-a5cd-6477db8268fe",
+    "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+    "name": "Impact Drill",
+    "category": null,
+    "quantity": 2,
+    "notes": null,
+    "createdAt": 1770000000066,
+    "updatedAt": 1770000000120
+   }
+  },
+  {
+   "op": "items.update",
+   "id": "@drill",
+   "input": {
+    "photo": {
+     "id": "ignored",
+     "uri": "file:///p/drill2.webp",
+     "width": 10
+    }
+   },
+   "ok": {
+    "id": "d4886d19-44f6-478f-a5cd-6477db8268fe",
+    "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+    "name": "Impact Drill",
+    "category": null,
+    "quantity": 2,
+    "notes": null,
+    "createdAt": 1770000000066,
+    "updatedAt": 1770000000123
+   }
+  },
+  {
+   "op": "items.update",
+   "id": "@misc",
+   "input": {
+    "photo": null
+   },
+   "ok": {
+    "id": "cdb851da-b4d5-4cf1-8c58-faca62736b7a",
+    "containerId": "2194ef90-e914-4177-83be-bbcd4cb2a089",
+    "name": "Straße ǅ ﬁle ™ ẞ",
+    "category": "Küche",
+    "quantity": 1,
+    "notes": null,
+    "createdAt": 1770000000084,
+    "updatedAt": 1770000000129
+   }
+  },
+  {
+   "op": "items.update",
+   "id": "@unnamed",
+   "input": {
+    "containerId": "@box",
+    "expectedUpdatedAt": "@unnamed.updatedAt"
+   },
+   "ok": {
+    "id": "acb0e075-4fcf-4c83-88a5-021cb3071b4d",
+    "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+    "name": "",
+    "category": null,
+    "quantity": 1,
+    "notes": null,
+    "createdAt": 1770000000096,
+    "updatedAt": 1770000000132
+   }
+  },
+  {
+   "op": "items.update",
+   "id": "@unnamed",
+   "input": {
+    "quantity": 3,
+    "tags": [
+     "lost"
+    ],
+    "expectedUpdatedAt": 1
+   },
+   "error": "conflict"
+  },
+  {
+   "op": "items.update",
+   "id": "no-such-item",
+   "input": {
+    "quantity": 3,
+    "expectedUpdatedAt": 1
+   },
+   "ok": null
+  },
+  {
+   "op": "items.update",
+   "id": "@zero",
+   "input": {
+    "name": "  "
+   },
+   "error": "Item name is required."
+  },
+  {
+   "op": "items.update",
+   "id": "@zero",
+   "input": {
+    "quantity": -2,
+    "name": "  "
+   },
+   "error": "Quantity must be a whole number of 0 or more."
+  },
+  {
+   "op": "items.update",
+   "id": "@sigma",
+   "input": {
+    "tags": []
+   },
+   "ok": {
+    "id": "9d31c5fd-bd88-4d49-9e16-2bc525a89670",
+    "containerId": "e22c58d6-ae64-4ffe-995c-399b7bef912d",
+    "name": "ΟΔΟΣ ΣΑΣ Σ",
+    "category": "aΣ.",
+    "quantity": 1,
+    "notes": null,
+    "createdAt": 1770000000075,
+    "updatedAt": 1770000000138
+   }
+  },
+  {
+   "op": "items.update",
+   "id": "@sigma",
+   "input": {
+    "category": " ΣΑΣ ",
+    "quantity": 1
+   },
+   "ok": {
+    "id": "9d31c5fd-bd88-4d49-9e16-2bc525a89670",
+    "containerId": "e22c58d6-ae64-4ffe-995c-399b7bef912d",
+    "name": "ΟΔΟΣ ΣΑΣ Σ",
+    "category": "ΣΑΣ",
+    "quantity": 1,
+    "notes": null,
+    "createdAt": 1770000000075,
+    "updatedAt": 1770000000141
+   }
+  },
+  {
+   "op": "sql",
+   "sql": "UPDATE items SET search_text = 'Ärmel' WHERE name = 'Screws'",
+   "ok": null
+  },
+  {
+   "op": "items.update",
+   "id": "@big",
+   "input": {
+    "quantity": 9
+   },
+   "ok": {
+    "id": "d5ab042c-f18d-4e0d-8b83-801eb822657b",
+    "containerId": "e5debc39-3ea8-4298-b35c-989796c95e0e",
+    "name": "Screws",
+    "category": null,
+    "quantity": 9,
+    "notes": null,
+    "createdAt": 1770000000111,
+    "updatedAt": 1770000000144
+   }
+  },
+  {
+   "op": "qr.createAndBind",
+   "as": "label1",
+   "containerId": "@box",
+   "ok": {
+    "id": "2840e743-7831-4328-950b-b7b62d95f964",
+    "token": "4ba88b16ea9cf95e62c8003f6a13b960",
+    "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+    "createdAt": 1770000000147,
+    "updatedAt": 1770000000147
+   }
+  },
+  {
+   "op": "qr.createAndBind",
+   "as": "label2",
+   "containerId": "@box",
+   "ok": {
+    "id": "bd428877-57bf-4985-ac47-d77631dfe6b2",
+    "token": "fc7100f26e23ab70fef442903c2e885d",
+    "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+    "createdAt": 1770000000150,
+    "updatedAt": 1770000000150
+   }
+  },
+  {
+   "op": "qr.bind",
+   "as": "label3",
+   "token": "@label2.token",
+   "containerId": "@shelf",
+   "ok": {
+    "id": "273c6c73-33fb-4dcc-9cd7-cb254a560926",
+    "token": "fc7100f26e23ab70fef442903c2e885d",
+    "containerId": "e22c58d6-ae64-4ffe-995c-399b7bef912d",
+    "createdAt": 1770000000153,
+    "updatedAt": 1770000000153
+   }
+  },
+  {
+   "op": "qr.bind",
+   "as": "label4",
+   "token": "ABCDEF",
+   "containerId": "@drawer",
+   "ok": {
+    "id": "0b7e9e64-cf85-454a-8993-6202b4052965",
+    "token": "ABCDEF",
+    "containerId": "2194ef90-e914-4177-83be-bbcd4cb2a089",
+    "createdAt": 1770000000156,
+    "updatedAt": 1770000000156
+   }
+  },
+  {
+   "op": "qr.createAndBind",
+   "containerId": "drop-zone",
+   "error": "system_record"
+  },
+  {
+   "op": "qr.bind",
+   "token": "@label3.token",
+   "containerId": "no-such-container",
+   "error": "Error: FOREIGN KEY constraint failed"
+  },
+  {
+   "op": "qr.unbind",
+   "containerId": "@drawer",
+   "ok": true
+  },
+  {
+   "op": "qr.unbind",
+   "containerId": "@drawer",
+   "ok": false
+  },
+  {
+   "op": "sql",
+   "sql": "UPDATE sync_deletions SET deleted_at = 0",
+   "ok": null
+  },
+  {
+   "op": "dump",
+   "ok": {
+    "spaces": [
+     {
+      "id": "drop-zone-space",
+      "name": "Drop zone",
+      "icon": "📥",
+      "color": "#0F9BB0",
+      "created_at": 0,
+      "updated_at": 0,
+      "kind": "system"
+     },
+     {
+      "id": "36f71d6f-a025-4116-8907-570415467993",
+      "name": "Attic",
+      "icon": "📦",
+      "color": "#123456",
+      "created_at": 1770000000003,
+      "updated_at": 1770000000024,
+      "kind": "normal"
+     },
+     {
+      "id": "d38eb618-d9d0-42c2-ad20-8d6e026e826c",
+      "name": "",
+      "icon": "🏠",
+      "color": "#2E9E4F",
+      "created_at": 1770000000006,
+      "updated_at": 1770000000018,
+      "kind": "normal"
+     },
+     {
+      "id": "77db4e83-c57a-4aaf-a0af-3765ac891c5e",
+      "name": "Nel",
+      "icon": "",
+      "color": "",
+      "created_at": 1770000000009,
+      "updated_at": 1770000000009,
+      "kind": "normal"
+     },
+     {
+      "id": "46b8ce24-160e-41fa-98a5-34ca0e0c5134",
+      "name": "",
+      "icon": "x",
+      "color": "#000",
+      "created_at": 1770000000012,
+      "updated_at": 1770000000012,
+      "kind": "normal"
+     },
+     {
+      "id": "993243ec-68d2-4702-a6ae-77c337d08d45",
+      "name": "ΑΠΟΘΗΚΗ ΣΑΣ",
+      "icon": "g",
+      "color": "#111111",
+      "created_at": 1770000000015,
+      "updated_at": 1770000000015,
+      "kind": "normal"
+     }
+    ],
+    "containers": [
+     {
+      "id": "drop-zone",
+      "space_id": "drop-zone-space",
+      "name": "Drop zone",
+      "visual_type": "other",
+      "short_code": "DROP-ZONE",
+      "created_at": 0,
+      "updated_at": 0,
+      "kind": "system"
+     },
+     {
+      "id": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "space_id": "36f71d6f-a025-4116-8907-570415467993",
+      "name": "Tool Box",
+      "visual_type": "crate",
+      "short_code": "BOX-MTKW",
+      "created_at": 1770000000027,
+      "updated_at": 1770000000057,
+      "kind": "normal"
+     },
+     {
+      "id": "2194ef90-e914-4177-83be-bbcd4cb2a089",
+      "space_id": "36f71d6f-a025-4116-8907-570415467993",
+      "name": null,
+      "visual_type": "cabinet",
+      "short_code": "DRW-HAGN",
+      "created_at": 1770000000030,
+      "updated_at": 1770000000051,
+      "kind": "normal"
+     },
+     {
+      "id": "e22c58d6-ae64-4ffe-995c-399b7bef912d",
+      "space_id": "993243ec-68d2-4702-a6ae-77c337d08d45",
+      "name": "ΡΑΦΙ",
+      "visual_type": "shelf",
+      "short_code": "SHF-YGM7",
+      "created_at": 1770000000033,
+      "updated_at": 1770000000033,
+      "kind": "normal"
+     },
+     {
+      "id": "e5debc39-3ea8-4298-b35c-989796c95e0e",
+      "space_id": "d38eb618-d9d0-42c2-ad20-8d6e026e826c",
+      "name": null,
+      "visual_type": "Trunk",
+      "short_code": "CTR-9N8Y",
+      "created_at": 1770000000036,
+      "updated_at": 1770000000036,
+      "kind": "normal"
+     },
+     {
+      "id": "85903fce-8643-4164-a943-18707ca93125",
+      "space_id": "drop-zone-space",
+      "name": null,
+      "visual_type": "bag",
+      "short_code": "BAG-DTCU",
+      "created_at": 1770000000042,
+      "updated_at": 1770000000060,
+      "kind": "normal"
+     }
+    ],
+    "item_photos": [
+     {
+      "id": "e3179ed8-67ae-4343-b35f-360aa84ae7b3",
+      "item_id": "d4886d19-44f6-478f-a5cd-6477db8268fe",
+      "uri": "file:///p/drill2.webp",
+      "width": 10,
+      "height": null,
+      "byte_size": null,
+      "created_at": 1770000000126,
+      "remote_synced_at": null,
+      "thumb_uri": null
+     }
+    ],
+    "tags": [
+     {
+      "id": "56acbbd7-d8a7-4e63-806a-f969d348de00",
+      "name": "DeWalt",
+      "normalized_name": "dewalt",
+      "created_at": 1770000000069
+     },
+     {
+      "id": "be10f57e-6b80-436e-8c9d-a7d9d75b9fe2",
+      "name": "18V",
+      "normalized_name": "18v",
+      "created_at": 1770000000072
+     },
+     {
+      "id": "dbd62192-bcb0-4ab4-9e65-6408655b054a",
+      "name": "ΣΑΣ",
+      "normalized_name": "σας",
+      "created_at": 1770000000078
+     },
+     {
+      "id": "74590959-1ea4-4310-b233-242230606ef7",
+      "name": "İstanbul",
+      "normalized_name": "i̇stanbul",
+      "created_at": 1770000000081
+     },
+     {
+      "id": "fca7789d-b88f-44ac-bde7-037c673276e0",
+      "name": "Ölkanne",
+      "normalized_name": "ölkanne",
+      "created_at": 1770000000087
+     },
+     {
+      "id": "1e9d71b8-1c03-47e8-843f-bf0b8c2abed0",
+      "name": "café",
+      "normalized_name": "café",
+      "created_at": 1770000000090
+     },
+     {
+      "id": "a6e6785f-dc5c-4932-9a1b-db3150e7f31b",
+      "name": "café",
+      "normalized_name": "café",
+      "created_at": 1770000000093
+     },
+     {
+      "id": "93616b22-683a-41fc-a3f3-f4eb9f6978f9",
+      "name": "new tag",
+      "normalized_name": "new tag",
+      "created_at": 1770000000117
+     }
+    ],
+    "item_tags": [
+     {
+      "item_id": "cdb851da-b4d5-4cf1-8c58-faca62736b7a",
+      "tag_id": "fca7789d-b88f-44ac-bde7-037c673276e0"
+     },
+     {
+      "item_id": "cdb851da-b4d5-4cf1-8c58-faca62736b7a",
+      "tag_id": "1e9d71b8-1c03-47e8-843f-bf0b8c2abed0"
+     },
+     {
+      "item_id": "cdb851da-b4d5-4cf1-8c58-faca62736b7a",
+      "tag_id": "a6e6785f-dc5c-4932-9a1b-db3150e7f31b"
+     },
+     {
+      "item_id": "d5ab042c-f18d-4e0d-8b83-801eb822657b",
+      "tag_id": "56acbbd7-d8a7-4e63-806a-f969d348de00"
+     },
+     {
+      "item_id": "d4886d19-44f6-478f-a5cd-6477db8268fe",
+      "tag_id": "56acbbd7-d8a7-4e63-806a-f969d348de00"
+     },
+     {
+      "item_id": "d4886d19-44f6-478f-a5cd-6477db8268fe",
+      "tag_id": "93616b22-683a-41fc-a3f3-f4eb9f6978f9"
+     }
+    ],
+    "qr_bindings": [
+     {
+      "id": "273c6c73-33fb-4dcc-9cd7-cb254a560926",
+      "token": "fc7100f26e23ab70fef442903c2e885d",
+      "container_id": "e22c58d6-ae64-4ffe-995c-399b7bef912d",
+      "created_at": 1770000000153,
+      "updated_at": 1770000000153
+     }
+    ],
+    "sync_deletions": [
+     {
+      "photo_id": "42c3561b-8eb5-4d7d-bdfd-5eb210f48587",
+      "deleted_at": 0
+     },
+     {
+      "photo_id": "given-photo",
+      "deleted_at": 0
+     }
+    ],
+    "items": [
+     {
+      "id": "d4886d19-44f6-478f-a5cd-6477db8268fe",
+      "container_id": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "name": "Impact Drill",
+      "category": null,
+      "quantity": 2,
+      "notes": null,
+      "created_at": 1770000000066,
+      "updated_at": 1770000000123,
+      "search_text": "impact drill"
+     },
+     {
+      "id": "9d31c5fd-bd88-4d49-9e16-2bc525a89670",
+      "container_id": "e22c58d6-ae64-4ffe-995c-399b7bef912d",
+      "name": "ΟΔΟΣ ΣΑΣ Σ",
+      "category": "ΣΑΣ",
+      "quantity": 1,
+      "notes": null,
+      "created_at": 1770000000075,
+      "updated_at": 1770000000141,
+      "search_text": "οδος σας σ σας"
+     },
+     {
+      "id": "cdb851da-b4d5-4cf1-8c58-faca62736b7a",
+      "container_id": "2194ef90-e914-4177-83be-bbcd4cb2a089",
+      "name": "Straße ǅ ﬁle ™ ẞ",
+      "category": "Küche",
+      "quantity": 1,
+      "notes": null,
+      "created_at": 1770000000084,
+      "updated_at": 1770000000129,
+      "search_text": "straße ǆ ﬁle ™ ß küche"
+     },
+     {
+      "id": "acb0e075-4fcf-4c83-88a5-021cb3071b4d",
+      "container_id": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "name": "",
+      "category": null,
+      "quantity": 1,
+      "notes": null,
+      "created_at": 1770000000096,
+      "updated_at": 1770000000132,
+      "search_text": ""
+     },
+     {
+      "id": "3b21e21a-71a7-4cdd-b47f-b10486475e3c",
+      "container_id": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "name": "Nails",
+      "category": null,
+      "quantity": 0,
+      "notes": null,
+      "created_at": 1770000000099,
+      "updated_at": 1770000000099,
+      "search_text": "nails"
+     },
+     {
+      "id": "d5ab042c-f18d-4e0d-8b83-801eb822657b",
+      "container_id": "e5debc39-3ea8-4298-b35c-989796c95e0e",
+      "name": "Screws",
+      "category": null,
+      "quantity": 9,
+      "notes": null,
+      "created_at": 1770000000111,
+      "updated_at": 1770000000144,
+      "search_text": "screws"
+     }
+    ]
+   }
+  },
+  {
+   "op": "search",
+   "query": "drill",
+   "ok": {
+    "terms": [
+     "drill"
+    ],
+    "locations": [],
+    "items": [
+     {
+      "id": "d4886d19-44f6-478f-a5cd-6477db8268fe",
+      "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "name": "Impact Drill",
+      "category": null,
+      "quantity": 2,
+      "notes": null,
+      "createdAt": 1770000000066,
+      "updatedAt": 1770000000123,
+      "photoId": "e3179ed8-67ae-4343-b35f-360aa84ae7b3",
+      "photoUri": "file:///p/drill2.webp",
+      "photoThumbUri": null,
+      "tags": [
+       "DeWalt",
+       "new tag"
+      ],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": "Tool Box",
+      "containerShortCode": "BOX-MTKW",
+      "matchKind": "direct"
+     }
+    ]
+   }
+  },
+  {
+   "op": "search",
+   "query": "impact",
+   "ok": {
+    "terms": [
+     "impact"
+    ],
+    "locations": [],
+    "items": [
+     {
+      "id": "d4886d19-44f6-478f-a5cd-6477db8268fe",
+      "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "name": "Impact Drill",
+      "category": null,
+      "quantity": 2,
+      "notes": null,
+      "createdAt": 1770000000066,
+      "updatedAt": 1770000000123,
+      "photoId": "e3179ed8-67ae-4343-b35f-360aa84ae7b3",
+      "photoUri": "file:///p/drill2.webp",
+      "photoThumbUri": null,
+      "tags": [
+       "DeWalt",
+       "new tag"
+      ],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": "Tool Box",
+      "containerShortCode": "BOX-MTKW",
+      "matchKind": "direct"
+     }
+    ]
+   }
+  },
+  {
+   "op": "search",
+   "query": "dewalt",
+   "ok": {
+    "terms": [
+     "dewalt"
+    ],
+    "locations": [],
+    "items": [
+     {
+      "id": "d4886d19-44f6-478f-a5cd-6477db8268fe",
+      "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "name": "Impact Drill",
+      "category": null,
+      "quantity": 2,
+      "notes": null,
+      "createdAt": 1770000000066,
+      "updatedAt": 1770000000123,
+      "photoId": "e3179ed8-67ae-4343-b35f-360aa84ae7b3",
+      "photoUri": "file:///p/drill2.webp",
+      "photoThumbUri": null,
+      "tags": [
+       "DeWalt",
+       "new tag"
+      ],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": "Tool Box",
+      "containerShortCode": "BOX-MTKW",
+      "matchKind": "direct"
+     },
+     {
+      "id": "d5ab042c-f18d-4e0d-8b83-801eb822657b",
+      "containerId": "e5debc39-3ea8-4298-b35c-989796c95e0e",
+      "name": "Screws",
+      "category": null,
+      "quantity": 9,
+      "notes": null,
+      "createdAt": 1770000000111,
+      "updatedAt": 1770000000144,
+      "photoId": null,
+      "photoUri": null,
+      "photoThumbUri": null,
+      "tags": [
+       "DeWalt"
+      ],
+      "spaceId": "d38eb618-d9d0-42c2-ad20-8d6e026e826c",
+      "spaceName": "",
+      "spaceIcon": "🏠",
+      "spaceColor": "#2E9E4F",
+      "containerName": null,
+      "containerShortCode": "CTR-9N8Y",
+      "matchKind": "direct"
+     }
+    ]
+   }
+  },
+  {
+   "op": "search",
+   "query": "new tag",
+   "ok": {
+    "terms": [
+     "new",
+     "tag"
+    ],
+    "locations": [],
+    "items": [
+     {
+      "id": "d4886d19-44f6-478f-a5cd-6477db8268fe",
+      "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "name": "Impact Drill",
+      "category": null,
+      "quantity": 2,
+      "notes": null,
+      "createdAt": 1770000000066,
+      "updatedAt": 1770000000123,
+      "photoId": "e3179ed8-67ae-4343-b35f-360aa84ae7b3",
+      "photoUri": "file:///p/drill2.webp",
+      "photoThumbUri": null,
+      "tags": [
+       "DeWalt",
+       "new tag"
+      ],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": "Tool Box",
+      "containerShortCode": "BOX-MTKW",
+      "matchKind": "direct"
+     }
+    ]
+   }
+  },
+  {
+   "op": "search",
+   "query": "οδος",
+   "ok": {
+    "terms": [
+     "οδος"
+    ],
+    "locations": [],
+    "items": [
+     {
+      "id": "9d31c5fd-bd88-4d49-9e16-2bc525a89670",
+      "containerId": "e22c58d6-ae64-4ffe-995c-399b7bef912d",
+      "name": "ΟΔΟΣ ΣΑΣ Σ",
+      "category": "ΣΑΣ",
+      "quantity": 1,
+      "notes": null,
+      "createdAt": 1770000000075,
+      "updatedAt": 1770000000141,
+      "photoId": null,
+      "photoUri": null,
+      "photoThumbUri": null,
+      "tags": [],
+      "spaceId": "993243ec-68d2-4702-a6ae-77c337d08d45",
+      "spaceName": "ΑΠΟΘΗΚΗ ΣΑΣ",
+      "spaceIcon": "g",
+      "spaceColor": "#111111",
+      "containerName": "ΡΑΦΙ",
+      "containerShortCode": "SHF-YGM7",
+      "matchKind": "direct"
+     }
+    ]
+   }
+  },
+  {
+   "op": "search",
+   "query": "σας",
+   "ok": {
+    "terms": [
+     "σας"
+    ],
+    "locations": [],
+    "items": [
+     {
+      "id": "9d31c5fd-bd88-4d49-9e16-2bc525a89670",
+      "containerId": "e22c58d6-ae64-4ffe-995c-399b7bef912d",
+      "name": "ΟΔΟΣ ΣΑΣ Σ",
+      "category": "ΣΑΣ",
+      "quantity": 1,
+      "notes": null,
+      "createdAt": 1770000000075,
+      "updatedAt": 1770000000141,
+      "photoId": null,
+      "photoUri": null,
+      "photoThumbUri": null,
+      "tags": [],
+      "spaceId": "993243ec-68d2-4702-a6ae-77c337d08d45",
+      "spaceName": "ΑΠΟΘΗΚΗ ΣΑΣ",
+      "spaceIcon": "g",
+      "spaceColor": "#111111",
+      "containerName": "ΡΑΦΙ",
+      "containerShortCode": "SHF-YGM7",
+      "matchKind": "direct"
+     }
+    ]
+   }
+  },
+  {
+   "op": "search",
+   "query": "σασ",
+   "ok": {
+    "terms": [
+     "σασ"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "istanbul",
+   "ok": {
+    "terms": [
+     "istanbul"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "i̇stanbul",
+   "ok": {
+    "terms": [
+     "istanbul"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "straße",
+   "ok": {
+    "terms": [
+     "straße"
+    ],
+    "locations": [],
+    "items": [
+     {
+      "id": "cdb851da-b4d5-4cf1-8c58-faca62736b7a",
+      "containerId": "2194ef90-e914-4177-83be-bbcd4cb2a089",
+      "name": "Straße ǅ ﬁle ™ ẞ",
+      "category": "Küche",
+      "quantity": 1,
+      "notes": null,
+      "createdAt": 1770000000084,
+      "updatedAt": 1770000000129,
+      "photoId": null,
+      "photoUri": null,
+      "photoThumbUri": null,
+      "tags": [
+       "café",
+       "café",
+       "Ölkanne"
+      ],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": null,
+      "containerShortCode": "DRW-HAGN",
+      "matchKind": "direct"
+     }
+    ]
+   }
+  },
+  {
+   "op": "search",
+   "query": "ǆ",
+   "ok": {
+    "terms": [
+     "dz"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "file",
+   "ok": {
+    "terms": [
+     "file"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "tm",
+   "ok": {
+    "terms": [
+     "tm"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "küche",
+   "ok": {
+    "terms": [
+     "kuche"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "kuche",
+   "ok": {
+    "terms": [
+     "kuche"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "ölkanne",
+   "ok": {
+    "terms": [
+     "olkanne"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "cafe",
+   "ok": {
+    "terms": [
+     "cafe"
+    ],
+    "locations": [],
+    "items": [
+     {
+      "id": "cdb851da-b4d5-4cf1-8c58-faca62736b7a",
+      "containerId": "2194ef90-e914-4177-83be-bbcd4cb2a089",
+      "name": "Straße ǅ ﬁle ™ ẞ",
+      "category": "Küche",
+      "quantity": 1,
+      "notes": null,
+      "createdAt": 1770000000084,
+      "updatedAt": 1770000000129,
+      "photoId": null,
+      "photoUri": null,
+      "photoThumbUri": null,
+      "tags": [
+       "café",
+       "café",
+       "Ölkanne"
+      ],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": null,
+      "containerShortCode": "DRW-HAGN",
+      "matchKind": "direct"
+     }
+    ]
+   }
+  },
+  {
+   "op": "search",
+   "query": "café",
+   "ok": {
+    "terms": [
+     "cafe"
+    ],
+    "locations": [],
+    "items": [
+     {
+      "id": "cdb851da-b4d5-4cf1-8c58-faca62736b7a",
+      "containerId": "2194ef90-e914-4177-83be-bbcd4cb2a089",
+      "name": "Straße ǅ ﬁle ™ ẞ",
+      "category": "Küche",
+      "quantity": 1,
+      "notes": null,
+      "createdAt": 1770000000084,
+      "updatedAt": 1770000000129,
+      "photoId": null,
+      "photoUri": null,
+      "photoThumbUri": null,
+      "tags": [
+       "café",
+       "café",
+       "Ölkanne"
+      ],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": null,
+      "containerShortCode": "DRW-HAGN",
+      "matchKind": "direct"
+     }
+    ]
+   }
+  },
+  {
+   "op": "search",
+   "query": "attic",
+   "ok": {
+    "terms": [
+     "attic"
+    ],
+    "locations": [
+     {
+      "kind": "space",
+      "id": "36f71d6f-a025-4116-8907-570415467993",
+      "title": "Attic",
+      "subtitle": "2 containers · 4 items",
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "itemCount": 4
+     }
+    ],
+    "items": [
+     {
+      "id": "acb0e075-4fcf-4c83-88a5-021cb3071b4d",
+      "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "name": "",
+      "category": null,
+      "quantity": 1,
+      "notes": null,
+      "createdAt": 1770000000096,
+      "updatedAt": 1770000000132,
+      "photoId": null,
+      "photoUri": null,
+      "photoThumbUri": null,
+      "tags": [],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": "Tool Box",
+      "containerShortCode": "BOX-MTKW",
+      "matchKind": "location"
+     },
+     {
+      "id": "d4886d19-44f6-478f-a5cd-6477db8268fe",
+      "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "name": "Impact Drill",
+      "category": null,
+      "quantity": 2,
+      "notes": null,
+      "createdAt": 1770000000066,
+      "updatedAt": 1770000000123,
+      "photoId": "e3179ed8-67ae-4343-b35f-360aa84ae7b3",
+      "photoUri": "file:///p/drill2.webp",
+      "photoThumbUri": null,
+      "tags": [
+       "DeWalt",
+       "new tag"
+      ],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": "Tool Box",
+      "containerShortCode": "BOX-MTKW",
+      "matchKind": "location"
+     },
+     {
+      "id": "3b21e21a-71a7-4cdd-b47f-b10486475e3c",
+      "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "name": "Nails",
+      "category": null,
+      "quantity": 0,
+      "notes": null,
+      "createdAt": 1770000000099,
+      "updatedAt": 1770000000099,
+      "photoId": null,
+      "photoUri": null,
+      "photoThumbUri": null,
+      "tags": [],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": "Tool Box",
+      "containerShortCode": "BOX-MTKW",
+      "matchKind": "location"
+     },
+     {
+      "id": "cdb851da-b4d5-4cf1-8c58-faca62736b7a",
+      "containerId": "2194ef90-e914-4177-83be-bbcd4cb2a089",
+      "name": "Straße ǅ ﬁle ™ ẞ",
+      "category": "Küche",
+      "quantity": 1,
+      "notes": null,
+      "createdAt": 1770000000084,
+      "updatedAt": 1770000000129,
+      "photoId": null,
+      "photoUri": null,
+      "photoThumbUri": null,
+      "tags": [
+       "café",
+       "café",
+       "Ölkanne"
+      ],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": null,
+      "containerShortCode": "DRW-HAGN",
+      "matchKind": "location"
+     }
+    ]
+   }
+  },
+  {
+   "op": "search",
+   "query": "tool box",
+   "ok": {
+    "terms": [
+     "tool",
+     "box"
+    ],
+    "locations": [
+     {
+      "kind": "container",
+      "id": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "title": "Tool Box",
+      "subtitle": "Attic · BOX-MTKW · 3 items",
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "itemCount": 3
+     }
+    ],
+    "items": [
+     {
+      "id": "acb0e075-4fcf-4c83-88a5-021cb3071b4d",
+      "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "name": "",
+      "category": null,
+      "quantity": 1,
+      "notes": null,
+      "createdAt": 1770000000096,
+      "updatedAt": 1770000000132,
+      "photoId": null,
+      "photoUri": null,
+      "photoThumbUri": null,
+      "tags": [],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": "Tool Box",
+      "containerShortCode": "BOX-MTKW",
+      "matchKind": "location"
+     },
+     {
+      "id": "d4886d19-44f6-478f-a5cd-6477db8268fe",
+      "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "name": "Impact Drill",
+      "category": null,
+      "quantity": 2,
+      "notes": null,
+      "createdAt": 1770000000066,
+      "updatedAt": 1770000000123,
+      "photoId": "e3179ed8-67ae-4343-b35f-360aa84ae7b3",
+      "photoUri": "file:///p/drill2.webp",
+      "photoThumbUri": null,
+      "tags": [
+       "DeWalt",
+       "new tag"
+      ],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": "Tool Box",
+      "containerShortCode": "BOX-MTKW",
+      "matchKind": "location"
+     },
+     {
+      "id": "3b21e21a-71a7-4cdd-b47f-b10486475e3c",
+      "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "name": "Nails",
+      "category": null,
+      "quantity": 0,
+      "notes": null,
+      "createdAt": 1770000000099,
+      "updatedAt": 1770000000099,
+      "photoId": null,
+      "photoUri": null,
+      "photoThumbUri": null,
+      "tags": [],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": "Tool Box",
+      "containerShortCode": "BOX-MTKW",
+      "matchKind": "location"
+     }
+    ]
+   }
+  },
+  {
+   "op": "search",
+   "query": "toolbox",
+   "ok": {
+    "terms": [
+     "toolbox"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "nails",
+   "ok": {
+    "terms": [
+     "nails"
+    ],
+    "locations": [],
+    "items": [
+     {
+      "id": "3b21e21a-71a7-4cdd-b47f-b10486475e3c",
+      "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "name": "Nails",
+      "category": null,
+      "quantity": 0,
+      "notes": null,
+      "createdAt": 1770000000099,
+      "updatedAt": 1770000000099,
+      "photoId": null,
+      "photoUri": null,
+      "photoThumbUri": null,
+      "tags": [],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": "Tool Box",
+      "containerShortCode": "BOX-MTKW",
+      "matchKind": "direct"
+     }
+    ]
+   }
+  },
+  {
+   "op": "search",
+   "query": "screws",
+   "ok": {
+    "terms": [
+     "screws"
+    ],
+    "locations": [],
+    "items": [
+     {
+      "id": "d5ab042c-f18d-4e0d-8b83-801eb822657b",
+      "containerId": "e5debc39-3ea8-4298-b35c-989796c95e0e",
+      "name": "Screws",
+      "category": null,
+      "quantity": 9,
+      "notes": null,
+      "createdAt": 1770000000111,
+      "updatedAt": 1770000000144,
+      "photoId": null,
+      "photoUri": null,
+      "photoThumbUri": null,
+      "tags": [
+       "DeWalt"
+      ],
+      "spaceId": "d38eb618-d9d0-42c2-ad20-8d6e026e826c",
+      "spaceName": "",
+      "spaceIcon": "🏠",
+      "spaceColor": "#2E9E4F",
+      "containerName": null,
+      "containerShortCode": "CTR-9N8Y",
+      "matchKind": "direct"
+     }
+    ]
+   }
+  },
+  {
+   "op": "search",
+   "query": "ärmel",
+   "ok": {
+    "terms": [
+     "armel"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "ραφι",
+   "ok": {
+    "terms": [
+     "ραφι"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "nel",
+   "ok": {
+    "terms": [
+     "nel"
+    ],
+    "locations": [
+     {
+      "kind": "space",
+      "id": "77db4e83-c57a-4aaf-a0af-3765ac891c5e",
+      "title": "Nel",
+      "subtitle": "0 containers · 0 items",
+      "spaceId": "77db4e83-c57a-4aaf-a0af-3765ac891c5e",
+      "itemCount": 0
+     }
+    ],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "loft",
+   "ok": {
+    "terms": [
+     "loft"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "cutlery",
+   "ok": {
+    "terms": [
+     "cutlery"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "drop",
+   "ok": {
+    "terms": [
+     "drop"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "trunk",
+   "ok": {
+    "terms": [
+     "trunk"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "ctr",
+   "ok": {
+    "terms": [
+     "ctr"
+    ],
+    "locations": [
+     {
+      "kind": "container",
+      "id": "e5debc39-3ea8-4298-b35c-989796c95e0e",
+      "title": "CTR-9N8Y",
+      "subtitle": " · CTR-9N8Y · 1 item",
+      "spaceId": "d38eb618-d9d0-42c2-ad20-8d6e026e826c",
+      "itemCount": 1
+     }
+    ],
+    "items": [
+     {
+      "id": "d5ab042c-f18d-4e0d-8b83-801eb822657b",
+      "containerId": "e5debc39-3ea8-4298-b35c-989796c95e0e",
+      "name": "Screws",
+      "category": null,
+      "quantity": 9,
+      "notes": null,
+      "createdAt": 1770000000111,
+      "updatedAt": 1770000000144,
+      "photoId": null,
+      "photoUri": null,
+      "photoThumbUri": null,
+      "tags": [
+       "DeWalt"
+      ],
+      "spaceId": "d38eb618-d9d0-42c2-ad20-8d6e026e826c",
+      "spaceName": "",
+      "spaceIcon": "🏠",
+      "spaceColor": "#2E9E4F",
+      "containerName": null,
+      "containerShortCode": "CTR-9N8Y",
+      "matchKind": "location"
+     }
+    ]
+   }
+  },
+  {
+   "op": "search",
+   "query": "box",
+   "ok": {
+    "terms": [
+     "box"
+    ],
+    "locations": [
+     {
+      "kind": "container",
+      "id": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "title": "Tool Box",
+      "subtitle": "Attic · BOX-MTKW · 3 items",
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "itemCount": 3
+     }
+    ],
+    "items": [
+     {
+      "id": "acb0e075-4fcf-4c83-88a5-021cb3071b4d",
+      "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "name": "",
+      "category": null,
+      "quantity": 1,
+      "notes": null,
+      "createdAt": 1770000000096,
+      "updatedAt": 1770000000132,
+      "photoId": null,
+      "photoUri": null,
+      "photoThumbUri": null,
+      "tags": [],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": "Tool Box",
+      "containerShortCode": "BOX-MTKW",
+      "matchKind": "location"
+     },
+     {
+      "id": "d4886d19-44f6-478f-a5cd-6477db8268fe",
+      "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "name": "Impact Drill",
+      "category": null,
+      "quantity": 2,
+      "notes": null,
+      "createdAt": 1770000000066,
+      "updatedAt": 1770000000123,
+      "photoId": "e3179ed8-67ae-4343-b35f-360aa84ae7b3",
+      "photoUri": "file:///p/drill2.webp",
+      "photoThumbUri": null,
+      "tags": [
+       "DeWalt",
+       "new tag"
+      ],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": "Tool Box",
+      "containerShortCode": "BOX-MTKW",
+      "matchKind": "location"
+     },
+     {
+      "id": "3b21e21a-71a7-4cdd-b47f-b10486475e3c",
+      "containerId": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+      "name": "Nails",
+      "category": null,
+      "quantity": 0,
+      "notes": null,
+      "createdAt": 1770000000099,
+      "updatedAt": 1770000000099,
+      "photoId": null,
+      "photoUri": null,
+      "photoThumbUri": null,
+      "tags": [],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": "Tool Box",
+      "containerShortCode": "BOX-MTKW",
+      "matchKind": "location"
+     }
+    ]
+   }
+  },
+  {
+   "op": "search",
+   "query": "crt",
+   "ok": {
+    "terms": [
+     "crt"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "zone",
+   "ok": {
+    "terms": [
+     "zone"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "power",
+   "ok": {
+    "terms": [
+     "power"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "charger",
+   "ok": {
+    "terms": [
+     "charger"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "search",
+   "query": "ẞ",
+   "ok": {
+    "terms": [
+     "ß"
+    ],
+    "locations": [],
+    "items": [
+     {
+      "id": "cdb851da-b4d5-4cf1-8c58-faca62736b7a",
+      "containerId": "2194ef90-e914-4177-83be-bbcd4cb2a089",
+      "name": "Straße ǅ ﬁle ™ ẞ",
+      "category": "Küche",
+      "quantity": 1,
+      "notes": null,
+      "createdAt": 1770000000084,
+      "updatedAt": 1770000000129,
+      "photoId": null,
+      "photoUri": null,
+      "photoThumbUri": null,
+      "tags": [
+       "café",
+       "café",
+       "Ölkanne"
+      ],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": null,
+      "containerShortCode": "DRW-HAGN",
+      "matchKind": "direct"
+     }
+    ]
+   }
+  },
+  {
+   "op": "search",
+   "query": "ß",
+   "ok": {
+    "terms": [
+     "ß"
+    ],
+    "locations": [],
+    "items": [
+     {
+      "id": "cdb851da-b4d5-4cf1-8c58-faca62736b7a",
+      "containerId": "2194ef90-e914-4177-83be-bbcd4cb2a089",
+      "name": "Straße ǅ ﬁle ™ ẞ",
+      "category": "Küche",
+      "quantity": 1,
+      "notes": null,
+      "createdAt": 1770000000084,
+      "updatedAt": 1770000000129,
+      "photoId": null,
+      "photoUri": null,
+      "photoThumbUri": null,
+      "tags": [
+       "café",
+       "café",
+       "Ölkanne"
+      ],
+      "spaceId": "36f71d6f-a025-4116-8907-570415467993",
+      "spaceName": "Attic",
+      "spaceIcon": "📦",
+      "spaceColor": "#123456",
+      "containerName": null,
+      "containerShortCode": "DRW-HAGN",
+      "matchKind": "direct"
+     }
+    ]
+   }
+  },
+  {
+   "op": "search",
+   "query": "ss",
+   "ok": {
+    "terms": [
+     "ss"
+    ],
+    "locations": [],
+    "items": []
+   }
+  },
+  {
+   "op": "items.delete",
+   "id": "@drill",
+   "ok": {
+    "deleted": true,
+    "orphanedPhotoUris": [
+     "file:///p/drill2.webp"
+    ]
+   }
+  },
+  {
+   "op": "items.delete",
+   "id": "no-such-item",
+   "ok": {
+    "deleted": false,
+    "orphanedPhotoUris": []
+   }
+  },
+  {
+   "op": "containers.delete",
+   "id": "@drawer",
+   "ok": {
+    "deleted": true,
+    "orphanedPhotoUris": []
+   }
+  },
+  {
+   "op": "containers.delete",
+   "id": "drop-zone",
+   "error": "system_record"
+  },
+  {
+   "op": "spaces.delete",
+   "id": "@greek",
+   "ok": {
+    "deleted": true,
+    "orphanedPhotoUris": []
+   }
+  },
+  {
+   "op": "spaces.delete",
+   "id": "drop-zone-space",
+   "error": "system_record"
+  },
+  {
+   "op": "spaces.delete",
+   "id": "no-such-space",
+   "ok": {
+    "deleted": false,
+    "orphanedPhotoUris": []
+   }
+  },
+  {
+   "op": "sql",
+   "sql": "UPDATE sync_deletions SET deleted_at = 0",
+   "ok": null
+  }
+ ],
+ "tables": {
+  "spaces": [
+   {
+    "id": "drop-zone-space",
+    "name": "Drop zone",
+    "icon": "📥",
+    "color": "#0F9BB0",
+    "created_at": 0,
+    "updated_at": 0,
+    "kind": "system"
+   },
+   {
+    "id": "36f71d6f-a025-4116-8907-570415467993",
+    "name": "Attic",
+    "icon": "📦",
+    "color": "#123456",
+    "created_at": 1770000000003,
+    "updated_at": 1770000000024,
+    "kind": "normal"
+   },
+   {
+    "id": "d38eb618-d9d0-42c2-ad20-8d6e026e826c",
+    "name": "",
+    "icon": "🏠",
+    "color": "#2E9E4F",
+    "created_at": 1770000000006,
+    "updated_at": 1770000000018,
+    "kind": "normal"
+   },
+   {
+    "id": "77db4e83-c57a-4aaf-a0af-3765ac891c5e",
+    "name": "Nel",
+    "icon": "",
+    "color": "",
+    "created_at": 1770000000009,
+    "updated_at": 1770000000009,
+    "kind": "normal"
+   },
+   {
+    "id": "46b8ce24-160e-41fa-98a5-34ca0e0c5134",
+    "name": "",
+    "icon": "x",
+    "color": "#000",
+    "created_at": 1770000000012,
+    "updated_at": 1770000000012,
+    "kind": "normal"
+   }
+  ],
+  "containers": [
+   {
+    "id": "drop-zone",
+    "space_id": "drop-zone-space",
+    "name": "Drop zone",
+    "visual_type": "other",
+    "short_code": "DROP-ZONE",
+    "created_at": 0,
+    "updated_at": 0,
+    "kind": "system"
+   },
+   {
+    "id": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+    "space_id": "36f71d6f-a025-4116-8907-570415467993",
+    "name": "Tool Box",
+    "visual_type": "crate",
+    "short_code": "BOX-MTKW",
+    "created_at": 1770000000027,
+    "updated_at": 1770000000057,
+    "kind": "normal"
+   },
+   {
+    "id": "e5debc39-3ea8-4298-b35c-989796c95e0e",
+    "space_id": "d38eb618-d9d0-42c2-ad20-8d6e026e826c",
+    "name": null,
+    "visual_type": "Trunk",
+    "short_code": "CTR-9N8Y",
+    "created_at": 1770000000036,
+    "updated_at": 1770000000036,
+    "kind": "normal"
+   },
+   {
+    "id": "85903fce-8643-4164-a943-18707ca93125",
+    "space_id": "drop-zone-space",
+    "name": null,
+    "visual_type": "bag",
+    "short_code": "BAG-DTCU",
+    "created_at": 1770000000042,
+    "updated_at": 1770000000060,
+    "kind": "normal"
+   }
+  ],
+  "item_photos": [],
+  "tags": [
+   {
+    "id": "56acbbd7-d8a7-4e63-806a-f969d348de00",
+    "name": "DeWalt",
+    "normalized_name": "dewalt",
+    "created_at": 1770000000069
+   },
+   {
+    "id": "be10f57e-6b80-436e-8c9d-a7d9d75b9fe2",
+    "name": "18V",
+    "normalized_name": "18v",
+    "created_at": 1770000000072
+   },
+   {
+    "id": "dbd62192-bcb0-4ab4-9e65-6408655b054a",
+    "name": "ΣΑΣ",
+    "normalized_name": "σας",
+    "created_at": 1770000000078
+   },
+   {
+    "id": "74590959-1ea4-4310-b233-242230606ef7",
+    "name": "İstanbul",
+    "normalized_name": "i̇stanbul",
+    "created_at": 1770000000081
+   },
+   {
+    "id": "fca7789d-b88f-44ac-bde7-037c673276e0",
+    "name": "Ölkanne",
+    "normalized_name": "ölkanne",
+    "created_at": 1770000000087
+   },
+   {
+    "id": "1e9d71b8-1c03-47e8-843f-bf0b8c2abed0",
+    "name": "café",
+    "normalized_name": "café",
+    "created_at": 1770000000090
+   },
+   {
+    "id": "a6e6785f-dc5c-4932-9a1b-db3150e7f31b",
+    "name": "café",
+    "normalized_name": "café",
+    "created_at": 1770000000093
+   },
+   {
+    "id": "93616b22-683a-41fc-a3f3-f4eb9f6978f9",
+    "name": "new tag",
+    "normalized_name": "new tag",
+    "created_at": 1770000000117
+   }
+  ],
+  "item_tags": [
+   {
+    "item_id": "d5ab042c-f18d-4e0d-8b83-801eb822657b",
+    "tag_id": "56acbbd7-d8a7-4e63-806a-f969d348de00"
+   }
+  ],
+  "qr_bindings": [],
+  "sync_deletions": [
+   {
+    "photo_id": "42c3561b-8eb5-4d7d-bdfd-5eb210f48587",
+    "deleted_at": 0
+   },
+   {
+    "photo_id": "given-photo",
+    "deleted_at": 0
+   }
+  ],
+  "items": [
+   {
+    "id": "acb0e075-4fcf-4c83-88a5-021cb3071b4d",
+    "container_id": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+    "name": "",
+    "category": null,
+    "quantity": 1,
+    "notes": null,
+    "created_at": 1770000000096,
+    "updated_at": 1770000000132,
+    "search_text": ""
+   },
+   {
+    "id": "3b21e21a-71a7-4cdd-b47f-b10486475e3c",
+    "container_id": "5199b4db-8e73-4afb-8b45-cf4e961a7103",
+    "name": "Nails",
+    "category": null,
+    "quantity": 0,
+    "notes": null,
+    "created_at": 1770000000099,
+    "updated_at": 1770000000099,
+    "search_text": "nails"
+   },
+   {
+    "id": "d5ab042c-f18d-4e0d-8b83-801eb822657b",
+    "container_id": "e5debc39-3ea8-4298-b35c-989796c95e0e",
+    "name": "Screws",
+    "category": null,
+    "quantity": 9,
+    "notes": null,
+    "created_at": 1770000000111,
+    "updated_at": 1770000000144,
+    "search_text": "screws"
+   }
+  ]
+ }
+}

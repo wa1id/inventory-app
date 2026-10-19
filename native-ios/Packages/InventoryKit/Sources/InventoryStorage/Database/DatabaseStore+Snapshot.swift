@@ -20,6 +20,10 @@ public enum SnapshotError: Error, Sendable, Equatable {
     case corrupt(String)
     /// The snapshot's `user_version` is newer than this build's schema (03 §6.1, B10).
     case newerSchema(Int)
+    /// Migrating the restored snapshot failed, and so did copying the previous contents back:
+    /// the database now holds the snapshot at an older schema version (it migrates on the next
+    /// open). Unlike every other restore failure, local data **has** changed (03 B11).
+    case rollbackFailed(String)
 }
 
 extension DatabaseStore {
@@ -62,7 +66,8 @@ extension DatabaseStore {
         return try vacuumInto(db)
     }
 
-    private static func serialize(_ db: Database) -> Data? {
+    /// `sqlite3_serialize` of `main`, or `nil` where the SQLite library lacks it.
+    static func serialize(_ db: Database) -> Data? {
         #if canImport(SQLite3)
         guard let connection = db.sqliteConnection else { return nil }
         var size: sqlite3_int64 = 0
@@ -95,6 +100,8 @@ extension DatabaseStore {
     /// (with the snapshot's `user_version`) comes along. An older snapshot is migrated
     /// forward. If that migration throws, the previous contents are copied back before the
     /// error propagates, so a failed restore changes nothing (03 B11, fixed per DECISIONS U6).
+    /// Only if that copy fails too (a full disk) does the error become
+    /// ``SnapshotError/rollbackFailed(_:)``, the one failure after which local data has changed.
     ///
     /// No row-level delete happens, so the photo tombstone trigger does not fire. Callers
     /// invalidate every screen afterwards.
@@ -111,9 +118,16 @@ extension DatabaseStore {
         }
     }
 
-    func restore(from snapshot: Data, migrations: [Migration]) throws -> Int {
+    /// Puts the pre-restore copy back into the live database (tests inject a failing one).
+    typealias Rollback = @Sendable (_ previous: DatabaseQueue, _ live: Database) throws -> Void
+
+    static let copyBack: Rollback = { previous, live in
+        try previous.read { copy in try copy.backup(to: live) }
+    }
+
+    func restore(from snapshot: Data, migrations: [Migration], rollback: Rollback = copyBack) throws -> Int {
         try queue.writeWithoutTransaction { live in
-            try Self.restore(live, from: snapshot, migrations: migrations)
+            try Self.restore(live, from: snapshot, migrations: migrations, rollback: rollback)
         }
     }
 
@@ -124,7 +138,12 @@ extension DatabaseStore {
         return file.schemaVersion
     }
 
-    private static func restore(_ live: Database, from snapshot: Data, migrations: [Migration]) throws -> Int {
+    private static func restore(
+        _ live: Database,
+        from snapshot: Data,
+        migrations: [Migration],
+        rollback: Rollback = copyBack
+    ) throws -> Int {
         let source = try SnapshotFile(snapshot)
         defer { source.remove() }
         guard source.schemaVersion <= Migration.latestSchemaVersion else {
@@ -143,7 +162,12 @@ extension DatabaseStore {
             try live.execute(sql: "PRAGMA foreign_keys = ON")
             return try MigrationRunner.migrate(live, migrations: migrations)
         } catch {
-            try? previous.read { copy in try copy.backup(to: live) }
+            do {
+                try rollback(previous, live)
+            } catch let rollbackError {
+                // Never report "nothing changed" when the snapshot is in fact still in place.
+                throw SnapshotError.rollbackFailed("migration: \(error); rollback: \(rollbackError)")
+            }
             throw error
         }
     }

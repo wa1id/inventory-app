@@ -18,6 +18,7 @@ reproduces the same rows.
 | `search/inventory.db` | A v7 inventory built through the TS repositories: accents, Greek, Cyrillic, Japanese, apostrophes, underscores, `%`, backslashes, tags, multiple photos, drop-zone items, quantity 0, unnamed containers, 205 widgets and 34 bins (to hit the 200-item and 30-location caps), rebinds and a deleted item. |
 | `search-vectors.json` | `search(query)` over that inventory for 166 queries: terms, locations, and item ids with match kinds in result order; each item's projection is stored once under `items`. |
 | `reads.json` | Every other read the TS repositories offer, over the same inventory: dashboard counts, place picker, per-space and per-container reads, deletion impacts, item details and photos, recents with clamped limits, scans and token lookups. |
+| `writes.json` | A script of repository writes (JS trims and folds, NULL patches, drop-zone guards, conflicts, foreign-key failures, the ten-attempt short-code retry, tag reuse, photo replacement, QR rebinding, cascades) run through the TS repositories with a seeded clock, id bytes and short codes: every result or error, a dump of every table, searches over what was written, and the final tables. `WriteParityTests` replays it through the Swift repositories with the same seeds. Regenerate just this file with `-t write-parity`. |
 
 Notes checked while generating:
 

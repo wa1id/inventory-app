@@ -57,11 +57,25 @@ public final class DatabaseStore: Sendable {
     /// Creates `Documents/SQLite/` first on a fresh install, like expo-sqlite. A thrown error
     /// leaves nothing open; the boot screen offers Retry, which calls this again.
     public static func openLive(documents: URL = .documentsDirectory) throws -> DatabaseStore {
-        let url = liveURL(documents: documents)
-        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        let store = try DatabaseStore(path: url.path)
+        let store = try openLiveUnmigrated(documents: documents)
         try store.migrate()
         return store
+    }
+
+    /// Opens the live database and migrates it off the caller's thread (boot, 09 §4.1).
+    ///
+    /// The v7 rebuild of an old phone's `items` table can take a moment; this keeps it off the
+    /// main actor. Same contract as the synchronous ``openLive(documents:)``.
+    public static func openLive(documents: URL = .documentsDirectory) async throws -> DatabaseStore {
+        let store = try openLiveUnmigrated(documents: documents)
+        try await store.migrate()
+        return store
+    }
+
+    private static func openLiveUnmigrated(documents: URL) throws -> DatabaseStore {
+        let url = liveURL(documents: documents)
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        return try DatabaseStore(path: url.path)
     }
 
     /// A private in-memory database with the app's pragmas, not migrated (tests and previews).

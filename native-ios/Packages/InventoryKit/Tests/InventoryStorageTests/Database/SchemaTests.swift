@@ -105,4 +105,19 @@ struct SchemaTests {
         try store.close()
         #expect(FileManager.default.fileExists(atPath: DatabaseStore.liveURL(documents: documents).path))
     }
+
+    @Test("opens and migrates an upgraded phone's database off the caller's thread")
+    func openLiveAsync() async throws {
+        let scratch = try ScratchDirectory()
+        let documents = scratch.url.appending(path: "Documents", directoryHint: .isDirectory)
+        let live = DatabaseStore.liveURL(documents: documents)
+        try FileManager.default.createDirectory(at: live.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try FileManager.default.copyItem(at: DatabaseFixtures.url("historical/v6.db"), to: live)
+
+        let store = try await DatabaseStore.openLive(documents: documents)
+        #expect(try await store.schemaVersion() == 7)
+        #expect(try count(store, "item_photos") > 0)
+        #expect(try count(store, "item_tags") > 0)
+        try store.close()
+    }
 }

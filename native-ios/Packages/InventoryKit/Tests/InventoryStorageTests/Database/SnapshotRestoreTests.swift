@@ -147,6 +147,68 @@ struct SnapshotRestoreTests {
         #expect(try pragma(store, "journal_mode") == "wal")
     }
 
+    @Test("a failed rollback says local data changed instead of surfacing the migration error")
+    func reportsFailedRollback() async throws {
+        let old = try DatabaseStore.inMemory()
+        try await old.migrate(Array(Migration.all.prefix(1)))
+        let snapshot = try await old.snapshot()
+
+        let store = try DatabaseStore.temporary()
+        let repos = try await LocalRepositories.initialize(store)
+        try await seedSpaceAndContainer(repos)
+
+        var migrations = Array(Migration.all.prefix(2))
+        migrations.append(Migration(version: 3, name: "broken", up: "SELECT nope FROM nowhere;"))
+        struct DiskFull: Error {}
+        do {
+            try store.restore(from: snapshot, migrations: migrations, rollback: { _, _ in throw DiskFull() })
+            Issue.record("expected the restore to fail")
+        } catch SnapshotError.rollbackFailed(let detail) {
+            #expect(detail.contains("nowhere"))
+            #expect(detail.contains("DiskFull"))
+        }
+        // The snapshot stayed, migrated as far as it got; the next open carries it forward.
+        #expect(try await store.schemaVersion() == 2)
+        #expect(try await store.migrate() == 7)
+        #expect(try await repos.spaces.listWithCounts().isEmpty)
+    }
+
+    @Test("a restore into the live WAL file survives closing and reopening it")
+    func restoreIsDurable() async throws {
+        let scratch = try ScratchDirectory()
+        let path = scratch.path("inventory.db")
+        let first = try await LocalRepositories.initialize(DatabaseStore(path: path))
+        let (space, container) = try await seedSpaceAndContainer(first)
+        _ = try await first.items.create(ItemDraft(containerId: container.id, name: "Snapshotted"))
+        let snapshot = try await first.store.snapshot()
+
+        // Grow the live file past the snapshot, so the restore also has to shrink it.
+        for index in 0..<300 {
+            _ = try await first.items.create(ItemDraft(containerId: container.id, name: "Later \(index)", notes: String(repeating: "x", count: 400)))
+        }
+        _ = try await first.spaces.update(space.id, UpdateSpaceInput(name: "Renamed"))
+        #expect(try await first.store.restore(from: snapshot) == 7)
+        try first.store.close()
+
+        let reopened = try await LocalRepositories.initialize(DatabaseStore(path: path))
+        #expect(try await reopened.items.listByContainer(container.id).map(\.name) == ["Snapshotted"])
+        #expect(try await reopened.spaces.getById(space.id)?.name == "Garage")
+        #expect(try pragma(reopened.store, "integrity_check") == "ok")
+        #expect(try pragma(reopened.store, "journal_mode") == "wal")
+        try reopened.store.close()
+    }
+
+    @Test("snapshots go through sqlite3_serialize on this platform")
+    func serializeIsAvailable() throws {
+        let store = try DatabaseStore.temporary()
+        try store.migrate()
+        let image = try store.queue.writeWithoutTransaction { db in DatabaseStore.serialize(db) }
+        let bytes = try #require(image)
+        #expect(bytes.prefix(16) == DatabaseStore.sqliteHeader)
+        // Header bytes 18-19 say WAL, as in the snapshots the Expo build uploaded.
+        #expect(bytes.count > 19 && bytes[18] == 2 && bytes[19] == 2)
+    }
+
     @Test("refuses bytes that are not an SQLite database")
     func refusesGarbage() async throws {
         let repos = try freshRepos()
@@ -221,12 +283,18 @@ struct SnapshotRestoreTests {
                                          sqlite3_int64(size), sqlite3_int64(size), flags)
             #expect(rc == SQLITE_OK)
         }
-        let android = try DatabaseStore.inMemory()
+        // The Android build's own database: a WAL file with rows of its own.
+        let android = try DatabaseStore.temporary()
+        let androidRepos = try await LocalRepositories.initialize(android)
+        let (otherSpace, _) = try await seedSpaceAndContainer(androidRepos)
         try await source.read { image in
             try android.queue.writeWithoutTransaction { live in try image.backup(to: live) }
         }
         #expect(try await android.migrate() == 7)
-        #expect(try await repositories(android).spaces.getById(space.id)?.name == "Garage")
+        #expect(try await androidRepos.spaces.getById(space.id)?.name == "Garage")
+        #expect(try await androidRepos.spaces.getById(otherSpace.id) == nil)
+        #expect(try pragma(android, "journal_mode") == "wal")
+        #expect(try pragma(android, "integrity_check") == "ok")
     }
     #endif
 }

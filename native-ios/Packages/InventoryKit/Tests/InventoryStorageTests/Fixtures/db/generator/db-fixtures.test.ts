@@ -611,6 +611,196 @@ async function generateSearch(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Write parity: one script of repository writes, run through the TypeScript
+// repositories with a seeded clock, id bytes and short codes. WriteParityTests
+// replays the same script through the Swift repositories with the same seeds
+// and compares every result, every error and every table row, so a drift in
+// trimming, folding, NULL handling or statement order cannot hide behind
+// read-only parity. Strings starting with `@` refer to earlier results:
+// `@alias` is its id, `@alias.field` one of its fields.
+
+/** Seeds shared with WriteParityTests. */
+const WRITE_SEEDS = { clockStart: 1_770_000_000_000, clockStep: 3, idSeed: 0x1d5eed, codeSeed: 0xc0dec0de };
+
+type WriteOp = { op: string; as?: string; [key: string]: unknown };
+
+const WRITE_OPS: WriteOp[] = [
+  // SQL-stamped values (migration 3's seed rows, the tombstone trigger) use the wall clock.
+  { op: 'sql', sql: "UPDATE spaces SET created_at = 0, updated_at = 0 WHERE kind = 'system'" },
+  { op: 'sql', sql: "UPDATE containers SET created_at = 0, updated_at = 0 WHERE kind = 'system'" },
+
+  { op: 'spaces.create', as: 'attic', input: { name: '  Attic  ', icon: 'box', color: '#E4572E' } },
+  { op: 'spaces.create', as: 'loft', input: { name: '﻿Loft　', icon: '🏠', color: '#2E9E4F' } },
+  { op: 'spaces.create', as: 'nel', input: { name: '\u0085Nel\u0085', icon: '', color: '' } },
+  { op: 'spaces.create', as: 'blank', input: { name: ' \t\n ', icon: 'x', color: '#000' } },
+  { op: 'spaces.create', as: 'greek', input: { name: 'ΑΠΟΘΗΚΗ ΣΑΣ', icon: 'g', color: '#111111' } },
+  { op: 'spaces.update', id: '@loft', input: { name: '  ' } },
+  { op: 'spaces.update', id: '@attic', input: { icon: '📦' } },
+  { op: 'spaces.update', id: '@attic', input: { name: ' Attic ', color: '#123456' } },
+  { op: 'spaces.update', id: 'drop-zone-space', input: { name: 'Mine' } },
+  { op: 'spaces.update', id: 'no-such-space', input: { name: 'x' } },
+
+  { op: 'containers.create', as: 'box', input: { spaceId: '@attic', visualType: 'box', name: ' Tool Box ' } },
+  { op: 'containers.create', as: 'drawer', input: { spaceId: '@attic', visualType: 'drawer', name: '   ' } },
+  { op: 'containers.create', as: 'shelf', input: { spaceId: '@greek', visualType: 'shelf', name: ' ΡΑΦΙ ' } },
+  { op: 'containers.create', as: 'trunk', input: { spaceId: '@loft', visualType: 'Trunk', name: null } },
+  // Ten attempts, each with a new id and code, then the short-code error (01 §7.2, Q5).
+  { op: 'containers.create', input: { spaceId: 'no-such-space', visualType: 'bin' } },
+  { op: 'containers.create', as: 'bag', input: { spaceId: '@nel', visualType: 'bag' } },
+  { op: 'containers.update', id: '@drawer', input: { name: ' Cutlery ' } },
+  { op: 'containers.update', id: '@drawer', input: { visualType: 'cabinet' } },
+  { op: 'containers.update', id: '@drawer', input: { name: null } },
+  { op: 'containers.update', id: '@box', input: { name: '  ', visualType: 'crate' } },
+  { op: 'containers.update', id: '@box', input: { name: 'Tool Box' } },
+  { op: 'containers.update', id: '@bag', input: { spaceId: 'drop-zone-space' } },
+  { op: 'containers.update', id: '@bag', input: { spaceId: 'no-such-space' } },
+  { op: 'containers.update', id: 'drop-zone', input: { name: 'x' } },
+  { op: 'containers.update', id: 'no-such-container', input: {} },
+
+  {
+    op: 'items.create', as: 'drill',
+    input: {
+      containerId: '@box', name: ' Cordless Drill ', category: ' Power Tools ', quantity: 2, notes: '\n Charger \t',
+      tags: ['  DeWalt ', 'dewalt', 'DEWALT', '', '   ', '18V'],
+      photo: { uri: 'file:///p/drill.webp', thumbUri: 'file:///p/drill-thumb.webp', width: 1400, height: 1050, byteSize: 1234 },
+    },
+  },
+  {
+    op: 'items.create', as: 'sigma',
+    input: { containerId: '@shelf', name: 'ΟΔΟΣ ΣΑΣ Σ', category: 'aΣ.', tags: ['ΣΑΣ', 'σας', 'İstanbul', 'i̇stanbul'] },
+  },
+  {
+    op: 'items.create', as: 'misc',
+    input: {
+      containerId: '@drawer', name: 'Straße ǅ ﬁle ™ ẞ', category: 'Küche',
+      tags: ['Ölkanne', 'ölkanne', 'café', 'café', '﻿ '], photo: { id: 'given-photo', uri: 'r2:x' },
+    },
+  },
+  { op: 'items.create', as: 'unnamed', input: { containerId: 'drop-zone' } },
+  { op: 'items.create', as: 'zero', input: { containerId: '@box', name: 'Nails', quantity: 0, category: '  ', notes: '  ' } },
+  { op: 'items.create', input: { containerId: '@box', name: '  ' } },
+  { op: 'items.create', input: { containerId: '@box', name: '  ', quantity: -1 } },
+  { op: 'items.create', input: { containerId: 'no-such-container', name: 'Ghost', photo: { uri: 'file:///ghost' }, tags: ['ghost'] } },
+  { op: 'items.create', as: 'big', input: { containerId: '@trunk', name: 'Screws', quantity: 12345, tags: ['dewalt'], category: null, notes: null } },
+  { op: 'sql', sql: 'UPDATE item_photos SET remote_synced_at = 5' },
+  { op: 'items.update', id: '@drill', input: { name: 'Impact Drill', tags: ['DeWalt', 'new tag', 'NEW TAG'] } },
+  { op: 'items.update', id: '@drill', input: { category: null, notes: '  ' } },
+  { op: 'items.update', id: '@drill', input: { photo: { id: 'ignored', uri: 'file:///p/drill2.webp', width: 10 } } },
+  { op: 'items.update', id: '@misc', input: { photo: null } },
+  { op: 'items.update', id: '@unnamed', input: { containerId: '@box', expectedUpdatedAt: '@unnamed.updatedAt' } },
+  { op: 'items.update', id: '@unnamed', input: { quantity: 3, tags: ['lost'], expectedUpdatedAt: 1 } },
+  { op: 'items.update', id: 'no-such-item', input: { quantity: 3, expectedUpdatedAt: 1 } },
+  { op: 'items.update', id: '@zero', input: { name: '  ' } },
+  { op: 'items.update', id: '@zero', input: { quantity: -2, name: '  ' } },
+  { op: 'items.update', id: '@sigma', input: { tags: [] } },
+  { op: 'items.update', id: '@sigma', input: { category: ' ΣΑΣ ', quantity: 1 } },
+  // A pre-v2 backfill left ASCII-only lowercase; any update rewrites it (01 §3.2 v2).
+  { op: 'sql', sql: "UPDATE items SET search_text = 'Ärmel' WHERE name = 'Screws'" },
+  { op: 'items.update', id: '@big', input: { quantity: 9 } },
+
+  { op: 'qr.createAndBind', as: 'label1', containerId: '@box' },
+  { op: 'qr.createAndBind', as: 'label2', containerId: '@box' },
+  { op: 'qr.bind', as: 'label3', token: '@label2.token', containerId: '@shelf' },
+  { op: 'qr.bind', as: 'label4', token: 'ABCDEF', containerId: '@drawer' },
+  { op: 'qr.createAndBind', containerId: 'drop-zone' },
+  { op: 'qr.bind', token: '@label3.token', containerId: 'no-such-container' },
+  { op: 'qr.unbind', containerId: '@drawer' },
+  { op: 'qr.unbind', containerId: '@drawer' },
+
+  // Every table, then searches over what the writes stored (folding on write meets folding in the query).
+  { op: 'sql', sql: 'UPDATE sync_deletions SET deleted_at = 0' },
+  { op: 'dump' },
+  ...[
+    'drill', 'impact', 'dewalt', 'new tag', 'οδος', 'σας', 'σασ', 'istanbul', 'i̇stanbul', 'straße', 'ǆ', 'file', 'tm',
+    'küche', 'kuche', 'ölkanne', 'cafe', 'café', 'attic', 'tool box', 'toolbox', 'nails', 'screws', 'ärmel', 'ραφι',
+    'nel', 'loft', 'cutlery', 'drop', 'trunk', 'ctr', 'box', 'crt', 'zone', 'power', 'charger', 'ẞ', 'ß', 'ss',
+  ].map((query) => ({ op: 'search', query })),
+
+  { op: 'items.delete', id: '@drill' },
+  { op: 'items.delete', id: 'no-such-item' },
+  { op: 'containers.delete', id: '@drawer' },
+  { op: 'containers.delete', id: 'drop-zone' },
+  { op: 'spaces.delete', id: '@greek' },
+  { op: 'spaces.delete', id: 'drop-zone-space' },
+  { op: 'spaces.delete', id: 'no-such-space' },
+  { op: 'sql', sql: 'UPDATE sync_deletions SET deleted_at = 0' },
+];
+
+function resolveRefs(value: unknown, results: Map<string, Record<string, unknown>>): unknown {
+  if (typeof value === 'string' && value.startsWith('@')) {
+    const [alias, field = 'id'] = value.slice(1).split('.');
+    const result = results.get(alias!);
+    if (!result) throw new Error(`unknown alias ${value}`);
+    return result[field];
+  }
+  if (Array.isArray(value)) return value.map((entry) => resolveRefs(entry, results));
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, resolveRefs(entry, results)]));
+  }
+  return value;
+}
+
+async function runWriteOp(repos: Repositories, step: WriteOp): Promise<unknown> {
+  const arg = (key: string) => step[key] as never;
+  switch (step.op) {
+    case 'sql':
+      await repos.db.execAsync(arg('sql'));
+      return null;
+    case 'dump': return dumpTables(repos.db);
+    case 'search': return repos.search.search(arg('query'));
+    case 'spaces.create': return repos.spaces.create(arg('input'));
+    case 'spaces.update': return repos.spaces.update(arg('id'), arg('input'));
+    case 'spaces.delete': return repos.spaces.delete(arg('id'));
+    case 'containers.create': return repos.containers.create(arg('input'));
+    case 'containers.update': return repos.containers.update(arg('id'), arg('input'));
+    case 'containers.delete': return repos.containers.delete(arg('id'));
+    case 'items.create': return repos.items.create(arg('input'));
+    case 'items.update': return repos.items.update(arg('id'), arg('input'));
+    case 'items.delete': return repos.items.delete(arg('id'));
+    case 'qr.bind': return repos.qr.bind(arg('token'), arg('containerId'));
+    case 'qr.createAndBind': return repos.qr.createAndBind(arg('containerId'));
+    case 'qr.unbind': return repos.qr.unbind(arg('containerId'));
+    default: throw new Error(`unknown op ${step.op}`);
+  }
+}
+
+async function generateWrites(): Promise<void> {
+  const bytes = lcg(WRITE_SEEDS.idSeed);
+  const codes = lcg(WRITE_SEEDS.codeSeed);
+  configureRandomBytes((count) => Uint8Array.from({ length: count }, () => Math.floor(bytes() * 256)));
+  const random = jest.spyOn(Math, 'random').mockImplementation(codes);
+  let clock = WRITE_SEEDS.clockStart;
+  const now = jest.spyOn(Date, 'now').mockImplementation(() => {
+    clock += WRITE_SEEDS.clockStep;
+    return clock;
+  });
+
+  try {
+    const db = openNodeDatabase();
+    const repos = await initializeRepositories(db);
+    const aliases = new Map<string, Record<string, unknown>>();
+    const steps = [];
+    for (const raw of WRITE_OPS) {
+      const step = resolveRefs(raw, aliases) as WriteOp;
+      let outcome: { ok: unknown } | { error: string };
+      try {
+        const value = await runWriteOp(repos, step);
+        outcome = { ok: value ?? null };
+        if (raw.as && value && typeof value === 'object') aliases.set(raw.as, value as Record<string, unknown>);
+      } catch (error) {
+        outcome = { error: error instanceof Error ? error.message : String(error) };
+      }
+      steps.push({ ...raw, ...outcome });
+    }
+    write('writes.json', { seeds: WRITE_SEEDS, steps, tables: await dumpTables(db) });
+    await db.closeAsync();
+  } finally {
+    random.mockRestore();
+    now.mockRestore();
+  }
+}
+
+// ---------------------------------------------------------------------------
 
 describe('database fixtures', () => {
   beforeAll(() => {
@@ -650,4 +840,8 @@ describe('database fixtures', () => {
   it('writes the search inventory and the TypeScript results over it', async () => {
     await generateSearch();
   }, 120_000);
+
+  it('writes the write-parity script and what the TypeScript repositories made of it', async () => {
+    await generateWrites();
+  });
 });
