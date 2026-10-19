@@ -1,0 +1,2384 @@
+{
+ "fixtures": [
+  {
+   "version": 0,
+   "file": "v0.db",
+   "byteSize": 4096,
+   "countsBefore": {},
+   "schemaBefore": [],
+   "expectedAfter": {
+    "spaces": [
+     {
+      "id": "drop-zone-space",
+      "name": "Drop zone",
+      "icon": "📥",
+      "color": "#0F9BB0",
+      "created_at": 1792436192000,
+      "updated_at": 1792436192000,
+      "kind": "system"
+     }
+    ],
+    "containers": [
+     {
+      "id": "drop-zone",
+      "space_id": "drop-zone-space",
+      "name": "Drop zone",
+      "visual_type": "other",
+      "short_code": "DROP-ZONE",
+      "created_at": 1792436192000,
+      "updated_at": 1792436192000,
+      "kind": "system"
+     }
+    ],
+    "item_photos": [],
+    "tags": [],
+    "item_tags": [],
+    "qr_bindings": [],
+    "sync_deletions": [],
+    "items": []
+   }
+  },
+  {
+   "version": 1,
+   "file": "v1.db",
+   "byteSize": 98304,
+   "countsBefore": {
+    "spaces": 2,
+    "containers": 3,
+    "items": 4,
+    "item_photos": 3,
+    "tags": 3,
+    "item_tags": 4,
+    "qr_bindings": 2
+   },
+   "schemaBefore": [
+    {
+     "type": "table",
+     "name": "spaces",
+     "tbl_name": "spaces",
+     "sql": "CREATE TABLE spaces (\n        id          TEXT PRIMARY KEY NOT NULL,\n        name        TEXT NOT NULL,\n        icon        TEXT NOT NULL DEFAULT 'cube',\n        color       TEXT NOT NULL DEFAULT '#5B8DEF',\n        created_at  INTEGER NOT NULL,\n        updated_at  INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_spaces_1",
+     "tbl_name": "spaces",
+     "sql": null
+    },
+    {
+     "type": "table",
+     "name": "containers",
+     "tbl_name": "containers",
+     "sql": "CREATE TABLE containers (\n        id          TEXT PRIMARY KEY NOT NULL,\n        space_id    TEXT NOT NULL REFERENCES spaces(id) ON DELETE CASCADE,\n        name        TEXT,\n        visual_type TEXT NOT NULL DEFAULT 'box',\n        short_code  TEXT NOT NULL UNIQUE,\n        created_at  INTEGER NOT NULL,\n        updated_at  INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_containers_1",
+     "tbl_name": "containers",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_containers_2",
+     "tbl_name": "containers",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_containers_space",
+     "tbl_name": "containers",
+     "sql": "CREATE INDEX idx_containers_space ON containers(space_id)"
+    },
+    {
+     "type": "table",
+     "name": "items",
+     "tbl_name": "items",
+     "sql": "CREATE TABLE items (\n        id              TEXT PRIMARY KEY NOT NULL,\n        container_id    TEXT NOT NULL REFERENCES containers(id) ON DELETE CASCADE,\n        name            TEXT NOT NULL,\n        category        TEXT,\n        quantity        INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),\n        estimated_value REAL,\n        currency        TEXT,\n        notes           TEXT,\n        created_at      INTEGER NOT NULL,\n        updated_at      INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_items_1",
+     "tbl_name": "items",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_items_container",
+     "tbl_name": "items",
+     "sql": "CREATE INDEX idx_items_container ON items(container_id)"
+    },
+    {
+     "type": "index",
+     "name": "idx_items_name",
+     "tbl_name": "items",
+     "sql": "CREATE INDEX idx_items_name ON items(name COLLATE NOCASE)"
+    },
+    {
+     "type": "table",
+     "name": "item_photos",
+     "tbl_name": "item_photos",
+     "sql": "CREATE TABLE item_photos (\n        id         TEXT PRIMARY KEY NOT NULL,\n        item_id    TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,\n        uri        TEXT NOT NULL,\n        width      INTEGER,\n        height     INTEGER,\n        byte_size  INTEGER,\n        created_at INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_item_photos_1",
+     "tbl_name": "item_photos",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_item_photos_item",
+     "tbl_name": "item_photos",
+     "sql": "CREATE INDEX idx_item_photos_item ON item_photos(item_id)"
+    },
+    {
+     "type": "table",
+     "name": "tags",
+     "tbl_name": "tags",
+     "sql": "CREATE TABLE tags (\n        id              TEXT PRIMARY KEY NOT NULL,\n        name            TEXT NOT NULL,\n        normalized_name TEXT NOT NULL UNIQUE,\n        created_at      INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_tags_1",
+     "tbl_name": "tags",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_tags_2",
+     "tbl_name": "tags",
+     "sql": null
+    },
+    {
+     "type": "table",
+     "name": "item_tags",
+     "tbl_name": "item_tags",
+     "sql": "CREATE TABLE item_tags (\n        item_id TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,\n        tag_id  TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,\n        PRIMARY KEY (item_id, tag_id)\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_item_tags_1",
+     "tbl_name": "item_tags",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_item_tags_tag",
+     "tbl_name": "item_tags",
+     "sql": "CREATE INDEX idx_item_tags_tag ON item_tags(tag_id)"
+    },
+    {
+     "type": "table",
+     "name": "qr_bindings",
+     "tbl_name": "qr_bindings",
+     "sql": "CREATE TABLE qr_bindings (\n        id           TEXT PRIMARY KEY NOT NULL,\n        token        TEXT NOT NULL UNIQUE,\n        container_id TEXT NOT NULL REFERENCES containers(id) ON DELETE CASCADE,\n        created_at   INTEGER NOT NULL,\n        updated_at   INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_qr_bindings_1",
+     "tbl_name": "qr_bindings",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_qr_bindings_2",
+     "tbl_name": "qr_bindings",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_qr_bindings_container",
+     "tbl_name": "qr_bindings",
+     "sql": "CREATE INDEX idx_qr_bindings_container ON qr_bindings(container_id)"
+    }
+   ],
+   "expectedAfter": {
+    "spaces": [
+     {
+      "id": "sp-garage",
+      "name": "Garage",
+      "icon": "car",
+      "color": "#5B8DEF",
+      "created_at": 1000,
+      "updated_at": 1000,
+      "kind": "normal"
+     },
+     {
+      "id": "sp-kitchen",
+      "name": "Küche",
+      "icon": "🍳",
+      "color": "#E4572E",
+      "created_at": 1001,
+      "updated_at": 1001,
+      "kind": "normal"
+     },
+     {
+      "id": "drop-zone-space",
+      "name": "Drop zone",
+      "icon": "📥",
+      "color": "#0F9BB0",
+      "created_at": 1792436192000,
+      "updated_at": 1792436192000,
+      "kind": "system"
+     }
+    ],
+    "containers": [
+     {
+      "id": "ct-toolbox",
+      "space_id": "sp-garage",
+      "name": "Tool Box",
+      "visual_type": "box",
+      "short_code": "BOX-7K2M",
+      "created_at": 1100,
+      "updated_at": 1100,
+      "kind": "normal"
+     },
+     {
+      "id": "ct-drawer",
+      "space_id": "sp-kitchen",
+      "name": null,
+      "visual_type": "drawer",
+      "short_code": "DRW-ABCD",
+      "created_at": 1101,
+      "updated_at": 1101,
+      "kind": "normal"
+     },
+     {
+      "id": "ct-shelf",
+      "space_id": "sp-garage",
+      "name": "Top shelf",
+      "visual_type": "shelf",
+      "short_code": "SHF-2345",
+      "created_at": 1102,
+      "updated_at": 1102,
+      "kind": "normal"
+     },
+     {
+      "id": "drop-zone",
+      "space_id": "drop-zone-space",
+      "name": "Drop zone",
+      "visual_type": "other",
+      "short_code": "DROP-ZONE",
+      "created_at": 1792436192000,
+      "updated_at": 1792436192000,
+      "kind": "system"
+     }
+    ],
+    "item_photos": [
+     {
+      "id": "ph-drill",
+      "item_id": "it-drill",
+      "uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/7f3c.webp",
+      "width": 1400,
+      "height": 1050,
+      "byte_size": 210000,
+      "created_at": 1200,
+      "remote_synced_at": null,
+      "thumb_uri": null
+     },
+     {
+      "id": "ph-drill-later",
+      "item_id": "it-drill",
+      "uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/later.webp",
+      "width": 320,
+      "height": 240,
+      "byte_size": 9000,
+      "created_at": 1250,
+      "remote_synced_at": null,
+      "thumb_uri": null
+     },
+     {
+      "id": "ph-nails",
+      "item_id": "it-nails",
+      "uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/legacy.jpg",
+      "width": null,
+      "height": null,
+      "byte_size": null,
+      "created_at": 1202,
+      "remote_synced_at": null,
+      "thumb_uri": null
+     }
+    ],
+    "tags": [
+     {
+      "id": "tg-dewalt",
+      "name": "DeWalt",
+      "normalized_name": "dewalt",
+      "created_at": 1200
+     },
+     {
+      "id": "tg-18v",
+      "name": "18V",
+      "normalized_name": "18v",
+      "created_at": 1200
+     },
+     {
+      "id": "tg-hw",
+      "name": "hardware",
+      "normalized_name": "hardware",
+      "created_at": 1202
+     }
+    ],
+    "item_tags": [
+     {
+      "item_id": "it-drill",
+      "tag_id": "tg-dewalt"
+     },
+     {
+      "item_id": "it-drill",
+      "tag_id": "tg-18v"
+     },
+     {
+      "item_id": "it-nails",
+      "tag_id": "tg-hw"
+     },
+     {
+      "item_id": "it-cable",
+      "tag_id": "tg-hw"
+     }
+    ],
+    "qr_bindings": [
+     {
+      "id": "qr-1",
+      "token": "abababababababababababababababab",
+      "container_id": "ct-toolbox",
+      "created_at": 1300,
+      "updated_at": 1300
+     },
+     {
+      "id": "qr-2",
+      "token": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+      "container_id": "ct-shelf",
+      "created_at": 1301,
+      "updated_at": 1301
+     }
+    ],
+    "sync_deletions": [],
+    "items": [
+     {
+      "id": "it-drill",
+      "container_id": "ct-toolbox",
+      "name": "Cordless Drill",
+      "category": "Power Tools",
+      "quantity": 1,
+      "notes": "Charger in side pocket",
+      "created_at": 1200,
+      "updated_at": 1200,
+      "search_text": "cordless drill power tools"
+     },
+     {
+      "id": "it-armel",
+      "container_id": "ct-drawer",
+      "name": "ÄRMEL Schoner",
+      "category": null,
+      "quantity": 2,
+      "notes": null,
+      "created_at": 1201,
+      "updated_at": 1201,
+      "search_text": "Ärmel schoner"
+     },
+     {
+      "id": "it-nails",
+      "container_id": "ct-shelf",
+      "name": "Nails",
+      "category": "Hardware",
+      "quantity": 500,
+      "notes": "Mixed sizes",
+      "created_at": 1202,
+      "updated_at": 1202,
+      "search_text": "nails hardware"
+     },
+     {
+      "id": "it-cable",
+      "container_id": "ct-toolbox",
+      "name": "USB-C cable",
+      "category": null,
+      "quantity": 3,
+      "notes": null,
+      "created_at": 1203,
+      "updated_at": 1203,
+      "search_text": "usb-c cable"
+     }
+    ]
+   }
+  },
+  {
+   "version": 2,
+   "file": "v2.db",
+   "byteSize": 102400,
+   "countsBefore": {
+    "spaces": 2,
+    "containers": 3,
+    "items": 4,
+    "item_photos": 3,
+    "tags": 3,
+    "item_tags": 4,
+    "qr_bindings": 2
+   },
+   "schemaBefore": [
+    {
+     "type": "table",
+     "name": "spaces",
+     "tbl_name": "spaces",
+     "sql": "CREATE TABLE spaces (\n        id          TEXT PRIMARY KEY NOT NULL,\n        name        TEXT NOT NULL,\n        icon        TEXT NOT NULL DEFAULT 'cube',\n        color       TEXT NOT NULL DEFAULT '#5B8DEF',\n        created_at  INTEGER NOT NULL,\n        updated_at  INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_spaces_1",
+     "tbl_name": "spaces",
+     "sql": null
+    },
+    {
+     "type": "table",
+     "name": "containers",
+     "tbl_name": "containers",
+     "sql": "CREATE TABLE containers (\n        id          TEXT PRIMARY KEY NOT NULL,\n        space_id    TEXT NOT NULL REFERENCES spaces(id) ON DELETE CASCADE,\n        name        TEXT,\n        visual_type TEXT NOT NULL DEFAULT 'box',\n        short_code  TEXT NOT NULL UNIQUE,\n        created_at  INTEGER NOT NULL,\n        updated_at  INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_containers_1",
+     "tbl_name": "containers",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_containers_2",
+     "tbl_name": "containers",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_containers_space",
+     "tbl_name": "containers",
+     "sql": "CREATE INDEX idx_containers_space ON containers(space_id)"
+    },
+    {
+     "type": "table",
+     "name": "items",
+     "tbl_name": "items",
+     "sql": "CREATE TABLE items (\n        id              TEXT PRIMARY KEY NOT NULL,\n        container_id    TEXT NOT NULL REFERENCES containers(id) ON DELETE CASCADE,\n        name            TEXT NOT NULL,\n        category        TEXT,\n        quantity        INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),\n        estimated_value REAL,\n        currency        TEXT,\n        notes           TEXT,\n        created_at      INTEGER NOT NULL,\n        updated_at      INTEGER NOT NULL\n      , search_text TEXT NOT NULL DEFAULT '')"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_items_1",
+     "tbl_name": "items",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_items_container",
+     "tbl_name": "items",
+     "sql": "CREATE INDEX idx_items_container ON items(container_id)"
+    },
+    {
+     "type": "index",
+     "name": "idx_items_name",
+     "tbl_name": "items",
+     "sql": "CREATE INDEX idx_items_name ON items(name COLLATE NOCASE)"
+    },
+    {
+     "type": "table",
+     "name": "item_photos",
+     "tbl_name": "item_photos",
+     "sql": "CREATE TABLE item_photos (\n        id         TEXT PRIMARY KEY NOT NULL,\n        item_id    TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,\n        uri        TEXT NOT NULL,\n        width      INTEGER,\n        height     INTEGER,\n        byte_size  INTEGER,\n        created_at INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_item_photos_1",
+     "tbl_name": "item_photos",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_item_photos_item",
+     "tbl_name": "item_photos",
+     "sql": "CREATE INDEX idx_item_photos_item ON item_photos(item_id)"
+    },
+    {
+     "type": "table",
+     "name": "tags",
+     "tbl_name": "tags",
+     "sql": "CREATE TABLE tags (\n        id              TEXT PRIMARY KEY NOT NULL,\n        name            TEXT NOT NULL,\n        normalized_name TEXT NOT NULL UNIQUE,\n        created_at      INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_tags_1",
+     "tbl_name": "tags",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_tags_2",
+     "tbl_name": "tags",
+     "sql": null
+    },
+    {
+     "type": "table",
+     "name": "item_tags",
+     "tbl_name": "item_tags",
+     "sql": "CREATE TABLE item_tags (\n        item_id TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,\n        tag_id  TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,\n        PRIMARY KEY (item_id, tag_id)\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_item_tags_1",
+     "tbl_name": "item_tags",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_item_tags_tag",
+     "tbl_name": "item_tags",
+     "sql": "CREATE INDEX idx_item_tags_tag ON item_tags(tag_id)"
+    },
+    {
+     "type": "table",
+     "name": "qr_bindings",
+     "tbl_name": "qr_bindings",
+     "sql": "CREATE TABLE qr_bindings (\n        id           TEXT PRIMARY KEY NOT NULL,\n        token        TEXT NOT NULL UNIQUE,\n        container_id TEXT NOT NULL REFERENCES containers(id) ON DELETE CASCADE,\n        created_at   INTEGER NOT NULL,\n        updated_at   INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_qr_bindings_1",
+     "tbl_name": "qr_bindings",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_qr_bindings_2",
+     "tbl_name": "qr_bindings",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_qr_bindings_container",
+     "tbl_name": "qr_bindings",
+     "sql": "CREATE INDEX idx_qr_bindings_container ON qr_bindings(container_id)"
+    },
+    {
+     "type": "index",
+     "name": "idx_items_search_text",
+     "tbl_name": "items",
+     "sql": "CREATE INDEX idx_items_search_text ON items(search_text)"
+    }
+   ],
+   "expectedAfter": {
+    "spaces": [
+     {
+      "id": "sp-garage",
+      "name": "Garage",
+      "icon": "car",
+      "color": "#5B8DEF",
+      "created_at": 1000,
+      "updated_at": 1000,
+      "kind": "normal"
+     },
+     {
+      "id": "sp-kitchen",
+      "name": "Küche",
+      "icon": "🍳",
+      "color": "#E4572E",
+      "created_at": 1001,
+      "updated_at": 1001,
+      "kind": "normal"
+     },
+     {
+      "id": "drop-zone-space",
+      "name": "Drop zone",
+      "icon": "📥",
+      "color": "#0F9BB0",
+      "created_at": 1792436192000,
+      "updated_at": 1792436192000,
+      "kind": "system"
+     }
+    ],
+    "containers": [
+     {
+      "id": "ct-toolbox",
+      "space_id": "sp-garage",
+      "name": "Tool Box",
+      "visual_type": "box",
+      "short_code": "BOX-7K2M",
+      "created_at": 1100,
+      "updated_at": 1100,
+      "kind": "normal"
+     },
+     {
+      "id": "ct-drawer",
+      "space_id": "sp-kitchen",
+      "name": null,
+      "visual_type": "drawer",
+      "short_code": "DRW-ABCD",
+      "created_at": 1101,
+      "updated_at": 1101,
+      "kind": "normal"
+     },
+     {
+      "id": "ct-shelf",
+      "space_id": "sp-garage",
+      "name": "Top shelf",
+      "visual_type": "shelf",
+      "short_code": "SHF-2345",
+      "created_at": 1102,
+      "updated_at": 1102,
+      "kind": "normal"
+     },
+     {
+      "id": "drop-zone",
+      "space_id": "drop-zone-space",
+      "name": "Drop zone",
+      "visual_type": "other",
+      "short_code": "DROP-ZONE",
+      "created_at": 1792436192000,
+      "updated_at": 1792436192000,
+      "kind": "system"
+     }
+    ],
+    "item_photos": [
+     {
+      "id": "ph-drill",
+      "item_id": "it-drill",
+      "uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/7f3c.webp",
+      "width": 1400,
+      "height": 1050,
+      "byte_size": 210000,
+      "created_at": 1200,
+      "remote_synced_at": null,
+      "thumb_uri": null
+     },
+     {
+      "id": "ph-drill-later",
+      "item_id": "it-drill",
+      "uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/later.webp",
+      "width": 320,
+      "height": 240,
+      "byte_size": 9000,
+      "created_at": 1250,
+      "remote_synced_at": null,
+      "thumb_uri": null
+     },
+     {
+      "id": "ph-nails",
+      "item_id": "it-nails",
+      "uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/legacy.jpg",
+      "width": null,
+      "height": null,
+      "byte_size": null,
+      "created_at": 1202,
+      "remote_synced_at": null,
+      "thumb_uri": null
+     }
+    ],
+    "tags": [
+     {
+      "id": "tg-dewalt",
+      "name": "DeWalt",
+      "normalized_name": "dewalt",
+      "created_at": 1200
+     },
+     {
+      "id": "tg-18v",
+      "name": "18V",
+      "normalized_name": "18v",
+      "created_at": 1200
+     },
+     {
+      "id": "tg-hw",
+      "name": "hardware",
+      "normalized_name": "hardware",
+      "created_at": 1202
+     }
+    ],
+    "item_tags": [
+     {
+      "item_id": "it-drill",
+      "tag_id": "tg-dewalt"
+     },
+     {
+      "item_id": "it-drill",
+      "tag_id": "tg-18v"
+     },
+     {
+      "item_id": "it-nails",
+      "tag_id": "tg-hw"
+     },
+     {
+      "item_id": "it-cable",
+      "tag_id": "tg-hw"
+     }
+    ],
+    "qr_bindings": [
+     {
+      "id": "qr-1",
+      "token": "abababababababababababababababab",
+      "container_id": "ct-toolbox",
+      "created_at": 1300,
+      "updated_at": 1300
+     },
+     {
+      "id": "qr-2",
+      "token": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+      "container_id": "ct-shelf",
+      "created_at": 1301,
+      "updated_at": 1301
+     }
+    ],
+    "sync_deletions": [],
+    "items": [
+     {
+      "id": "it-drill",
+      "container_id": "ct-toolbox",
+      "name": "Cordless Drill",
+      "category": "Power Tools",
+      "quantity": 1,
+      "notes": "Charger in side pocket",
+      "created_at": 1200,
+      "updated_at": 1200,
+      "search_text": "cordless drill power tools"
+     },
+     {
+      "id": "it-armel",
+      "container_id": "ct-drawer",
+      "name": "ÄRMEL Schoner",
+      "category": null,
+      "quantity": 2,
+      "notes": null,
+      "created_at": 1201,
+      "updated_at": 1201,
+      "search_text": "ärmel schoner"
+     },
+     {
+      "id": "it-nails",
+      "container_id": "ct-shelf",
+      "name": "Nails",
+      "category": "Hardware",
+      "quantity": 500,
+      "notes": "Mixed sizes",
+      "created_at": 1202,
+      "updated_at": 1202,
+      "search_text": "nails hardware"
+     },
+     {
+      "id": "it-cable",
+      "container_id": "ct-toolbox",
+      "name": "USB-C cable",
+      "category": null,
+      "quantity": 3,
+      "notes": null,
+      "created_at": 1203,
+      "updated_at": 1203,
+      "search_text": "usb-c cable"
+     }
+    ]
+   }
+  },
+  {
+   "version": 3,
+   "file": "v3.db",
+   "byteSize": 102400,
+   "countsBefore": {
+    "spaces": 3,
+    "containers": 4,
+    "items": 5,
+    "item_photos": 3,
+    "tags": 3,
+    "item_tags": 4,
+    "qr_bindings": 2
+   },
+   "schemaBefore": [
+    {
+     "type": "table",
+     "name": "spaces",
+     "tbl_name": "spaces",
+     "sql": "CREATE TABLE spaces (\n        id          TEXT PRIMARY KEY NOT NULL,\n        name        TEXT NOT NULL,\n        icon        TEXT NOT NULL DEFAULT 'cube',\n        color       TEXT NOT NULL DEFAULT '#5B8DEF',\n        created_at  INTEGER NOT NULL,\n        updated_at  INTEGER NOT NULL\n      , kind TEXT NOT NULL DEFAULT 'normal')"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_spaces_1",
+     "tbl_name": "spaces",
+     "sql": null
+    },
+    {
+     "type": "table",
+     "name": "containers",
+     "tbl_name": "containers",
+     "sql": "CREATE TABLE containers (\n        id          TEXT PRIMARY KEY NOT NULL,\n        space_id    TEXT NOT NULL REFERENCES spaces(id) ON DELETE CASCADE,\n        name        TEXT,\n        visual_type TEXT NOT NULL DEFAULT 'box',\n        short_code  TEXT NOT NULL UNIQUE,\n        created_at  INTEGER NOT NULL,\n        updated_at  INTEGER NOT NULL\n      , kind TEXT NOT NULL DEFAULT 'normal')"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_containers_1",
+     "tbl_name": "containers",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_containers_2",
+     "tbl_name": "containers",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_containers_space",
+     "tbl_name": "containers",
+     "sql": "CREATE INDEX idx_containers_space ON containers(space_id)"
+    },
+    {
+     "type": "table",
+     "name": "items",
+     "tbl_name": "items",
+     "sql": "CREATE TABLE items (\n        id              TEXT PRIMARY KEY NOT NULL,\n        container_id    TEXT NOT NULL REFERENCES containers(id) ON DELETE CASCADE,\n        name            TEXT NOT NULL,\n        category        TEXT,\n        quantity        INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),\n        estimated_value REAL,\n        currency        TEXT,\n        notes           TEXT,\n        created_at      INTEGER NOT NULL,\n        updated_at      INTEGER NOT NULL\n      , search_text TEXT NOT NULL DEFAULT '')"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_items_1",
+     "tbl_name": "items",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_items_container",
+     "tbl_name": "items",
+     "sql": "CREATE INDEX idx_items_container ON items(container_id)"
+    },
+    {
+     "type": "index",
+     "name": "idx_items_name",
+     "tbl_name": "items",
+     "sql": "CREATE INDEX idx_items_name ON items(name COLLATE NOCASE)"
+    },
+    {
+     "type": "table",
+     "name": "item_photos",
+     "tbl_name": "item_photos",
+     "sql": "CREATE TABLE item_photos (\n        id         TEXT PRIMARY KEY NOT NULL,\n        item_id    TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,\n        uri        TEXT NOT NULL,\n        width      INTEGER,\n        height     INTEGER,\n        byte_size  INTEGER,\n        created_at INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_item_photos_1",
+     "tbl_name": "item_photos",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_item_photos_item",
+     "tbl_name": "item_photos",
+     "sql": "CREATE INDEX idx_item_photos_item ON item_photos(item_id)"
+    },
+    {
+     "type": "table",
+     "name": "tags",
+     "tbl_name": "tags",
+     "sql": "CREATE TABLE tags (\n        id              TEXT PRIMARY KEY NOT NULL,\n        name            TEXT NOT NULL,\n        normalized_name TEXT NOT NULL UNIQUE,\n        created_at      INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_tags_1",
+     "tbl_name": "tags",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_tags_2",
+     "tbl_name": "tags",
+     "sql": null
+    },
+    {
+     "type": "table",
+     "name": "item_tags",
+     "tbl_name": "item_tags",
+     "sql": "CREATE TABLE item_tags (\n        item_id TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,\n        tag_id  TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,\n        PRIMARY KEY (item_id, tag_id)\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_item_tags_1",
+     "tbl_name": "item_tags",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_item_tags_tag",
+     "tbl_name": "item_tags",
+     "sql": "CREATE INDEX idx_item_tags_tag ON item_tags(tag_id)"
+    },
+    {
+     "type": "table",
+     "name": "qr_bindings",
+     "tbl_name": "qr_bindings",
+     "sql": "CREATE TABLE qr_bindings (\n        id           TEXT PRIMARY KEY NOT NULL,\n        token        TEXT NOT NULL UNIQUE,\n        container_id TEXT NOT NULL REFERENCES containers(id) ON DELETE CASCADE,\n        created_at   INTEGER NOT NULL,\n        updated_at   INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_qr_bindings_1",
+     "tbl_name": "qr_bindings",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_qr_bindings_2",
+     "tbl_name": "qr_bindings",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_qr_bindings_container",
+     "tbl_name": "qr_bindings",
+     "sql": "CREATE INDEX idx_qr_bindings_container ON qr_bindings(container_id)"
+    },
+    {
+     "type": "index",
+     "name": "idx_items_search_text",
+     "tbl_name": "items",
+     "sql": "CREATE INDEX idx_items_search_text ON items(search_text)"
+    }
+   ],
+   "expectedAfter": {
+    "spaces": [
+     {
+      "id": "drop-zone-space",
+      "name": "Drop zone",
+      "icon": "📥",
+      "color": "#0F9BB0",
+      "created_at": 1792436192000,
+      "updated_at": 1792436192000,
+      "kind": "system"
+     },
+     {
+      "id": "sp-garage",
+      "name": "Garage",
+      "icon": "car",
+      "color": "#5B8DEF",
+      "created_at": 1000,
+      "updated_at": 1000,
+      "kind": "normal"
+     },
+     {
+      "id": "sp-kitchen",
+      "name": "Küche",
+      "icon": "🍳",
+      "color": "#E4572E",
+      "created_at": 1001,
+      "updated_at": 1001,
+      "kind": "normal"
+     }
+    ],
+    "containers": [
+     {
+      "id": "drop-zone",
+      "space_id": "drop-zone-space",
+      "name": "Drop zone",
+      "visual_type": "other",
+      "short_code": "DROP-ZONE",
+      "created_at": 1792436192000,
+      "updated_at": 1792436192000,
+      "kind": "system"
+     },
+     {
+      "id": "ct-toolbox",
+      "space_id": "sp-garage",
+      "name": "Tool Box",
+      "visual_type": "box",
+      "short_code": "BOX-7K2M",
+      "created_at": 1100,
+      "updated_at": 1100,
+      "kind": "normal"
+     },
+     {
+      "id": "ct-drawer",
+      "space_id": "sp-kitchen",
+      "name": null,
+      "visual_type": "drawer",
+      "short_code": "DRW-ABCD",
+      "created_at": 1101,
+      "updated_at": 1101,
+      "kind": "normal"
+     },
+     {
+      "id": "ct-shelf",
+      "space_id": "sp-garage",
+      "name": "Top shelf",
+      "visual_type": "shelf",
+      "short_code": "SHF-2345",
+      "created_at": 1102,
+      "updated_at": 1102,
+      "kind": "normal"
+     }
+    ],
+    "item_photos": [
+     {
+      "id": "ph-drill",
+      "item_id": "it-drill",
+      "uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/7f3c.webp",
+      "width": 1400,
+      "height": 1050,
+      "byte_size": 210000,
+      "created_at": 1200,
+      "remote_synced_at": null,
+      "thumb_uri": null
+     },
+     {
+      "id": "ph-drill-later",
+      "item_id": "it-drill",
+      "uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/later.webp",
+      "width": 320,
+      "height": 240,
+      "byte_size": 9000,
+      "created_at": 1250,
+      "remote_synced_at": null,
+      "thumb_uri": null
+     },
+     {
+      "id": "ph-nails",
+      "item_id": "it-nails",
+      "uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/legacy.jpg",
+      "width": null,
+      "height": null,
+      "byte_size": null,
+      "created_at": 1202,
+      "remote_synced_at": null,
+      "thumb_uri": null
+     }
+    ],
+    "tags": [
+     {
+      "id": "tg-dewalt",
+      "name": "DeWalt",
+      "normalized_name": "dewalt",
+      "created_at": 1200
+     },
+     {
+      "id": "tg-18v",
+      "name": "18V",
+      "normalized_name": "18v",
+      "created_at": 1200
+     },
+     {
+      "id": "tg-hw",
+      "name": "hardware",
+      "normalized_name": "hardware",
+      "created_at": 1202
+     }
+    ],
+    "item_tags": [
+     {
+      "item_id": "it-drill",
+      "tag_id": "tg-dewalt"
+     },
+     {
+      "item_id": "it-drill",
+      "tag_id": "tg-18v"
+     },
+     {
+      "item_id": "it-nails",
+      "tag_id": "tg-hw"
+     },
+     {
+      "item_id": "it-cable",
+      "tag_id": "tg-hw"
+     }
+    ],
+    "qr_bindings": [
+     {
+      "id": "qr-1",
+      "token": "abababababababababababababababab",
+      "container_id": "ct-toolbox",
+      "created_at": 1300,
+      "updated_at": 1300
+     },
+     {
+      "id": "qr-2",
+      "token": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+      "container_id": "ct-shelf",
+      "created_at": 1301,
+      "updated_at": 1301
+     }
+    ],
+    "sync_deletions": [],
+    "items": [
+     {
+      "id": "it-drill",
+      "container_id": "ct-toolbox",
+      "name": "Cordless Drill",
+      "category": "Power Tools",
+      "quantity": 1,
+      "notes": "Charger in side pocket",
+      "created_at": 1200,
+      "updated_at": 1200,
+      "search_text": "cordless drill power tools"
+     },
+     {
+      "id": "it-armel",
+      "container_id": "ct-drawer",
+      "name": "ÄRMEL Schoner",
+      "category": null,
+      "quantity": 2,
+      "notes": null,
+      "created_at": 1201,
+      "updated_at": 1201,
+      "search_text": "ärmel schoner"
+     },
+     {
+      "id": "it-nails",
+      "container_id": "ct-shelf",
+      "name": "Nails",
+      "category": "Hardware",
+      "quantity": 500,
+      "notes": "Mixed sizes",
+      "created_at": 1202,
+      "updated_at": 1202,
+      "search_text": "nails hardware"
+     },
+     {
+      "id": "it-cable",
+      "container_id": "ct-toolbox",
+      "name": "USB-C cable",
+      "category": null,
+      "quantity": 3,
+      "notes": null,
+      "created_at": 1203,
+      "updated_at": 1203,
+      "search_text": "usb-c cable"
+     },
+     {
+      "id": "it-unnamed",
+      "container_id": "drop-zone",
+      "name": "",
+      "category": null,
+      "quantity": 1,
+      "notes": null,
+      "created_at": 1204,
+      "updated_at": 1204,
+      "search_text": ""
+     }
+    ]
+   }
+  },
+  {
+   "version": 4,
+   "file": "v4.db",
+   "byteSize": 122880,
+   "countsBefore": {
+    "spaces": 3,
+    "containers": 4,
+    "items": 5,
+    "item_photos": 3,
+    "tags": 3,
+    "item_tags": 4,
+    "qr_bindings": 2,
+    "sync_deletions": 1
+   },
+   "schemaBefore": [
+    {
+     "type": "table",
+     "name": "spaces",
+     "tbl_name": "spaces",
+     "sql": "CREATE TABLE spaces (\n        id          TEXT PRIMARY KEY NOT NULL,\n        name        TEXT NOT NULL,\n        icon        TEXT NOT NULL DEFAULT 'cube',\n        color       TEXT NOT NULL DEFAULT '#5B8DEF',\n        created_at  INTEGER NOT NULL,\n        updated_at  INTEGER NOT NULL\n      , kind TEXT NOT NULL DEFAULT 'normal')"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_spaces_1",
+     "tbl_name": "spaces",
+     "sql": null
+    },
+    {
+     "type": "table",
+     "name": "containers",
+     "tbl_name": "containers",
+     "sql": "CREATE TABLE containers (\n        id          TEXT PRIMARY KEY NOT NULL,\n        space_id    TEXT NOT NULL REFERENCES spaces(id) ON DELETE CASCADE,\n        name        TEXT,\n        visual_type TEXT NOT NULL DEFAULT 'box',\n        short_code  TEXT NOT NULL UNIQUE,\n        created_at  INTEGER NOT NULL,\n        updated_at  INTEGER NOT NULL\n      , kind TEXT NOT NULL DEFAULT 'normal')"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_containers_1",
+     "tbl_name": "containers",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_containers_2",
+     "tbl_name": "containers",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_containers_space",
+     "tbl_name": "containers",
+     "sql": "CREATE INDEX idx_containers_space ON containers(space_id)"
+    },
+    {
+     "type": "table",
+     "name": "items",
+     "tbl_name": "items",
+     "sql": "CREATE TABLE items (\n        id              TEXT PRIMARY KEY NOT NULL,\n        container_id    TEXT NOT NULL REFERENCES containers(id) ON DELETE CASCADE,\n        name            TEXT NOT NULL,\n        category        TEXT,\n        quantity        INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),\n        estimated_value REAL,\n        currency        TEXT,\n        notes           TEXT,\n        created_at      INTEGER NOT NULL,\n        updated_at      INTEGER NOT NULL\n      , search_text TEXT NOT NULL DEFAULT '')"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_items_1",
+     "tbl_name": "items",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_items_container",
+     "tbl_name": "items",
+     "sql": "CREATE INDEX idx_items_container ON items(container_id)"
+    },
+    {
+     "type": "index",
+     "name": "idx_items_name",
+     "tbl_name": "items",
+     "sql": "CREATE INDEX idx_items_name ON items(name COLLATE NOCASE)"
+    },
+    {
+     "type": "table",
+     "name": "item_photos",
+     "tbl_name": "item_photos",
+     "sql": "CREATE TABLE item_photos (\n        id         TEXT PRIMARY KEY NOT NULL,\n        item_id    TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,\n        uri        TEXT NOT NULL,\n        width      INTEGER,\n        height     INTEGER,\n        byte_size  INTEGER,\n        created_at INTEGER NOT NULL\n      , remote_synced_at INTEGER)"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_item_photos_1",
+     "tbl_name": "item_photos",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_item_photos_item",
+     "tbl_name": "item_photos",
+     "sql": "CREATE INDEX idx_item_photos_item ON item_photos(item_id)"
+    },
+    {
+     "type": "table",
+     "name": "tags",
+     "tbl_name": "tags",
+     "sql": "CREATE TABLE tags (\n        id              TEXT PRIMARY KEY NOT NULL,\n        name            TEXT NOT NULL,\n        normalized_name TEXT NOT NULL UNIQUE,\n        created_at      INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_tags_1",
+     "tbl_name": "tags",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_tags_2",
+     "tbl_name": "tags",
+     "sql": null
+    },
+    {
+     "type": "table",
+     "name": "item_tags",
+     "tbl_name": "item_tags",
+     "sql": "CREATE TABLE item_tags (\n        item_id TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,\n        tag_id  TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,\n        PRIMARY KEY (item_id, tag_id)\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_item_tags_1",
+     "tbl_name": "item_tags",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_item_tags_tag",
+     "tbl_name": "item_tags",
+     "sql": "CREATE INDEX idx_item_tags_tag ON item_tags(tag_id)"
+    },
+    {
+     "type": "table",
+     "name": "qr_bindings",
+     "tbl_name": "qr_bindings",
+     "sql": "CREATE TABLE qr_bindings (\n        id           TEXT PRIMARY KEY NOT NULL,\n        token        TEXT NOT NULL UNIQUE,\n        container_id TEXT NOT NULL REFERENCES containers(id) ON DELETE CASCADE,\n        created_at   INTEGER NOT NULL,\n        updated_at   INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_qr_bindings_1",
+     "tbl_name": "qr_bindings",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_qr_bindings_2",
+     "tbl_name": "qr_bindings",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_qr_bindings_container",
+     "tbl_name": "qr_bindings",
+     "sql": "CREATE INDEX idx_qr_bindings_container ON qr_bindings(container_id)"
+    },
+    {
+     "type": "index",
+     "name": "idx_items_search_text",
+     "tbl_name": "items",
+     "sql": "CREATE INDEX idx_items_search_text ON items(search_text)"
+    },
+    {
+     "type": "index",
+     "name": "idx_item_photos_unsynced",
+     "tbl_name": "item_photos",
+     "sql": "CREATE INDEX idx_item_photos_unsynced\n        ON item_photos(created_at)\n        WHERE remote_synced_at IS NULL"
+    },
+    {
+     "type": "table",
+     "name": "sync_deletions",
+     "tbl_name": "sync_deletions",
+     "sql": "CREATE TABLE sync_deletions (\n        photo_id   TEXT PRIMARY KEY NOT NULL,\n        deleted_at INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_sync_deletions_1",
+     "tbl_name": "sync_deletions",
+     "sql": null
+    },
+    {
+     "type": "trigger",
+     "name": "item_photos_tombstone",
+     "tbl_name": "item_photos",
+     "sql": "CREATE TRIGGER item_photos_tombstone\n      AFTER DELETE ON item_photos\n      WHEN OLD.remote_synced_at IS NOT NULL\n      BEGIN\n        INSERT OR REPLACE INTO sync_deletions (photo_id, deleted_at)\n        VALUES (OLD.id, CAST(strftime('%s','now') AS INTEGER) * 1000);\n      END"
+    }
+   ],
+   "expectedAfter": {
+    "spaces": [
+     {
+      "id": "drop-zone-space",
+      "name": "Drop zone",
+      "icon": "📥",
+      "color": "#0F9BB0",
+      "created_at": 1792436192000,
+      "updated_at": 1792436192000,
+      "kind": "system"
+     },
+     {
+      "id": "sp-garage",
+      "name": "Garage",
+      "icon": "car",
+      "color": "#5B8DEF",
+      "created_at": 1000,
+      "updated_at": 1000,
+      "kind": "normal"
+     },
+     {
+      "id": "sp-kitchen",
+      "name": "Küche",
+      "icon": "🍳",
+      "color": "#E4572E",
+      "created_at": 1001,
+      "updated_at": 1001,
+      "kind": "normal"
+     }
+    ],
+    "containers": [
+     {
+      "id": "drop-zone",
+      "space_id": "drop-zone-space",
+      "name": "Drop zone",
+      "visual_type": "other",
+      "short_code": "DROP-ZONE",
+      "created_at": 1792436192000,
+      "updated_at": 1792436192000,
+      "kind": "system"
+     },
+     {
+      "id": "ct-toolbox",
+      "space_id": "sp-garage",
+      "name": "Tool Box",
+      "visual_type": "box",
+      "short_code": "BOX-7K2M",
+      "created_at": 1100,
+      "updated_at": 1100,
+      "kind": "normal"
+     },
+     {
+      "id": "ct-drawer",
+      "space_id": "sp-kitchen",
+      "name": null,
+      "visual_type": "drawer",
+      "short_code": "DRW-ABCD",
+      "created_at": 1101,
+      "updated_at": 1101,
+      "kind": "normal"
+     },
+     {
+      "id": "ct-shelf",
+      "space_id": "sp-garage",
+      "name": "Top shelf",
+      "visual_type": "shelf",
+      "short_code": "SHF-2345",
+      "created_at": 1102,
+      "updated_at": 1102,
+      "kind": "normal"
+     }
+    ],
+    "item_photos": [
+     {
+      "id": "ph-drill",
+      "item_id": "it-drill",
+      "uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/7f3c.webp",
+      "width": 1400,
+      "height": 1050,
+      "byte_size": 210000,
+      "created_at": 1200,
+      "remote_synced_at": 1500,
+      "thumb_uri": null
+     },
+     {
+      "id": "ph-drill-later",
+      "item_id": "it-drill",
+      "uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/later.webp",
+      "width": 320,
+      "height": 240,
+      "byte_size": 9000,
+      "created_at": 1250,
+      "remote_synced_at": null,
+      "thumb_uri": null
+     },
+     {
+      "id": "ph-nails",
+      "item_id": "it-nails",
+      "uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/legacy.jpg",
+      "width": null,
+      "height": null,
+      "byte_size": null,
+      "created_at": 1202,
+      "remote_synced_at": null,
+      "thumb_uri": null
+     }
+    ],
+    "tags": [
+     {
+      "id": "tg-dewalt",
+      "name": "DeWalt",
+      "normalized_name": "dewalt",
+      "created_at": 1200
+     },
+     {
+      "id": "tg-18v",
+      "name": "18V",
+      "normalized_name": "18v",
+      "created_at": 1200
+     },
+     {
+      "id": "tg-hw",
+      "name": "hardware",
+      "normalized_name": "hardware",
+      "created_at": 1202
+     }
+    ],
+    "item_tags": [
+     {
+      "item_id": "it-drill",
+      "tag_id": "tg-dewalt"
+     },
+     {
+      "item_id": "it-drill",
+      "tag_id": "tg-18v"
+     },
+     {
+      "item_id": "it-nails",
+      "tag_id": "tg-hw"
+     },
+     {
+      "item_id": "it-cable",
+      "tag_id": "tg-hw"
+     }
+    ],
+    "qr_bindings": [
+     {
+      "id": "qr-1",
+      "token": "abababababababababababababababab",
+      "container_id": "ct-toolbox",
+      "created_at": 1300,
+      "updated_at": 1300
+     },
+     {
+      "id": "qr-2",
+      "token": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+      "container_id": "ct-shelf",
+      "created_at": 1301,
+      "updated_at": 1301
+     }
+    ],
+    "sync_deletions": [
+     {
+      "photo_id": "ph-old",
+      "deleted_at": 1600
+     }
+    ],
+    "items": [
+     {
+      "id": "it-drill",
+      "container_id": "ct-toolbox",
+      "name": "Cordless Drill",
+      "category": "Power Tools",
+      "quantity": 1,
+      "notes": "Charger in side pocket",
+      "created_at": 1200,
+      "updated_at": 1200,
+      "search_text": "cordless drill power tools"
+     },
+     {
+      "id": "it-armel",
+      "container_id": "ct-drawer",
+      "name": "ÄRMEL Schoner",
+      "category": null,
+      "quantity": 2,
+      "notes": null,
+      "created_at": 1201,
+      "updated_at": 1201,
+      "search_text": "ärmel schoner"
+     },
+     {
+      "id": "it-nails",
+      "container_id": "ct-shelf",
+      "name": "Nails",
+      "category": "Hardware",
+      "quantity": 500,
+      "notes": "Mixed sizes",
+      "created_at": 1202,
+      "updated_at": 1202,
+      "search_text": "nails hardware"
+     },
+     {
+      "id": "it-cable",
+      "container_id": "ct-toolbox",
+      "name": "USB-C cable",
+      "category": null,
+      "quantity": 3,
+      "notes": null,
+      "created_at": 1203,
+      "updated_at": 1203,
+      "search_text": "usb-c cable"
+     },
+     {
+      "id": "it-unnamed",
+      "container_id": "drop-zone",
+      "name": "",
+      "category": null,
+      "quantity": 1,
+      "notes": null,
+      "created_at": 1204,
+      "updated_at": 1204,
+      "search_text": ""
+     }
+    ]
+   }
+  },
+  {
+   "version": 5,
+   "file": "v5.db",
+   "byteSize": 122880,
+   "countsBefore": {
+    "spaces": 3,
+    "containers": 4,
+    "items": 5,
+    "item_photos": 3,
+    "tags": 3,
+    "item_tags": 4,
+    "qr_bindings": 2,
+    "sync_deletions": 1
+   },
+   "schemaBefore": [
+    {
+     "type": "table",
+     "name": "spaces",
+     "tbl_name": "spaces",
+     "sql": "CREATE TABLE spaces (\n        id          TEXT PRIMARY KEY NOT NULL,\n        name        TEXT NOT NULL,\n        icon        TEXT NOT NULL DEFAULT 'cube',\n        color       TEXT NOT NULL DEFAULT '#5B8DEF',\n        created_at  INTEGER NOT NULL,\n        updated_at  INTEGER NOT NULL\n      , kind TEXT NOT NULL DEFAULT 'normal')"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_spaces_1",
+     "tbl_name": "spaces",
+     "sql": null
+    },
+    {
+     "type": "table",
+     "name": "containers",
+     "tbl_name": "containers",
+     "sql": "CREATE TABLE containers (\n        id          TEXT PRIMARY KEY NOT NULL,\n        space_id    TEXT NOT NULL REFERENCES spaces(id) ON DELETE CASCADE,\n        name        TEXT,\n        visual_type TEXT NOT NULL DEFAULT 'box',\n        short_code  TEXT NOT NULL UNIQUE,\n        created_at  INTEGER NOT NULL,\n        updated_at  INTEGER NOT NULL\n      , kind TEXT NOT NULL DEFAULT 'normal')"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_containers_1",
+     "tbl_name": "containers",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_containers_2",
+     "tbl_name": "containers",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_containers_space",
+     "tbl_name": "containers",
+     "sql": "CREATE INDEX idx_containers_space ON containers(space_id)"
+    },
+    {
+     "type": "table",
+     "name": "items",
+     "tbl_name": "items",
+     "sql": "CREATE TABLE items (\n        id              TEXT PRIMARY KEY NOT NULL,\n        container_id    TEXT NOT NULL REFERENCES containers(id) ON DELETE CASCADE,\n        name            TEXT NOT NULL,\n        category        TEXT,\n        quantity        INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),\n        estimated_value REAL,\n        currency        TEXT,\n        notes           TEXT,\n        created_at      INTEGER NOT NULL,\n        updated_at      INTEGER NOT NULL\n      , search_text TEXT NOT NULL DEFAULT '')"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_items_1",
+     "tbl_name": "items",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_items_container",
+     "tbl_name": "items",
+     "sql": "CREATE INDEX idx_items_container ON items(container_id)"
+    },
+    {
+     "type": "index",
+     "name": "idx_items_name",
+     "tbl_name": "items",
+     "sql": "CREATE INDEX idx_items_name ON items(name COLLATE NOCASE)"
+    },
+    {
+     "type": "table",
+     "name": "item_photos",
+     "tbl_name": "item_photos",
+     "sql": "CREATE TABLE item_photos (\n        id         TEXT PRIMARY KEY NOT NULL,\n        item_id    TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,\n        uri        TEXT NOT NULL,\n        width      INTEGER,\n        height     INTEGER,\n        byte_size  INTEGER,\n        created_at INTEGER NOT NULL\n      , remote_synced_at INTEGER, thumb_uri TEXT)"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_item_photos_1",
+     "tbl_name": "item_photos",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_item_photos_item",
+     "tbl_name": "item_photos",
+     "sql": "CREATE INDEX idx_item_photos_item ON item_photos(item_id)"
+    },
+    {
+     "type": "table",
+     "name": "tags",
+     "tbl_name": "tags",
+     "sql": "CREATE TABLE tags (\n        id              TEXT PRIMARY KEY NOT NULL,\n        name            TEXT NOT NULL,\n        normalized_name TEXT NOT NULL UNIQUE,\n        created_at      INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_tags_1",
+     "tbl_name": "tags",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_tags_2",
+     "tbl_name": "tags",
+     "sql": null
+    },
+    {
+     "type": "table",
+     "name": "item_tags",
+     "tbl_name": "item_tags",
+     "sql": "CREATE TABLE item_tags (\n        item_id TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,\n        tag_id  TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,\n        PRIMARY KEY (item_id, tag_id)\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_item_tags_1",
+     "tbl_name": "item_tags",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_item_tags_tag",
+     "tbl_name": "item_tags",
+     "sql": "CREATE INDEX idx_item_tags_tag ON item_tags(tag_id)"
+    },
+    {
+     "type": "table",
+     "name": "qr_bindings",
+     "tbl_name": "qr_bindings",
+     "sql": "CREATE TABLE qr_bindings (\n        id           TEXT PRIMARY KEY NOT NULL,\n        token        TEXT NOT NULL UNIQUE,\n        container_id TEXT NOT NULL REFERENCES containers(id) ON DELETE CASCADE,\n        created_at   INTEGER NOT NULL,\n        updated_at   INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_qr_bindings_1",
+     "tbl_name": "qr_bindings",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_qr_bindings_2",
+     "tbl_name": "qr_bindings",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_qr_bindings_container",
+     "tbl_name": "qr_bindings",
+     "sql": "CREATE INDEX idx_qr_bindings_container ON qr_bindings(container_id)"
+    },
+    {
+     "type": "index",
+     "name": "idx_items_search_text",
+     "tbl_name": "items",
+     "sql": "CREATE INDEX idx_items_search_text ON items(search_text)"
+    },
+    {
+     "type": "index",
+     "name": "idx_item_photos_unsynced",
+     "tbl_name": "item_photos",
+     "sql": "CREATE INDEX idx_item_photos_unsynced\n        ON item_photos(created_at)\n        WHERE remote_synced_at IS NULL"
+    },
+    {
+     "type": "table",
+     "name": "sync_deletions",
+     "tbl_name": "sync_deletions",
+     "sql": "CREATE TABLE sync_deletions (\n        photo_id   TEXT PRIMARY KEY NOT NULL,\n        deleted_at INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_sync_deletions_1",
+     "tbl_name": "sync_deletions",
+     "sql": null
+    },
+    {
+     "type": "trigger",
+     "name": "item_photos_tombstone",
+     "tbl_name": "item_photos",
+     "sql": "CREATE TRIGGER item_photos_tombstone\n      AFTER DELETE ON item_photos\n      WHEN OLD.remote_synced_at IS NOT NULL\n      BEGIN\n        INSERT OR REPLACE INTO sync_deletions (photo_id, deleted_at)\n        VALUES (OLD.id, CAST(strftime('%s','now') AS INTEGER) * 1000);\n      END"
+    }
+   ],
+   "expectedAfter": {
+    "spaces": [
+     {
+      "id": "drop-zone-space",
+      "name": "Drop zone",
+      "icon": "📥",
+      "color": "#0F9BB0",
+      "created_at": 1792436193000,
+      "updated_at": 1792436193000,
+      "kind": "system"
+     },
+     {
+      "id": "sp-garage",
+      "name": "Garage",
+      "icon": "car",
+      "color": "#5B8DEF",
+      "created_at": 1000,
+      "updated_at": 1000,
+      "kind": "normal"
+     },
+     {
+      "id": "sp-kitchen",
+      "name": "Küche",
+      "icon": "🍳",
+      "color": "#E4572E",
+      "created_at": 1001,
+      "updated_at": 1001,
+      "kind": "normal"
+     }
+    ],
+    "containers": [
+     {
+      "id": "drop-zone",
+      "space_id": "drop-zone-space",
+      "name": "Drop zone",
+      "visual_type": "other",
+      "short_code": "DROP-ZONE",
+      "created_at": 1792436193000,
+      "updated_at": 1792436193000,
+      "kind": "system"
+     },
+     {
+      "id": "ct-toolbox",
+      "space_id": "sp-garage",
+      "name": "Tool Box",
+      "visual_type": "box",
+      "short_code": "BOX-7K2M",
+      "created_at": 1100,
+      "updated_at": 1100,
+      "kind": "normal"
+     },
+     {
+      "id": "ct-drawer",
+      "space_id": "sp-kitchen",
+      "name": null,
+      "visual_type": "drawer",
+      "short_code": "DRW-ABCD",
+      "created_at": 1101,
+      "updated_at": 1101,
+      "kind": "normal"
+     },
+     {
+      "id": "ct-shelf",
+      "space_id": "sp-garage",
+      "name": "Top shelf",
+      "visual_type": "shelf",
+      "short_code": "SHF-2345",
+      "created_at": 1102,
+      "updated_at": 1102,
+      "kind": "normal"
+     }
+    ],
+    "item_photos": [
+     {
+      "id": "ph-drill",
+      "item_id": "it-drill",
+      "uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/7f3c.webp",
+      "width": 1400,
+      "height": 1050,
+      "byte_size": 210000,
+      "created_at": 1200,
+      "remote_synced_at": 1500,
+      "thumb_uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/7f3c-thumb.webp"
+     },
+     {
+      "id": "ph-drill-later",
+      "item_id": "it-drill",
+      "uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/later.webp",
+      "width": 320,
+      "height": 240,
+      "byte_size": 9000,
+      "created_at": 1250,
+      "remote_synced_at": null,
+      "thumb_uri": null
+     },
+     {
+      "id": "ph-nails",
+      "item_id": "it-nails",
+      "uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/legacy.jpg",
+      "width": null,
+      "height": null,
+      "byte_size": null,
+      "created_at": 1202,
+      "remote_synced_at": null,
+      "thumb_uri": null
+     }
+    ],
+    "tags": [
+     {
+      "id": "tg-dewalt",
+      "name": "DeWalt",
+      "normalized_name": "dewalt",
+      "created_at": 1200
+     },
+     {
+      "id": "tg-18v",
+      "name": "18V",
+      "normalized_name": "18v",
+      "created_at": 1200
+     },
+     {
+      "id": "tg-hw",
+      "name": "hardware",
+      "normalized_name": "hardware",
+      "created_at": 1202
+     }
+    ],
+    "item_tags": [
+     {
+      "item_id": "it-drill",
+      "tag_id": "tg-dewalt"
+     },
+     {
+      "item_id": "it-drill",
+      "tag_id": "tg-18v"
+     },
+     {
+      "item_id": "it-nails",
+      "tag_id": "tg-hw"
+     },
+     {
+      "item_id": "it-cable",
+      "tag_id": "tg-hw"
+     }
+    ],
+    "qr_bindings": [
+     {
+      "id": "qr-1",
+      "token": "abababababababababababababababab",
+      "container_id": "ct-toolbox",
+      "created_at": 1300,
+      "updated_at": 1300
+     },
+     {
+      "id": "qr-2",
+      "token": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+      "container_id": "ct-shelf",
+      "created_at": 1301,
+      "updated_at": 1301
+     }
+    ],
+    "sync_deletions": [
+     {
+      "photo_id": "ph-old",
+      "deleted_at": 1600
+     }
+    ],
+    "items": [
+     {
+      "id": "it-drill",
+      "container_id": "ct-toolbox",
+      "name": "Cordless Drill",
+      "category": "Power Tools",
+      "quantity": 1,
+      "notes": "Charger in side pocket",
+      "created_at": 1200,
+      "updated_at": 1200,
+      "search_text": "cordless drill power tools"
+     },
+     {
+      "id": "it-armel",
+      "container_id": "ct-drawer",
+      "name": "ÄRMEL Schoner",
+      "category": null,
+      "quantity": 2,
+      "notes": null,
+      "created_at": 1201,
+      "updated_at": 1201,
+      "search_text": "ärmel schoner"
+     },
+     {
+      "id": "it-nails",
+      "container_id": "ct-shelf",
+      "name": "Nails",
+      "category": "Hardware",
+      "quantity": 500,
+      "notes": "Mixed sizes",
+      "created_at": 1202,
+      "updated_at": 1202,
+      "search_text": "nails hardware"
+     },
+     {
+      "id": "it-cable",
+      "container_id": "ct-toolbox",
+      "name": "USB-C cable",
+      "category": null,
+      "quantity": 3,
+      "notes": null,
+      "created_at": 1203,
+      "updated_at": 1203,
+      "search_text": "usb-c cable"
+     },
+     {
+      "id": "it-unnamed",
+      "container_id": "drop-zone",
+      "name": "",
+      "category": null,
+      "quantity": 1,
+      "notes": null,
+      "created_at": 1204,
+      "updated_at": 1204,
+      "search_text": ""
+     }
+    ]
+   }
+  },
+  {
+   "version": 6,
+   "file": "v6.db",
+   "byteSize": 122880,
+   "countsBefore": {
+    "spaces": 3,
+    "containers": 4,
+    "items": 5,
+    "item_photos": 3,
+    "tags": 3,
+    "item_tags": 4,
+    "qr_bindings": 2,
+    "sync_deletions": 1
+   },
+   "schemaBefore": [
+    {
+     "type": "table",
+     "name": "spaces",
+     "tbl_name": "spaces",
+     "sql": "CREATE TABLE spaces (\n        id          TEXT PRIMARY KEY NOT NULL,\n        name        TEXT NOT NULL,\n        icon        TEXT NOT NULL DEFAULT 'cube',\n        color       TEXT NOT NULL DEFAULT '#5B8DEF',\n        created_at  INTEGER NOT NULL,\n        updated_at  INTEGER NOT NULL\n      , kind TEXT NOT NULL DEFAULT 'normal')"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_spaces_1",
+     "tbl_name": "spaces",
+     "sql": null
+    },
+    {
+     "type": "table",
+     "name": "containers",
+     "tbl_name": "containers",
+     "sql": "CREATE TABLE containers (\n        id          TEXT PRIMARY KEY NOT NULL,\n        space_id    TEXT NOT NULL REFERENCES spaces(id) ON DELETE CASCADE,\n        name        TEXT,\n        visual_type TEXT NOT NULL DEFAULT 'box',\n        short_code  TEXT NOT NULL UNIQUE,\n        created_at  INTEGER NOT NULL,\n        updated_at  INTEGER NOT NULL\n      , kind TEXT NOT NULL DEFAULT 'normal')"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_containers_1",
+     "tbl_name": "containers",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_containers_2",
+     "tbl_name": "containers",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_containers_space",
+     "tbl_name": "containers",
+     "sql": "CREATE INDEX idx_containers_space ON containers(space_id)"
+    },
+    {
+     "type": "table",
+     "name": "items",
+     "tbl_name": "items",
+     "sql": "CREATE TABLE items (\n        id              TEXT PRIMARY KEY NOT NULL,\n        container_id    TEXT NOT NULL REFERENCES containers(id) ON DELETE CASCADE,\n        name            TEXT NOT NULL,\n        category        TEXT,\n        quantity        INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),\n        notes           TEXT,\n        created_at      INTEGER NOT NULL,\n        updated_at      INTEGER NOT NULL\n      , search_text TEXT NOT NULL DEFAULT '')"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_items_1",
+     "tbl_name": "items",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_items_container",
+     "tbl_name": "items",
+     "sql": "CREATE INDEX idx_items_container ON items(container_id)"
+    },
+    {
+     "type": "index",
+     "name": "idx_items_name",
+     "tbl_name": "items",
+     "sql": "CREATE INDEX idx_items_name ON items(name COLLATE NOCASE)"
+    },
+    {
+     "type": "table",
+     "name": "item_photos",
+     "tbl_name": "item_photos",
+     "sql": "CREATE TABLE item_photos (\n        id         TEXT PRIMARY KEY NOT NULL,\n        item_id    TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,\n        uri        TEXT NOT NULL,\n        width      INTEGER,\n        height     INTEGER,\n        byte_size  INTEGER,\n        created_at INTEGER NOT NULL\n      , remote_synced_at INTEGER, thumb_uri TEXT)"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_item_photos_1",
+     "tbl_name": "item_photos",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_item_photos_item",
+     "tbl_name": "item_photos",
+     "sql": "CREATE INDEX idx_item_photos_item ON item_photos(item_id)"
+    },
+    {
+     "type": "table",
+     "name": "tags",
+     "tbl_name": "tags",
+     "sql": "CREATE TABLE tags (\n        id              TEXT PRIMARY KEY NOT NULL,\n        name            TEXT NOT NULL,\n        normalized_name TEXT NOT NULL UNIQUE,\n        created_at      INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_tags_1",
+     "tbl_name": "tags",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_tags_2",
+     "tbl_name": "tags",
+     "sql": null
+    },
+    {
+     "type": "table",
+     "name": "item_tags",
+     "tbl_name": "item_tags",
+     "sql": "CREATE TABLE item_tags (\n        item_id TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,\n        tag_id  TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,\n        PRIMARY KEY (item_id, tag_id)\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_item_tags_1",
+     "tbl_name": "item_tags",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_item_tags_tag",
+     "tbl_name": "item_tags",
+     "sql": "CREATE INDEX idx_item_tags_tag ON item_tags(tag_id)"
+    },
+    {
+     "type": "table",
+     "name": "qr_bindings",
+     "tbl_name": "qr_bindings",
+     "sql": "CREATE TABLE qr_bindings (\n        id           TEXT PRIMARY KEY NOT NULL,\n        token        TEXT NOT NULL UNIQUE,\n        container_id TEXT NOT NULL REFERENCES containers(id) ON DELETE CASCADE,\n        created_at   INTEGER NOT NULL,\n        updated_at   INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_qr_bindings_1",
+     "tbl_name": "qr_bindings",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_qr_bindings_2",
+     "tbl_name": "qr_bindings",
+     "sql": null
+    },
+    {
+     "type": "index",
+     "name": "idx_qr_bindings_container",
+     "tbl_name": "qr_bindings",
+     "sql": "CREATE INDEX idx_qr_bindings_container ON qr_bindings(container_id)"
+    },
+    {
+     "type": "index",
+     "name": "idx_items_search_text",
+     "tbl_name": "items",
+     "sql": "CREATE INDEX idx_items_search_text ON items(search_text)"
+    },
+    {
+     "type": "index",
+     "name": "idx_item_photos_unsynced",
+     "tbl_name": "item_photos",
+     "sql": "CREATE INDEX idx_item_photos_unsynced\n        ON item_photos(created_at)\n        WHERE remote_synced_at IS NULL"
+    },
+    {
+     "type": "table",
+     "name": "sync_deletions",
+     "tbl_name": "sync_deletions",
+     "sql": "CREATE TABLE sync_deletions (\n        photo_id   TEXT PRIMARY KEY NOT NULL,\n        deleted_at INTEGER NOT NULL\n      )"
+    },
+    {
+     "type": "index",
+     "name": "sqlite_autoindex_sync_deletions_1",
+     "tbl_name": "sync_deletions",
+     "sql": null
+    },
+    {
+     "type": "trigger",
+     "name": "item_photos_tombstone",
+     "tbl_name": "item_photos",
+     "sql": "CREATE TRIGGER item_photos_tombstone\n      AFTER DELETE ON item_photos\n      WHEN OLD.remote_synced_at IS NOT NULL\n      BEGIN\n        INSERT OR REPLACE INTO sync_deletions (photo_id, deleted_at)\n        VALUES (OLD.id, CAST(strftime('%s','now') AS INTEGER) * 1000);\n      END"
+    }
+   ],
+   "expectedAfter": {
+    "spaces": [
+     {
+      "id": "drop-zone-space",
+      "name": "Drop zone",
+      "icon": "📥",
+      "color": "#0F9BB0",
+      "created_at": 1792436193000,
+      "updated_at": 1792436193000,
+      "kind": "system"
+     },
+     {
+      "id": "sp-garage",
+      "name": "Garage",
+      "icon": "car",
+      "color": "#5B8DEF",
+      "created_at": 1000,
+      "updated_at": 1000,
+      "kind": "normal"
+     },
+     {
+      "id": "sp-kitchen",
+      "name": "Küche",
+      "icon": "🍳",
+      "color": "#E4572E",
+      "created_at": 1001,
+      "updated_at": 1001,
+      "kind": "normal"
+     }
+    ],
+    "containers": [
+     {
+      "id": "drop-zone",
+      "space_id": "drop-zone-space",
+      "name": "Drop zone",
+      "visual_type": "other",
+      "short_code": "DROP-ZONE",
+      "created_at": 1792436193000,
+      "updated_at": 1792436193000,
+      "kind": "system"
+     },
+     {
+      "id": "ct-toolbox",
+      "space_id": "sp-garage",
+      "name": "Tool Box",
+      "visual_type": "box",
+      "short_code": "BOX-7K2M",
+      "created_at": 1100,
+      "updated_at": 1100,
+      "kind": "normal"
+     },
+     {
+      "id": "ct-drawer",
+      "space_id": "sp-kitchen",
+      "name": null,
+      "visual_type": "drawer",
+      "short_code": "DRW-ABCD",
+      "created_at": 1101,
+      "updated_at": 1101,
+      "kind": "normal"
+     },
+     {
+      "id": "ct-shelf",
+      "space_id": "sp-garage",
+      "name": "Top shelf",
+      "visual_type": "shelf",
+      "short_code": "SHF-2345",
+      "created_at": 1102,
+      "updated_at": 1102,
+      "kind": "normal"
+     }
+    ],
+    "item_photos": [
+     {
+      "id": "ph-drill",
+      "item_id": "it-drill",
+      "uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/7f3c.webp",
+      "width": 1400,
+      "height": 1050,
+      "byte_size": 210000,
+      "created_at": 1200,
+      "remote_synced_at": 1500,
+      "thumb_uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/7f3c-thumb.webp"
+     },
+     {
+      "id": "ph-drill-later",
+      "item_id": "it-drill",
+      "uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/later.webp",
+      "width": 320,
+      "height": 240,
+      "byte_size": 9000,
+      "created_at": 1250,
+      "remote_synced_at": null,
+      "thumb_uri": null
+     },
+     {
+      "id": "ph-nails",
+      "item_id": "it-nails",
+      "uri": "file:///var/mobile/Containers/Data/Application/0A1B2C3D-0000-4000-8000-000000000001/Documents/item-photos/legacy.jpg",
+      "width": null,
+      "height": null,
+      "byte_size": null,
+      "created_at": 1202,
+      "remote_synced_at": null,
+      "thumb_uri": null
+     }
+    ],
+    "tags": [
+     {
+      "id": "tg-dewalt",
+      "name": "DeWalt",
+      "normalized_name": "dewalt",
+      "created_at": 1200
+     },
+     {
+      "id": "tg-18v",
+      "name": "18V",
+      "normalized_name": "18v",
+      "created_at": 1200
+     },
+     {
+      "id": "tg-hw",
+      "name": "hardware",
+      "normalized_name": "hardware",
+      "created_at": 1202
+     }
+    ],
+    "item_tags": [
+     {
+      "item_id": "it-drill",
+      "tag_id": "tg-dewalt"
+     },
+     {
+      "item_id": "it-drill",
+      "tag_id": "tg-18v"
+     },
+     {
+      "item_id": "it-nails",
+      "tag_id": "tg-hw"
+     },
+     {
+      "item_id": "it-cable",
+      "tag_id": "tg-hw"
+     }
+    ],
+    "qr_bindings": [
+     {
+      "id": "qr-1",
+      "token": "abababababababababababababababab",
+      "container_id": "ct-toolbox",
+      "created_at": 1300,
+      "updated_at": 1300
+     },
+     {
+      "id": "qr-2",
+      "token": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+      "container_id": "ct-shelf",
+      "created_at": 1301,
+      "updated_at": 1301
+     }
+    ],
+    "sync_deletions": [
+     {
+      "photo_id": "ph-old",
+      "deleted_at": 1600
+     }
+    ],
+    "items": [
+     {
+      "id": "it-drill",
+      "container_id": "ct-toolbox",
+      "name": "Cordless Drill",
+      "category": "Power Tools",
+      "quantity": 1,
+      "notes": "Charger in side pocket",
+      "created_at": 1200,
+      "updated_at": 1200,
+      "search_text": "cordless drill power tools"
+     },
+     {
+      "id": "it-armel",
+      "container_id": "ct-drawer",
+      "name": "ÄRMEL Schoner",
+      "category": null,
+      "quantity": 2,
+      "notes": null,
+      "created_at": 1201,
+      "updated_at": 1201,
+      "search_text": "ärmel schoner"
+     },
+     {
+      "id": "it-nails",
+      "container_id": "ct-shelf",
+      "name": "Nails",
+      "category": "Hardware",
+      "quantity": 500,
+      "notes": "Mixed sizes",
+      "created_at": 1202,
+      "updated_at": 1202,
+      "search_text": "nails hardware"
+     },
+     {
+      "id": "it-cable",
+      "container_id": "ct-toolbox",
+      "name": "USB-C cable",
+      "category": null,
+      "quantity": 3,
+      "notes": null,
+      "created_at": 1203,
+      "updated_at": 1203,
+      "search_text": "usb-c cable"
+     },
+     {
+      "id": "it-unnamed",
+      "container_id": "drop-zone",
+      "name": "",
+      "category": null,
+      "quantity": 1,
+      "notes": null,
+      "created_at": 1204,
+      "updated_at": 1204,
+      "search_text": ""
+     }
+    ]
+   }
+  }
+ ]
+}
