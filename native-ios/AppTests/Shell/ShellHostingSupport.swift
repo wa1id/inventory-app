@@ -14,7 +14,7 @@ final class ShellTestWindow {
         let scene = try #require(ShellTestWindow.scene)
         window = UIWindow(windowScene: scene)
         window.rootViewController = UIHostingController(rootView: content)
-        window.frame = scene.coordinateSpace.bounds
+        window.frame = scene.effectiveGeometry.coordinateSpace.bounds
         window.isHidden = false
     }
 
