@@ -42,6 +42,10 @@ private struct ShellFocusDriving<Model: ShellFocusDriven>: ViewModifier {
             .onChange(of: app.database.revision) { _, revision in
                 model.revisionChanged(revision)
             }
+            // A screen that swaps in a new model (new inputs) hands it the focus it already has.
+            .onChange(of: ObjectIdentifier(model)) {
+                model.focusChanged(isScreenFocused, revision: app.database.revision)
+            }
             // A screen taken away while in front (a reset) must not keep reading in the background.
             .onDisappear { model.focusChanged(false, revision: nil) }
             // ...and one that comes back while its focus never changed (it disappeared without
