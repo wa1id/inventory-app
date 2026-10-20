@@ -66,7 +66,7 @@ final class ShellModalUITests: XCTestCase {
 
         XCTAssertTrue(screen("screen-add").waitForExistence(timeout: 5))
         XCTAssertTrue(waitForAbsence(screen("screen-capture")))
-        app.buttons["item-cancel"].tap()
+        app.buttons["add-cancel"].tap()
         XCTAssertTrue(screen("screen-home").waitForExistence(timeout: 5))
         XCTAssertTrue(app.tabBars.buttons["tab-home"].isHittable)
     }

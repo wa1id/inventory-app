@@ -140,11 +140,16 @@ struct FormLayout<Notice: View, Content: View, BottomBar: View>: View {
     @ViewBuilder var notice: Notice
     @ViewBuilder var content: Content
     @ViewBuilder var bottomBar: BottomBar
+    /// The screen's `screen-*` identifier, set on the form alone. Around the whole screen it
+    /// would also replace the identifiers of the notice and of the bar's buttons (which sit
+    /// outside the list); on the rows, theirs.
+    var contentIdentifier: String?
 
     var body: some View {
         Form {
             content
         }
+        .accessibilityIdentifierIfPresent(contentIdentifier)
         .safeAreaInset(edge: .top, spacing: 0) {
             if !(Notice.self == EmptyView.self) {
                 notice
@@ -167,8 +172,8 @@ extension FormLayout where BottomBar == EmptyView {
     /// Without a bar of its own: inside the app, put the form in `ScreenFrame(.modal)` and pass
     /// the shell's `BottomBar` as the frame's `bottomBar`, which also lifts toasts above it and
     /// stacks its buttons at large sizes.
-    init(@ViewBuilder notice: () -> Notice, @ViewBuilder content: () -> Content) {
-        self.init(notice: notice, content: content, bottomBar: { EmptyView() })
+    init(contentIdentifier: String? = nil, @ViewBuilder notice: () -> Notice, @ViewBuilder content: () -> Content) {
+        self.init(notice: notice, content: content, bottomBar: { EmptyView() }, contentIdentifier: contentIdentifier)
     }
 }
 
