@@ -28,7 +28,8 @@ import Observation
 ///
 /// **External requests.** A deep link (``open(_:)``) or a Home Screen quick action waits in
 /// ``pendingExternalRequest`` until the main shell shows (``setAcceptsNavigation(_:)``): while
-/// boot runs or onboarding is pending, the newest one waits and is delivered after.
+/// boot runs or onboarding is pending, the newest one waits and is delivered after. It then
+/// opens in front of whatever shows, dismissing nothing.
 @MainActor
 @Observable
 public final class Router {
@@ -439,18 +440,19 @@ public final class Router {
         for handler in tabRootHandlers { handler() }
     }
 
+    /// Opens what came from outside in front of whatever shows, as expo-router pushed it on the
+    /// root stack. Nothing presented is dismissed: a sheet being filled in stays underneath with its
+    /// typing, where closing it would skip its "Discard your changes?" (RN's `usePreventRemove`
+    /// asked on every removal; DECISIONS U6).
     private func deliver(_ request: ExternalRequest) {
         switch request {
         case .deepLink(.label(let token)):
-            // A cold start lands on Home with nothing pushed, so Home is underneath (RN anchor).
-            var next = state
-            next.modals = []
-            next.paths[next.selectedTab, default: []].append(PushEntry(id: makeID(), route: .label(token: token)))
-            commit(next)
+            // On the stack in front: the top modal's, else the selected tab's. A cold start lands
+            // on Home with nothing pushed, so Home is underneath (RN anchor).
+            push(.label(token: token))
         case .quickAction(.quickSnap):
-            var next = state
-            next.modals = []
-            commit(next)
+            // Already in Quick Snap: stay there rather than stack a second camera.
+            if let top = state.topModal, case .cover(.capture(let route, nil)) = top.route, route == .quickSnap { return }
             openQuickSnap()
         }
     }

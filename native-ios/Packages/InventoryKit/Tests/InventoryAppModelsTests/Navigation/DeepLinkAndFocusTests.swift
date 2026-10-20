@@ -86,19 +86,32 @@ struct NavigationExternalRequestTests {
         #expect(router.pendingExternalRequest == nil)
     }
 
-    @Test("a warm link closes what is presented and opens the label on the current tab")
+    @Test("a warm link opens the label on the current tab")
     func warm() throws {
         let router = Router()
         router.setAcceptsNavigation(true)
         router.selectTab(.spaces)
         router.push(.space(id: "s1"))
-        router.present(.sheet(.addItem(AddParams())))
         router.open(try #require(URL(string: "inventory://c/abc")))
-        #expect(router.modals.isEmpty)
         #expect(router.path(.spaces).map(\.route) == [.space(id: "s1"), .label(token: "abc")])
+        #expect(router.isFocused(router.path(.spaces)[1].address))
     }
 
-    @Test("the Quick Snap quick action waits like a link, then opens the camera over a cleared stack")
+    @Test("a warm link over a sheet opens in front of it and dismisses nothing, so a form being filled in keeps its typing")
+    func warmOverASheet() throws {
+        let router = Router()
+        router.setAcceptsNavigation(true)
+        let sheet = router.present(.sheet(.itemEdit(id: "i1")))
+        var removed = false
+        router.onRemoval(of: sheet.address) { removed = true }
+        router.open(try #require(URL(string: "inventory://c/abc")))
+        #expect(router.modals.map(\.id) == [sheet.id])
+        #expect(router.modals[0].path.map(\.route) == [.label(token: "abc")])
+        #expect(router.isFocused(router.modals[0].path[0].address))
+        #expect(!removed)
+    }
+
+    @Test("the Quick Snap quick action waits like a link, then opens the camera in front, never twice")
     func quickAction() {
         let router = Router()
         #expect(router.performQuickAction(type: AppQuickAction.quickSnap.rawValue))
@@ -107,9 +120,16 @@ struct NavigationExternalRequestTests {
         router.setAcceptsNavigation(true)
         #expect(router.modals.map(\.route) == [.cover(.capture(.quickSnap, request: nil))])
 
-        router.present(.sheet(.addItem(AddParams())))
+        // Again while Quick Snap is open: it stays the one camera.
         router.performQuickAction(type: AppQuickAction.quickSnap.rawValue)
-        #expect(router.modals.map(\.route) == [.cover(.capture(.quickSnap, request: nil))])
+        #expect(router.modals.count == 1)
+
+        // Over a sheet being filled in: the camera comes in front, the sheet stays.
+        router.dismissTop()
+        let sheet = router.present(.sheet(.addItem(AddParams())))
+        router.performQuickAction(type: AppQuickAction.quickSnap.rawValue)
+        #expect(router.modals.first?.id == sheet.id)
+        #expect(router.modals.map(\.route) == [.sheet(.addItem(AddParams())), .cover(.capture(.quickSnap, request: nil))])
     }
 
     @Test("leaving the main shell (How it works) resets navigation to a fresh Home")
