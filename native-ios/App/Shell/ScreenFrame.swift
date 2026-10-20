@@ -42,6 +42,7 @@ struct ScreenFrame<Content: View, Bottom: View>: View {
     private let bottomBar: Bottom
 
     @Environment(AppContainer.self) private var app
+    @Environment(\.shellReadableColumn) private var stackKeepsColumn
 
     /// - Parameter banner: the connection banner; on by default except for `camera`.
     init(
@@ -79,7 +80,8 @@ struct ScreenFrame<Content: View, Bottom: View>: View {
                     ConnectionBanner(state: app.connection.state, retry: { app.connection.retry() })
                 }
             }
-            .frame(maxWidth: Self.contentMaxWidth)
+            // In the shell's stacks the safe area already keeps the content to the column.
+            .frame(maxWidth: stackKeepsColumn ? .infinity : Self.contentMaxWidth)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(backgroundColor.ignoresSafeArea())
             .modifier(ScreenFrameBottomBar(hasBar: Bottom.self != EmptyView.self) { bottomBar })

@@ -8,15 +8,27 @@ struct ShellTabStack<Root: View>: View {
     let tab: AppTab
     @ViewBuilder let root: () -> Root
     @Environment(Router.self) private var router
+    @State private var column = ShellReadableColumn()
+    /// Goes up each time this stack's path gets shorter (a pop, a re-tap, `goToTab`).
+    @State private var pops = 0
 
     var body: some View {
         NavigationStack(path: Binding(get: { router.path(tab) }, set: { router.setPath($0, for: tab) })) {
             root()
                 .environment(\.screenAddress, .tabRoot(tab))
                 .environment(\.isScreenFocused, router.isFocused(.tabRoot(tab)))
+                .readableColumnContent()
                 .navigationDestination(for: PushEntry.self) { entry in
                     PushRouteDestination(entry: entry)
                 }
+        }
+        .background {
+            // The end of a pop answers a search-focus request waiting for it (06 §3.5).
+            ShellStackProbe(inset: column.inset, pops: pops) { router.searchFocus.transitionEnded() }
+        }
+        .measuresReadableColumn(column)
+        .onChange(of: router.path(tab).count) { old, new in
+            if new < old { pops += 1 }
         }
     }
 }
@@ -30,6 +42,7 @@ struct PushRouteDestination: View {
         PushRouteScreen(route: entry.route)
             .environment(\.screenAddress, entry.address)
             .environment(\.isScreenFocused, router.isFocused(entry.address))
+            .readableColumnContent()
     }
 }
 
@@ -119,6 +132,7 @@ struct ShellModalSlot: Hashable {
 struct ShellModalScreen: View {
     let level: Int
     @State private var shown: ModalEntry
+    @State private var column = ShellReadableColumn()
     @Environment(Router.self) private var router
 
     init(modal: ModalEntry, level: Int) {
@@ -134,6 +148,9 @@ struct ShellModalScreen: View {
                 .id(modal.screenID)
                 .environment(\.screenAddress, modal.address)
                 .environment(\.isScreenFocused, router.isFocused(modal.address))
+                // Sheets keep the column like the tabs; covers (the cameras, the photo) are full
+                // bleed (their inset is 0).
+                .readableColumnContent()
                 .toolbar {
                     if modal.route.usesShellCancel {
                         ToolbarItem(placement: .cancellationAction) {
@@ -145,6 +162,8 @@ struct ShellModalScreen: View {
                     PushRouteDestination(entry: entry)
                 }
         }
+        .background { ShellStackProbe(inset: modal.isSheet ? column.inset : 0) }
+        .measuresReadableColumn(column, enabled: modal.isSheet)
         .modifier(ShellModalPresentation(level: level + 1))
         .onChange(of: router.modal(shown.id)) { _, current in
             if let current { shown = current }

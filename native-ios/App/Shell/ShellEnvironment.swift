@@ -20,4 +20,14 @@ extension EnvironmentValues {
     /// The tab bar's toast chrome, shared by the main shell's tab bar and the overlay's toast.
     /// The root view sets it; nil elsewhere (previews put the toast above the safe area).
     @Entry var shellTabBarChrome: ShellTabBarChrome?
+
+    /// True inside the shell's tab and sheet stacks, which keep their bars and content to the
+    /// readable column through the safe area (``ShellReadableColumn``, iPad, U4): `ScreenFrame`
+    /// then lets its content span the window (so a list scrolls from anywhere) instead of
+    /// capping its width.
+    @Entry var shellReadableColumn = false
+
+    /// The padding on each side that keeps a stack's screens to the readable column (0 on an
+    /// iPhone or in a narrow window).
+    @Entry var shellColumnInset: CGFloat = 0
 }
