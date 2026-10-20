@@ -153,6 +153,8 @@ public final class HomeModel {
         searchStarted = DelayedFlag(delay: .milliseconds(Motion.delay.searchDebounce), clock: clock)
         recent.onSettle = { [weak self] in self?.recentSettled() }
         search.onSettle = { [weak self] in self?.updateDelayedFlags() }
+        spaces.onSettle = { [weak self] in self?.indexSpaces() }
+        containers.onSettle = { [weak self] in self?.indexContainers() }
     }
 
     // MARK: Inputs
@@ -383,14 +385,14 @@ public final class HomeModel {
     public var highlightTerms: [String] { isSearching ? search.results?.terms ?? [] : [] }
 
     /// Place results draw from these; a hit without its record falls back to a plain row.
-    public var spacesById: [String: SpaceWithCounts] {
-        Dictionary((spaces.data ?? []).map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
-    }
+    ///
+    /// Built when the spaces read settles, not on each access: every place row asks for both,
+    /// and with 250 containers rebuilding them per row cost Home a few milliseconds per redraw
+    /// (docs/PERFORMANCE.md).
+    public private(set) var spacesById: [String: SpaceWithCounts] = [:]
 
-    /// See ``spacesById``.
-    public var containersById: [String: ContainerWithSpace] {
-        Dictionary((containers.data ?? []).map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
-    }
+    /// See ``spacesById``; built when the containers read settles.
+    public private(set) var containersById: [String: ContainerWithSpace] = [:]
 
     /// The pull-to-refresh spinner's condition: a list it asked for has not answered yet.
     public var refreshing: Bool {
@@ -413,6 +415,14 @@ public final class HomeModel {
         guard isCompact, !wantsPlaces else { return }
         wantsPlaces = true
         containers.setKey("containers-all", read: reads.containers)
+    }
+
+    private func indexSpaces() {
+        spacesById = Dictionary((spaces.data ?? []).map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
+    }
+
+    private func indexContainers() {
+        containersById = Dictionary((containers.data ?? []).map { ($0.container.id, $0) }, uniquingKeysWith: { _, last in last })
     }
 
     private func recentSettled() {

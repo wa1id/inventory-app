@@ -36,21 +36,28 @@ public struct LocalSearchRepository: SearchRepository {
     }
 
     /// The words this inventory uses, for correcting a search that found nothing (native only,
-    /// ``SearchSpelling``).
+    /// ``SearchSpelling``). The texts are read on the database queue and their words counted
+    /// after it, so the one connection is not held while the words are folded.
     public func vocabulary() async throws -> SearchVocabulary {
-        try await queue.read { db in try vocabulary(in: db) }
+        let texts = try await queue.read { db in try vocabularyTexts(in: db) }
+        try Task.checkCancellation()
+        return SearchVocabulary(texts: texts)
+    }
+
+    /// ``vocabulary()`` inside a database access.
+    public func vocabulary(in db: Database) throws -> SearchVocabulary {
+        SearchVocabulary(texts: try vocabularyTexts(in: db))
     }
 
     /// What the search SQL matches terms against: item names and categories (`search_text`), tag
     /// names, and space and container names.
-    public func vocabulary(in db: Database) throws -> SearchVocabulary {
-        let texts = try String.fetchAll(db, sql: """
+    func vocabularyTexts(in db: Database) throws -> [String] {
+        try String.fetchAll(db, sql: """
             SELECT search_text FROM items
             UNION ALL SELECT normalized_name FROM tags
             UNION ALL SELECT name FROM spaces
             UNION ALL SELECT name FROM containers WHERE name IS NOT NULL
             """)
-        return SearchVocabulary(texts: texts)
     }
 
     // MARK: SQL fragments

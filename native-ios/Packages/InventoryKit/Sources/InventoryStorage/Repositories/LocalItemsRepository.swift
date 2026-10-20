@@ -83,13 +83,47 @@ public struct LocalItemsRepository: ItemsRepository {
     }
 
     /// The newest items, drop zone included; `limit` clamped to 1…100.
+    ///
+    /// RN reads `ITEM_CONTEXT_SELECT ORDER BY i.created_at DESC LIMIT ?` in one statement.
+    /// There is no index on `created_at` (and U12 adds none), so that statement worked out the
+    /// photo and tag subqueries for every item before sorting: 25 ms at 10 000 items on the
+    /// build Mac's M4 Pro, paid on every Home focus and every write while Home shows. Here the
+    /// same joins and the same `ORDER BY` pick the ids first, then the context is read for those
+    /// rows only (5 ms; docs/PERFORMANCE.md). Same rows in the same order, ties and orphaned rows
+    /// included: the first statement is RN's with only the id selected, so SQLite plans and sorts
+    /// it the same way (`PerfReadParityTests`).
     public func listRecent(limit: Int = 40, in db: Database) throws -> [ItemWithContext] {
         let cap = max(1, min(limit, 100))
-        return try Row.fetchAll(
+        let ids = try String.fetchAll(
             db,
-            sql: "\(itemContextSelect) ORDER BY i.created_at DESC LIMIT ?",
+            sql: """
+                SELECT i.id
+                  FROM items i
+                  JOIN containers c ON c.id = i.container_id
+                  JOIN spaces s ON s.id = c.space_id
+                 ORDER BY i.created_at DESC LIMIT ?
+                """,
             arguments: [cap]
-        ).map(RowMapping.itemWithContext)
+        )
+        return try Self.withContext(ids, in: db)
+    }
+
+    /// The context rows of `ids` (``itemContextSelect``), in the order of `ids`.
+    static func withContext(_ ids: [String], in db: Database) throws -> [ItemWithContext] {
+        guard !ids.isEmpty else { return [] }
+        let placeholders = Array(repeating: "?", count: ids.count).joined(separator: ", ")
+        let rows = try Row.fetchAll(
+            db,
+            sql: "\(itemContextSelect) WHERE i.id IN (\(placeholders))",
+            arguments: StatementArguments(ids)
+        )
+        var byId: [String: ItemWithContext] = [:]
+        byId.reserveCapacity(rows.count)
+        for row in rows {
+            let item = try RowMapping.itemWithContext(row)
+            byId[item.item.id] = item
+        }
+        return ids.compactMap { byId[$0] }
     }
 
     public func countUnsorted(in db: Database) throws -> Int {
