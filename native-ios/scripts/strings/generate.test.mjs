@@ -1,4 +1,4 @@
-// Tests for generate.mjs's native copy files: node --test native-ios/scripts/strings/
+// Tests for generate.mjs's native copy files: node --test 'native-ios/scripts/strings/*.test.mjs'
 //
 // Each case writes native files into a temporary directory and runs the
 // generator on them with --validate (build and verify everything, write

@@ -2,5 +2,9 @@
 
 INV_APP_ENV = development
 
+// Debug-only Info.plist keys (App/Resources/Info.plist is preprocessed): NSAllowsLocalNetworking
+// and NSLocalNetworkUsageDescription, for a Local.xcconfig that points at a dev server on the LAN.
+INFOPLIST_PREPROCESSOR_DEFINITIONS = INV_DEBUG_LOCAL_NETWORK=1
+
 #include? "Secrets.xcconfig"
 #include? "Local.xcconfig"

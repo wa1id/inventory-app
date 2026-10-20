@@ -119,6 +119,8 @@ private struct ScreenFrameBottomBar<Bar: View>: ViewModifier {
     }
 }
 
+#if DEBUG
+// DEBUG only (previews, the demo, tests): kept out of Release builds.
 #Preview("Tab root") {
     ShellPreviewHost {
         NavigationStack {
@@ -147,3 +149,4 @@ private struct ScreenFrameBottomBar<Bar: View>: ViewModifier {
         }
     }
 }
+#endif

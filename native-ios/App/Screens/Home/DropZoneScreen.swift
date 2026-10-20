@@ -179,6 +179,8 @@ private extension DropZoneScreenModel.Placeholder {
     }
 }
 
+#if DEBUG
+// DEBUG only (previews, the demo, tests): kept out of Release builds.
 #Preview("Waiting") {
     ShellPreviewHost { NavigationStack { DropZoneScreen() } }
 }
@@ -186,3 +188,4 @@ private extension DropZoneScreenModel.Placeholder {
 #Preview("Everything filed") {
     ShellPreviewHost(seed: false) { NavigationStack { DropZoneScreen() } }
 }
+#endif

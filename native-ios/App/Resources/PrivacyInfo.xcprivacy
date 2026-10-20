@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  The app's privacy manifest (02 §9.9). docs/RELEASE.md ("Privacy manifest" and "App Store privacy
+  label") says why each entry is here; scripts/release/check-release.sh checks the built copy.
+
+  Collected data (what leaves the phone and is kept longer than one request needs; nothing is used
+  for tracking, advertising or analytics, and the Release telemetry sink discards every event):
+  - photos: an item photo goes to the recognition service (and its AI provider) for a suggestion;
+    opt-in backup uploads every photo; a phone in a household stores its photos on the home server;
+  - other user content: the backup snapshot (spaces, containers, items, notes, tags), the household
+    inventory, and the typed name sent with a photo as a recognition hint;
+  - user ID: the backup account id derived from the recovery code;
+  - device ID: the household's id and token for this phone.
+
+  Required-reason APIs our code calls. GRDB 7.11.1 ships its own manifest (GRDB_GRDB.bundle,
+  declaring none); libwebp-Xcode 1.6.0 ships none and its sources call none of these APIs.
+  - UserDefaults, CA92.1: the preferences (DECISIONS U8, 02 §5.4);
+  - disk space, E174.1: the free-space check before a photo is written (ImageStore);
+  - file timestamp, C617.1: file metadata inside the container (the household photo cache reads
+    a cached file's size and type).
+-->
 <plist version="1.0">
 <dict>
 	<key>NSPrivacyTracking</key>
@@ -7,7 +27,56 @@
 	<key>NSPrivacyTrackingDomains</key>
 	<array/>
 	<key>NSPrivacyCollectedDataTypes</key>
-	<array/>
+	<array>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypePhotosorVideos</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeOtherUserContent</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeUserID</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeDeviceID</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
 		<dict>

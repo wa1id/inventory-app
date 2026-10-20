@@ -14,8 +14,32 @@ ln -s /home/walid/inventory-app/node_modules node_modules
 node native-ios/scripts/strings/generate.mjs              # write the outputs
 node native-ios/scripts/strings/generate.mjs --check      # exit 1 if any output is stale
 node native-ios/scripts/strings/generate.mjs --validate   # build and verify everything, write nothing
-node --test native-ios/scripts/strings/generate.test.mjs  # the generator's own tests
+node native-ios/scripts/strings/check.mjs                 # the strictness check (below); --unused lists unread keys
+node --test 'native-ios/scripts/strings/*.test.mjs'       # the generator's and the check's own tests
 ```
+
+## Strictness check (`check.mjs`)
+
+Run it before committing anything that touches copy or `App/`. It fails when:
+
+- an output of `generate.mjs` is stale (`--check`);
+- an `L10n.…` chain in `App/` names a member that does not exist. That covers backtick-escaped
+  members and `typealias Copy = L10n.Privacy` / `let names = L10n.X.Y.self` aliases. The members
+  come from the accessor manifest `generate.mjs --manifest <file>` writes;
+- `App/` hard-codes user-facing copy: a string literal with letters as the title of `Text`,
+  `Label`, `Button` or another titled stock control, in `.navigationTitle`,
+  `.accessibilityLabel/Hint/Value`, `.accessibilityAction(named:)`, `.help`, `.alert`,
+  `.confirmationDialog` or `.badge`, as a `prompt:`, or as a copy argument of our components
+  (`label:`, `title:`, `message:`, `hint:`, `placeholder:`, …). The whole argument is read, so
+  `Text(on ? "On" : L10n.X.off)`, `Text(name ?? "Untitled")` and `Text("Hi " + name)` fail too,
+  and a modifier counts wherever it is chained (`content.accessibilityHint("…")`);
+- `String(localized:)`, `LocalizedStringKey`, `LocalizedStringResource`, `NSLocalizedString` or
+  `L10nRuntime` appear outside InventoryStrings (in `App/` or the package).
+
+Exempt: `#if DEBUG` code (galleries, demos), `#Preview` bodies (Release builds drop them),
+`Text(verbatim:)` data, reverse-DNS labels such as queue names, and a line that ends with
+`// l10n-ok: <reason>`. `--unused` also lists the catalog keys no native code reads. They stay in
+the catalog while RN still reads `strings.ts`; `docs/RELEASE.md` §14 explains each one.
 
 ## Native-only copy (`native/<area>.ts`)
 

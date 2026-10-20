@@ -148,6 +148,8 @@ private extension SpacesScreenModel.Placeholder {
     }
 }
 
+#if DEBUG
+// DEBUG only (previews, the demo, tests): kept out of Release builds.
 #Preview("Spaces") {
     ShellPreviewHost { NavigationStack { SpacesScreen() } }
 }
@@ -155,3 +157,4 @@ private extension SpacesScreenModel.Placeholder {
 #Preview("No spaces yet") {
     ShellPreviewHost(seed: false) { NavigationStack { SpacesScreen() } }
 }
+#endif

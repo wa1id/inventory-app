@@ -65,6 +65,8 @@ struct RootView: View {
     }
 }
 
+#if DEBUG
+// DEBUG only (previews, the demo, tests): kept out of Release builds.
 #Preview("Main") {
     @Previewable @State var app = AppContainer.preview()
     RootView().shellEnvironment(app)
@@ -74,3 +76,4 @@ struct RootView: View {
     @Previewable @State var app = AppContainer.preview(onboardingCompleted: false)
     RootView().shellEnvironment(app)
 }
+#endif

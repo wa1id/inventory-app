@@ -62,8 +62,11 @@ struct RevokedOverlay: View {
     }
 }
 
+#if DEBUG
+// DEBUG only (previews, the demo, tests): kept out of Release builds.
 #Preview {
     ShellPreviewHost {
         RevokedOverlay()
     }
 }
+#endif

@@ -8,6 +8,7 @@
  *   node native-ios/scripts/strings/generate.mjs --check      exit 1 if any output is stale
  *   node native-ios/scripts/strings/generate.mjs --validate   build and verify everything, write nothing
  *   … --native-dir <dir>                                      read the native files from <dir> (tests)
+ *   … --manifest <file>                                       also write which Swift accessor reads each key (check.mjs)
  *
  * strings.ts stays the source of truth while Android and web still use it
  * (DECISIONS U9) and is never edited for native-only states: those go in one
@@ -1363,6 +1364,50 @@ ${dispatchCases.join('\n')}
     }
 }
 `;
+
+// ---------------------------------------------------------------------------
+// The accessor manifest (--manifest <file>): which public Swift member reads
+// each catalog key, for check.mjs. Not committed; written only on request.
+// ---------------------------------------------------------------------------
+
+function buildManifest() {
+  const accessors = new Set(['L10n']);
+  const leafOf = new Map();
+  for (const node of nodesByPath.values()) {
+    const owner = swiftAccess(node);
+    const name = node.kind === 'group' || node.kind === 'map' ? upperCamel(node.name) : node.name;
+    const accessor = `${owner}.${name}`;
+    accessors.add(accessor);
+    if (node.kind === 'map') accessors.add(`${accessor}.allKeys`);
+    if (node.kind === 'map') for (const e of node.entries) if (isIdentifier(e.key) && e.key !== 'allKeys') accessors.add(`${accessor}.${e.key}`);
+    if (node.kind !== 'group') leafOf.set(node.path, { accessor, kind: node.kind });
+  }
+  const keys = {};
+  for (const key of catalogKeys) {
+    if (key.startsWith('format.ago.')) {
+      keys[key] = { accessor: 'Format.ago', kind: 'format' };
+      continue;
+    }
+    // The node that owns the key: the key itself, or the nearest enclosing map, list or function.
+    let owner = key;
+    while (owner && !leafOf.has(owner)) owner = owner.includes('.') ? owner.slice(0, owner.lastIndexOf('.')) : '';
+    if (!owner) fail(`manifest: no accessor owns the catalog key ${key}`);
+    const leaf = leafOf.get(owner);
+    if (leaf.kind === 'map') {
+      const entry = nodesByPath.get(owner).entries.find((e) => e.catalogKey === key);
+      const member = entry && isIdentifier(entry.key) && entry.key !== 'allKeys' ? `${leaf.accessor}.${entry.key}` : null;
+      keys[key] = { accessor: leaf.accessor, member, kind: 'map' };
+    } else {
+      keys[key] = { accessor: leaf.accessor, kind: leaf.kind };
+    }
+  }
+  return { note: 'Written by generate.mjs --manifest for check.mjs; not committed.', accessors: [...accessors].sort(), keys };
+}
+
+const manifestFile = argValue('--manifest');
+if (manifestFile) {
+  fs.writeFileSync(manifestFile, `${JSON.stringify(buildManifest(), null, 1)}\n`);
+}
 
 // ---------------------------------------------------------------------------
 // Writing (or checking) the outputs.

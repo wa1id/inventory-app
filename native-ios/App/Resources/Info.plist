@@ -38,9 +38,18 @@
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<false/>
+<!-- Debug only (00-index §5, 09 §15 Q21): a Local.xcconfig may point a Debug build at a dev
+     server on the LAN, while Release builds only talk to https hosts. This file goes through the
+     C preprocessor (INFOPLIST_PREPROCESS in project.yml); Config/Debug.xcconfig sets the flag. -->
+#if INV_DEBUG_LOCAL_NETWORK
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
+#endif
 	</dict>
+#if INV_DEBUG_LOCAL_NETWORK
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>This development build of Inventory can connect to a test server on your local network.</string>
+#endif
 	<key>NSCameraUsageDescription</key>
 	<string>Inventory uses the camera so you can photograph items you are adding and scan QR labels on your containers.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
