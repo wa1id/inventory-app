@@ -152,6 +152,24 @@ struct TestSupportManualClockTests {
         #expect(model.attempts == 3)
     }
 
+    @Test(
+        "drives many re-arming main-actor timers at once, each firing on time (run in parallel for load)",
+        arguments: 0..<24
+    )
+    @MainActor
+    func manyMainActorModels(round: Int) async throws {
+        let clock = ManualClock()
+        let models = (0..<6).map { _ in TestSupportRetryModel(clock: clock) }
+        models.forEach { $0.arm() }
+        try await clock.waitForSleepers(models.count)
+        await clock.advance(by: .milliseconds(2500))
+        #expect(models.map(\.attempts) == Array(repeating: 1, count: models.count))
+        await clock.advance(by: .milliseconds(7500))
+        #expect(models.map(\.attempts) == Array(repeating: 4, count: models.count))
+        models.forEach { $0.stop() }
+        #expect(clock.pendingSleeperCount == 0)
+    }
+
     @Test("works behind any Clock<Duration>")
     func existential() async throws {
         func sleep<C: Clock>(on clock: C, for duration: C.Duration) async throws {
