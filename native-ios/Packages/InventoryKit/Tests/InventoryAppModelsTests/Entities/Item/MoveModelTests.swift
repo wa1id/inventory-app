@@ -271,4 +271,23 @@ struct EntitiesMoveModelTests {
         await pick.value
         #expect(!harness.model.interactiveDismissDisabled)
     }
+
+    @Test("following the sheet's read sets the item as each read settles, gone included")
+    func followsRead() async {
+        let harness = Harness(items: EntitiesFakeItems())
+        let reads = EntitiesFakeItems(
+            reads: [.value(EntitiesFixtures.context(containerId: DropZone.containerId, updatedAt: 100))],
+            lastRead: .value(nil)
+        )
+        let query = InventoryQuery<ItemWithContext?>(key: "item:item-1") { try await reads.getById("item-1") }
+        harness.model.follow(query)
+        #expect(harness.model.item == nil)
+        query.focusChanged(true, revision: 0)
+        await query.readTask?.value
+        #expect(harness.model.pickerMode == .file)
+        #expect(harness.model.item?.updatedAt == 100)
+        query.reload()
+        await query.readTask?.value
+        #expect(harness.model.item == nil)
+    }
 }

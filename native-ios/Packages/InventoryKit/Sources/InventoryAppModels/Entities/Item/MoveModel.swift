@@ -28,8 +28,8 @@ public final class MoveModel {
         public var message: String
     }
 
-    /// The item as the screen last read it; nil while loading or once it is gone. The view
-    /// sets it from its query on every read.
+    /// The item as the screen last read it; nil while loading or once it is gone. Set from the
+    /// sheet's query on every read (``follow(_:)``).
     public var loaded: ItemWithContext?
     /// The container being moved into, which shows a spinner; the picker is locked meanwhile.
     public private(set) var busyId: String?
@@ -164,6 +164,16 @@ public final class MoveModel {
         toasts.show(ToastOptions(message: MoveFlow.undoFailedMessage(outcome) ?? L10n.Move.undoFailedOther, tone: .error))
         // Whatever stopped it, the screen in front should show where the item really is.
         invalidator.invalidate()
+    }
+
+    /// Keeps ``loaded`` set from `query` (the sheet's `item:<id>` read) as each read settles,
+    /// before the view redraws, so the picker is never built for a read the model has not seen.
+    public func follow(_ query: InventoryQuery<ItemWithContext?>) {
+        loaded = query.data ?? nil
+        query.onSettle = { [weak self, weak query] in
+            guard let self, let query else { return }
+            loaded = query.data ?? nil
+        }
     }
 
     /// Call when the sheet goes away: an opener still waiting gets nothing (RN `abandonResult`

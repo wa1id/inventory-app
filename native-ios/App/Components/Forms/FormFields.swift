@@ -136,17 +136,32 @@ struct SpaceFields: View {
 /// The frame of the space and container sheets (RN `FormLayout`, 07 §4.14): a failed save's
 /// notice above the form, the fields scrolling, and the primary action in a bar at the bottom
 /// that the keyboard pushes up rather than covers.
+///
+/// At the accessibility text sizes the notice scrolls as the form's first row instead: pinned,
+/// a long one would fill the sheet and push the fields and the bar off screen.
 struct FormLayout<Notice: View, Content: View, BottomBar: View>: View {
     @ViewBuilder var notice: Notice
     @ViewBuilder var content: Content
     @ViewBuilder var bottomBar: BottomBar
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private var hasNotice: Bool { !(Notice.self == EmptyView.self) }
+    private var pinsNotice: Bool { !dynamicTypeSize.isAccessibilitySize }
+
     var body: some View {
         Form {
+            if hasNotice && !pinsNotice {
+                Section {
+                    notice
+                }
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+            }
             content
         }
         .safeAreaInset(edge: .top, spacing: 0) {
-            if !(Notice.self == EmptyView.self) {
+            if hasNotice && pinsNotice {
                 notice
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
