@@ -21,6 +21,8 @@
 # run and launch hand the app each launch argument as given (quote one that holds spaces or a
 # `>`, e.g. -demoRoute 'container:Tool chest>containerEdit:Tool chest').
 # test, build, apptest, uitest and run wait for one of MAC_SLOTS (default 4) build slots.
+# DEVICE=ipad (iPad Pro 13-inch) or DEVICE=se (iPhone SE, 375x667 pt) runs apptest, uitest, run,
+# launch, openurl and screenshot on a second simulator of that kind instead of the iPhone 17 Pro.
 # Full logs go to native-ios/.build-logs/<command>.log; stdout gets a filtered summary.
 set -euo pipefail
 
@@ -31,6 +33,12 @@ REMOTE_ROOT="inventory-native/$KEY"
 REMOTE_NATIVE="$REMOTE_ROOT/native-ios"
 SIM_NAME="inventory-$KEY"
 SIM_TYPE="com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro"
+case "${DEVICE:-}" in
+  "") ;;
+  ipad) SIM_NAME="$SIM_NAME-ipad"; SIM_TYPE="com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M5-12GB" ;;
+  se) SIM_NAME="$SIM_NAME-se"; SIM_TYPE="com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation" ;;
+  *) echo "DEVICE must be ipad or se" >&2; exit 2 ;;
+esac
 SIM_RUNTIME="com.apple.CoreSimulator.SimRuntime.iOS-26-3"
 BUNDLE_ID="com.wystudio.inventory"
 LOG_DIR="$NATIVE_DIR/.build-logs"
@@ -160,10 +168,11 @@ case "$cmd" in
     remote "$ensure_sim; cd ~/$REMOTE_NATIVE && $*"
     ;;
   clean)
-    remote "$ensure_sim; xcrun simctl shutdown \$udid 2>/dev/null; xcrun simctl delete \$udid 2>/dev/null; rm -rf ~/$REMOTE_ROOT" || true
-    echo "removed ~/$REMOTE_ROOT and simulator $SIM_NAME on $MAC_HOST"
+    # Every simulator of this checkout, whatever its DEVICE.
+    remote "for n in inventory-$KEY inventory-$KEY-ipad inventory-$KEY-se; do for u in \$(xcrun simctl list devices | grep \"\$n (\" | grep -oE '[0-9A-F-]{36}'); do xcrun simctl shutdown \$u 2>/dev/null; xcrun simctl delete \$u 2>/dev/null; done; done; rm -rf ~/$REMOTE_ROOT" || true
+    echo "removed ~/$REMOTE_ROOT and the inventory-$KEY simulators on $MAC_HOST"
     ;;
   *)
-    sed -n '2,22p' "${BASH_SOURCE[0]}"
+    sed -n '2,26p' "${BASH_SOURCE[0]}"
     ;;
 esac
