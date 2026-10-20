@@ -5,7 +5,8 @@ import InventoryCore
 /// A household or recovery code field (RN `CodeInput`, 07 §4.10, 03 §3.5).
 ///
 /// Shown in groups of five while typing; lower case, missing hyphens, pasted spaces and line
-/// breaks, and the look-alikes I, L and O are all fine, because every change is normalised.
+/// breaks, and the look-alikes I, L and O are all fine, because every change is normalised; a
+/// paste never submits on its own.
 /// Validity is the screen's call, on submit; nothing is cut to the expected length. A whole code
 /// is wider than a phone, so the field wraps at its hyphens instead of scrolling it out of
 /// sight. Return closes the keyboard and submits; it never adds a line. The counter ("12 of 26
@@ -57,15 +58,14 @@ struct CodeInput: View {
     }
 
     private func typed(_ text: String) {
-        if CodeFieldText.isSubmit(text) {
-            value = CodeFieldText.normalise(text)
-            submit()
-            return
-        }
+        let returnKey = CodeFieldText.isReturnKey(shown: CodeFieldText.display(value), typed: text)
         value = CodeFieldText.normalise(text)
+        if returnKey { submit() }
     }
 
+    /// Once per key press: the Return key can arrive both as a line break and as a submit.
     private func submit() {
+        guard focus == .code else { return }
         focus = nil
         onSubmit?()
     }

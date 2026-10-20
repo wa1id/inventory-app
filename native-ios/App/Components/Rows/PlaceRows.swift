@@ -62,7 +62,7 @@ struct ContainerRow: View {
             }
             switch context {
             case .space:
-                Text(verbatim: PlaceRowText.containerMeta(itemCount: container.itemCount, hasLabel: container.qrToken != nil))
+                Text(verbatim: PlaceRowText.containerMeta(itemCount: container.itemCount, hasLabel: container.hasLabel))
                     .textRole(.meta)
                     .foregroundStyle(.secondary)
             case .search:

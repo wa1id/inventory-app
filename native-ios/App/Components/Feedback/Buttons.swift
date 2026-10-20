@@ -1,5 +1,6 @@
 import SwiftUI
 import InventoryAppModels
+import InventoryStrings
 
 /// The RN `Button` variants as stock button styles (08 §10).
 ///
@@ -91,6 +92,11 @@ struct LoadingButton: View {
         .disabled(isDisabled)
         .allowsHitTesting(!isLoading)
         .accessibilityLabel(Text(verbatim: accessibilityLabel ?? label))
+        // The busy cue (RN `accessibilityState.busy`): the spinner inside the label is not read,
+        // so VoiceOver hears "Save, Loading…" for as long as the action runs.
+        // Always applied (an empty value is not read), so the button keeps its identity and
+        // VoiceOver's focus when it turns busy.
+        .accessibilityValue(Text(verbatim: isLoading ? L10n.A11y.loading : ""))
         .accessibilityHintIfPresent(accessibilityHint)
         .accessibilityIdentifierIfPresent(identifier)
         .onChange(of: isLoading, initial: true) { _, loading in spinner.setActive(loading) }

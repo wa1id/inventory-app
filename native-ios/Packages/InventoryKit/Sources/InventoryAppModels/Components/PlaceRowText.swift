@@ -43,6 +43,9 @@ public struct ContainerRowData: Sendable, Hashable, Identifiable {
     }
 
     /// A container in a space's list.
+    /// Whether it has a QR label: a token that is there and not empty (RN `Boolean(qrToken)`).
+    public var hasLabel: Bool { qrToken.map { !$0.isEmpty } ?? false }
+
     public init(_ row: ContainerWithCounts) {
         self.init(
             id: row.id,
@@ -121,7 +124,7 @@ public enum PlaceRowText {
             type: typeName(container.visualType),
             spelled: spellCode(container.shortCode),
             items: L10n.Entities.contents(count: container.itemCount),
-            hasLabel: container.qrToken != nil
+            hasLabel: container.hasLabel
         )
     }
 

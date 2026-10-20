@@ -37,10 +37,17 @@ struct ComponentsFieldTextTests {
         #expect(CodeFieldText.counter("ABCDE", length: 10) == L10n.Forms.codeCounter(count: 5, total: 10))
     }
 
-    @Test("a line break in the typed text is a submit")
+    @Test("only the Return key submits; a pasted line break is just normalised")
     func codeSubmit() {
-        #expect(CodeFieldText.isSubmit("ABC\n"))
-        #expect(!CodeFieldText.isSubmit("ABC DEF"))
+        // Return at the end or in the middle of what was shown submits.
+        #expect(CodeFieldText.isReturnKey(shown: "MMWKY-M2H78", typed: "MMWKY-M2H78\n"))
+        #expect(CodeFieldText.isReturnKey(shown: "MMWKY-M2H78", typed: "MMWKY\n-M2H78"))
+        #expect(CodeFieldText.isReturnKey(shown: "", typed: "\n"))
+        // Typing and pasting do not, even when the paste brings line breaks along.
+        #expect(!CodeFieldText.isReturnKey(shown: "MMWKY", typed: "MMWKYM"))
+        #expect(!CodeFieldText.isReturnKey(shown: "MMWKY", typed: "MMWKYM2H78\n"))
+        #expect(!CodeFieldText.isReturnKey(shown: "", typed: "MMWKY\nM2H78"))
+        #expect(!CodeFieldText.isReturnKey(shown: "", typed: "MMWKY\nM2H78\n"))
     }
 
     @Test("the stepper names the item or speaks plainly")
@@ -88,6 +95,10 @@ struct ComponentsPlaceRowTextTests {
         var labelled = row
         labelled.qrToken = "abc"
         #expect(PlaceRowText.containerAccessibilityLabel(labelled) == L10n.Rows.containerA11y(label: "Tool chest", type: "Cabinet", spelled: "C A B, J 9 2 R", items: "3 items", hasLabel: true))
+        // JS truthiness: an empty token is no label.
+        labelled.qrToken = ""
+        #expect(!labelled.hasLabel)
+        #expect(PlaceRowText.containerAccessibilityLabel(labelled) == L10n.Rows.containerA11y(label: "Tool chest", type: "Cabinet", spelled: "C A B, J 9 2 R", items: "3 items", hasLabel: false))
     }
 
     @Test("space rows speak their counts")

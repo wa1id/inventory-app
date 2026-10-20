@@ -181,6 +181,48 @@ struct ComponentsAccessibilityTests {
         #expect(rendered.element(label: L10n.A11y.loading) != nil, "\(rendered.dump)")
     }
 
+    @Test("a pressable row says it is a button")
+    func rowIsButton() {
+        let item = ComponentsFixtures.drill
+        let rendered = ComponentsHost.render(ItemRow(item: item, tool: .none, onPress: {}))
+        let row = rendered.element(identifier: ItemRowText.rowIdentifier(item.id))
+        #expect(row?.traits.contains(.button) == true, "\(rendered.dump)")
+    }
+
+    @Test("a row that cannot be picked reads as dimmed")
+    func disabledRow() {
+        let rendered = ComponentsHost.render(
+            ListRow(action: {}, isDisabled: true, accessibilityLabel: "Tool chest, here now", identifier: "here-now") {
+                EmptyView()
+            } content: {
+                Text(verbatim: "Tool chest")
+            }
+        )
+        #expect(rendered.element(identifier: "here-now")?.traits.contains(.notEnabled) == true, "\(rendered.dump)")
+    }
+
+    @Test("a busy button keeps its label and says it is loading")
+    func busyButton() {
+        let busy = ComponentsHost.render(LoadingButton(label: "Save", isLoading: true, identifier: "save", action: {}))
+        #expect(busy.element(identifier: "save")?.label == "Save")
+        #expect(busy.element(identifier: "save")?.value == L10n.A11y.loading)
+        let idle = ComponentsHost.render(LoadingButton(label: "Save", identifier: "save", action: {}))
+        #expect(idle.element(identifier: "save")?.value.isEmpty == true)
+    }
+
+    @Test("a picker section heading is its title alone")
+    func pickerHeading() async {
+        let rendered = await ComponentsHost.renderAfter(
+            .milliseconds(300),
+            NavigationStack {
+                PlacePicker(mode: .move, options: ComponentsFixtures.options, spaces: ComponentsFixtures.spaces, recentIds: ["c-chest"], currentContainerId: "c-chest", onPick: { _ in })
+            }
+        )
+        let recent = rendered.element(label: L10n.Picker.recent)
+        #expect(recent?.traits.contains(.header) == true, "\(rendered.dump)")
+        #expect(rendered.elements.allSatisfy { $0.label != "Clock" }, "\(rendered.dump)")
+    }
+
     @Test("a settings row speaks its value with its label")
     func settingsRow() {
         let rendered = ComponentsHost.render(SettingsRow(label: "Backup", value: "On", identifier: "settings-backup"))

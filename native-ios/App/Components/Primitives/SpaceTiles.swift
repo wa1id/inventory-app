@@ -39,14 +39,20 @@ struct SpaceTile: View {
             shape.fill(Color(spaceHex: color).opacity(0.24))
             shape.strokeBorder(Color(spaceHex: color).opacity(0.45), lineWidth: 1)
             if let glyph = SpacePalette.tileGlyph(icon) {
-                // A fixed picture: the name beside it scales, the emoji does not.
-                Text(verbatim: glyph)
+                // A fixed picture: the name beside it scales, the emoji does not. Centred when it
+                // fits; several characters ("cube") start at the edge and are cut off at the end,
+                // as RN's one clipped line.
+                let text = Text(verbatim: glyph)
                     .font(.system(size: metrics.emoji))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .fixedSize()
-                    .frame(width: size, height: size)
-                    .clipped()
+                ViewThatFits(in: .horizontal) {
+                    text
+                    text.frame(width: size - 2, alignment: .leading)
+                }
+                .frame(width: size, height: size)
+                .clipped()
             } else {
                 Image(glyph: .home)
                     .font(.system(size: size / 2))

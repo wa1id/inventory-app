@@ -123,11 +123,12 @@ struct SpaceFields: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .accessibilityHidden(true)
                 .accessibilityIdentifier("space-row-preview")
             } header: {
                 Text(verbatim: L10n.SpaceForm.previewLabel)
+                    .accessibilityHidden(true)
             }
-            .accessibilityHidden(true)
         }
     }
 }

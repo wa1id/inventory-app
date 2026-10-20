@@ -25,6 +25,7 @@ struct ComponentsGallery: View {
 enum ComponentsGalleryPage: Int, CaseIterable {
     case tokens, itemRowsChip, itemRowsOther, placeRows, whereCard, quantity, banners, buttons
     case states, inputs, pickers, placePickerChoose, placePickerMove, placePickerStates, spaceForm, itemDetails, thumbs
+    case taps
 
     var title: String {
         switch self {
@@ -45,6 +46,7 @@ enum ComponentsGalleryPage: Int, CaseIterable {
         case .spaceForm: "Space form"
         case .itemDetails: "Item details"
         case .thumbs: "Thumbs"
+        case .taps: "Taps"
         }
     }
 
@@ -68,6 +70,7 @@ enum ComponentsGalleryPage: Int, CaseIterable {
         case .spaceForm: GallerySpaceFormPage()
         case .itemDetails: GalleryItemDetailsPage()
         case .thumbs: GalleryThumbsPage()
+        case .taps: GalleryTapsPage()
         }
     }
 }
@@ -540,6 +543,49 @@ private struct GalleryThumbsPage: View {
             Section {
                 ItemRow(item: ComponentsFixtures.item(id: "photo", name: "Sample with photo", quantity: 2, photo: photo), tool: .none, thumb: 76, onPress: {})
             } header: { galleryHeader("Row") }
+        }
+    }
+}
+
+/// Rows with every tool, counting what each tap reached, so a UI test (or a person) can check
+/// that a tap on a control never opens the row: `-gallery components -galleryPage 17`.
+private struct GalleryTapsPage: View {
+    @State private var counts: [String: Int] = [:]
+    @State private var expanded: String? = ComponentsFixtures.batteries.id
+    @State private var chipModel = ComponentsFixtures.quantityModel(for: ComponentsFixtures.batteries)
+    @State private var stepperModel = ComponentsFixtures.quantityModel(for: ComponentsFixtures.screws)
+
+    private var summary: String {
+        ["row", "chip", "file", "delete"].map { "\($0)=\(counts[$0, default: 0])" }.joined(separator: " ")
+            + " chipQty=\(chipModel.quantity) stepperQty=\(stepperModel.quantity)"
+    }
+
+    var body: some View {
+        List {
+            Section {
+                Text(verbatim: summary)
+                    .font(.footnote.monospaced())
+                    .accessibilityIdentifier("taps-summary")
+            }
+            Section {
+                ItemRow(
+                    item: ComponentsFixtures.batteries,
+                    tool: .chip(chipModel, itemId: ComponentsFixtures.batteries.id, expandedId: Binding(
+                        get: { expanded },
+                        set: { expanded = $0; counts["chip", default: 0] += 1 }
+                    )),
+                    onPress: { counts["row", default: 0] += 1 }
+                )
+                ItemRow(item: ComponentsFixtures.screws, tool: .stepper(stepperModel), onPress: { counts["row", default: 0] += 1 })
+                ItemRow(item: ComponentsFixtures.waiting, line: .added, tool: .file({ counts["file", default: 0] += 1 }), onPress: { counts["row", default: 0] += 1 })
+                ItemRow(item: ComponentsFixtures.unnamed, line: .added, tool: .delete({ counts["delete", default: 0] += 1 }), onPress: { counts["row", default: 0] += 1 })
+            }
+            // Room to scroll, so a drag that starts on a control can be checked too.
+            Section {
+                ForEach(0..<16, id: \.self) { index in
+                    ItemRow(item: ComponentsFixtures.item(id: "filler-\(index)", name: "Filler \(index)"), tool: .none, onPress: { counts["row", default: 0] += 1 })
+                }
+            }
         }
     }
 }

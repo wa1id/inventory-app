@@ -68,6 +68,14 @@ extension FactRow where Content == Text {
     }
 }
 
+extension FactRow where Content == AnyView {
+    /// A plain-text fact that can be selected and copied, as RN's `selectable` body text (notes).
+    init(label: String, selectableText text: String) {
+        self.label = label
+        self.content = AnyView(Text(verbatim: text).textSelection(.enabled))
+    }
+}
+
 #Preview("Settings") {
     @Previewable @State var expanded = false
     NavigationStack {

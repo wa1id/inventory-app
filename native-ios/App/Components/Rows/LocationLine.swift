@@ -149,11 +149,21 @@ struct WhereCard: View {
     let name: String
     let onMove: () -> Void
     var links: LocationLine.Links?
+    /// VoiceOver focus on the action: the item screen moves it to "File it…" once the item is
+    /// named during a filing run (RN `actionRef`).
+    var actionFocus: AccessibilityFocusState<Bool>.Binding?
 
-    init(place: some PlaceLike, name: String, links: LocationLine.Links? = nil, onMove: @escaping () -> Void) {
+    init(
+        place: some PlaceLike,
+        name: String,
+        links: LocationLine.Links? = nil,
+        actionFocus: AccessibilityFocusState<Bool>.Binding? = nil,
+        onMove: @escaping () -> Void
+    ) {
         self.place = RowPlace(place)
         self.name = name
         self.links = links
+        self.actionFocus = actionFocus
         self.onMove = onMove
     }
 
@@ -196,8 +206,9 @@ struct WhereCard: View {
         }
     }
 
+    @ViewBuilder
     private func action(_ copy: WhereCardCopy) -> some View {
-        LoadingButton(
+        let button = LoadingButton(
             label: copy.actionTitle,
             glyph: .move,
             variant: copy.isDropZone ? .primary : .secondary,
@@ -206,6 +217,11 @@ struct WhereCard: View {
             identifier: copy.actionIdentifier,
             action: onMove
         )
+        if let actionFocus {
+            button.accessibilityFocused(actionFocus)
+        } else {
+            button
+        }
     }
 }
 

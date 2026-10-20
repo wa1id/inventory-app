@@ -28,14 +28,26 @@ struct ListRow<Leading: View, Content: View, Aside: View>: View {
     private let layout = LayoutScale()
 
     var body: some View {
-        if let action {
+        if let action, isDisabled {
+            // Not pressable, but not dimmed either (RN `Row`): "Here now" and its tape stay
+            // readable in the secondary text the caller chose, also under the picker's busy fade
+            // (a disabled list button would fade them to near nothing). VoiceOver still hears a
+            // dimmed button, and cannot activate it.
+            label
+                .accessibilityRepresentation {
+                    Button(action: action) { Text(verbatim: accessibilityLabel ?? "") }
+                        .disabled(true)
+                }
+                .accessibilityHintIfPresent(accessibilityHint)
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
+                .accessibilityIdentifierIfPresent(identifier)
+        } else if let action {
             Button(action: action) { label.contentShape(Rectangle()) }
                 .foregroundStyle(.primary)
-                .disabled(isDisabled)
-                .modifier(RowAccessibility(label: accessibilityLabel, hint: accessibilityHint, isSelected: isSelected, identifier: identifier))
+                .modifier(RowAccessibility(label: accessibilityLabel, hint: accessibilityHint, isSelected: isSelected, isButton: true, identifier: identifier))
         } else {
             label
-                .modifier(RowAccessibility(label: accessibilityLabel, hint: accessibilityHint, isSelected: isSelected, identifier: identifier))
+                .modifier(RowAccessibility(label: accessibilityLabel, hint: accessibilityHint, isSelected: isSelected, isButton: false, identifier: identifier))
         }
     }
 
@@ -97,6 +109,9 @@ private struct RowAccessibility: ViewModifier {
     let label: String?
     let hint: String?
     let isSelected: Bool
+    /// Pressable: one element replacing the button keeps no traits of its own, so the row says
+    /// "button" explicitly (RN `accessibilityRole="button"`).
+    let isButton: Bool
     let identifier: String?
 
     func body(content: Content) -> some View {
@@ -105,6 +120,7 @@ private struct RowAccessibility: ViewModifier {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(Text(verbatim: label))
                 .accessibilityHintIfPresent(hint)
+                .accessibilityAddTraits(isButton ? .isButton : [])
                 .accessibilityAddTraits(isSelected ? .isSelected : [])
                 .accessibilityIdentifierIfPresent(identifier)
         } else {
@@ -128,13 +144,27 @@ struct RowWithTool<Row: View, Tool: View>: View {
         if layout.isStacked {
             VStack(alignment: .trailing, spacing: 4) {
                 row
-                tool.buttonStyle(.borderless)
+                tool.buttonStyle(.borderless).absorbsListRowTaps()
             }
         } else {
             HStack(spacing: 8) {
                 row
-                tool.buttonStyle(.borderless)
+                tool.buttonStyle(.borderless).absorbsListRowTaps()
             }
+        }
+    }
+}
+
+extension View {
+    /// Stops taps on the blank parts of a row's control area (around a stepper, beside "Done")
+    /// from falling through to the list row's button, which takes the whole cell, and opening
+    /// the item. The controls on top still get their own taps.
+    func absorbsListRowTaps() -> some View {
+        background {
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture {}
+                .accessibilityHidden(true)
         }
     }
 }

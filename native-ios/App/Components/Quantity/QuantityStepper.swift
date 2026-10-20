@@ -44,7 +44,6 @@ struct QuantityStepper: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var relay: QuantityStepperRelay
     @State private var repeater: QuantityHoldRepeater
-    @State private var pressed: QuantityHoldRepeater.Direction?
     @State private var selection: TextSelection?
     @FocusState private var fieldFocused: Bool
     private let layout = LayoutScale()
@@ -173,39 +172,55 @@ struct QuantityStepper: View {
         return max(size.numberWidth, (CGFloat(digits) * pointSize * 0.66 + 12).rounded(.up))
     }
 
+    /// A stock button, so a drag that starts on it scrolls the list and a tap on it never reaches
+    /// the row behind (a SwiftUI drag or long-press gesture here would stop the list scrolling
+    /// when the finger lands on the stepper). Never `.disabled`: a dimmed minus at zero still
+    /// takes the touch and does nothing, rather than letting it fall through and open the item.
+    ///
+    /// - Pressed: arms the 400 ms hold. In a scrolling list the system reports the press a moment
+    ///   late, while it checks for a scroll, so the hold starts that much later than RN's.
+    /// - No longer pressed (lifted, slid off, or a scroll took the touch): the hold stops and
+    ///   nothing steps (`pressLifted`).
+    /// - The button's action is the tap: one step, or nothing after a hold (`buttonActivated`).
     private func stepButton(_ direction: QuantityHoldRepeater.Direction) -> some View {
         let off = direction == .minus ? repeater.isMinusDisabled : repeater.isPlusDisabled
         let cell = size.cell
-        return Image(glyph: direction == .minus ? .minus : .plus)
-            // A fixed glyph in a fixed cell (RN 20 / 24 pt); the number beside it scales.
-            .font(.system(size: size == .compact ? 20 : 24, weight: .semibold))
-            .foregroundStyle(off ? AnyShapeStyle(.tertiary) : AnyShapeStyle(.primary))
-            .frame(width: cell, height: cell)
-            .background(pressed == direction ? Color(uiColor: .systemFill) : .clear)
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { drag in
-                        if pressed == nil {
-                            pressed = direction
-                            if fieldFocused { fieldFocused = false }
-                            repeater.pressBegan(direction)
-                        } else if !CGRect(x: -24, y: -24, width: cell + 48, height: cell + 48).contains(drag.location) {
-                            pressed = nil
-                            repeater.pressCancelled()
-                        }
-                    }
-                    .onEnded { _ in
-                        guard pressed != nil else { return }
-                        pressed = nil
-                        repeater.pressEnded()
-                    },
-                including: off ? .none : .all
-            )
-            .accessibilityIdentifier(QuantityStepperCopy.identifier(direction == .minus ? "decrease" : "increase", suffix: identifierSuffix))
-            .accessibilityLabel(
-                Text(verbatim: direction == .minus ? QuantityStepperCopy.decreaseLabel(itemName: itemName) : QuantityStepperCopy.increaseLabel(itemName: itemName))
-            )
+        return Button {
+            repeater.buttonActivated(direction)
+        } label: {
+            Image(glyph: direction == .minus ? .minus : .plus)
+                // A fixed glyph in a fixed cell (RN 20 / 24 pt); the number beside it scales.
+                .font(.system(size: size == .compact ? 20 : 24, weight: .semibold))
+                .foregroundStyle(off ? AnyShapeStyle(.tertiary) : AnyShapeStyle(.primary))
+                .frame(width: cell, height: cell)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(QuantityStepperCellStyle(isOff: off) { isPressed in
+            guard isPressed else {
+                repeater.pressLifted()
+                return
+            }
+            guard !off else { return }
+            if fieldFocused { fieldFocused = false }
+            repeater.pressBegan(direction)
+        })
+        .accessibilityIdentifier(QuantityStepperCopy.identifier(direction == .minus ? "decrease" : "increase", suffix: identifierSuffix))
+        .accessibilityLabel(
+            Text(verbatim: direction == .minus ? QuantityStepperCopy.decreaseLabel(itemName: itemName) : QuantityStepperCopy.increaseLabel(itemName: itemName))
+        )
+    }
+}
+
+/// A stepper cell: the system fill while pressed, and the pressed state reported so the hold can
+/// start on touch-down and stop on lift or scroll.
+private struct QuantityStepperCellStyle: ButtonStyle {
+    let isOff: Bool
+    let onPressChange: (Bool) -> Void
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(configuration.isPressed && !isOff ? Color(uiColor: .systemFill) : .clear)
+            .onChange(of: configuration.isPressed) { _, isPressed in onPressChange(isPressed) }
     }
 }
 

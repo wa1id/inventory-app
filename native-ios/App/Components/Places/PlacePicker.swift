@@ -49,6 +49,7 @@ struct PlacePicker<Notice: View>: View {
 
     @Environment(\.haptics) private var haptics
     @State private var query = ""
+    @State private var arrived = false
     @FocusState private var filterFocused: Bool
 
     private var allowNew: Bool { allowsNewContainer ?? mode.allowsNewContainerByDefault }
@@ -73,6 +74,9 @@ struct PlacePicker<Notice: View>: View {
         .textInputAutocapitalization(mode == .open ? .characters : .never)
         .autocorrectionDisabled()
         .onAppear {
+            // On arrival only (RN `autoFocus`), not each time a pushed form comes back.
+            guard !arrived else { return }
+            arrived = true
             if query.isEmpty && !initialQuery.isEmpty { query = initialQuery }
             if autoFocusesFilter ?? mode.autoFocusesFilter { filterFocused = true }
         }
@@ -150,11 +154,13 @@ struct PlacePicker<Notice: View>: View {
                     }
                 }
                 .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-                .accessibilityHidden(true)
                 Text(verbatim: title)
                     .lineLimit(2)
-                    .accessibilityAddTraits(.isHeader)
             }
+            // One heading element: the title, never the clock or plus beside it.
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text(verbatim: title))
+            .accessibilityAddTraits(.isHeader)
         }
     }
 

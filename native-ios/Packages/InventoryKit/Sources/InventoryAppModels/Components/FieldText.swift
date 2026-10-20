@@ -50,10 +50,19 @@ public enum CodeFieldText {
         normalised.isEmpty ? nil : counter(normalised, length: length)
     }
 
-    /// Whether typed text holds a line break: Return closes the keyboard and submits, it never
-    /// adds a line.
-    public static func isSubmit(_ typed: String) -> Bool {
-        typed.unicodeScalars.contains { $0 == "\n" || $0 == "\r" }
+    /// Whether a change is the Return key: what was shown with exactly one line break added.
+    /// Return closes the keyboard and submits, it never adds a line. A paste that brings line
+    /// breaks along (a code copied across two lines) is not Return: it is normalised like any
+    /// other change and never submits on its own (RN `submitBehavior="blurAndSubmit"` only
+    /// submits on the key).
+    /// - Parameters:
+    ///   - shown: what the field showed before the change (``display(_:)``).
+    ///   - typed: what it holds now.
+    public static func isReturnKey(shown: String, typed: String) -> Bool {
+        func isBreak(_ scalar: Unicode.Scalar) -> Bool { scalar == "\n" || scalar == "\r" }
+        let added = typed.unicodeScalars.filter(isBreak).count - shown.unicodeScalars.filter(isBreak).count
+        guard added == 1 else { return false }
+        return typed.unicodeScalars.filter { !isBreak($0) }.elementsEqual(shown.unicodeScalars.filter { !isBreak($0) })
     }
 }
 

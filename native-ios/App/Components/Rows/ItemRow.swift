@@ -64,7 +64,9 @@ struct ItemRow: View {
 
     var body: some View {
         content
-            .onChange(of: QuantitySync(quantity: item.quantity, updatedAt: item.updatedAt)) { _, sync in
+            // Initial too: the screen keeps the models while lazy rows come and go, and a row that
+            // scrolls back in must adopt what was read meanwhile (RN's hook re-read on mount).
+            .onChange(of: QuantitySync(quantity: item.quantity, updatedAt: item.updatedAt), initial: true) { _, sync in
                 tool.model?.itemDidChange(quantity: sync.quantity, updatedAt: sync.updatedAt)
             }
     }
@@ -158,6 +160,9 @@ struct ItemRow: View {
         }
         .buttonStyle(.borderless)
         .frame(maxWidth: .infinity, alignment: .leading)
+        // The stepper area is outside the row's pressable part, as in RN: a tap beside Done or
+        // between the controls does nothing rather than open the item.
+        .absorbsListRowTaps()
     }
 
     private func toggle(_ onToggle: () -> Void) {
