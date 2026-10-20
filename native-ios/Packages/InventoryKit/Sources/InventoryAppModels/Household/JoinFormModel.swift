@@ -63,8 +63,9 @@ public final class JoinFormModel {
     /// The banner above the fields when the server did not answer (`offline`) or joining failed
     /// otherwise (`other`); a refused code is a code error instead.
     public private(set) var failure: JoinFailure?
-    /// "Joining…" with a spinner on the button.
-    public private(set) var isJoining = false
+    /// "Joining…" with a spinner on the button: this form's join, or another form's that still
+    /// pairs this phone (``HouseholdModel/isJoining``), so a press here does nothing meanwhile.
+    public var isJoining: Bool { household.isJoining }
     /// "Home server: inventory.wystudio.be", under the fields: always the build's origin, never a
     /// session's (RN JoinForm.tsx:198-202).
     public let serverCaption: String
@@ -139,8 +140,8 @@ public final class JoinFormModel {
 
     /// Checks the form, then joins (RN `join()`, JoinForm.tsx:102-143). Returns the household's
     /// name and whether an import offer is waiting, or nil when nothing was joined (the form then
-    /// says why). A second call while one is running does nothing: pairing twice would register
-    /// this phone twice.
+    /// says why). A call while a join runs, this form's or another's, does nothing: pairing twice
+    /// would register this phone twice.
     ///
     /// On success: the local inventory is counted for the import offer (only on a phone that
     /// never joined before), the phone pairs, `joinedBefore` is set, every list is invalidated
@@ -149,7 +150,7 @@ public final class JoinFormModel {
     /// and the error class; a refused code goes under the code field, anything else is the
     /// banner; the error haptic plays.
     public func join() async -> HouseholdJoined? {
-        guard !isJoining else { return nil }
+        guard !household.isJoining else { return nil }
         let found = validateJoin(code, name: name)
         errors = found
         failure = nil
@@ -158,8 +159,8 @@ public final class JoinFormModel {
             return nil
         }
 
-        isJoining = true
-        defer { isJoining = false }
+        guard household.beginJoining() else { return nil }
+        defer { household.endJoining() }
         do {
             // The local database, never the shadowed repositories: what the phone holds of its
             // own, before any household write lands in it. In a task of its own, like the pairing

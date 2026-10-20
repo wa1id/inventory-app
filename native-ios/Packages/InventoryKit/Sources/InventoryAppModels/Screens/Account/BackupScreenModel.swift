@@ -191,11 +191,14 @@ public final class BackupScreenModel {
     }
 
     /// What VoiceOver hears when the status changes (RN app/backup.tsx:307-316): a finished
-    /// backup is said once, with its line; the line itself is not announced as it ticks, and a
-    /// failure is said by its banner. A finished restore of the saved copy says nothing here:
-    /// its toast does.
+    /// backup is said once, with its line, while "Backup is on" shows; the line itself is not
+    /// announced as it ticks, and a failure is said by its banner. A finished restore of the
+    /// saved copy says nothing here: its toast does. Nor does the first backup of Turn on, which
+    /// ends with the code on screen (RN's status card was gone by then, with its announcement),
+    /// so nothing talks over "Write this down now".
     public func statusAnnouncement(from old: SyncStatus, to new: SyncStatus, now: Int64) -> String? {
-        guard case .working = old, case .idle = new, busy != .restoreOffer else { return nil }
+        guard case .working = old, case .idle = new else { return nil }
+        guard busy != .restoreOffer, busy != .enable, revealed == nil else { return nil }
         return new.lastBackupLine(now: now)
     }
 

@@ -55,6 +55,11 @@ public final class HouseholdModel {
     public private(set) var session: HouseholdSession?
     /// False until the stored session has been read; the boot gate waits for it.
     public private(set) var ready = false
+    /// A join form is joining, from its checks passing to its end (``beginJoining()``). One per
+    /// app, not per form: a form made again while the first still pairs (onboarding's Join step
+    /// after Back, Household opened again after going back) must not pair this phone a second
+    /// time, which would register it twice (DECISIONS U6; RN's guard was per form).
+    public private(set) var isJoining = false
 
     /// The pairing client: the build's household origin, no token. Its transport, reachability
     /// hub and clock carry over to every session client.
@@ -150,6 +155,19 @@ public final class HouseholdModel {
     }
 
     // MARK: - Pair and disconnect
+
+    /// Claims the one join that may run (``isJoining``); false while another join runs. Pair
+    /// with ``endJoining()``.
+    public func beginJoining() -> Bool {
+        guard !isJoining else { return false }
+        isJoining = true
+        return true
+    }
+
+    /// The join claimed with ``beginJoining()`` has finished, whatever it came to.
+    public func endJoining() {
+        isJoining = false
+    }
 
     /// Joins the household with its code, saves the session and switches to it
     /// (RN `pair`, HouseholdProvider.tsx:50-54).

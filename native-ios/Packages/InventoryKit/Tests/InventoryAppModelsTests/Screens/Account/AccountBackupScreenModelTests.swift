@@ -452,6 +452,36 @@ struct AccountBackupOnTests {
             from: .working(account: account), to: .error(account: account, reason: .offline), now: 1000) == nil)
         #expect(fixture.model.statusAnnouncement(
             from: .idle(account: account, lastBackupAt: 1), to: .idle(account: account, lastBackupAt: 2), now: 1000) == nil)
+
+        // With the code on screen, the status card is not there to speak.
+        fixture.model.showCode()
+        #expect(fixture.model.statusAnnouncement(
+            from: .working(account: account), to: .idle(account: account, lastBackupAt: 1000), now: 1000) == nil)
+    }
+
+    @Test("Turn on's first backup ends on the code without announcing the status line")
+    func turnOnAnnouncesNothing() async throws {
+        let fixture = try await AccountBackupFixture()
+        await fixture.harness.startReady()
+        var changes: [(SyncStatus, SyncStatus)] = []
+        var last = fixture.sync.status
+        let hold = fixture.harness.worker.hold("PUT", "/v1/backups")
+
+        let turningOn = Task { await fixture.model.turnOn() }
+        await hold.arrived()
+        changes.append((last, fixture.sync.status))
+        last = fixture.sync.status
+        hold.release()
+        await turningOn.value
+        changes.append((last, fixture.sync.status))
+
+        // The view sees working, then idle with the code revealed.
+        guard case .working = changes[1].0, case .idle = changes[1].1 else {
+            Issue.record("expected working then idle, got \(changes)")
+            return
+        }
+        #expect(fixture.model.revealed != nil)
+        #expect(fixture.model.statusAnnouncement(from: changes[1].0, to: changes[1].1, now: 0) == nil)
     }
 
     @Test("Show recovery code shows this account's code")

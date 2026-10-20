@@ -10,6 +10,9 @@ import Testing
 // RN has no tests for app/onboarding.tsx; these pin 06 §11.2. The completion store's own rules
 // (status before storage, read failure → pending) are OnboardingModelTests.
 
+/// `POST /v1/pair`'s answer for a phone named "Anna’s iPhone" joining Home.
+private let accountOnboardingPairAnswer = #"{"deviceId":"dev-9","token":"abababababababababababababababababababababababababababababababab","origin":"https://inventory.wystudio.be","householdName":"Home","contractVersion":1}"#
+
 /// An account demo container booted, with telemetry recorded.
 @MainActor
 private func accountOnboardingApp(_ scenario: AccountDemoScenario) async -> (AppContainer, RecordingTelemetry) {
@@ -121,6 +124,58 @@ struct AccountOnboardingFlowTests {
         flow.start()
         #expect(app.onboarding.status == .completed)
         #expect(telemetry.events.first?.payload == ["outcome": .string("completed"), "step": .int(1)])
+    }
+
+    @Test("Back while joining, then Join again, pairs once and still ends on You are in (U6)")
+    func backWhileJoiningPairsOnce() async throws {
+        // A home server that holds the pairing answer until the test lets it through.
+        let gate = HouseholdTestGate()
+        let fixture = try HouseholdModelFixture { _ in
+            await gate.pass()
+            return .json(200, accountOnboardingPairAnswer)
+        }
+        let household = fixture.household
+        await household.load()
+        let onboarding = OnboardingModel(storage: OnboardingModel.Storage(read: { false }, write: { _ in }))
+        onboarding.load()
+        let flow = OnboardingFlowModel(
+            onboarding: onboarding,
+            household: household,
+            makeJoinForm: { draft in
+                JoinFormModel(
+                    household: household,
+                    joinPreferences: HouseholdJoinPreferences(preferences: InMemoryPreferences()),
+                    localRepositories: { nil },
+                    invalidator: SharedSeamsInvalidationCounter(),
+                    haptics: { _ in },
+                    householdOrigin: "https://inventory.wystudio.be",
+                    deviceName: nil,
+                    initialDraft: draft
+                )
+            },
+            telemetry: TelemetryReporter(sink: RecordingTelemetry())
+        )
+        flow.showJoin()
+        let form = try #require(flow.joinForm)
+        form.updateCode(AccountDemoServer.householdCode)
+        form.updateName("Anna’s iPhone")
+
+        let joining = Task { await flow.join() }
+        await gate.arrived()
+        flow.back()
+        flow.showJoin()
+        let again = try #require(flow.joinForm)
+        #expect(again !== form)
+        #expect(again.code == AccountDemoServer.householdCode)
+        #expect(again.isJoining)
+        await flow.join()
+        #expect(flow.step == .join)
+
+        await gate.release()
+        await joining.value
+        #expect(fixture.server.requests.count == 1)
+        #expect(flow.step == .joined)
+        #expect(household.session?.deviceName == "Anna’s iPhone")
     }
 
     @Test("a refused code stays on Join with the reason under the code")

@@ -232,11 +232,19 @@ private struct HouseholdStatusCard: View {
         let tint: Color = summary.tone == .signal ? DesignColor.signal : .primary
         Section {
             VStack(alignment: .leading, spacing: 8) {
-                Label {
+                // RN: a 24 pt icon and the heading; the lines below start under the heading.
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    // Decorative, as RN's icon (VoiceOver reads the heading, not "iphone, image"),
+                    // and fixed at its default size as RN's 24 pt icon was, so the heading keeps
+                    // the width at AX sizes.
+                    Image(glyph: .phone)
+                        .font(.title3)
+                        .dynamicTypeSize(...DynamicTypeSize.large)
+                        .frame(width: 24)
+                        .accessibilityHidden(true)
                     Text(verbatim: model.heading)
                         .textRole(.heading, header: true)
-                } icon: {
-                    Image(glyph: .phone)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     Text(verbatim: model.partOf)
@@ -320,6 +328,7 @@ private struct HouseholdPhoneRowView: View {
             ListRow(action: nil, accessibilityLabel: row.accessibilityLabel, identifier: "device-\(row.id)") {
                 Image(glyph: .phone)
                     .font(.title3)
+                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                     .foregroundStyle(.secondary)
                     .frame(width: 28)
                     .accessibilityHidden(true)

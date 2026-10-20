@@ -66,10 +66,15 @@ final class AccountUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Where your inventory lives"].exists)
         goBack()
 
-        // Technical details expands in place.
+        // Technical details expands in place; each fact reads "label, value" and keeps no
+        // identifier of the row that opened it.
         XCTAssertFalse(app.staticTexts["Database schema"].exists)
-        app.staticTexts["Technical details"].tap()
+        app.descendants(matching: .any).matching(identifier: "settings-technical").firstMatch.tap()
         XCTAssertTrue(app.staticTexts["Database schema"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["Database schema, v7"].exists)
+        let factsWithRowIdentifier = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier == 'settings-technical' AND label CONTAINS 'schema'"))
+        XCTAssertEqual(factsWithRowIdentifier.count, 0)
         attachScreenshot("settings-technical")
     }
 

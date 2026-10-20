@@ -59,9 +59,9 @@ struct SettingsScreen: View {
                             SettingsRow(label: fact.label, value: fact.value)
                         }
                     } label: {
-                        SettingsRow(label: L10n.Settings.technical, glyph: .settings)
+                        // On the label: set on the group, the identifier lands on every fact too.
+                        SettingsRow(label: L10n.Settings.technical, glyph: .settings, identifier: "settings-technical")
                     }
-                    .accessibilityIdentifier("settings-technical")
                 }
             }
         }

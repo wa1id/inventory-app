@@ -159,6 +159,39 @@ func householdModelLocal() throws -> LocalRepositories {
     return LocalRepositories(store: store)
 }
 
+/// Holds a stub server's answer until the test releases it, so "while the request runs" does
+/// not depend on a delay outlasting a busy machine.
+actor HouseholdTestGate {
+    private var arrivedCount = 0
+    private var released = false
+    private var held: [CheckedContinuation<Void, Never>] = []
+    private var arrivalWaiters: [CheckedContinuation<Void, Never>] = []
+
+    /// Called from the stub's handler: records the arrival, then waits for ``release()``.
+    func pass() async {
+        arrivedCount += 1
+        let waiting = arrivalWaiters
+        arrivalWaiters = []
+        for waiter in waiting { waiter.resume() }
+        if released { return }
+        await withCheckedContinuation { held.append($0) }
+    }
+
+    /// Returns once a request has reached ``pass()``.
+    func arrived() async {
+        if arrivedCount > 0 { return }
+        await withCheckedContinuation { arrivalWaiters.append($0) }
+    }
+
+    /// Lets every held request, and every later one, answer.
+    func release() {
+        released = true
+        let waiting = held
+        held = []
+        for waiter in waiting { waiter.resume() }
+    }
+}
+
 /// Lets main-actor tasks that were just scheduled run.
 @MainActor
 func householdSettle(_ rounds: Int = 20) async {

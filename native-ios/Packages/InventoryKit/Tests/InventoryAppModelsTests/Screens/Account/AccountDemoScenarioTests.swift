@@ -145,7 +145,8 @@ struct AccountDemoHouseholdTests {
     @Test("leaving forgets the session and tells the home server in passing")
     func leaves() async throws {
         let confirm = SharedSeamsConfirmScript(answers: [true])
-        let app = await accountDemoApp(.paired, confirm: confirm)
+        let (app, server) = AppContainer.accountDemoWithServer(.paired, platform: .silent(confirm: confirm))
+        await app.boot.run()
         let session = try #require(app.household.session)
         let model = app.makeHouseholdPairedModel(session: session)
         var left = false
@@ -155,6 +156,9 @@ struct AccountDemoHouseholdTests {
         #expect(left)
         #expect(app.household.session == nil)
         #expect(app.toasts.current?.options.message == L10n.Household.left)
+        await app.household.pendingRevoke?.value
+        #expect(server.requests.contains("DELETE /v1/devices/\(AccountDemoServer.thisPhoneId)"))
+        #expect(!server.phones.contains { $0.id == AccountDemoServer.thisPhoneId })
     }
 }
 
