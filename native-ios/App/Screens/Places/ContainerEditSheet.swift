@@ -114,18 +114,10 @@ private struct ContainerEditForm: View {
     }
 
     private func form(_ stored: Container) -> some View {
-        ScrollViewReader { proxy in
-            fields(stored)
-                .placesRevealsNotice(model.notice != nil, proxy: proxy)
-        }
-    }
-
-    private func fields(_ stored: Container) -> some View {
         ScreenFrame(.modal) {
             FormLayout {
                 if let notice = model.notice {
                     SaveNotice(copy: notice, action: model.isGone ? BannerAction(label: L10n.Common.goToSpaces) { app.router.goToTab(.spaces) } : nil)
-                        .id(PlacesFormNotice.id)
                 }
             } content: {
                 // Type, then name, as when it was created.

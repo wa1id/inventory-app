@@ -105,25 +105,6 @@ extension View {
         fixedSize(horizontal: false, vertical: true)
             .listRowBackground(Color.clear)
     }
-
-    /// At large text sizes a form's notice scrolls with the form (`FormLayout`): when a save fails
-    /// while Save in the bottom bar was reached by scrolling down, bring the notice into view. A
-    /// pinned notice has no row to scroll to, so this does nothing then.
-    func placesRevealsNotice(_ isShown: Bool, proxy: ScrollViewProxy) -> some View {
-        onChange(of: isShown) { _, shown in
-            guard shown else { return }
-            Task {
-                // Once the notice's row exists.
-                try? await Task.sleep(for: .milliseconds(50))
-                withAnimation { proxy.scrollTo(PlacesFormNotice.id, anchor: .top) }
-            }
-        }
-    }
-}
-
-/// The scroll target of a places form's notice.
-enum PlacesFormNotice {
-    static let id = "places-form-notice"
 }
 
 /// "Delete space…" / "Delete container…" at the end of an edit form: a stock destructive form

@@ -115,18 +115,10 @@ private struct SpaceEditForm: View {
     }
 
     private var form: some View {
-        ScrollViewReader { proxy in
-            fields
-                .placesRevealsNotice(model.notice != nil, proxy: proxy)
-        }
-    }
-
-    private var fields: some View {
         ScreenFrame(.modal) {
             FormLayout {
                 if let notice = model.notice {
                     SaveNotice(copy: notice, action: model.isGone ? BannerAction(label: L10n.Common.goToSpaces) { app.router.goToTab(.spaces) } : nil)
-                        .id(PlacesFormNotice.id)
                 }
             } content: {
                 SpaceFields(

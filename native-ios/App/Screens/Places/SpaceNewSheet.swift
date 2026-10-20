@@ -91,7 +91,6 @@ private struct SpaceNewForm: View {
                         withAnimation { proxy.scrollTo(Self.lastPresetID, anchor: .top) }
                     }
                 }
-                .placesRevealsNotice(model.notice != nil, proxy: proxy)
         }
     }
 
@@ -101,7 +100,7 @@ private struct SpaceNewForm: View {
         ScreenFrame(.modal) {
             FormLayout {
                 if let notice = model.notice {
-                    SaveNotice(copy: notice).id(PlacesFormNotice.id)
+                    SaveNotice(copy: notice)
                 }
             } content: {
                 Section {

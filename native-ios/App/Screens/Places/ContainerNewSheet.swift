@@ -118,17 +118,10 @@ private struct ContainerNewForm: View {
     }
 
     private var form: some View {
-        ScrollViewReader { proxy in
-            fields
-                .placesRevealsNotice(model.notice != nil, proxy: proxy)
-        }
-    }
-
-    private var fields: some View {
         ScreenFrame(.modal) {
             FormLayout {
                 if let notice = model.notice {
-                    SaveNotice(copy: notice).id(PlacesFormNotice.id)
+                    SaveNotice(copy: notice)
                 }
             } content: {
                 Section {
