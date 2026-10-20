@@ -30,7 +30,9 @@ Run it before committing anything that touches copy or `App/`. It fails when:
   `Label`, `Button` or another titled stock control, in `.navigationTitle`,
   `.accessibilityLabel/Hint/Value`, `.accessibilityAction(named:)`, `.help`, `.alert`,
   `.confirmationDialog` or `.badge`, as a `prompt:`, or as a copy argument of our components
-  (`label:`, `title:`, `message:`, `hint:`, `placeholder:`, …);
+  (`label:`, `title:`, `message:`, `hint:`, `placeholder:`, …). The whole argument is read, so
+  `Text(on ? "On" : L10n.X.off)`, `Text(name ?? "Untitled")` and `Text("Hi " + name)` fail too,
+  and a modifier counts wherever it is chained (`content.accessibilityHint("…")`);
 - `String(localized:)`, `LocalizedStringKey`, `LocalizedStringResource`, `NSLocalizedString` or
   `L10nRuntime` appear outside InventoryStrings (in `App/` or the package).
 

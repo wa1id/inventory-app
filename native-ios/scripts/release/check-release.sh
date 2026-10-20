@@ -310,6 +310,16 @@ for marker in ShellDemo HomeDemo AccountDemo AddDemo CaptureDemo ItemDemo Labels
   fi
 done
 [ "$found" -eq 0 ] && ok "binary holds none of the DEBUG-only markers"
+# The same by naming convention, so a demo, gallery, preview host, stand-in or test double added
+# after this list was written is caught too: Swift keeps every type's name in its metadata.
+# Allowed: the camera preview layer (CameraPreview, CameraPreviewLayerView, CameraPreviewUIView).
+named="$(grep -oE '[A-Z][A-Za-z0-9]*(Demo|Gallery|StandIn|Fixtures?|PreviewHost|PreviewData|PreviewRecord|PreviewRoute|PreviewBody|PreviewRegistry|Stub|Fake|Mock)[A-Za-z0-9]*' "$DERIVED/release-strings.txt" \
+  | grep -vE '^(CameraPreview[A-Za-z]*)$' | sort -u | head -20 || true)"
+if [ -n "$named" ]; then
+  bad "binary holds DEBUG-looking type names: $(printf '%s' "$named" | tr '\n' ' ')"
+else
+  ok "binary holds no type named like a demo, gallery, preview host, stand-in or test double"
+fi
 
 echo
 if [ "$failures" -eq 0 ]; then

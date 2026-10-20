@@ -71,6 +71,38 @@ struct Bad: View {
   );
 });
 
+test('copy hidden in a ternary, a nil-coalescing default, a concatenation or a chained modifier is reported', () => {
+  withApp(
+    {
+      'Screens/Hidden.swift': `import SwiftUI
+struct Hidden: View {
+    let on: Bool
+    let name: String?
+    var body: some View {
+        VStack {
+            Text(on ? "On" : L10n.Common.cancel)
+            Text(name ?? "Untitled")
+            Text("Hello " + (name ?? ""))
+            Toggle(isOn: .constant(true)) { Text(L10n.Common.close) }
+            BannerView(label: on ? L10n.Common.close : "Closed")
+        }
+        .modifier(EmptyModifier()).accessibilityLabel(on ? L10n.Common.close : "Shut")
+    }
+    func hinted(_ content: some View) -> some View { content.accessibilityHint("Opens it") }
+}
+`,
+    },
+    (dir) => {
+      const { status, out } = run(['--app-dir', dir]);
+      assert.equal(status, 1);
+      for (const [line, text] of [[7, 'On'], [8, 'Untitled'], [9, 'Hello '], [11, 'Closed'], [13, 'Shut'], [15, 'Opens it']]) {
+        assert.match(out, new RegExp(`Hidden\\.swift:${line}: hard-coded copy "${text}"`));
+      }
+      assert.doesNotMatch(out, /Hidden\.swift:10:/);
+    },
+  );
+});
+
 test('L10n, verbatim data, DEBUG code, previews, identifiers and justified lines pass', () => {
   withApp(
     {
@@ -89,7 +121,12 @@ struct Good: View {
             Button(L10n.Common.close) {}.accessibilityIdentifier("sheet-close")
             Color("Tape")
             Text("Inventory") // l10n-ok: the brand name, never translated
+            Text(L10n.Common.cancel + "\\(count)")
+            Button(action: { print("tapped") }) { Image(systemName: "plus") }
+            Label(L10n.Common.close, systemImage: count > 1 ? "plus" : "minus")
+            ProgressView()
         }
+        .alert(isPresented: .constant(false)) { Alert(title: Text(L10n.Common.close)) }
         .navigationTitle("")
     }
 }

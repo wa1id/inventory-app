@@ -14,7 +14,8 @@
  *    controls, in `.navigationTitle`, `.accessibilityLabel/Hint/Value`, `.help`,
  *    `.alert`, `.confirmationDialog`, `.badge`, `.accessibilityAction(named:)`, as
  *    a `prompt:`, or as the copy argument of our own components (`label:`,
- *    `title:`, `message:`, …). `String(localized:)`, `LocalizedStringKey` and
+ *    `title:`, `message:`, …), including either side of `? :`, a `??` default
+ *    and a `+` concatenation. `String(localized:)`, `LocalizedStringKey` and
  *    `LocalizedStringResource` are never used outside InventoryStrings. Code
  *    under `#if DEBUG` (galleries, demos), `#Preview` bodies (Release builds
  *    drop them) and `Text(verbatim:)` are exempt; so is a line that ends with
@@ -226,12 +227,50 @@ const COPY_LABELS = [
   'prompt', 'label', 'title', 'message', 'body', 'subtitle', 'placeholder', 'hint', 'caption',
   'accessibilityLabel', 'accessibilityHint', 'confirmLabel', 'cancelLabel', 'text', 'heading', 'notice',
 ];
-// `.accessibilityAction(named: "…")` takes its title as a labelled first argument.
+// A control (`Text(`) must not follow a word or a dot (`MyText(`, `x.Text(`); a modifier
+// (`.navigationTitle(`) may follow anything, `content.accessibilityLabel(…)` included.
 const titledPattern = new RegExp(
-  `(?:^|[^\\w.])(${TITLED_CALLS.map((c) => c.replace('.', '\\.')).join('|')})\\(\\s*(?:named:\\s*)?(#*")`,
+  `(?:(?:^|[^\\w.])(${TITLED_CALLS.filter((c) => !c.startsWith('.')).join('|')})|(${TITLED_CALLS.filter((c) => c.startsWith('.')).map((c) => `\\${c}`).join('|')}))\\(`,
   'g',
 );
-const labelPattern = new RegExp(`[(,]\\s*(${COPY_LABELS.join('|')}):\\s*(#*")`, 'g');
+const labelPattern = new RegExp(`[(,]\\s*(${COPY_LABELS.join('|')}):`, 'g');
+
+/**
+ * The string literals of one argument that starts at `start` (just past `(`, `,` or a label's
+ * `:`), up to its top-level `,` or the call's `)`. Only literals at the argument's own level
+ * count: the title itself, either side of `? :` or `??`, and a `+` concatenation; a literal
+ * inside a nested call (`L10n.Item.count(name: "x")`) or a closure is that call's business.
+ */
+function argumentLiterals(code, start) {
+  const found = [];
+  let depth = 0;
+  for (let i = start; i < code.length; i++) {
+    const c = code[i];
+    if (c === '"' || (c === '#' && /^#+"/.test(code.slice(i, i + 8)))) {
+      const { text, end } = readStringLiteral(code, i);
+      if (depth === 0) found.push({ at: i, text });
+      i = end - 1;
+    } else if (c === '(' || c === '[' || c === '{') depth++;
+    else if (c === ')' || c === ']' || c === '}') {
+      if (depth === 0) break;
+      depth--;
+    } else if (c === ',' && depth === 0) break;
+  }
+  return found;
+}
+
+/**
+ * The copy literals of a titled call whose `(` ends at `open`: its first argument, unless that
+ * argument is labelled (`Text(verbatim:)`, `Button(action:)`, `.alert(isPresented:)`); the
+ * labelled title of `.accessibilityAction(named:)` counts.
+ */
+function titleLiterals(code, open) {
+  const rest = code.slice(open, open + 80);
+  const label = rest.match(/^\s*([A-Za-z_]\w*)\s*:(?!:)/);
+  if (!label) return argumentLiterals(code, open);
+  if (label[1] === 'named') return argumentLiterals(code, open + label[0].length);
+  return [];
+}
 const localizedPattern = /\b(String\(localized:|LocalizedStringKey\(|LocalizedStringResource\(|NSLocalizedString\(|L10nRuntime\.)/g;
 // Members may be keyword-escaped: L10n.Onboarding.`continue`.
 const chainPattern = /\bL10n((?:\.`?[A-Za-z_][A-Za-z0-9_]*`?)+)/g;
@@ -282,16 +321,19 @@ for (const file of appFiles) {
   const exempt = (line) => debugOnly[line - 1] || /\/\/\s*l10n-ok:\s*\S/.test(rawLines[line - 1] ?? '');
   const where = (index) => `${rel}:${lineOf(code, index)}`;
 
-  for (const pattern of [titledPattern, labelPattern]) {
-    pattern.lastIndex = 0;
-    for (let m; (m = pattern.exec(code)); ) {
-      const quoteAt = m.index + m[0].length - m[2].length;
-      const line = lineOf(code, quoteAt);
-      if (exempt(line)) continue;
-      const { text } = readStringLiteral(code, quoteAt);
-      if (!hasLetters(text) || isReverseDNS(text)) continue;
-      report(`${where(quoteAt)}: hard-coded copy ${JSON.stringify(text.slice(0, 60))} in ${m[1]}(…); use L10n (native-only copy: scripts/strings/native/<area>.ts)`);
+  const reportCopy = (literals, name) => {
+    for (const { at, text } of literals) {
+      if (exempt(lineOf(code, at)) || !hasLetters(text) || isReverseDNS(text)) continue;
+      report(`${where(at)}: hard-coded copy ${JSON.stringify(text.slice(0, 60))} in ${name}; use L10n (native-only copy: scripts/strings/native/<area>.ts)`);
     }
+  };
+  titledPattern.lastIndex = 0;
+  for (let m; (m = titledPattern.exec(code)); ) {
+    reportCopy(titleLiterals(code, m.index + m[0].length), `${m[1] ?? m[2]}(…)`);
+  }
+  labelPattern.lastIndex = 0;
+  for (let m; (m = labelPattern.exec(code)); ) {
+    reportCopy(argumentLiterals(code, m.index + m[0].length), `${m[1]}:`);
   }
   localizedPattern.lastIndex = 0;
   for (let m; (m = localizedPattern.exec(code)); ) {

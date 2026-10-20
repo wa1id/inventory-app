@@ -49,20 +49,27 @@ fetch() {
     rm -f "$errors"
     fail "eas env:get failed for $name (exit $status)"
   fi
-  rm -f "$errors"
   # The `NAME=value` line, with any colour codes removed; everything after the first `=`.
-  printf '%s\n' "$output" | sed 's/\x1b\[[0-9;]*m//g' | awk -v k="$name" 'index($0, k "=") == 1 { print substr($0, length(k) + 2); exit }'
+  local value
+  value="$(printf '%s\n' "$output" | sed 's/\x1b\[[0-9;]*m//g' | awk -v k="$name" 'index($0, k "=") == 1 { print substr($0, length(k) + 2); exit }')"
+  # A variable eas cannot find is reported on stderr with exit 0 (`Variable with name … not
+  # found`); show that reason, which never holds a value (values only go to stdout).
+  [ -n "$value" ] || sed 's/^/[secrets]   /' "$errors" >&2
+  rm -f "$errors"
+  printf '%s' "$value"
 }
 
 # Refuses a value an xcconfig would mangle or that is not a real key. Prints nothing about it.
 validate() {
   local name="$1" value="$2"
   [ -n "$value" ] || fail "$name: no value in the eas output (is it set for production?)"
+  # The mask first: eas prints `***** (This is a … env variable …)` in place of a value it
+  # withholds, and that text would otherwise be refused for its spaces or quote.
   case "$value" in
+    \**) fail "$name: the value is masked (sensitive, secret or file in EAS); it cannot be read here" ;;
     *//*) fail "$name: the value holds '//', which an xcconfig reads as a comment" ;;
     *'$'*) fail "$name: the value holds '\$', which an xcconfig expands" ;;
     *\"* | *\'*) fail "$name: the value holds a quote" ;;
-    \**) fail "$name: the value is masked (sensitive or secret in EAS); it cannot be read here" ;;
   esac
   if printf '%s' "$value" | LC_ALL=C grep -q '[[:space:][:cntrl:]]'; then
     fail "$name: the value holds white space or a control character"

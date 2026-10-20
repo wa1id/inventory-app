@@ -156,10 +156,14 @@ version = (info.get("CFBundleShortVersionString"), info.get("CFBundleVersion"))
 want = (os.environ["MARKETING"], os.environ["BUILD"])
 print(("ok   " if version == want else "FAIL ") + f" version {version[0]} ({version[1]})")
 bad += version != want
-out = subprocess.run(["codesign", "-d", "--entitlements", ":-", app], capture_output=True)
+# `--entitlements - --xml`: the `:-` form is deprecated (macOS 15 warns that it will stop working).
+out = subprocess.run(["codesign", "-d", "--entitlements", "-", "--xml", app], capture_output=True)
 try:
-    ents = plistlib.loads(out.stdout) if out.stdout.strip() else {}
+    ents = plistlib.loads(out.stdout) if out.stdout.strip() else None
 except Exception:
+    ents = None
+if not isinstance(ents, dict):
+    print(f"FAIL  could not read the archived app's entitlements (codesign exit {out.returncode})"); bad += 1
     ents = {}
 appid = ents.get("application-identifier")
 print(("ok   " if appid == "4BQ3BX3UHK.com.wystudio.inventory" else "FAIL ") + f" application-identifier {appid}")
