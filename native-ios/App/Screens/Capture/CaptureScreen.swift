@@ -52,6 +52,9 @@ struct CaptureScreen: View {
         // A container carries the screen's id; on the bare tree it would replace every control's.
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("screen-capture")
+        // VoiceOver's escape does what ✕ does (a cover has no back of its own): close, or end a
+        // set that has shots on the review.
+        .accessibilityAction(.escape) { parts?.model.close() }
         // Once, at the root: the library button and "Choose a photo instead" both open it, and
         // every presentation is answered (cancelled included), which unlocks the model's guard.
         .captureLibraryPicker(isPresented: $picking) { result in
@@ -107,11 +110,16 @@ struct CaptureScreen: View {
         if let request {
             deliver = { photo in results.deliver(request, photo) }
         }
+        #if DEBUG
+        let photos = CaptureDemo.photos(app.imageStore)
+        #else
+        let photos = app.imageStore
+        #endif
         let model = CaptureModel(
             route: route,
             deliverPhoto: deliver,
             permission: permissionOverride ?? CaptureCameraSource.makePermission(app: app),
-            photos: app.imageStore,
+            photos: photos,
             fastCapture: app.fastCapture,
             items: app.repositories.items,
             invalidator: app.database,
@@ -161,6 +169,9 @@ struct CaptureCameraView: View {
     let runs: Bool
     let onLibrary: () -> Void
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.shellWindowSize) private var windowSize
+
     var body: some View {
         ScreenFrame(.camera) {
             ZStack {
@@ -209,10 +220,13 @@ struct CaptureCameraView: View {
         .padding(.top, 8)
     }
 
-    /// The notices and the status pill, just over the controls. Where they do not fit between the
-    /// top row and the controls (a 667 pt phone at the largest text sizes, with both notices up)
-    /// they scroll, rather than squeezing the controls until Done loses its count and the hint
-    /// its words.
+    /// The notices and the status pill, just over the controls. Both notices at once on a short
+    /// phone at the largest sizes (a 667 pt phone at AX1, the camera's cap) did not fit between
+    /// the top row and the controls, and scrolled with the top one cut off; their text then
+    /// stops a few steps lower (`isCrowded`), a modifier rather than another view, so nothing is
+    /// rebuilt and announced again. Should they still not fit they scroll, from the top (the
+    /// error and its Type it instead whole), rather than squeezing the controls until Done loses
+    /// its count and the hint its words.
     private var notices: some View {
         ViewThatFits(in: .vertical) {
             noticeStack
@@ -220,9 +234,17 @@ struct CaptureCameraView: View {
                 noticeStack
             }
             .scrollBounceBehavior(.basedOnSize)
-            .defaultScrollAnchor(.bottom)
+            .defaultScrollAnchor(.top)
         }
+        .dynamicTypeSize(...(isCrowded ? DynamicTypeSize.xLarge : .accessibility5))
         .padding(.top, 16)
+    }
+
+    /// Both notices are up on a phone shorter than 800 pt at an accessibility size.
+    private var isCrowded: Bool {
+        model.error != nil && model.droppedNotice != nil
+            && dynamicTypeSize.isAccessibilitySize
+            && windowSize.height > 0 && windowSize.height < 800
     }
 
     private var noticeStack: some View {

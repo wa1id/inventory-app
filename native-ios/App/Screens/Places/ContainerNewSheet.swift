@@ -160,7 +160,11 @@ private struct ContainerNewForm: View {
                     identifier: "container-create",
                     action: save
                 )
+                .accessibilityShowsLargeContentViewer()
             }
+            // RN's button cap for pinned chrome (08 §6: 1.6 → xxxLarge): uncapped, "Create
+            // container" took two lines at AX5.
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         }
     }
 

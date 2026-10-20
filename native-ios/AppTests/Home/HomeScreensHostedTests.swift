@@ -184,6 +184,40 @@ struct HomeScreensHostedTests {
         #expect(model.rows.map(\.id) == ids)
     }
 
+    // MARK: Reduce Motion
+
+    @Test("a layout change animates over 180 ms, and happens at once under Reduce Motion (08 §8.3)")
+    func layoutMotion() {
+        #expect(HomeLayoutMotion.animation(reduceMotion: false) == .easeInOut(duration: 0.18))
+        #expect(HomeLayoutMotion.animation(reduceMotion: true) == nil)
+    }
+
+    @Test("a scroll to the top without animation (Reduce Motion) gets there at once and stays")
+    func scrollToTopWithoutAnimation() async throws {
+        let scroller = HomeListScroller()
+        let host = try ShellTestWindow(
+            NavigationStack {
+                List { ForEach(0..<80, id: \.self) { Text(verbatim: "Row \($0)") } }
+                    .homeListScroller(scroller)
+                    .navigationTitle("Title")
+            }
+        )
+        defer { host.close() }
+        try await Task.sleep(for: .milliseconds(500))
+        let list = try #require(scroller.scrollView)
+        list.setContentOffset(CGPoint(x: 0, y: list.contentOffset.y + 900), animated: false)
+        try await Task.sleep(for: .milliseconds(200))
+        scroller.scrollToTop(animated: false)
+        #expect(!scroller.isScrolledDown)
+        #expect(list.layer.animationKeys()?.isEmpty ?? true)
+        // The settling passes (the large title coming back) never animate either.
+        for _ in 0..<6 {
+            try await Task.sleep(for: .milliseconds(100))
+            #expect(list.layer.animationKeys()?.isEmpty ?? true)
+        }
+        #expect(!scroller.isScrolledDown)
+    }
+
     @Test("RN's font scale per Dynamic Type size picks the drop zone's thumbnail")
     func fontScale() {
         #expect(DropZoneScreen.fontScale(.large) == 1)

@@ -66,7 +66,7 @@ struct DropZoneScreen: View {
             },
             rememberCategories: { categories.rememberCategories($0) },
             animate: { change in
-                withAnimation(UIAccessibility.isReduceMotionEnabled ? nil : .easeInOut(duration: Double(Motion.duration.expand) / 1000)) {
+                withAnimation(HomeLayoutMotion.animation(reduceMotion: UIAccessibility.isReduceMotionEnabled)) {
                     change()
                 }
             }

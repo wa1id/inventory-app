@@ -49,6 +49,12 @@ enum AddDemo {
 
     static let log = Logger(subsystem: "com.wystudio.inventory", category: "demo")
 
+    /// `-demoKeyboardDown YES`: the sheet never moves focus to the name by itself, so a state
+    /// shows (and is audited) with the whole form in sight rather than under the keyboard.
+    static var keepsKeyboardDown: Bool {
+        UserDefaults.standard.bool(forKey: "demoKeyboardDown")
+    }
+
     /// The newest Add sheet's model, so a state can type and tap through it.
     @MainActor private(set) static weak var currentModel: AddSheetModel?
 

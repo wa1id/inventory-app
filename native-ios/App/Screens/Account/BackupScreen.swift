@@ -17,6 +17,9 @@ struct BackupScreen: View {
     /// Whether this phone's database holds anything beyond the drop zone, for the Restore offer.
     @State private var hasRows: InventoryQuery<Bool>?
     @State private var ticker = NowTicker()
+    /// The part VoiceOver moves to when the page changes from one state to another (Turn on,
+    /// "I have saved it", Show recovery code, a restore): the button pressed goes with the old one.
+    @AccessibilityFocusState private var focusedPart: BackupFocusPart?
     #if DEBUG
     @Environment(\.accountDemoBackupAction) private var previewAction
     #endif
@@ -31,6 +34,14 @@ struct BackupScreen: View {
                     .onChange(of: app.sync.status) { old, new in
                         if let text = model.statusAnnouncement(from: old, to: new, now: ticker.now) {
                             app.platform.announce(text)
+                        }
+                    }
+                    .onChange(of: BackupFocusPart(model.body)) { _, part in
+                        guard let part else { return }
+                        Task { @MainActor in
+                            // Once the new part is on screen.
+                            try? await Task.sleep(for: .milliseconds(150))
+                            focusedPart = part
                         }
                     }
             } else {
@@ -88,9 +99,14 @@ struct BackupScreen: View {
                     BannerView(tone: .info, message: L10n.Backup.unavailable, chrome: .row, identifier: "backup-unavailable")
                 }
             case .revealed(let code):
-                BackupRevealedSection(code: code) { model.saved() }
+                BackupRevealedSection(code: code, focus: $focusedPart) { model.saved() }
             case .on:
-                BackupOnSections(model: model, now: ticker.now, showsRestoreOffer: model.showsRestoreOffer(localInventoryHasRows: hasRows.data))
+                BackupOnSections(
+                    model: model,
+                    now: ticker.now,
+                    showsRestoreOffer: model.showsRestoreOffer(localInventoryHasRows: hasRows.data),
+                    focus: $focusedPart
+                )
             case .unreadable:
                 Section {
                     BannerView(
@@ -108,10 +124,31 @@ struct BackupScreen: View {
                     )
                 }
             case .off:
-                BackupOffSections(model: model)
+                BackupOffSections(model: model, focus: $focusedPart)
             }
         }
         .scrollDismissesKeyboard(.interactively)
+    }
+}
+
+/// The part of the Backup page that leads each of its states, where VoiceOver goes when the page
+/// changes to that state.
+enum BackupFocusPart: Hashable {
+    /// "Keep a copy off this phone" (off).
+    case keep
+    /// "Write this code down" (the code shown).
+    case writeDown
+    /// "Backup is on".
+    case on
+
+    /// The part leading `body`, or nil for a state with no part (a notice only).
+    init?(_ body: BackupScreenBody) {
+        switch body {
+        case .off: self = .keep
+        case .revealed: self = .writeDown
+        case .on: self = .on
+        case .unavailable, .unreadable: return nil
+        }
     }
 }
 
@@ -119,17 +156,28 @@ struct BackupScreen: View {
 private struct BackupPart<Content: View>: View {
     let title: String
     var spacing: CGFloat = 12
+    /// The page's focus and this part's place in it, for a part that leads a state.
+    var focus: AccessibilityFocusState<BackupFocusPart?>.Binding?
+    var part: BackupFocusPart?
     @ViewBuilder var content: Content
 
     var body: some View {
         Section {
             VStack(alignment: .leading, spacing: spacing) {
-                Text(verbatim: title)
-                    .textRole(.heading, header: true)
+                heading
                 content
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 6)
+        }
+    }
+
+    @ViewBuilder private var heading: some View {
+        let text = Text(verbatim: title).textRole(.heading, header: true)
+        if let focus, let part {
+            text.accessibilityFocused(focus, equals: part)
+        } else {
+            text
         }
     }
 }
@@ -151,9 +199,10 @@ private struct BackupParagraph: View {
 /// Backup is off: turn it on, or bring a backup onto this phone with its code (RN `BackupOff`).
 private struct BackupOffSections: View {
     let model: BackupScreenModel
+    let focus: AccessibilityFocusState<BackupFocusPart?>.Binding
 
     var body: some View {
-        BackupPart(title: L10n.Backup.keepTitle) {
+        BackupPart(title: L10n.Backup.keepTitle, focus: focus, part: .keep) {
             BackupParagraph(text: L10n.Backup.keepBody)
             BackupParagraph(text: L10n.Backup.keepCode)
             if let failure = model.enableFailure {
@@ -195,10 +244,11 @@ private struct BackupOffSections: View {
 /// The code, once: write it down or share it somewhere safe (RN `RevealedCode`).
 private struct BackupRevealedSection: View {
     let code: BackupRevealedCode
+    let focus: AccessibilityFocusState<BackupFocusPart?>.Binding
     let onSaved: () -> Void
 
     var body: some View {
-        BackupPart(title: L10n.Backup.writeDownTitle) {
+        BackupPart(title: L10n.Backup.writeDownTitle, focus: focus, part: .writeDown) {
             BackupParagraph(text: L10n.Backup.writeDownBody)
             if code.keptExistingCode {
                 BannerView(tone: .info, message: L10n.Backup.keptExistingCode, identifier: "backup-kept-code")
@@ -217,10 +267,17 @@ private struct BackupRevealedSection: View {
                 .accessibilityIdentifier("backup-code")
             // The share sheet, so it can go to Notes or a password manager.
             ShareLink(item: code.formatted) {
-                Label(L10n.Backup.share, glyph: .share)
-                    .frame(maxWidth: .infinity)
+                // Laid out as `LoadingButton`'s label: a `Label` here kept its title to one line
+                // inside the bordered button, cut short at the largest sizes.
+                HStack(spacing: 8) {
+                    Image(glyph: .share)
+                    Text(verbatim: L10n.Backup.share)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
             }
             .buttonVariant(.secondary)
+            .accessibilityLabel(Text(verbatim: L10n.Backup.share))
             .accessibilityIdentifier("backup-share-code")
             LoadingButton(label: L10n.Backup.saved, fullWidth: true, identifier: "backup-saved", action: onSaved)
         }
@@ -259,6 +316,7 @@ private struct BackupOnSections: View {
     let model: BackupScreenModel
     let now: Int64
     let showsRestoreOffer: Bool
+    let focus: AccessibilityFocusState<BackupFocusPart?>.Binding
 
     var body: some View {
         if let reason = model.errorReason {
@@ -314,7 +372,7 @@ private struct BackupOnSections: View {
             }
         }
 
-        BackupPart(title: L10n.Backup.onTitle, spacing: 8) {
+        BackupPart(title: L10n.Backup.onTitle, spacing: 8, focus: focus, part: .on) {
             if let line = model.lastLine(now: now) {
                 Text(verbatim: line)
                     .textRole(.meta)

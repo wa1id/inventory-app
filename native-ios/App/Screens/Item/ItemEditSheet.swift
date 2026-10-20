@@ -18,6 +18,7 @@ struct ItemEditSheet: View {
 
     @Environment(AppContainer.self) private var app
     @Environment(\.screenAddress) private var address
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var model: EditDetailsModel?
     @FocusState private var nameFocus: ItemEditNameField?
     @FocusState private var detailsFocus: ItemDetailsField?
@@ -46,7 +47,10 @@ struct ItemEditSheet: View {
                     ) {
                         model.startSave()
                     }
+                    .accessibilityShowsLargeContentViewer()
                 }
+                // RN's button cap for pinned chrome (08 §6: 1.6 → xxxLarge).
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
             }
         }
         .navigationTitle(L10n.EditItem.title)
@@ -104,21 +108,35 @@ struct ItemEditSheet: View {
 
     private func form(_ model: EditDetailsModel) -> some View {
         @Bindable var model = model
-        return FormLayout {
-            // Above the fields, so it is seen whatever was scrolled to.
-            if let notice = model.notice {
-                BannerView(tone: .warning, title: notice.title, message: notice.message, live: .assertive, identifier: "item-edit-notice")
+        return ScrollViewReader { proxy in
+            FormLayout {
+                // Above the fields, so it is seen whatever was scrolled to.
+                if let notice = model.notice {
+                    BannerView(tone: .warning, title: notice.title, message: notice.message, live: .assertive, identifier: "item-edit-notice")
+                }
+            } content: {
+                Section {
+                    nameRow(model)
+                        .id(Self.nameRowID)
+                }
+                Section {
+                    ItemDetailsFields(values: $model.values, suggestions: model.categorySuggestions, focus: $detailsFocus)
+                }
             }
-        } content: {
-            Section {
-                nameRow(model)
-            }
-            Section {
-                ItemDetailsFields(values: $model.values, suggestions: model.categorySuggestions, focus: $detailsFocus)
+            .scrollDismissesKeyboard(.interactively)
+            .onChange(of: model.nameFocusRequests) {
+                // Once the keyboard is up, the name's row goes to the top, so "Give the item a
+                // name." under the field is not left behind the bar at the largest sizes (as
+                // New space does for its name).
+                Task {
+                    try? await Task.sleep(for: .milliseconds(400))
+                    withAnimation(reduceMotion ? nil : .default) { proxy.scrollTo(Self.nameRowID, anchor: .top) }
+                }
             }
         }
-        .scrollDismissesKeyboard(.interactively)
     }
+
+    private static let nameRowID = "item-edit-name-row"
 
     /// The read-only photo beside the name it goes with, so it does not read as an empty slot;
     /// above it at large sizes. Photos of existing items cannot be replaced (05 §15).

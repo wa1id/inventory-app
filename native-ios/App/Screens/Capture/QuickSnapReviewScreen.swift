@@ -41,15 +41,25 @@ struct QuickSnapReviewScreen: View {
                 LoadingButton(label: L10n.Review.keepShooting, variant: .secondary, fullWidth: true, identifier: "fast-review-more") {
                     model?.keepShooting()
                 }
+                .accessibilityShowsLargeContentViewer()
             } primary: {
                 LoadingButton(label: L10n.Review.done, fullWidth: true, identifier: "fast-review-done") {
                     model?.done()
                 }
+                .accessibilityShowsLargeContentViewer()
             }
+            // RN's button cap for pinned chrome (08 §6: 1.6 → xxxLarge): uncapped, the two
+            // stacked buttons took about 40 % of a 667 pt phone at AX5.
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         }
         .navigationTitle(L10n.Review.title)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
+        // Read out from the screen rather than from the rows that show them: a list builds its
+        // rows lazily, so a row scrolled away and back would say its words again (once per
+        // change, RN's polite live regions).
+        .announcesOnChange(model?.statusText ?? "", enabled: model?.showsHeader == true, queued: true)
+        .announcesOnChange(L10n.Errors.refreshFailed, enabled: model?.showsRefreshBanner == true)
         .background {
             QuickSnapReviewSwipeBack()
                 .frame(width: 0, height: 0)
@@ -72,9 +82,12 @@ struct QuickSnapReviewScreen: View {
             }
         case .emptied:
             fullScreen(model) {
+                // With a glyph like every other empty state, so its heading is drawn as one
+                // (bold); without, `ContentUnavailableView` set it in regular weight.
                 EmptyStateView(
                     title: L10n.Review.Emptied.title,
-                    message: L10n.Review.Emptied.body
+                    message: L10n.Review.Emptied.body,
+                    glyph: .layers
                 )
             }
         case .nothing:
@@ -165,6 +178,8 @@ struct QuickSnapReviewScreen: View {
             primary: BannerAction(label: L10n.Common.tryAgain, identifier: "fast-review-refresh-retry") {
                 Task { await model.reload() }
             },
+            // Announced by the screen, once (see `body`).
+            live: .off,
             identifier: "fast-review-refresh-failed"
         )
     }
@@ -191,8 +206,9 @@ struct QuickSnapReviewScreen: View {
 }
 
 /// "4 saved to the drop zone" over "Saving 2 more…" (RN review head): the title is a heading;
-/// the status line is read out whenever it changes (RN: a polite live region), in the signal
-/// colour once photos may have been lost.
+/// the status line is read out whenever it changes (RN: a polite live region; the screen
+/// announces it, so a scroll does not repeat it), in the signal colour once photos may have been
+/// lost.
 private struct QuickSnapReviewHead: View {
     let title: String?
     let status: String
@@ -210,7 +226,6 @@ private struct QuickSnapReviewHead: View {
                 .textRole(.meta)
                 .foregroundStyle(isAlert ? DesignColor.signal : Color.secondary)
                 .accessibilityIdentifier("fast-review-status")
-                .announcesOnChange(status, queued: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 8)

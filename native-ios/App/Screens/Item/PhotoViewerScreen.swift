@@ -30,7 +30,9 @@ struct PhotoViewerScreen: View {
     @State private var shown = false
     @State private var closing = false
 
-    /// The fade in and out.
+    /// The fade in and out. Kept under Reduce Motion: it moves nothing (a cross-fade is what
+    /// Reduce Motion puts in place of movement), and RN's `animation: 'fade'` was not reduced
+    /// either. The settle after a short swipe is what Reduce Motion drops (`dragEnded`).
     private static let fade: Animation = .easeOut(duration: 0.25)
 
     init(itemId: String) {

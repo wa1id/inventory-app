@@ -102,11 +102,16 @@ private struct SpaceDetailContent: View {
                         identifier: "containers-create",
                         action: newContainer
                     )
+                    .accessibilityShowsLargeContentViewer()
                 }
+                // Pinned chrome stops at RN's button cap (08 §6: 1.6 → xxxLarge): uncapped, the
+                // label took two lines and the bar a fifth of the screen at AX5.
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
             }
         }
         .navigationTitle(model.spaceData?.name ?? "")
         .navigationBarTitleDisplayMode(.large)
+        .announcesOnChange(L10n.Errors.refreshFailed, enabled: model.blocking == nil && model.showsRefreshBanner)
     }
 
     private func list(_ space: Space) -> some View {
@@ -119,9 +124,16 @@ private struct SpaceDetailContent: View {
                             .textRole(.meta)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
+                            // RN's cap for the meta role (08 §6: 2.0 → AX1), as on the container
+                            // screen's head: uncapped, the counts took four lines beside the tile
+                            // on a 375 pt phone at AX5 and pushed the containers off the screen.
+                            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                // The counts are their own element: a row of static content is otherwise read
+                // as one, framed round the tile as well.
+                .accessibilityElement(children: .contain)
                 .listRowBackground(Color.clear)
                 // In line with the large title, and clear of the section's rounded clip.
                 .listRowInsets(EdgeInsets(top: 12, leading: 0, bottom: 12, trailing: 0))
@@ -132,6 +144,9 @@ private struct SpaceDetailContent: View {
                         tone: .info,
                         message: L10n.Errors.refreshFailed,
                         primary: BannerAction(label: L10n.Common.tryAgain) { model.reloadAll() },
+                        // Announced by the screen, once (a row scrolled away and back would
+                        // say it again).
+                        live: .off,
                         chrome: .row,
                         identifier: "refresh-banner"
                     )

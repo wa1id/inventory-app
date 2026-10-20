@@ -59,8 +59,16 @@ struct SettingsScreen: View {
                             SettingsRow(label: fact.label, value: fact.value)
                         }
                     } label: {
+                        // A plain label, not an element of its own (as `SettingsRow` is): the
+                        // group's own button then reads it (RN: one button with its expanded
+                        // state) rather than a separate row element beside the group's button.
                         // On the label: set on the group, the identifier lands on every fact too.
-                        SettingsRow(label: L10n.Settings.technical, glyph: .settings, identifier: "settings-technical")
+                        Label {
+                            Text(verbatim: L10n.Settings.technical)
+                        } icon: {
+                            Image(glyph: .settings).foregroundStyle(.secondary)
+                        }
+                        .accessibilityIdentifier("settings-technical")
                     }
                 }
             }
@@ -73,8 +81,7 @@ struct SettingsScreen: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var expandAnimation: Animation? {
-        let length = Motion.duration(reduceMotion: reduceMotion).expand
-        return length == 0 ? nil : .easeInOut(duration: Double(length) / 1000)
+        HomeLayoutMotion.animation(reduceMotion: reduceMotion)
     }
 }
 

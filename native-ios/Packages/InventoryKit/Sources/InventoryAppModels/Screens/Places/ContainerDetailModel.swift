@@ -171,6 +171,24 @@ public final class ContainerDetailModel {
     /// "This bin is empty".
     public var emptyTitle: String { L10n.Container.Empty.title(type: typeName) }
 
+    /// How long a just-arrived row stays picked out, then how long the highlight fades.
+    public struct ArrivalTiming: Sendable, Hashable {
+        /// Milliseconds at full strength.
+        public let holdMs: Int
+        /// Milliseconds of fading; 0: it goes at once.
+        public let fadeMs: Int
+    }
+
+    /// RN `ArrivalHighlight` (08 §8.1): 600 ms, then a 1200 ms fade; under Reduce Motion the
+    /// whole 1800 ms at full strength, then gone at once (no fade).
+    public static func arrivalTiming(reduceMotion: Bool) -> ArrivalTiming {
+        let fade = 1200
+        return ArrivalTiming(
+            holdMs: 600 + (reduceMotion ? fade : 0),
+            fadeMs: Motion.motionMs(fade, reduced: reduceMotion)
+        )
+    }
+
     /// Whether `item`'s row is picked out as just arrived. Decided once per row, the first time
     /// it is asked (when the row first appears); later asks answer false.
     public func claimsArrival(_ item: ItemWithContext) -> Bool {

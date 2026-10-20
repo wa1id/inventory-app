@@ -99,21 +99,36 @@ private struct CaptureShutterStyle: ButtonStyle {
     static let disc: CGFloat = 62
 
     func makeBody(configuration: Configuration) -> some View {
+        CaptureShutterFace(isPressed: configuration.isPressed, isBusy: isBusy)
+    }
+}
+
+/// The shutter's ring and disc. The disc shrinks a little while pressed; under Reduce Motion it
+/// dims instead, with no scaling and no animation (08 §8.3).
+private struct CaptureShutterFace: View {
+    let isPressed: Bool
+    let isBusy: Bool
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        let pressed = isPressed && !isBusy
         ZStack {
             Circle()
                 .strokeBorder(Color.white, lineWidth: 3)
             Circle()
                 .fill(Color.white)
-                .frame(width: Self.disc, height: Self.disc)
-                .scaleEffect(configuration.isPressed && !isBusy ? 0.92 : 1)
+                .frame(width: CaptureShutterStyle.disc, height: CaptureShutterStyle.disc)
+                .scaleEffect(pressed && !reduceMotion ? 0.92 : 1)
+                .opacity(pressed && reduceMotion ? 0.7 : 1)
             if isBusy {
                 ProgressView()
                     .tint(.black)
             }
         }
-        .frame(width: Self.side, height: Self.side)
+        .frame(width: CaptureShutterStyle.side, height: CaptureShutterStyle.side)
         .contentShape(Circle())
-        .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.1), value: isPressed)
     }
 }
 

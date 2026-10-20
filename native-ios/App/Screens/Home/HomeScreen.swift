@@ -92,6 +92,8 @@ struct HomeScreen: View {
             .frame(width: 0, height: 0)
             .accessibilityHidden(true)
         }
+        // One container takes the screen's identifier, so the list keeps its own (`home-list`).
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("screen-home")
         #if DEBUG
         // After the screen's identifier, which would otherwise replace this one.
@@ -118,6 +120,7 @@ struct HomeScreen: View {
         .listStyle(.insetGrouped)
         .listSectionSpacing(.compact)
         .scrollDismissesKeyboard(.interactively)
+        .accessibilityIdentifier("home-list")
         .homeListScroller(scroller)
         .refreshable { await home.refresh() }
         .onChange(of: home.scrollToTopRequests) { _, _ in
@@ -307,7 +310,7 @@ struct HomeScreen: View {
     // MARK: Actions
 
     private var layoutAnimation: Animation? {
-        reduceMotion ? nil : .easeInOut(duration: Double(Motion.duration.expand) / 1000)
+        HomeLayoutMotion.animation(reduceMotion: reduceMotion)
     }
 
     private func setQuery(_ text: String) {
@@ -417,7 +420,9 @@ private struct HomeOlderResults: ViewModifier {
 
 #if DEBUG
 /// For the shell's UI tests (ShellModalUITests): how many re-taps of Home reached the screen.
-/// Demo mode only, one point square, so screenshots never show it.
+/// Demo mode only, two points square and just off the left edge of the window, so screenshots
+/// never show it and the accessibility audits, which look only at what is on screen, never take
+/// it for text someone has to read (UI tests still find it by its identifier).
 private struct HomeDebugReselections: View {
     let count: Int
 
@@ -428,6 +433,8 @@ private struct HomeDebugReselections: View {
                 .font(.system(size: 2))
                 .foregroundStyle(.clear)
                 .frame(width: 2, height: 2)
+                .offset(x: -40)
+                .allowsHitTesting(false)
                 .accessibilityIdentifier("debug-home-reselections")
         }
     }

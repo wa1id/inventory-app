@@ -12,6 +12,9 @@ import InventoryStrings
 struct OnboardingScreen: View {
     @Environment(AppContainer.self) private var app
     @State private var flow: OnboardingFlowModel?
+    /// The heading VoiceOver moves to when a step is swapped in: the button that was pressed
+    /// goes with the step it was on.
+    @AccessibilityFocusState private var focusedHeading: OnboardingFlowModel.Step?
     #if DEBUG
     @Environment(\.accountDemoOnboardingStart) private var previewStart
     #endif
@@ -21,14 +24,20 @@ struct OnboardingScreen: View {
             if let flow {
                 switch flow.step {
                 case .welcome:
-                    OnboardingWelcomeStep(flow: flow)
+                    OnboardingWelcomeStep(flow: flow, headingFocus: $focusedHeading)
                         .toolbar(.hidden, for: .navigationBar)
                 case .join:
                     if let form = flow.joinForm {
-                        AccountJoinForm(model: form, showsConnectionBanner: false, onJoin: { Task { await flow.join() } }) {
+                        AccountJoinForm(
+                            model: form,
+                            showsConnectionBanner: false,
+                            columnWidth: OnboardingLayout.columnWidth,
+                            onJoin: { Task { await flow.join() } }
+                        ) {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(verbatim: L10n.Household.joinHeading)
                                     .textRole(.title, header: true)
+                                    .accessibilityFocused($focusedHeading, equals: .join)
                                 Text(verbatim: L10n.Household.joinBody)
                                     .textRole(.body)
                                     .foregroundStyle(.secondary)
@@ -42,9 +51,11 @@ struct OnboardingScreen: View {
                                 .accessibilityIdentifier("onboarding-back")
                             }
                         }
+                        // The step is swapped in, not pushed: VoiceOver's escape goes Back too.
+                        .accessibilityAction(.escape) { flow.back() }
                     }
                 case .joined:
-                    OnboardingJoinedStep(flow: flow)
+                    OnboardingJoinedStep(flow: flow, headingFocus: $focusedHeading)
                         .toolbar(.hidden, for: .navigationBar)
                 }
             } else {
@@ -56,6 +67,14 @@ struct OnboardingScreen: View {
         }
         .accessibilityIdentifier("screen-onboarding")
         .onAppear(perform: setUp)
+        .onChange(of: flow?.step) { _, step in
+            guard let step else { return }
+            Task { @MainActor in
+                // Once the new step is on screen.
+                try? await Task.sleep(for: .milliseconds(150))
+                focusedHeading = step
+            }
+        }
     }
 
     private func setUp() {
@@ -76,6 +95,7 @@ struct OnboardingScreen: View {
 /// two ways on (or Continue on a phone replaying onboarding after it joined).
 private struct OnboardingWelcomeStep: View {
     let flow: OnboardingFlowModel
+    let headingFocus: AccessibilityFocusState<OnboardingFlowModel.Step?>.Binding
 
     /// RN `FACT_ICONS`: search, plus, scan, in the order she will need them.
     private static let factGlyphs: [Glyph] = [.search, .plus, .scan]
@@ -93,6 +113,7 @@ private struct OnboardingWelcomeStep: View {
                     Text(verbatim: L10n.Onboarding.title)
                         .textRole(.display, header: true)
                         .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityFocused(headingFocus, equals: .welcome)
                     VStack(alignment: .leading, spacing: 16) {
                         ForEach(Array(L10n.Onboarding.facts.enumerated()), id: \.offset) { index, fact in
                             HStack(alignment: .firstTextBaseline, spacing: 12) {
@@ -133,6 +154,7 @@ private struct OnboardingWelcomeStep: View {
 /// After joining (RN `JoinedStep`): a check in ink, "You are in", and Start.
 private struct OnboardingJoinedStep: View {
     let flow: OnboardingFlowModel
+    let headingFocus: AccessibilityFocusState<OnboardingFlowModel.Step?>.Binding
 
     var body: some View {
         ScreenFrame(.detail, banner: false, background: .plain) {
@@ -149,6 +171,7 @@ private struct OnboardingJoinedStep: View {
                         .accessibilityHidden(true)
                     Text(verbatim: L10n.Onboarding.joinedTitle)
                         .textRole(.title, header: true)
+                        .accessibilityFocused(headingFocus, equals: .joined)
                     Text(verbatim: flow.joinedBody)
                         .textRole(.body)
                         .foregroundStyle(.secondary)
@@ -195,6 +218,11 @@ private struct OnboardingActions<Content: View>: View {
         VStack(spacing: 8) {
             content
         }
+        // Pinned, so its text grows only to AX1 (as the connection banner's and the camera's
+        // pinned controls do; RN capped button text lower still, at 1.6, 08 §6): past it the two
+        // stacked buttons took nearly half an iPhone SE at AX5. The step's own text above keeps
+        // growing, and scrolls.
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         // Its full height at the largest text sizes, so no label is cut short; the step's
         // content scrolls behind it instead.
         .fixedSize(horizontal: false, vertical: true)

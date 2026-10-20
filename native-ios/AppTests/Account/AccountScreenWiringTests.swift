@@ -83,6 +83,33 @@ struct AccountScreenWiringTests {
         await ShellTestWait.until("the join form's rows") { listRows(in: window.window) >= 1 }
     }
 
+    @Test("onboarding's Join step keeps to RN's 480 pt column in a wide window (iPad)")
+    func onboardingJoinColumn() async throws {
+        let (app, _) = await booted(.onboarding)
+        let window = try host(
+            OnboardingScreen()
+                .environment(\.accountDemoOnboardingStart, .join)
+                .shellEnvironment(app)
+        )
+        defer { window.close() }
+        window.window.frame = CGRect(x: 0, y: 0, width: 1024, height: 1366)
+
+        await ShellTestWait.until("the join form's rows") { listRows(in: window.window) >= 1 }
+        try await Task.sleep(for: .milliseconds(300))
+        let form = try #require(window.window.shellDescendants.compactMap { $0 as? UICollectionView }.max { $0.bounds.width < $1.bounds.width })
+        #expect(form.bounds.width <= 480)
+        #expect(form.bounds.width > 300)
+    }
+
+    @Test("each Backup state that replaces the page names the part VoiceOver moves to")
+    func backupFocusParts() {
+        #expect(BackupFocusPart(.off) == .keep)
+        #expect(BackupFocusPart(.revealed(BackupRevealedCode(code: "89144GJ289144GJ28914GJ288"))) == .writeDown)
+        #expect(BackupFocusPart(.on) == .on)
+        #expect(BackupFocusPart(.unavailable) == nil)
+        #expect(BackupFocusPart(.unreadable) == nil)
+    }
+
     @Test("leaving Household closes it only while it is in front")
     func exitOnlyWhenFocused() async {
         let (app, _) = await booted(.paired)
