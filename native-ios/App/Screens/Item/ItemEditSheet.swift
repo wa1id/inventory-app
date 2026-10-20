@@ -86,11 +86,11 @@ struct ItemEditSheet: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         case .failed(let cause):
-            ItemStateScroll {
+            CenteredStateScroll {
                 ErrorStateView(cause: .failed(cause), subject: .item, onRetry: { model.retry() })
             }
         case .gone:
-            ItemStateScroll {
+            CenteredStateScroll {
                 ErrorStateView(
                     cause: .gone,
                     subject: .item,

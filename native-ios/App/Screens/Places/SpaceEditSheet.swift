@@ -27,7 +27,7 @@ struct SpaceEditSheet: View {
         Group {
             if id == DropZone.spaceId {
                 ScreenFrame(.modal) {
-                    PlacesFullScreenState {
+                    CenteredStateScroll {
                         DropZoneLocked { app.router.goToTab(.dropZone) }
                     }
                 }
@@ -95,7 +95,7 @@ private struct SpaceEditForm: View {
         switch model.blocking {
         case .failed(let cause):
             ScreenFrame(.modal) {
-                PlacesFullScreenState {
+                CenteredStateScroll {
                     ErrorStateView(cause: .failed(cause), subject: .space, onRetry: { model.space.reload() })
                 }
             }
@@ -103,7 +103,7 @@ private struct SpaceEditForm: View {
             ScreenFrame(.modal) { PlacesLoading(variant: .rows, rows: 3, thumb: nil) }
         case .gone:
             ScreenFrame(.modal) {
-                PlacesFullScreenState {
+                CenteredStateScroll {
                     ErrorStateView(cause: .gone, subject: .space, secondary: StateAction(label: L10n.Common.goToSpaces) {
                         app.router.goToTab(.spaces)
                     })

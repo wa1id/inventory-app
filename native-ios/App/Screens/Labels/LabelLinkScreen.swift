@@ -104,11 +104,11 @@ private struct LabelLinkContent: View {
             // A linked label shows the same shape until the container replaces this screen.
             LabelLinkResolving()
         case .failed(let cause):
-            LabelsCenteredState {
+            CenteredStateScroll {
                 ErrorStateView(cause: .failed(cause), onRetry: { model.retry() })
             }
         case .invalid:
-            LabelsCenteredState {
+            CenteredStateScroll {
                 EmptyStateView(
                     title: L10n.Scan.invalidTitle,
                     message: L10n.Scan.invalidBody,

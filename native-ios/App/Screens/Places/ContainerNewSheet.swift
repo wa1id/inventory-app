@@ -28,7 +28,7 @@ struct ContainerNewSheet: View {
         Group {
             if spaceId == DropZone.spaceId {
                 ScreenFrame(.modal) {
-                    PlacesFullScreenState {
+                    CenteredStateScroll {
                         DropZoneLocked { app.router.goToTab(.dropZone) }
                     }
                 }
@@ -102,7 +102,7 @@ private struct ContainerNewForm: View {
             if model.isSpaceGone {
                 // The space was deleted, probably on another phone: nothing to add to.
                 ScreenFrame(.modal) {
-                    PlacesFullScreenState {
+                    CenteredStateScroll {
                         ErrorStateView(cause: .gone, subject: .space, secondary: StateAction(label: L10n.Common.goBack) {
                             if let address { app.router.close(address) }
                         })

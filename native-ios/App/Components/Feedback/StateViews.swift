@@ -276,3 +276,20 @@ struct SkeletonView: View {
 #Preview("Skeleton") {
     SkeletonView(variant: .list).padding()
 }
+
+/// A state view (empty, error, gone, locked) that fills the screen: centred while it fits and
+/// scrolling once it does not, so its heading and buttons stay reachable at the largest text
+/// sizes (`ContentUnavailableView` does not scroll by itself; UI-KIT §4).
+struct CenteredStateScroll<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        GeometryReader { proxy in
+            ScrollView {
+                content
+                    .frame(maxWidth: .infinity, minHeight: proxy.size.height)
+            }
+            .scrollBounceBehavior(.basedOnSize)
+        }
+    }
+}

@@ -75,13 +75,13 @@ private struct SpaceDetailContent: View {
         ScreenFrame(.detail) {
             switch model.blocking {
             case .failed(let cause):
-                PlacesFullScreenState {
+                CenteredStateScroll {
                     ErrorStateView(cause: .failed(cause), subject: .space, onRetry: { model.reloadAll() })
                 }
             case .loading:
                 PlacesLoading(variant: .list)
             case .gone:
-                PlacesFullScreenState {
+                CenteredStateScroll {
                     ErrorStateView(cause: .gone, subject: .space, secondary: StateAction(label: L10n.Common.goToSpaces) {
                         app.router.goToTab(.spaces)
                     })

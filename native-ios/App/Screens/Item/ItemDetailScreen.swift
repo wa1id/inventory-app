@@ -143,12 +143,12 @@ struct ItemDetailBody: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         case .failed(let cause):
-            ItemStateScroll {
+            CenteredStateScroll {
                 ErrorStateView(cause: .failed(cause), subject: .item, onRetry: { model.retry() })
             }
         case .gone:
             // Read fine, but nothing there: deleted, probably on another phone.
-            ItemStateScroll {
+            CenteredStateScroll {
                 ErrorStateView(
                     cause: .gone,
                     subject: .item,
@@ -390,22 +390,6 @@ extension ItemDetailScreen {
 }
 
 extension ItemDetailModel: ShellFocusDriven {}
-
-/// A full-screen state (an error, a gone item) that stays centred while it fits and scrolls at
-/// the largest text sizes (UI-KIT §4).
-struct ItemStateScroll<Content: View>: View {
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        GeometryReader { proxy in
-            ScrollView {
-                content
-                    .frame(maxWidth: .infinity, minHeight: proxy.size.height)
-            }
-            .scrollBounceBehavior(.basedOnSize)
-        }
-    }
-}
 
 /// "What is it?" in place of the title of an item that has no name yet (RN `NameItInline`,
 /// 07 §3.3, 05 §12): the field, why a save failed, a name that arrived meanwhile, Save name and

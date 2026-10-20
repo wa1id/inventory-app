@@ -26,7 +26,7 @@ struct ContainerEditSheet: View {
         Group {
             if id == DropZone.containerId {
                 ScreenFrame(.modal) {
-                    PlacesFullScreenState {
+                    CenteredStateScroll {
                         DropZoneLocked { app.router.goToTab(.dropZone) }
                     }
                 }
@@ -92,7 +92,7 @@ private struct ContainerEditForm: View {
         switch model.blocking {
         case .failed(let cause):
             ScreenFrame(.modal) {
-                PlacesFullScreenState {
+                CenteredStateScroll {
                     ErrorStateView(cause: .failed(cause), subject: .container, onRetry: { model.container.reload() })
                 }
             }
@@ -100,7 +100,7 @@ private struct ContainerEditForm: View {
             ScreenFrame(.modal) { PlacesLoading(variant: .rows, rows: 3, thumb: nil) }
         case .gone:
             ScreenFrame(.modal) {
-                PlacesFullScreenState {
+                CenteredStateScroll {
                     ErrorStateView(cause: .gone, subject: .container, secondary: StateAction(label: L10n.Common.goToSpaces) {
                         app.router.goToTab(.spaces)
                     })

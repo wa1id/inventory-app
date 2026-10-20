@@ -25,7 +25,7 @@ struct QrLabelScreen: View {
         ScreenFrame(.detail) {
             if containerId == DropZone.containerId {
                 // The drop zone is a tab, not a box with a sticker on it.
-                LabelsCenteredState {
+                CenteredStateScroll {
                     DropZoneLocked { app.router.goToTab(.dropZone) }
                 }
             } else if let model {
@@ -75,11 +75,11 @@ private struct QrLabelContent: View {
         case .loading:
             QrLabelLoading()
         case .containerFailed(let cause), .labelFailed(let cause):
-            LabelsCenteredState {
+            CenteredStateScroll {
                 ErrorStateView(cause: .failed(cause), subject: .container, onRetry: { model.reloadAll() })
             }
         case .containerGone:
-            LabelsCenteredState {
+            CenteredStateScroll {
                 ErrorStateView(
                     cause: .gone,
                     subject: .container,

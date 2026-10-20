@@ -88,13 +88,13 @@ private struct ContainerDetailContent: View {
         ScreenFrame(.detail) {
             switch model.blocking {
             case .failed(let cause):
-                PlacesFullScreenState {
+                CenteredStateScroll {
                     ErrorStateView(cause: .failed(cause), subject: .container, onRetry: { model.reloadAll() })
                 }
             case .loading:
                 PlacesLoading(variant: .detail)
             case .gone:
-                PlacesFullScreenState {
+                CenteredStateScroll {
                     ErrorStateView(cause: .gone, subject: .container, secondary: StateAction(label: L10n.Common.goToSpaces) {
                         app.router.goToTab(.spaces)
                     })

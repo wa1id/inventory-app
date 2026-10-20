@@ -34,8 +34,8 @@ final class PlacesUITests: XCTestCase {
 
     /// Closes the Add sheet with its own Cancel (RN `add-cancel`), or by swiping it down.
     private func closeAddSheet() {
-        for identifier in ["add-cancel", "item-cancel"] where app.buttons[identifier].exists {
-            app.buttons[identifier].tap()
+        if app.buttons["add-cancel"].exists {
+            app.buttons["add-cancel"].tap()
             return
         }
         app.swipeDown(velocity: .fast)

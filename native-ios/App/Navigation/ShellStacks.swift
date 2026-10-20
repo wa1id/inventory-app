@@ -41,25 +41,26 @@ struct PushRouteDestination: View {
 /// everything over it, abandoning its pending result; when the dismissal animation ends, a
 /// search-focus request waiting for the transition may focus Home.
 ///
-/// When the router swaps the modal at this level for one of the other kind (the camera replaced
-/// by the Add sheet, the Add sheet by the camera), the new one is presented only once the old one
-/// has finished going away: UIKit refuses a presentation while the same presenter is still
-/// dismissing, which left the router showing a sheet nobody could see.
+/// When the router swaps the modal at this level for another one (the camera replaced by the Add
+/// sheet, the Add sheet by the camera, or a sheet closed and a new sheet opened at once, as the
+/// place picker does when New space hands over to New container), the new one is presented only
+/// once the old one has finished going away. UIKit refuses a presentation while the same
+/// presenter is still dismissing, which left the router showing a sheet nobody could see; and a
+/// sheet whose item changed while it was going away came back with the old screen in it.
+/// Replacing a modal's root with one of the same kind keeps its id, so that swap stays in place.
 struct ShellModalPresentation: ViewModifier {
     let level: Int
     @Environment(Router.self) private var router
-    /// The kind handed to SwiftUI at this level, kept until its dismissal has finished.
-    @State private var presentedKind: ShellModalKind?
+    /// The modal handed to SwiftUI at this level, kept until its dismissal has finished.
+    @State private var presented: ShellModalSlot?
 
     func body(content: Content) -> some View {
-        let sheetID = router.sheet(atLevel: level)?.id
-        let coverID = router.cover(atLevel: level)?.id
-        let wanted = ShellModalKind(sheet: sheetID, cover: coverID)
+        let wanted = currentSlot
         content
             .sheet(
                 item: Binding(
-                    get: { presentedKind == .sheet ? router.sheet(atLevel: level) : nil },
-                    set: { if $0 == nil, let sheetID { router.modalDismissedBySystem(sheetID) } }
+                    get: { presented != nil && presented == currentSlot && presented?.kind == .sheet ? router.sheet(atLevel: level) : nil },
+                    set: { if $0 == nil, let presented, presented.kind == .sheet { router.modalDismissedBySystem(presented.id) } }
                 ),
                 onDismiss: { dismissalFinished() }
             ) { modal in
@@ -67,30 +68,36 @@ struct ShellModalPresentation: ViewModifier {
             }
             .fullScreenCover(
                 item: Binding(
-                    get: { presentedKind == .cover ? router.cover(atLevel: level) : nil },
-                    set: { if $0 == nil, let coverID { router.modalDismissedBySystem(coverID) } }
+                    get: { presented != nil && presented == currentSlot && presented?.kind == .cover ? router.cover(atLevel: level) : nil },
+                    set: { if $0 == nil, let presented, presented.kind == .cover { router.modalDismissedBySystem(presented.id) } }
                 ),
                 onDismiss: { dismissalFinished() }
             ) { modal in
                 ShellModalScreen(modal: modal, level: level)
             }
             .onChange(of: wanted, initial: true) { _, wanted in
-                // Nothing on screen (or the same kind again): present at once. Otherwise the
+                // Nothing on screen (or the same modal again): present at once. Otherwise the
                 // old modal's onDismiss hands over.
-                if presentedKind == nil || presentedKind == wanted, let wanted { presentedKind = wanted }
+                if presented == nil || presented == wanted, let wanted { presented = wanted }
             }
             .task(id: wanted) {
                 // Never stuck waiting for a dismissal SwiftUI did not report (a modal replaced
                 // before it was ever presented): after a second, show what the router has.
-                guard let wanted, presentedKind != wanted else { return }
+                guard let wanted, presented != wanted else { return }
                 try? await Task.sleep(for: .seconds(1))
-                let current = ShellModalKind(sheet: router.sheet(atLevel: level)?.id, cover: router.cover(atLevel: level)?.id)
-                if !Task.isCancelled, let current, presentedKind != current { presentedKind = current }
+                if !Task.isCancelled, let current = currentSlot, presented != current { presented = current }
             }
     }
 
+    /// The modal the router has at this level now.
+    private var currentSlot: ShellModalSlot? {
+        if let sheet = router.sheet(atLevel: level) { return ShellModalSlot(kind: .sheet, id: sheet.id) }
+        if let cover = router.cover(atLevel: level) { return ShellModalSlot(kind: .cover, id: cover.id) }
+        return nil
+    }
+
     private func dismissalFinished() {
-        presentedKind = ShellModalKind(sheet: router.sheet(atLevel: level)?.id, cover: router.cover(atLevel: level)?.id)
+        presented = currentSlot
         router.modalDismissalFinished()
     }
 }
@@ -99,16 +106,12 @@ struct ShellModalPresentation: ViewModifier {
 enum ShellModalKind: Hashable {
     case sheet
     case cover
+}
 
-    init?(sheet: Int?, cover: Int?) {
-        if sheet != nil {
-            self = .sheet
-        } else if cover != nil {
-            self = .cover
-        } else {
-            return nil
-        }
-    }
+/// The modal at a level: its kind and its id. A new id is a new presentation.
+struct ShellModalSlot: Hashable {
+    let kind: ShellModalKind
+    let id: Int
 }
 
 /// A presented sheet or cover: its own navigation stack, the shell's Cancel on sheets (except the

@@ -92,7 +92,14 @@ final class HomeUITests: XCTestCase {
         XCTAssertTrue(add.waitForExistence(timeout: 5))
         add.tap()
         XCTAssertTrue(screen("screen-add").waitForExistence(timeout: 5))
-        app.buttons["item-cancel"].tap()
+        // The Add sheet starts with the search typed as the name, so Cancel asks first.
+        let name = app.textFields["item-name"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        XCTAssertEqual(name.value as? String, "zebra")
+        app.buttons["add-cancel"].tap()
+        let discard = app.alerts["Discard this item?"].buttons["Discard"]
+        XCTAssertTrue(discard.waitForExistence(timeout: 5))
+        discard.tap()
         XCTAssertTrue(waitForAbsence(screen("screen-add")))
     }
 

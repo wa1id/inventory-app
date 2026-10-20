@@ -95,7 +95,7 @@ struct PhotoViewerScreen: View {
     private func stage(_ model: PhotoViewerModel) -> some View {
         switch model.phase {
         case .failed(let title, let body):
-            ItemStateScroll {
+            CenteredStateScroll {
                 ErrorStateView(cause: nil, subject: .item, title: title, body: body, onRetry: { model.retry() })
             }
         case .loading:
@@ -105,11 +105,11 @@ struct PhotoViewerScreen: View {
                     .tint(.white)
             }
         case .gone:
-            ItemStateScroll {
+            CenteredStateScroll {
                 ErrorStateView(cause: .gone, subject: .item)
             }
         case .missing:
-            ItemStateScroll {
+            CenteredStateScroll {
                 ContentUnavailableView {
                     Label(L10n.Errors.Photo.title, glyph: .photo)
                 } description: {

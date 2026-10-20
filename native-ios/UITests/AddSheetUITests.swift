@@ -131,7 +131,9 @@ final class AddSheetUITests: XCTestCase {
         dragSheetDown(from: app.navigationBars["Where does it go?"])
         XCTAssertTrue(screen("screen-add").exists)
 
-        let filter = app.searchFields.firstMatch
+        // The picker's own field: Home's search field ("Find anything") is under the sheet.
+        let filter = app.searchFields.matching(NSPredicate(format: "placeholderValue == %@", "Container, space or code")).firstMatch
+        XCTAssertTrue(filter.waitForExistence(timeout: 5))
         filter.tap()
         filter.typeText("bin4f")
         let redBin = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'move-to-'")).firstMatch

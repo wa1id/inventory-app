@@ -12,22 +12,6 @@ extension ContainerEditModel: ShellFocusDriven {}
 extension SpaceDetailModel: ShellFocusDriven {}
 extension ContainerDetailModel: ShellFocusDriven {}
 
-/// A state view (error, gone, locked) that fills the screen: centred while it fits, scrolling at
-/// the largest text sizes so its words and buttons stay reachable (UI-KIT §4).
-struct PlacesFullScreenState<Content: View>: View {
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        GeometryReader { proxy in
-            ScrollView {
-                content
-                    .frame(maxWidth: .infinity, minHeight: proxy.size.height)
-            }
-            .scrollBounceBehavior(.basedOnSize)
-        }
-    }
-}
-
 /// The skeleton while a screen's first read is out, padded like a page.
 ///
 /// Not in a scroll view: a placeholder scroll view in front of the screen's list left the

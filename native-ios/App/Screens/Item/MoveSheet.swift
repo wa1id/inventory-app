@@ -87,7 +87,7 @@ struct MoveSheet: View {
                 }
             }
         } else if let cause = query.cause {
-            ItemStateScroll {
+            CenteredStateScroll {
                 ErrorStateView(cause: .failed(cause), subject: .item, onRetry: { query.reload() })
             }
         } else if query.isLoading {
@@ -98,7 +98,7 @@ struct MoveSheet: View {
             }
         } else {
             // Deleted on another phone before the sheet opened: say so, write nothing.
-            ItemStateScroll {
+            CenteredStateScroll {
                 ErrorStateView(
                     cause: .gone,
                     subject: .item,
