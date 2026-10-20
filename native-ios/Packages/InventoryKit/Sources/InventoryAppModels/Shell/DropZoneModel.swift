@@ -18,11 +18,18 @@ public final class DropZoneModel {
     /// The underlying read, for anything the derived values below do not cover.
     public let query: InventoryQuery<[ItemWithContext]>
 
+    /// Bumped each time a read answers with items (a failed refresh keeps the old items and
+    /// leaves it alone). The Drop zone list binds the rows it hid after a filing to the read
+    /// they were hidden in (RN tied them to the list array's identity, captureFlow.ts:186-210),
+    /// so a fresh read decides again and an item moved back by Undo shows.
+    public private(set) var readGeneration = 0
+
     /// - Parameters:
     ///   - revision: the global revision now.
     ///   - read: `repositories.items.listUnsorted()`, local or household.
     public init(revision: Int = 0, read: @escaping @Sendable () async throws -> [ItemWithContext]) {
         query = InventoryQuery(key: Self.queryKey, revision: revision, read: read)
+        query.onSettle = { [weak self] in self?.settled() }
     }
 
     /// Reads through `repositories.items.listUnsorted()`.
@@ -83,5 +90,10 @@ public final class DropZoneModel {
     /// caller invalidates, as RN's callers did.
     public func setRead(_ read: @escaping @Sendable () async throws -> [ItemWithContext]) {
         query.setRead(read)
+    }
+
+    private func settled() {
+        guard query.cause == nil else { return }
+        readGeneration &+= 1
     }
 }
