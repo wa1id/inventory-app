@@ -11,11 +11,14 @@ The code is written on Linux and compiled on the Mac over SSH. There is no Swift
 | `native-ios/scripts/mac.sh test` | `swift test` for `Packages/InventoryKit` on the macOS host. Pass `--filter <regex>` to narrow. |
 | `native-ios/scripts/mac.sh build` | Generates the Xcode project and builds the app for the iOS simulator. |
 | `native-ios/scripts/mac.sh apptest` | Runs the app-hosted `InventoryTests` on this checkout's own simulator. |
+| `native-ios/scripts/mac.sh uitest` | Runs the XCUITest `InventoryUITests` (in `UITests/`) on the same simulator. |
 | `native-ios/scripts/mac.sh run out.png [args…]` | Builds, installs, launches (with launch arguments) and screenshots the app on this checkout's simulator. |
 | `native-ios/scripts/mac.sh launch out.png [args…]` | Relaunches the installed app with launch arguments, without building, and screenshots it. |
 | `native-ios/scripts/mac.sh openurl <url> out.png` | Opens a URL (e.g. `inventory://c/<token>`) in the simulator and screenshots it. |
 
-`run`, `launch` and `openurl` honour `APPEARANCE=dark` and `CONTENT_SIZE=accessibility-extra-extra-extra-large` (any `simctl ui content_size` value). Look at screenshots with the Read tool. In Debug builds, `-gallery <name> [-galleryPage <n>]` shows an area's gallery instead of the app (`App/Shared/DebugGallery.swift`), so views can be checked without navigating to them.
+`run`, `launch` and `openurl` honour `APPEARANCE=dark` and `CONTENT_SIZE=accessibility-extra-extra-extra-large` (any `simctl ui content_size` value). Look at screenshots with the Read tool. In Debug builds, `-gallery <name> [-galleryPage <n>]` shows an area's gallery instead of the app (`App/Shared/DebugGallery.swift`), so views can be checked without navigating to them, and `-demo YES` (with `-demoOpen`, `-demoTab`, `-demoToast`, `-demoHousehold`; `App/Shell/ShellDemo.swift`) runs the app on sample data in memory.
+
+`docs/UI-KIT.md` explains how a screen is built on the shell and lists every shared component and media view.
 
 Each checkout, including each git worktree, gets its own folder and simulator on the Mac, so parallel work never collides. Full logs land in `native-ios/.build-logs/`, and stdout shows a filtered summary.
 
