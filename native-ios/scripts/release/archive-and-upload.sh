@@ -11,10 +11,10 @@
 #                                                      archives nothing, uploads nothing
 #   scripts/release/archive-and-upload.sh --archive-only  archive and check it, but do not upload
 #
-# On the Mac it runs xcodegen, `xcodebuild archive` (Release, generic/platform=iOS,
-# -allowProvisioningUpdates with the API key), checks the archived app, then
+# On the Mac it runs xcodegen, an unsigned `xcodebuild archive` (Release, generic/platform=iOS),
+# signs a local copy with cloud signing through the API key and checks it, then
 # `xcodebuild -exportArchive` with scripts/release/ExportOptions.plist (app-store-connect, upload,
-# symbols). The API key comes from ~/.appstoreconnect/beclean.env (ASC_KEY_ID, ASC_ISSUER_ID) and
+# symbols), which signs the same way. The API key comes from ~/.appstoreconnect/beclean.env (ASC_KEY_ID, ASC_ISSUER_ID) and
 # ~/.appstoreconnect/private_keys/AuthKey_<id>.p8 on the Mac.
 #
 # Secrets: Config/Secrets.xcconfig (written by scripts/release/write-secrets.sh) must exist with
@@ -126,11 +126,14 @@ EXPORT="$WORK/export-$STAMP"
 LOGS="$NATIVE_DIR/.build-logs"
 mkdir -p "$WORK" "$LOGS"
 
-echo "[release] archiving to $ARCHIVE (log: $LOGS/release-archive.log)"
+# The archive is built unsigned: over SSH the Mac's login keychain is locked, so codesign can't
+# reach a local signing key (errSecInternalComponent). The export below signs the app with the
+# team's cloud-managed Apple Distribution certificate through the API key instead.
+echo "[release] archiving (unsigned) to $ARCHIVE (log: $LOGS/release-archive.log)"
 status=0
 xcodebuild -project Inventory.xcodeproj -scheme Inventory -configuration Release \
   -destination 'generic/platform=iOS' -archivePath "$ARCHIVE" \
-  -derivedDataPath "$WORK/DerivedData" "${AUTH[@]}" \
+  -derivedDataPath "$WORK/DerivedData" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
   archive >"$LOGS/release-archive.log" 2>&1 || status=$?
 if [ "$status" -ne 0 ]; then
   grep -E "error:|\*\* ARCHIVE" "$LOGS/release-archive.log" | head -40 >&2 || true
@@ -138,11 +141,23 @@ if [ "$status" -ne 0 ]; then
 fi
 echo "[release] ** ARCHIVE SUCCEEDED **"
 
-# The archived app: the keys made it in (reported as set, never printed), the version, and the
-# signing identity the keychain adoption depends on (application-identifier = team + bundle id,
-# no other keychain group, no data-protection override; docs/RELEASE.md).
-APP="$ARCHIVE/Products/Applications/Inventory.app"
-/usr/bin/python3 - "$APP" <<'PY' || fail "the archived app failed its checks"
+# Sign a local copy exactly as the upload will (same options, destination export) and check it:
+# the keys made it in (reported as set, never printed), the version, and the signing identity the
+# keychain adoption depends on (application-identifier = team + bundle id, no other keychain
+# group, no data-protection override; docs/RELEASE.md).
+echo "[release] signing a local copy to check it (log: $LOGS/release-export-check.log)"
+sed 's|<string>upload</string>|<string>export</string>|' "$NATIVE_DIR/scripts/release/ExportOptions.plist" >"$WORK/ExportOptions-check.plist"
+status=0
+xcodebuild -exportArchive -archivePath "$ARCHIVE" -exportOptionsPlist "$WORK/ExportOptions-check.plist" \
+  -exportPath "$EXPORT-check" "${AUTH[@]}" >"$LOGS/release-export-check.log" 2>&1 || status=$?
+if [ "$status" -ne 0 ]; then
+  grep -E "error:|Error|\*\* EXPORT" "$LOGS/release-export-check.log" | grep -v DVTDeveloperAccountManager | head -40 >&2 || true
+  fail "signing the local copy failed with exit $status"
+fi
+rm -rf "$EXPORT-check/unzipped" && mkdir -p "$EXPORT-check/unzipped"
+(cd "$EXPORT-check/unzipped" && unzip -q ../Inventory.ipa)
+APP="$EXPORT-check/unzipped/Payload/Inventory.app"
+/usr/bin/python3 - "$APP" <<'PY' || fail "the signed app failed its checks"
 import plistlib, subprocess, sys, os
 app = sys.argv[1]
 info = plistlib.load(open(os.path.join(app, "Info.plist"), "rb"))
@@ -151,7 +166,7 @@ for key in ("INVRecognitionKey", "INVSyncKey"):
     if info.get(key):
         print(f"ok    {key} set")
     else:
-        print(f"FAIL  {key} empty in the archived Info.plist"); bad += 1
+        print(f"FAIL  {key} empty in the signed app's Info.plist"); bad += 1
 version = (info.get("CFBundleShortVersionString"), info.get("CFBundleVersion"))
 want = (os.environ["MARKETING"], os.environ["BUILD"])
 print(("ok   " if version == want else "FAIL ") + f" version {version[0]} ({version[1]})")
@@ -163,7 +178,7 @@ try:
 except Exception:
     ents = None
 if not isinstance(ents, dict):
-    print(f"FAIL  could not read the archived app's entitlements (codesign exit {out.returncode})"); bad += 1
+    print(f"FAIL  could not read the signed app's entitlements (codesign exit {out.returncode})"); bad += 1
     ents = {}
 appid = ents.get("application-identifier")
 print(("ok   " if appid == "4BQ3BX3UHK.com.wystudio.inventory" else "FAIL ") + f" application-identifier {appid}")
@@ -184,7 +199,7 @@ sys.exit(1 if bad else 0)
 PY
 
 if [ "$MODE" = "archive" ]; then
-  echo "[release] --archive-only: not uploading. Archive: $ARCHIVE"
+  echo "[release] --archive-only: not uploading. Archive: $ARCHIVE, signed copy: $EXPORT-check/Inventory.ipa"
   exit 0
 fi
 
@@ -194,7 +209,7 @@ xcodebuild -exportArchive -archivePath "$ARCHIVE" \
   -exportOptionsPlist "$NATIVE_DIR/scripts/release/ExportOptions.plist" \
   -exportPath "$EXPORT" "${AUTH[@]}" >"$LOGS/release-export.log" 2>&1 || status=$?
 if [ "$status" -ne 0 ]; then
-  grep -E "error:|Error|\*\* EXPORT" "$LOGS/release-export.log" | head -40 >&2 || true
+  grep -E "error:|Error|\*\* EXPORT" "$LOGS/release-export.log" | grep -v DVTDeveloperAccountManager | head -40 >&2 || true
   fail "xcodebuild -exportArchive failed with exit $status"
 fi
 grep -E "Upload succeeded|Uploaded|\*\* EXPORT SUCCEEDED \*\*" "$LOGS/release-export.log" | head -5 || true
