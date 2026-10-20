@@ -4,6 +4,9 @@ import InventoryCore
 import InventoryNetwork
 import InventoryServices
 
+#if DEBUG
+// DEBUG only (previews, the demo, tests): kept out of Release builds.
+
 /// The home server and the backup service in memory, for ``AccountDemoScenario``: a transport
 /// that answers the requests the account screens make, by host, the way the real servers do
 /// (04 §3.5, 03 §4.6). Every other household read answers an empty object, which the clients
@@ -267,3 +270,4 @@ public final class AccountDemoServer: HTTPTransport, Sendable {
         text.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
     }
 }
+#endif

@@ -20,6 +20,8 @@ struct SearchButton: View {
     }
 }
 
+#if DEBUG
+// DEBUG only (previews, the demo, tests): kept out of Release builds.
 #Preview {
     NavigationStack {
         Text(L10n.Spaces.title)
@@ -27,3 +29,4 @@ struct SearchButton: View {
     }
     .environment(AppContainer.preview())
 }
+#endif

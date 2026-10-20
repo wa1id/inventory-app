@@ -13,6 +13,8 @@ extension View {
     }
 }
 
+#if DEBUG
+// DEBUG only (previews, the demo, tests): kept out of Release builds.
 /// Runs a preview against ``AppContainer/preview(platform:seed:onboardingCompleted:)``: boots it
 /// (an in-memory database seeded with sample data, no network) and shows `content` once the
 /// database is ready, with the shell's environment.
@@ -44,3 +46,4 @@ struct ShellPreviewHost<Content: View>: View {
         .task { await app.boot.run() }
     }
 }
+#endif

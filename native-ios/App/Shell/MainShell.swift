@@ -95,8 +95,11 @@ private struct ShellTabLabel: View {
     }
 }
 
+#if DEBUG
+// DEBUG only (previews, the demo, tests): kept out of Release builds.
 #Preview("Main shell") {
     ShellPreviewHost {
         MainShell()
     }
 }
+#endif

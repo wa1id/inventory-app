@@ -5,6 +5,9 @@ import InventoryNetwork
 import InventoryServices
 import InventoryStorage
 
+#if DEBUG
+// DEBUG only (previews, the demo, tests): kept out of Release builds.
+
 /// States the account screens can be put in without tapping, for the DEBUG demo
 /// (`-demo YES -demoArea account -demoState <scenario>`), previews and tests. Each runs on
 /// ``AppContainer/accountDemo(_:platform:now:)``: memory only, with ``AccountDemoServer``
@@ -242,3 +245,4 @@ public final class AccountDemoKeychain: KeychainStore {
         inner.delete(forKey: key)
     }
 }
+#endif

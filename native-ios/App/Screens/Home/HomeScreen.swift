@@ -432,7 +432,6 @@ private struct HomeDebugReselections: View {
         }
     }
 }
-#endif
 
 #Preview("Overview") {
     ShellPreviewHost { NavigationStack { HomeScreen() } }
@@ -450,7 +449,6 @@ private struct HomeDebugReselections: View {
     ShellPreviewHost(seed: false) { NavigationStack { HomeScreen() } }
 }
 
-#if DEBUG
 extension View {
     /// Types `query` into Home's search once the preview's container is up.
     func homePreviewQuery(_ query: String) -> some View {

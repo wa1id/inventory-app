@@ -150,6 +150,8 @@ private struct BottomBarRow: Layout {
     }
 }
 
+#if DEBUG
+// DEBUG only (previews, the demo, tests): kept out of Release builds.
 #Preview("Two buttons") {
     ShellPreviewHost {
         VStack {
@@ -176,3 +178,4 @@ private struct BottomBarRow: Layout {
     }
     .environment(\.dynamicTypeSize, .accessibility2)
 }
+#endif

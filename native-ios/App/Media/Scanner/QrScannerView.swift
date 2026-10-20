@@ -253,6 +253,8 @@ extension QrScannerView where Footer == EmptyView {
     }
 }
 
+#if DEBUG
+// DEBUG only (previews, the demo, tests): kept out of Release builds.
 /// A feed with no camera behind it, for previews, the debug gallery and tests: it reports running
 /// as soon as it is asked to and draws a stand-in scene, so the chrome over the camera can be
 /// looked at on the simulator.
@@ -331,3 +333,4 @@ final class StandInQrScannerFeed: QrScannerFeed {
         makeFeed: { feed }
     )
 }
+#endif

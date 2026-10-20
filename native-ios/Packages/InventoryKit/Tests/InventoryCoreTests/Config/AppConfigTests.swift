@@ -434,9 +434,12 @@ private enum BuildFiles {
             && FileManager.default.fileExists(atPath: root.appendingPathComponent("Config/Shared.xcconfig").path)
     }
 
+    /// Info.plist goes through the C preprocessor (`INFOPLIST_PREPROCESS`, for the Debug-only
+    /// local-network keys): its directive lines are dropped here, so every conditional key is read.
     static func infoPlist() throws -> [String: Any] {
-        let data = try Data(contentsOf: root.appendingPathComponent("App/Resources/Info.plist"))
-        return try #require(PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any])
+        let text = try String(contentsOf: root.appendingPathComponent("App/Resources/Info.plist"), encoding: .utf8)
+        let plain = text.components(separatedBy: "\n").filter { !$0.hasPrefix("#") }.joined(separator: "\n")
+        return try #require(PropertyListSerialization.propertyList(from: Data(plain.utf8), format: nil) as? [String: Any])
     }
 
     /// The build settings an xcconfig defines, following its non-optional includes in order.

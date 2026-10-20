@@ -5,6 +5,9 @@ import InventoryNetwork
 import InventoryServices
 import InventoryStorage
 
+#if DEBUG
+// DEBUG only (previews, the demo, tests): kept out of Release builds.
+
 extension AppContainer {
     /// A container for `#Preview`s and the DEBUG demo: a private in-memory database seeded with
     /// ``AppContainerPreviewData`` when `seed` is on, photos in a fresh temporary directory, an
@@ -188,3 +191,4 @@ public enum AppContainerPreviewData {
         }
     }
 }
+#endif

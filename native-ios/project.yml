@@ -32,6 +32,13 @@ settings:
     LOCALIZATION_PREFERS_STRING_CATALOGS: YES
     SWIFT_EMIT_LOC_STRINGS: YES
     DEAD_CODE_STRIPPING: YES
+  # What Xcode's own templates set for a shipping configuration and XcodeGen's release preset
+  # leaves out (scripts/release/check-release.sh checks the rest of the Release settings).
+  configs:
+    Preview:
+      VALIDATE_PRODUCT: YES
+    Release:
+      VALIDATE_PRODUCT: YES
 
 packages:
   InventoryKit:
@@ -48,6 +55,9 @@ targets:
         PRODUCT_NAME: Inventory
         PRODUCT_BUNDLE_IDENTIFIER: com.wystudio.inventory
         INFOPLIST_FILE: App/Resources/Info.plist
+        # The Info.plist goes through the C preprocessor so Debug alone can carry the local
+        # network keys (INFOPLIST_PREPROCESSOR_DEFINITIONS in Config/Debug.xcconfig).
+        INFOPLIST_PREPROCESS: YES
         CODE_SIGN_ENTITLEMENTS: App/Resources/Inventory.entitlements
         CODE_SIGN_STYLE: Automatic
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

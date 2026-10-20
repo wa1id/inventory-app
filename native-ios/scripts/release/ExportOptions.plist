@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  xcodebuild -exportArchive options for scripts/release/archive-and-upload.sh: sign for App Store
+  Connect with automatic signing in team 4BQ3BX3UHK and upload straight to app 6795274058
+  (TestFlight), with symbols. The version and build number stay exactly as project.yml sets them
+  (0.2.0 (16), above the last EAS build 0.1.0 (15)): an upload that collides fails instead of being
+  renumbered behind our back.
+-->
+<plist version="1.0">
+<dict>
+	<key>method</key>
+	<string>app-store-connect</string>
+	<key>destination</key>
+	<string>upload</string>
+	<key>teamID</key>
+	<string>4BQ3BX3UHK</string>
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<key>uploadSymbols</key>
+	<true/>
+	<key>stripSwiftSymbols</key>
+	<true/>
+	<key>manageAppVersionAndBuildNumber</key>
+	<false/>
+	<key>testFlightInternalTestingOnly</key>
+	<false/>
+</dict>
+</plist>
