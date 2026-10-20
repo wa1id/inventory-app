@@ -566,6 +566,18 @@
         }
       }
     },
+    "backup.accountAlreadyOnThisPhone" : {
+      "comment" : "A restore stopped because this phone already backs up under a different recovery code. Native only (native/account.ts).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This phone already backs up under another recovery code, so nothing was restored or changed. Show the recovery code to see which one."
+          }
+        }
+      }
+    },
     "backup.automatic" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -684,6 +696,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Keep a copy off this phone"
+          }
+        }
+      }
+    },
+    "backup.keptExistingCode" : {
+      "comment" : "Turn on found a recovery code already on this phone (one it could not read earlier) and uses it instead of making a new one; shown above the revealed code. Native only (native/account.ts).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This phone already had a recovery code, so backup carries on with it instead of making a new one."
           }
         }
       }
@@ -898,6 +922,78 @@
         }
       }
     },
+    "backup.restoreOffer.action" : {
+      "comment" : "Native only (native/account.ts).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore the saved copy…"
+          }
+        }
+      }
+    },
+    "backup.restoreOffer.actionHint" : {
+      "comment" : "VoiceOver hint on the action. Native only (native/account.ts).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replaces what is on this phone with the newest backup"
+          }
+        }
+      }
+    },
+    "backup.restoreOffer.body" : {
+      "comment" : "Native only (native/account.ts).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This phone’s inventory is empty, so backup keeps the copy it already has instead of replacing it, and carries on once something is added. If that copy has things you want on this phone, restore it."
+          }
+        }
+      }
+    },
+    "backup.restoreOffer.failedTitle" : {
+      "comment" : "Banner title when restoring the saved copy failed; its message is a `backup.reasons` sentence. Native only (native/account.ts).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The restore did not finish"
+          }
+        }
+      }
+    },
+    "backup.restoreOffer.title" : {
+      "comment" : "Native only (native/account.ts).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing to back up yet"
+          }
+        }
+      }
+    },
+    "backup.restoreOffer.working" : {
+      "comment" : "The status line while the saved copy is being restored. Native only (native/account.ts).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restoring…"
+          }
+        }
+      }
+    },
     "backup.restoreTitle" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -916,6 +1012,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your inventory is back. Photos will finish downloading shortly."
+          }
+        }
+      }
+    },
+    "backup.restoredCodeNotKept" : {
+      "comment" : "A restore worked, but the keychain refused to keep the code, so backup is off. Native only (native/account.ts).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your inventory is back. This phone could not keep its recovery code, so backup is off until it is turned on again."
           }
         }
       }
@@ -994,6 +1102,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Backup is not set up in this build. Everything stays on this phone, and uninstalling the app deletes it."
+          }
+        }
+      }
+    },
+    "backup.unreadable.body" : {
+      "comment" : "Native only (native/account.ts).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This phone could not read its recovery code just now. This can happen while the phone is locked. Nothing has been changed or lost."
+          }
+        }
+      }
+    },
+    "backup.unreadable.retryHint" : {
+      "comment" : "VoiceOver hint on Try again. Native only (native/account.ts).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads the recovery code again"
+          }
+        }
+      }
+    },
+    "backup.unreadable.title" : {
+      "comment" : "Native only (native/account.ts).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup cannot be checked right now"
           }
         }
       }

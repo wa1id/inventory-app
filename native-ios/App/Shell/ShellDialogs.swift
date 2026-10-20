@@ -1,4 +1,6 @@
+import Observation
 import Synchronization
+import SwiftUI
 import UIKit
 import InventoryAppModels
 import InventoryStrings
@@ -12,13 +14,21 @@ import InventoryStrings
 ///   any other way (its presenter dismissed under it), answer false, exactly once.
 /// - `showActionSheet`: the options, destructive ones marked, Cancel last. On iPad it shows as a
 ///   popover in the middle of the presenter, without an arrow.
+///
+/// While either is up, ``ShellDialogTracker`` says so, and the overlay window hides the toast: it
+/// sits above system alerts and would cover (and take the taps of) an action sheet's buttons.
 @MainActor
 final class ShellDialogPresenter: ConfirmPresenting, ShellActionSheetPresenting {
     /// Finds the view controller to present from; the active scene's main window by default.
     private let presenter: @MainActor () -> UIViewController?
+    private let tracker: ShellDialogTracker
 
-    init(presenter: @escaping @MainActor () -> UIViewController? = { ShellDialogPresenter.topViewController() }) {
+    init(
+        presenter: @escaping @MainActor () -> UIViewController? = { ShellDialogPresenter.topViewController() },
+        tracker: ShellDialogTracker = .shared
+    ) {
         self.presenter = presenter
+        self.tracker = tracker
     }
 
     func confirm(_ options: ConfirmOptions) async -> Bool {
@@ -34,18 +44,23 @@ final class ShellDialogPresenter: ConfirmPresenting, ShellActionSheetPresenting 
                 return
             }
             presenter.present(alert, animated: true)
-            Self.resolveWhenGone(alert, answer)
+            // An alert that goes away without a tap (its presenter dismissed under it, or a
+            // presentation UIKit refused) answers Cancel.
+            track(alert) { answer.resolve(false) }
         }
     }
 
-    /// An alert that goes away without a tap (its presenter dismissed under it, or a presentation
-    /// UIKit refused) answers Cancel.
-    private static func resolveWhenGone(_ alert: UIAlertController, _ answer: ShellDialogAnswer) {
+    /// Counts `alert` as showing until it has gone (dismissed after a tap, its presenter
+    /// dismissed under it, or a presentation UIKit refused), then runs `gone`.
+    private func track(_ alert: UIAlertController, gone: @escaping @MainActor @Sendable () -> Void = {}) {
+        let tracker = tracker
+        tracker.began()
         Task { @MainActor in
-            while !answer.isResolved {
-                try? await Task.sleep(for: .milliseconds(200))
-                if alert.presentingViewController == nil { answer.resolve(false) }
-            }
+            repeat {
+                try? await Task.sleep(for: .milliseconds(100))
+            } while alert.presentingViewController != nil
+            gone()
+            tracker.ended()
         }
     }
 
@@ -65,6 +80,7 @@ final class ShellDialogPresenter: ConfirmPresenting, ShellActionSheetPresenting 
             popover.permittedArrowDirections = []
         }
         presenter.present(alert, animated: true)
+        track(alert)
     }
 
     /// The top-most view controller of the foreground scene's main window (never the overlay
@@ -79,6 +95,61 @@ final class ShellDialogPresenter: ConfirmPresenting, ShellActionSheetPresenting 
             top = presented
         }
         return top
+    }
+}
+
+/// Whether a confirmation or action sheet from ``ShellDialogPresenter`` is showing. The overlay
+/// window follows it: it sits at `.alert + 1`, above system alerts, so while a dialog is up the
+/// toast steps aside instead of covering its buttons (the removed-phone layer stays).
+@MainActor
+@Observable
+final class ShellDialogTracker {
+    /// The app's: every presenter and the overlay window share it.
+    static let shared = ShellDialogTracker()
+
+    /// Dialogs presented and not gone yet.
+    private(set) var openCount = 0
+
+    var isShowingDialog: Bool { openCount > 0 }
+
+    func began() {
+        openCount += 1
+    }
+
+    func ended() {
+        openCount = max(0, openCount - 1)
+    }
+}
+
+extension View {
+    /// Counts a SwiftUI `.confirmationDialog` or `.alert` that this view presents as a shell
+    /// dialog while `isPresented` is true, so a live toast steps aside instead of covering its
+    /// buttons and taking their taps (the overlay window sits above system alerts). Pass the flag
+    /// the dialog binds: `.confirmationDialog(…, isPresented: $asking) { … }.tracksShellDialog(isPresented: asking)`.
+    /// `app.platform.confirm` and `app.platform.actionSheets` are tracked already.
+    func tracksShellDialog(isPresented: Bool, tracker: ShellDialogTracker = .shared) -> some View {
+        modifier(ShellDialogTracking(isPresented: isPresented, tracker: tracker))
+    }
+}
+
+/// Counts one SwiftUI dialog in ``ShellDialogTracker`` while it is presented and this view is
+/// on screen (a view taken away with its dialog up stops counting).
+private struct ShellDialogTracking: ViewModifier {
+    let isPresented: Bool
+    let tracker: ShellDialogTracker
+    @State private var counted = false
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: isPresented, initial: true) { _, presented in update(presented) }
+            .onAppear { update(isPresented) }
+            .onDisappear { update(false) }
+    }
+
+    private func update(_ presented: Bool) {
+        guard presented != counted else { return }
+        counted = presented
+        if presented { tracker.began() } else { tracker.ended() }
     }
 }
 

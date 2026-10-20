@@ -15,6 +15,7 @@ enum DebugGallery {
         switch name {
         case "components": ComponentsGallery(page: page)
         case "media": MediaGallery(page: page)
+        case "foundation": FoundationGallery(page: page)
         default: ContentUnavailableView("No gallery named \(name)", systemImage: "questionmark.square.dashed")
         }
     }

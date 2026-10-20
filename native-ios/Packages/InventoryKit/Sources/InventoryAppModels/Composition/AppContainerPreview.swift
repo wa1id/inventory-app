@@ -40,7 +40,10 @@ extension AppContainer {
                     let store = try DatabaseStore.inMemory()
                     try await store.migrate()
                     if seed {
-                        try await AppContainerPreviewData.seed(LocalRepositories(store: store), photos: ImageStore(resolver: resolver))
+                        try await AppContainerPreviewData.seed(
+                            LocalRepositories(store: store, environment: AppContainerPreviewData.environment),
+                            photos: ImageStore(resolver: resolver)
+                        )
                     }
                     return store
                 },
@@ -57,8 +60,34 @@ extension AppContainer {
 
 /// Sample inventory for previews and the DEBUG demo: three spaces with containers of several
 /// types (each with its short code, one with a QR label), items with and without photos, one
-/// with none left, and four items waiting in the drop zone.
+/// with none left, and four items waiting in the drop zone. `docs/UI-KIT.md` lists every name.
+///
+/// Through ``AppContainer/preview(platform:seed:onboardingCompleted:householdSession:transport:)``
+/// the short codes and the label are fixed (``shortCodes``, ``toolChestLabelToken``), so
+/// screenshots, demo routes and UI tests can name them; ids stay random.
 public enum AppContainerPreviewData {
+    /// The seeded containers' short codes, one per type (Tool chest, Red bin, the unnamed box,
+    /// Pantry shelf, Top drawer, Winter clothes). Containers made later get random codes.
+    public static let shortCodes: [ContainerVisualType: String] = [
+        .cabinet: "CAB-J92R",
+        .bin: "BIN-4F2A",
+        .box: "BOX-7K2M",
+        .shelf: "SHF-3PQX",
+        .drawer: "DRW-8HNC",
+        .bag: "BAG-5WTD",
+    ]
+
+    /// The QR label bound to the Tool chest (`inventory://c/<token>` opens it).
+    public static let toolChestLabelToken = "c0ffee00c0ffee00c0ffee00c0ffee00"
+
+    /// A well-formed label token bound to nothing (the "link this label" state).
+    public static let unboundLabelToken = "0123456789abcdef0123456789abcdef"
+
+    /// The seed's repository environment: ``shortCodes`` for the seeded types.
+    public static let environment = RepositoryEnvironment(shortCode: { type in
+        shortCodes[type] ?? generateShortCode(type)
+    })
+
     /// What the seed created, for previews that open a specific record.
     public struct Seeded: Sendable {
         public var garageId: String
@@ -85,7 +114,7 @@ public enum AppContainerPreviewData {
         let pantry = try await containers.create(CreateContainerInput(spaceId: kitchen.id, name: "Pantry shelf", visualType: .shelf))
         let drawer = try await containers.create(CreateContainerInput(spaceId: kitchen.id, name: "Top drawer", visualType: .drawer))
         let winter = try await containers.create(CreateContainerInput(spaceId: attic.id, name: "Winter clothes", visualType: .bag))
-        _ = try await repositories.qr.createAndBind(toolChest.id)
+        _ = try await repositories.qr.bind(token: toolChestLabelToken, containerId: toolChest.id)
 
         let drill = try await items.create(ItemDraft(
             containerId: toolChest.id, name: "Cordless drill", category: "Tools", quantity: 1,

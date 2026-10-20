@@ -16,7 +16,8 @@ writing. When they change, update this file in the same commit.
 | `…/InventoryAppModels/Components/`, `…/Media/` | The pure logic behind the components and media views (copy, layout rules, the thumbnail loader). |
 | `App/Shell/` | The root view, tabs, overlay window (toasts, removed-phone layer), `ScreenFrame`, `BottomBar`, focus modifiers, dialogs, haptics, the DEBUG demo. |
 | `App/Navigation/` | The tab stacks, the modal presentation and the route → screen switch. |
-| `App/Screens/<Area>/` | **The placeholder screens you replace.** |
+| `App/Screens/<Area>/` | **The placeholder screens you replace**, and your area's DEBUG demo hooks (`<Area>Demo.swift`). |
+| `App/Screens/Shared/` | Screen-level views several areas embed: `PlacePickerHost`; the foundation gallery. |
 | `App/Design/` | Tokens, glyphs, type roles, `LayoutScale`, `WrappingHStack`, accessibility helpers. |
 | `App/Components/` | Shared SwiftUI components and their DEBUG gallery. |
 | `App/Media/` | Camera, QR scanner, camera permission, library picker, QR label views and their gallery. |
@@ -226,14 +227,14 @@ stores and seams: `toasts: app.toasts`, `confirm: app.platform.confirm`,
 |---|---|
 | Home | `app.home` (`HomeModel`, owned by the container; never make another) with `.inventoryQuery(app.home)`. Watch `app.router.searchFocus.focusRequests` and set `.searchable(isPresented:)` to true each time it goes up. Watch `router.reselections[.home]` and `home.scrollToTopRequests`. |
 | Drop zone | `app.dropZone` (`DropZoneModel`, shared with the badge and the Home card). The shell already drives it with the tab shell's focus and the revision, so do **not** attach `.inventoryQuery` to it. |
-| Lists with chips or steppers | `ItemRowQuantityModels(make:)` per list: `make` builds `SavedQuantityModel(itemId:quantity:updatedAt:items:invalidator:haptics:onError:)` with an `onError` that shows the toast `SavedQuantityModel.notSavedMessage(itemName:kind:)`. Call `keep(only:)` with the ids shown. Dismiss the keyboard before a chip expands and scroll the expanded row into view (06 §5.8). |
+| Lists with chips or steppers | `@State private var quantities: ItemRowQuantityModels?`, set once to `app.makeRowQuantityModels()` (§5.2: the current repositories, the database, the haptics and the "not saved" error toast). Call `keep(only:)` with the ids shown after each read. Dismiss the keyboard before a chip expands and scroll the expanded row into view (06 §5.8). |
 | Scan tab | `ScanModel(permission: app.makeCameraPermission(purpose: .scan), qr: { app.repositories.qr }, haptics:, telemetry:, clock:, navigate:)`. Call `focusGained()`/`focusLost()` from `\.isScreenFocused`, and `tabReselected()` on `reselections[.scan]`. Draw `QrScannerView(model: scan.scanner, managesFocus: false) { CameraPanel(scan.panel) { … } }`. |
 | Label link | `LabelLinkModel(token:qr:invalidator:toasts:confirm:haptics:rememberPlace:navigate:)`. Call `start()` on appear and register `close()` with `router.onRemoval(of: address)`. |
 | Sticker link cover | Its own `QrScannerModel(title:permission:)` with the default `managesFocus: true`. Pass the changing title through `QrScannerView(title:)`, because `QrScannerModel.title` is a `let`. Overlay its own `CameraPanel`, also over the permission screen. |
 | Capture | `CaptureModel(route:deliverPhoto:permission:photos:fastCapture:items:invalidator:toasts:haptics:…, navigate:)` with `deliverPhoto: { app.router.results.deliver(request, $0) }` when there is a request, `photos: app.imageStore` and `fastCapture: app.fastCapture`. `CaptureNavigation` maps to the router (see the file's comment). Wire `camera.reportEvents(to: model)` and register `disappeared()` with `onRemoval`. Attach `.captureLibraryPicker` once at the root, and pass `CameraPermissionView(isProcessing: model.processing)`. Stop the session when the screen loses focus, since the review is pushed over the live camera: `CameraPreview(camera:runs: isScreenFocused && …)`. |
 | Quick Snap review | `QuickSnapReviewModel(route:items:photos:isPaired:invalidator:toasts:confirm:haptics:…, navigate:)`. Call `reload()` on appear, on focus gain and on revision change. `QuickSnapReviewNavigation` maps to the router (see the file). |
-| Add sheet | `AddSheetModel(params:…, routing: AddSheetModel.Routing(isFocused:close:replaceWithCapture:takePhoto:))`, `recognize: app.recognize`, `drafts: app.drafts`. Map `takePhoto` to `router.presentForResult(StoredImage.self) { .cover(.capture(…, request: $0)) }`. Set `.interactiveDismissDisabled(model.interactiveDismissDisabled \|\| model.isPickingPlace)`. |
-| Move / file | `MoveModel(items:filing:request:routeResults: app.router.results, recentPlaces: app.recentPlaces, …, isFocused: { router.isFocused(address) }, close: { router.close(address) })`. Feed `PlacePicker` from an `InventoryQuery` of `joinPlaceOptions(…)` and `spaces.listWithCounts()`. |
+| Add sheet | `AddSheetModel(params:…, routing: AddSheetModel.Routing(isFocused:close:replaceWithCapture:takePhoto:))`, `recognize: app.recognize`, `drafts: app.drafts`. Map `takePhoto` to `router.presentForResult(StoredImage.self) { .cover(.capture(…, request: $0)) }`. Set `.interactiveDismissDisabled(model.interactiveDismissDisabled \|\| model.isPickingPlace)`. The place step is `PlacePickerHost(mode: .choose, selectedContainerId:, showsDropZone: true) { model.pickPlace($0) }` (§5.1). |
+| Move / file | `MoveModel(items:filing:request:routeResults: app.router.results, recentPlaces: app.recentPlaces, …, isFocused: { router.isFocused(address) }, close: { router.close(address) })`. Embed `PlacePickerHost(mode: move.pickerMode, currentContainerId:busyId: move.busyId) { notice } onPick: { place in Task { await move.pick(place) } }` (§5.1); it reads the lists and runs the inline create itself. |
 | Edit forms | `DirtyGuard(confirm:title:dirty:saving:revoked:)`, plus `.sheetCloseGuard { await guard.attemptClose() }` and `.interactiveDismissDisabled(guard.interactiveDismissDisabled)`. |
 | Item screen naming | `NameItModel(itemId:updatedAt:incomingName:items:invalidator:haptics:announce:onNamed:)`. `WhereCard(actionFocus:)` moves VoiceOver to "File it…". |
 | Camera permission anywhere | `app.makeCameraPermission(purpose:)` (container telemetry, a fake platform in previews and tests). `CameraPermissionModel.device(purpose:)` is for galleries and tests. |
@@ -244,7 +245,11 @@ stores and seams: `toasts: app.toasts`, `confirm: app.platform.confirm`,
 - **Toasts.** `app.toasts.show(ToastOptions(message:tone:action:duration:))`, with tone `.info`
   or `.error` and `ToastAction(label:accessibilityLabel:handler:)` for Undo. They show in the
   overlay window above every sheet. They are announced (queued), and live twice as long while
-  VoiceOver runs. Models take `toasts: app.toasts`.
+  VoiceOver runs. While a confirmation or action sheet from `app.platform` is up the toast steps
+  aside (the overlay is above system alerts and would cover their buttons) and comes back after;
+  its life keeps running. A stock `.confirmationDialog` or `.alert` needs
+  `.tracksShellDialog(isPresented: flag)` (the flag it binds) for the same. Models take
+  `toasts: app.toasts`.
 - **Confirm.** `await app.platform.confirm.confirm(ConfirmOptions(title:body:confirmLabel:cancelLabel:destructive:))`
   returns true only for the confirm button. It shows as a system alert above every sheet.
 - **Action sheet.** `app.platform.actionSheets.showActionSheet(ShellActionSheet(title:options: [.init(label:destructive:handler:)], cancelLabel:))`.
@@ -263,23 +268,31 @@ stores and seams: `toasts: app.toasts`, `confirm: app.platform.confirm`,
   `AppContainer.preview()`: an in-memory database seeded with `AppContainerPreviewData`, no
   network and silent dialogs. `ShellPreviewHost(seed: false, onboardingCompleted: false)` covers
   the other states. A component that needs no container needs no host.
-- **DEBUG launch arguments** (`App/Shell/ShellDemo.swift`):
+- **DEBUG launch arguments** (`App/Shell/ShellDemo.swift`; §5.3 has the details and the
+  seeded names):
   - `-demo YES` runs the sample inventory in memory; add `-demoOnboarding YES` to start on
-    onboarding.
+    onboarding, or `-demoSeed empty` to start with no inventory.
   - `-demoHousehold offline|revoked` shows the connection banner after 2.5 s, or the
     removed-phone layer.
+  - `-demoArea <area> -demoState <state>`: your area's own hook (`<Area>Demo`).
   - `-demoTab spaces|scan|dropZone`.
-  - `-demoOpen settings|label|add|addOverSheet|capture|review|move`.
+  - `-demoRoute <spec>[><spec>…]` opens any route by the names in the inventory, e.g.
+    `'container:Tool_chest>containerEdit:Tool_chest'` (quote a chain: `>` is a shell redirect).
+    `-demoOpen settings|label|add|addOverSheet|capture|review|move` still works (mapped onto
+    routes).
   - `-demoToast info|error|action`.
 - **Galleries** (`App/Shared/DebugGallery.swift`): `-gallery components -galleryPage N` (0–17:
   tokens, item rows chip and tools, place rows, where card, quantity, banners, buttons, empty
   and error, inputs, pickers, three place-picker pages, space form, item details, thumbs, taps;
-  long pages take `-galleryAnchor <section>`) and `-gallery media -galleryPage N` (0–11:
-  permission, scanner states, QR card, share picture, camera preview). Add a gallery for your
-  area by adding a case to `DebugGallery`.
+  long pages take `-galleryAnchor <section>`), `-gallery media -galleryPage N` (0–11:
+  permission, scanner states, QR card, share picture, camera preview) and
+  `-gallery foundation -galleryPage N` (0–7: `PlacePickerHost` in move, file, choose, bind, open,
+  move busy with a notice, nothing at all, no match; a bar under the title shows the last
+  pick, `foundation-picked`). Add a gallery for your area by adding a case to `DebugGallery`.
 - **Screenshots.**
   - `scripts/mac.sh run out.png -demo YES` builds and launches; `mac.sh launch out.png …` only
-    relaunches.
+    relaunches. Each launch argument reaches the app as given, so quote one with spaces or a `>`;
+    `RUN_SETTLE_SECONDS=8` waits longer before the screenshot (default 4).
   - `mac.sh openurl inventory://c/<token> out.png` opens a link. On a running app, iOS 26 asks
     "Open in Inventory?" first.
   - Add `APPEARANCE=dark` and `CONTENT_SIZE=accessibility-extra-extra-extra-large` to check dark
@@ -351,7 +364,7 @@ All are in the app target (module `Inventory`). Logic and copy behind them live 
 | Init | Purpose |
 |---|---|
 | `ListRow(action:showsChevron:isSelected:isDisabled:minHeight: = 44, alignment:accessibilityLabel:accessibilityHint:identifier:) { leading } content: { } aside: { }` (an init without `aside:` too) | The base row: a plain `Button` in a `List`, so the list draws the highlight. `isDisabled` draws undimmed and reads as a dimmed button. A pressable row needs `accessibilityLabel`. |
-| `RowWithTool { row } tool: { control }` | A row and its control as siblings (their own VoiceOver stops; a tap on the control never opens the row). It stacks at large sizes. |
+| `RowWithTool { row } tool: { control }` | A row and its control as siblings (their own VoiceOver stops; a tap on the control never opens the row). It stacks at large sizes; stacked, the whole line under the row is inert, so a tap beside the control does nothing (the chip row's stacked line too). |
 | `.absorbsListRowTaps()` | Stops taps on the blank parts of a control area from opening the row. |
 | `ItemRow(item:line: = .where, tool: = .none, terms:now:thumb: = 56, identifier:onPress:)` | An item: name over "where is it". `ItemRowLine` is `.where`, `.detail` or `.added`. `Tool` is `.chip(model, isExpanded:onToggle:)` (or the helper `.chip(model, itemId:expandedId: Binding<String?>)`), `.stepper(model)`, `.file { }`, `.delete { }` or `.none`. It keeps its model in step with the item. |
 | `SpaceRow(space:tileSize: = 56, terms:onPress:)` | A space with its counts. |
@@ -386,7 +399,7 @@ All are in the app target (module `Inventory`). Logic and copy behind them live 
 | `SegmentedChoice(options: [SegmentOption], selection:accessibilityLabel:onCamera:isDisabled:accessibilityHint:)`; `SegmentOption(value:label:glyph:identifier:)` | A stock segmented picker, on glass over the camera. It drops option glyphs. |
 | `EmojiPicker(label:value:color:options:)`, `SwatchPicker(label:value:palette:)`, `TypeGrid(label:value:)` | Space icon, space colour and container type. They play `.choice`. |
 | `SpreadGrid(tileWidth:minGap:rowGap:maxColumns:)` | Fixed tiles spread edge to edge (`Layout`). |
-| `PlacePicker(mode:options:spaces:recentIds:isLoading:failure:onRetry:currentContainerId:selectedContainerId:showsDropZone:allowsNewContainer:autoFocusesFilter:placeholder:initialQuery:busyId:notice:onPick:onNewContainer:onNewSpace:)` (`notice:` optional) | The one place picker. `mode` is `.move`, `.file`, `.choose`, `.bind` or `.open`. Present it inside a `NavigationStack` (it uses `.searchable`). Reading, forms and saving are the screen's. |
+| `PlacePicker(mode:options:spaces:recentIds:isLoading:failure:onRetry:currentContainerId:selectedContainerId:showsDropZone:allowsNewContainer:autoFocusesFilter:placeholder:initialQuery:busyId:notice:onPick:onNewContainer:onNewSpace:filterText:handlesPickFeedback:)` (`notice:` optional; an optional view that is nil adds no section) | The drawing of the one place picker. **Screens embed `PlacePickerHost` instead** (§5.1), which reads, opens the forms and drives this view (`filterText:` binds its model's query, `handlesPickFeedback: false` leaves the haptic and the busy guard to the model). Present it inside a `NavigationStack` (it uses `.searchable`; the stock field takes no identifier, so UI tests use `app.searchFields.firstMatch`). |
 
 ## 3. Media views (`App/Media`)
 
@@ -417,17 +430,198 @@ icon, error bar, "Type it instead"). Build them from `CameraGlassIconButton`, `C
 
 ## 4. Rules that are easy to miss
 
-- One copy of each concept. Before adding a view, search `App/Components`, `App/Media` and
-  `App/Shell`.
+- One copy of each concept. Before adding a view, search `App/Components`, `App/Media`,
+  `App/Shell` and `App/Screens/Shared`.
 - Copy comes from `L10n` (`InventoryStrings`). Never pass an error's message to the screen; use
-  `describeError` through `ErrorStateView` or `SaveNoticeCopy`.
+  `describeError` through `ErrorStateView` or `SaveNoticeCopy`. Copy RN never had goes in your
+  area's `scripts/strings/native/<area>.ts` (§5.4).
 - Keep RN's testIDs as accessibility identifiers. The UI tests depend on `screen-*`, the `tab-*`
   identifiers, `sheet-close` and others.
 - Never use `onDisappear` for "this screen is gone"; use `router.onRemoval(of:)`.
 - A screen under a sheet is unfocused. Stop cameras, scanners and timers there.
 - `EmptyStateView` and `ErrorStateView` are `ContentUnavailableView`s and do not scroll. Put
-  them in a `List` or `ScrollView` so their text and buttons stay reachable at AX5.
+  them in a `List` or `ScrollView` so their text and buttons stay reachable at AX5. As a `List`
+  row a long heading can be cut to one line at default sizes ("Your inventory could not…");
+  where the state fills the screen, prefer `GeometryReader { p in ScrollView { state.frame(maxWidth:
+  .infinity, minHeight: p.size.height) }.scrollBounceBehavior(.basedOnSize) }` (centred while it
+  fits, as `PlacePicker`'s failure state), and check the heading in a screenshot.
 - Simulator caveats: colour emoji draw as "?" boxes on the build Mac's simulator, and the camera
   is unavailable (galleries use `discover: { nil }` or `StandInQrScannerFeed`).
 - Check every screen in light and dark mode, at AX5 and on a 360 pt-wide window. The iPad
   layout is untested so far.
+
+## 5. Screen foundation
+
+What the screen wave builds on beyond the shell: the place picker every picking screen embeds,
+the row quantity factory, the DEBUG demo routes and hooks, and the native-only copy source.
+
+### 5.1 `PlacePickerHost` (`App/Screens/Shared/PlacePickerHost.swift`)
+
+The one view a screen embeds to pick a place (RN `<PlacePicker>`, 07 §4.1): Move and File, the
+Add sheet's place step, the label bind and the Scan tab's typed code. Present it inside a
+`NavigationStack`; its filter is the stock search field in the navigation bar.
+
+```swift
+PlacePickerHost(
+    mode: PlacePickerMode,                 // .move, .file, .choose, .bind, .open
+    currentContainerId: String? = nil,     // move/file: "Here now", not pickable
+    selectedContainerId: String? = nil,    // choose: checked (the drop zone when nil)
+    showsDropZone: Bool = false,           // choose: "Drop zone · Sort it later" first
+    allowsNewContainer: Bool? = nil,       // nil: everywhere but .open
+    busyId: String? = nil,                 // the row saving the pick; the list is locked
+    placeholder: String = L10n.Picker.filter,
+    initialQuery: String = "",
+    autoFocusesFilter: Bool? = nil,        // nil: only .open
+    @ViewBuilder notice: () -> Notice,     // optional (an init without it); `if let` works
+    onPick: @escaping (PickedPlace) -> Void
+)
+
+// Move / File:
+PlacePickerHost(mode: move.pickerMode, currentContainerId: item.containerId, busyId: move.busyId) {
+    if let notice = move.notice { BannerView(tone: .warning, message: notice.message) }
+} onPick: { place in
+    Task { await move.pick(place) }
+}
+```
+
+- It builds one `PlacePickerModel` for the screen's life from `app.repositories` and
+  `app.recentPlaces` (the recent places as the screen first saw them), and drives its two
+  reads (`containers-all`, `spaces`) from `\.isScreenFocused` and `app.database.revision`. A
+  form opened over the picker unfocuses it; it reads again when the form closes.
+- `onPick` runs after the `.choice` haptic and never while `busyId` is set; the host always
+  calls the newest closure it was given. Saving, the busy row, the notice and closing are the
+  screen's (`MoveModel.pick`, `AddSheetModel.pickPlace`, the label bind, the Scan tab's open).
+- "New container in <space>…" opens `.sheet(.containerNew(spaceId:request:))` with
+  `router.presentForResult(NewContainerResult.self)` and hands the container it made to
+  `onPick` without a re-read or haptic. So **`ContainerNewSheet` must deliver**
+  `app.router.results.deliver(request, NewContainerResult(container))` when it has a request,
+  and close itself in the same step (it opens the container itself when `deliver` returns
+  false). One form at a time; a form closed without an answer picks nothing.
+- No containers at all: the empty state's action (`move-no-containers`) opens
+  `.sheet(.spaceNew(request:))` for a `NewSpaceResult` (**`SpaceNewSheet` delivers** likewise),
+  then the container form in that space, and picks the result. Where no "New container" is
+  offered (`.open`) it presents `.spaceNew(request: nil)` and waits for nothing.
+- Loading, failure and empty follow 07 §4.1: the skeleton while either list has no data and is
+  loading; `ErrorStateView` with Try again (both lists) when the containers failed with no
+  data or the spaces have no data and failed; "Nothing matches “q”" above the lists.
+- Identifiers (RN testIDs): `place-drop-zone`, `move-to-<containerId>`,
+  `place-recent-<containerId>`, `place-new-container-<spaceId>`, `move-no-containers`. The
+  filter takes no identifier (the stock field cannot): UI tests use `app.searchFields.firstMatch`.
+- The logic is `PlacePickerModel` (`InventoryAppModels/Entities/Places/PlacePickerModel.swift`):
+  inputs `mode`, `allowsNewContainer` (fixed), and `currentContainerId`, `selectedContainerId`,
+  `showsDropZone`, `busyId`, `query` (settable); outputs `options`, `sections`,
+  `noMatchMessage`, `isLoading`, `failure`, `isNothingAtAll`, `isBusy`, `recentIds`, and the
+  two queries `containers` and `spaces`; actions `pick(_:)`, `newContainer(in:spaceName:) async`,
+  `newSpace() async`, `retry()`, `focusChanged(_:revision:)`, `revisionChanged(_:)`.
+  `PlacePickerHost.makeModel(app:mode:…:onPick:)` builds it with the host's wiring (tests use
+  it); `PlacePickerHost.forms(router:)` is the router side (`PlacePickerModel.Forms`).
+- Look at it with `-gallery foundation -galleryPage 0…7` (§1.9).
+
+### 5.2 The row quantity factory
+
+`app.makeRowQuantityModels() -> ItemRowQuantityModels` (an `AppContainer` extension in
+`Composition/AppContainer+RowQuantity.swift`): one per list screen, kept in `@State` (or the
+screen's model). Each row's `SavedQuantityModel` writes through `app.repositories.items` with
+`app.database` as the invalidator and the platform's haptics, and a quantity that did not save
+shows the error toast "The quantity of “Wood screws” was not saved. …"
+(`SavedQuantityModel.notSavedMessage(itemName:kind:)`), as RN's `ItemRow` and
+`SavedQuantityStepper` did. Hand rows `.chip(quantities.model(for: item), itemId:expandedId:)`
+or `.stepper(quantities.model(for: item))`, and call `quantities.keep(only: ids)` after each
+read. The toast names the item as its row last asked for its model
+(`ItemRowQuantityModels.latestName(of:)`), so a rename made meanwhile is respected.
+
+### 5.3 DEBUG demo: routes, seed and area hooks (`App/Shell/ShellDemo.swift`)
+
+Every state can be reached from launch arguments, so screenshots and UI tests need no taps:
+`scripts/mac.sh run out.png -demo YES -demoRoute move:Cordless_drill`. The order is `-demoTab`,
+then the area hook's `run`, then `-demoRoute`, then `-demoToast`.
+
+**`-demoRoute <spec>[><spec>…]`** opens routes in order, 0.7 s apart. A spec is `name` or
+`name:argument`. Names match case-insensitively, the first match wins, and `_` stands for a
+space, so a spec needs no quotes for its spaces; a quoted argument may hold real spaces. **Quote
+a chain** for `mac.sh` (`-demoRoute 'item:Cordless_drill>itemEdit:Cordless_drill'`): unquoted,
+the shell takes `>` as a redirect and the app gets only the first spec. A spec naming nothing
+known is logged (category `demo`) and skipped; the rest still open. Only a spec that names
+something reads the inventory first (through the household when joined); `add`, `settings` and
+the like open at once. A chain takes a few seconds after launch: give screenshots
+`RUN_SETTLE_SECONDS=8`.
+
+| Spec | Opens |
+|---|---|
+| `settings`, `privacy`, `household`, `backup` | that screen, pushed on the selected tab |
+| `label[:<token>]` | the label screen; no token: the unbound one below |
+| `space:<name>`, `container:<name or code>`, `qrLabel:<container>` | pushed (`container:Drop_zone` goes to its tab) |
+| `item:<name>`, `itemFiling:<name>` | the item screen (filing: as opened from the drop zone) |
+| `add[:<container>]` | the Add sheet (into that container) |
+| `spaceNew`, `spaceEdit:<space>`, `containerNew:<space>`, `containerEdit:<container>`, `itemEdit:<item>` | that sheet |
+| `move:<item>`, `file:<item>` | the Move or File sheet |
+| `capture[:<container>]` | the single-photo camera (the drop zone by default) |
+| `quickSnap`, `review` | Quick Snap; the review pushed over it |
+| `photo:<item>`, `linkSticker:<container>` | that cover |
+
+`item:` with no argument (also `move:`, `photo:`, …) names the unnamed Quick Snap shot.
+Examples: `'container:Tool_chest>containerEdit:Tool_chest'`, `'add>containerNew:Garage'`,
+`'item:Cordless_drill>itemEdit:Cordless_drill'`, `container:CAB-J92R` (by code), `review`. `-demoOpen` maps onto specs:
+`settings`, `label`, `add`, `addOverSheet` = `add>containerNew:Garage`, `capture` = `quickSnap`,
+`review`, `move` = `file:HDMI_cable`.
+
+**`-demoSeed empty`** starts with no inventory (onboarding done). `-demoOnboarding YES` starts
+on onboarding; `-demoHousehold offline|revoked` joins a household that is unreachable or
+answers 401.
+
+**`-demoArea <area> -demoState <state>`**: each area has `App/Screens/<Area>/<Area>Demo.swift`
+(home, account, labels, places, item, add, capture) with two hooks it fills in itself; nobody
+edits `ShellDemo.swift` for them:
+
+```swift
+enum AccountDemo {
+    /// The container for `state`, or nil for the default demo container (seeded, or empty with
+    /// -demoSeed empty). Build it with AppContainer.preview(platform: platform, …).
+    @MainActor static func container(state: String, platform: AppPlatform) -> AppContainer?
+    /// Once the main shell shows, after -demoTab and before -demoRoute.
+    @MainActor static func run(state: String, app: AppContainer) async
+}
+```
+
+For example a paired household answering from a fake transport, backup states (on, failing,
+the keychain unreadable, the Restore offer), or a seeded Quick Snap review.
+
+**The seeded inventory** (`AppContainerPreviewData`, behind `-demo YES`, `ShellPreviewHost` and
+`AppContainer.preview()`). Short codes and the label are fixed; ids are random.
+
+| Space | Container (type, code) | Items (quantity 1 unless shown) |
+|---|---|---|
+| Garage 🧰 `#5B8DEF` | Tool chest (cabinet, `CAB-J92R`, QR label) | Cordless drill (Tools, photo, notes, tag "power tools"), Screwdriver set (Tools) |
+| | Red bin (bin, `BIN-4F2A`) | Extension cord ×2 |
+| | unnamed, "Unnamed box" (box, `BOX-7K2M`) | Christmas lights (Decorations) ×3 |
+| Kitchen 🍳 `#E07A5F` | Pantry shelf (shelf, `SHF-3PQX`) | Olive oil (Food, photo) ×2 |
+| | Top drawer (drawer, `DRW-8HNC`) | AA batteries (Batteries) ×12, Printer ink ×0 (none left) |
+| Attic 📦 `#81B29A` | Winter clothes (bag, `BAG-5WTD`) | Wool scarf (Clothes) |
+| Drop zone | | HDMI cable ×2, Spare keys, Bike pump (photo), an unnamed Quick Snap shot (photo) |
+
+Label tokens: the Tool chest's is `AppContainerPreviewData.toolChestLabelToken`
+(`c0ffee00c0ffee00c0ffee00c0ffee00`: `label:c0ffee00c0ffee00c0ffee00c0ffee00`, or
+`mac.sh openurl inventory://c/c0ffee00c0ffee00c0ffee00c0ffee00`);
+`AppContainerPreviewData.unboundLabelToken` (`0123456789abcdef0123456789abcdef`) is bound to
+nothing. Recent places start empty.
+
+### 5.4 Native-only copy (`scripts/strings/native/<area>.ts`)
+
+Copy RN never had goes in your area's own file, shaped like `strings.ts` and merged into the
+same tree: `native/account.ts`'s `backup.unreadable.title` is `L10n.Backup.Unreadable.title`.
+Run `node native-ios/scripts/strings/generate.mjs` and commit the outputs; the generator fails
+on a key that already exists in `strings.ts` or another area's file, and on a file not named
+after an area. No booleans in native functions: one key per branch, chosen in Swift. Details
+in `scripts/strings/README.md`.
+
+Already there for the Backup screen (account area), from `SyncModel`'s outcomes (03 B8, B12):
+
+| Key | When |
+|---|---|
+| `L10n.Backup.Unreadable.title`, `.body`, `.retryHint` | `sync.isAccountUnreadable`: hide Turn on and Restore; Try again (`L10n.Common.tryAgain`) calls `await sync.retryAccountLoad()` |
+| `L10n.Backup.RestoreOffer.title`, `.body`, `.action`, `.actionHint` | `sync.suggestsRestore`: the neutral Restore offer (it also reads right for a new user whose only backup is of an empty inventory). The action replaces this phone's inventory, which may no longer be empty (`suggestsRestore` stays until a backup is stored), so confirm first exactly as RN's Restore… did (`L10n.Backup.restoreConfirmTitle`, `.restoreConfirmBody`, destructive `.restoreConfirm`), then `await sync.restoreFromAccount()`; success is the `L10n.Backup.restored` toast with the success haptic |
+| `L10n.Backup.RestoreOffer.working` | the status line while `restoreFromAccount()` runs (the status is `.working`, whose own line says "Backing up…") |
+| `L10n.Backup.RestoreOffer.failedTitle` | `restoreFromAccount()` failed: the banner title over `BackupFailureReason.message` |
+| `L10n.Backup.keptExistingCode` | `enable()` returned `.backupHeldBack`: the code revealed is the one already on this phone |
+| `L10n.Backup.accountAlreadyOnThisPhone` | `restoreFromCode(_:)` returned `.accountAlreadyOnThisPhone` |
+| `L10n.Backup.restoredCodeNotKept` | `restoreFromCode(_:)` returned `.restored` but `sync.account` is nil (the keychain refused the code) |

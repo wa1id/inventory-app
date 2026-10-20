@@ -16,7 +16,7 @@ The code is written on Linux and compiled on the Mac over SSH. There is no Swift
 | `native-ios/scripts/mac.sh launch out.png [args…]` | Relaunches the installed app with launch arguments, without building, and screenshots it. |
 | `native-ios/scripts/mac.sh openurl <url> out.png` | Opens a URL (e.g. `inventory://c/<token>`) in the simulator and screenshots it. |
 
-`run`, `launch` and `openurl` honour `APPEARANCE=dark` and `CONTENT_SIZE=accessibility-extra-extra-extra-large` (any `simctl ui content_size` value). Look at screenshots with the Read tool. In Debug builds, `-gallery <name> [-galleryPage <n>]` shows an area's gallery instead of the app (`App/Shared/DebugGallery.swift`), so views can be checked without navigating to them, and `-demo YES` (with `-demoOpen`, `-demoTab`, `-demoToast`, `-demoHousehold`; `App/Shell/ShellDemo.swift`) runs the app on sample data in memory.
+`run`, `launch` and `openurl` honour `APPEARANCE=dark`, `CONTENT_SIZE=accessibility-extra-extra-extra-large` (any `simctl ui content_size` value) and `RUN_SETTLE_SECONDS` (the wait before the screenshot, default 4). Launch arguments reach the app as given: quote one that holds spaces or a `>` (`-demoRoute 'add>containerNew:Garage'`). Look at screenshots with the Read tool. In Debug builds, `-gallery <name> [-galleryPage <n>]` shows an area's gallery instead of the app (`App/Shared/DebugGallery.swift`), so views can be checked without navigating to them, and `-demo YES` (with `-demoTab`, `-demoRoute`, `-demoSeed`, `-demoArea`/`-demoState`, `-demoToast`, `-demoHousehold`, `-demoOpen`; `App/Shell/ShellDemo.swift`) runs the app on sample data in memory and opens any screen state without tapping. `docs/UI-KIT.md` ("Screen foundation") lists the route specs and the seeded names.
 
 `docs/UI-KIT.md` explains how a screen is built on the shell and lists every shared component and media view.
 
@@ -31,7 +31,8 @@ Each checkout, including each git worktree, gets its own folder and simulator on
 - Package types the app uses are `public`. Keep everything else `internal`.
 - Behaviour must match the RN app unless `DECISIONS.md` says otherwise. Where parity is subtle, leave a short comment naming the RN source (`// RN: src/repositories/items.ts:120`). Don't comment the obvious.
 - Avoid force unwraps and `try!` outside tests.
-- Copy comes from `InventoryStrings`; never hard-code user-facing English in other modules. The exception is the strings the RN repositories hard-code themselves, which stay literal for parity (DECISIONS U9).
+- Copy comes from `InventoryStrings` (`L10n`); never hard-code user-facing English in other modules. The exception is the strings the RN repositories hard-code themselves, which stay literal for parity (DECISIONS U9).
+- Copy RN never had (a native-only state) goes in your area's own `scripts/strings/native/<area>.ts` (`home`, `account`, `labels`, `places`, `item`, `add`, `capture`), shaped like `strings.ts`; then run `node native-ios/scripts/strings/generate.mjs` and commit the outputs. Never edit `src/i18n/strings.ts` for it, nor the generated outputs by hand. The generator fails on a key that already exists in `strings.ts` or another area's file (`scripts/strings/README.md`). Never show an error's own message: word failures with `describeError` (through `ErrorStateView` or `SaveNoticeCopy`).
 - No new SwiftPM dependencies without a note in your report explaining why.
 
 ## Tests
@@ -40,6 +41,7 @@ Each checkout, including each git worktree, gets its own folder and simulator on
 - Use the shared test support instead of writing your own: `InventoryTestSupport` (`ManualClock`, `TemporaryDirectory`, `TemporaryDefaults`, `RecordingTelemetry`, `StubServer`/`StubReply`), `TelemetryReporter(sink:)` for injecting telemetry into models and services, and the seam fakes in `Tests/InventoryAppModelsTests/Support/SharedSeamsFakes.swift` (toasts, confirms, haptics, invalidation).
 - Test targets are shared between areas. Give every top-level type in a test target (suites and helpers) a name that starts with your area, so parallel work never clashes.
 - Port every RN test the owner spec lists for your area, and name each Swift test after the RN test it ports.
+- The string generator has Node tests: `node --test native-ios/scripts/strings/generate.test.mjs` (they also check that the committed outputs are current).
 - **Parity vectors:** where Swift must match JS byte for byte (tokenizer, folding, base32, ids, formatting, strings), generate expected outputs by running the real TypeScript. In a worktree, first link the dependencies: `ln -s /home/walid/inventory-app/node_modules node_modules` (it is gitignored). Then write a throwaway Jest test at `src/__vectors__/__tests__/<name>.test.ts` (the `logic` project only matches `__tests__/*.test.ts`) that writes JSON, run it with `npx jest --selectProjects logic src/__vectors__`, and delete the throwaway test afterwards. Commit the generated JSON under `Tests/<Target>/Fixtures/` and load it with `Bundle.module`.
 - Database fixtures at historical schema versions can be produced the same way with `src/db/nodeDatabase.ts`, which runs the real migrations on `node:sqlite`.
 

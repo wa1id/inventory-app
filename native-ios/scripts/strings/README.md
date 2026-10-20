@@ -1,18 +1,60 @@
 # strings: the String Catalog generator
 
 `generate.mjs` turns the React Native copy in `src/i18n/strings.ts` (and the
-relative-time wording in `src/i18n/format.ts`) into the native app's String
-Catalog and its typed accessors. `strings.ts` stays the source of truth while
-Android and web still use it (DECISIONS U9), so re-run the script whenever it
+relative-time wording in `src/i18n/format.ts`), plus the native-only copy in
+`native/<area>.ts`, into the native app's String Catalog and its typed
+accessors. `strings.ts` stays the source of truth while Android and web still
+use it (DECISIONS U9), so re-run the script whenever it or a native file
 changes and commit the outputs.
 
 ```sh
 # In a git worktree, link the main checkout's dependencies first (gitignored):
 ln -s /home/walid/inventory-app/node_modules node_modules
 
-node native-ios/scripts/strings/generate.mjs           # write the outputs
-node native-ios/scripts/strings/generate.mjs --check   # exit 1 if any output is stale
+node native-ios/scripts/strings/generate.mjs              # write the outputs
+node native-ios/scripts/strings/generate.mjs --check      # exit 1 if any output is stale
+node native-ios/scripts/strings/generate.mjs --validate   # build and verify everything, write nothing
+node --test native-ios/scripts/strings/generate.test.mjs  # the generator's own tests
 ```
+
+## Native-only copy (`native/<area>.ts`)
+
+Copy for states only the native app has (a keychain that cannot be read, the
+Restore offer, anything RN never showed) never goes into `strings.ts`. Each
+screen area writes it in its own file, named after the area: `home.ts`,
+`account.ts`, `labels.ts`, `places.ts`, `item.ts`, `add.ts` or `capture.ts`.
+A file is shaped like `strings.ts`, may import `plural` and `sentenceList`
+from `@/i18n/format`, and is merged into the same tree at its own paths:
+
+```ts
+// native/account.ts
+export const strings = {
+  backup: {
+    unreadable: {
+      /** Doc comments become the catalog comment and the Swift doc. */
+      title: 'Backup cannot be checked right now',
+    },
+  },
+};
+// → catalog key backup.unreadable.title, L10n.Backup.Unreadable.title
+```
+
+- Its groups join the `strings.ts` groups of the same path (`backup` above),
+  so the copy sits next to the screen's other strings in `L10n`.
+- Everything else must be new: the script **fails** on a key that already
+  exists in `strings.ts` or in another native file, and on a file not named
+  after an area.
+- Strings, format strings and plurals or substitutions work as for
+  `strings.ts`, and every entry goes into the parity fixture evaluated by the
+  real TS. `PLANS` is not open to native files: instead of a boolean or zero
+  branch, give each branch its own key and choose between them in Swift (the
+  script says so when it meets one).
+- Each native entry's doc ends with "Native only (native/<area>.ts)."
+- Match the voice of `strings.ts`: short, plain, no jargon, sentence case,
+  British spelling, typographic quotes and apostrophes (`’`, `“…”`).
+
+Areas each edit only their own file and regenerate. When branches merge, the
+generated outputs may conflict; resolve them by re-running the script.
 
 It needs only Node and the repo's `typescript` package. It transpiles both TS
 files in memory (`ts.transpileModule`), runs them, and reads parameter names,
@@ -22,10 +64,10 @@ types and doc comments from the syntax tree.
 
 | File | What |
 |---|---|
-| `Packages/InventoryKit/Sources/InventoryStrings/Resources/Localizable.xcstrings` | The catalog: 742 keys, English only |
-| `Packages/InventoryKit/Sources/InventoryStrings/L10n.swift` | `public enum L10n`, one member per strings.ts entry, plus the internal `…Keys` entries the hand-written code composes |
-| `Packages/InventoryKit/Tests/InventoryStringsTests/Fixtures/strings-parity.json` | Every strings.ts entry evaluated by the real TS over a spread of arguments, plus format.ts vectors |
-| `Packages/InventoryKit/Tests/InventoryStringsTests/StringsParityDispatch.swift` | Maps each strings.ts path to its Swift accessor for the parity test |
+| `Packages/InventoryKit/Sources/InventoryStrings/Resources/Localizable.xcstrings` | The catalog, English only (the script prints the key count) |
+| `Packages/InventoryKit/Sources/InventoryStrings/L10n.swift` | `public enum L10n`, one member per strings.ts and native entry, plus the internal `…Keys` entries the hand-written code composes |
+| `Packages/InventoryKit/Tests/InventoryStringsTests/Fixtures/strings-parity.json` | Every strings.ts and native entry evaluated by the real TS over a spread of arguments, plus format.ts vectors |
+| `Packages/InventoryKit/Tests/InventoryStringsTests/StringsParityDispatch.swift` | Maps each path to its Swift accessor for the parity test |
 
 Hand-written, next to the generated code: `L10n+Logic.swift` (the 28 functions
 that branch), `L10nRuntime.swift` (lookup), `Format.swift` (format.ts),

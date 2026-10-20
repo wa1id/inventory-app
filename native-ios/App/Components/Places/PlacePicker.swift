@@ -12,6 +12,9 @@ import InventoryStrings
 /// `PlacePickerRules.sections`; this view only draws them. Reading the lists, opening the
 /// container and space forms and saving the pick are the screen's: "New container in …" and
 /// "New space…" come back as callbacks. Present it inside a `NavigationStack`.
+///
+/// Screens embed `PlacePickerHost` (App/Screens/Shared), which reads the lists, opens the forms
+/// and drives this view from a `PlacePickerModel`; use this view directly only in galleries.
 struct PlacePicker<Notice: View>: View {
     let mode: PlacePickerMode
     /// Every container joined with its space (`joinPlaceOptions`); nil before the first read.
@@ -41,19 +44,36 @@ struct PlacePicker<Notice: View>: View {
     /// The row showing a spinner while the pick saves (the drop zone's is its container id); the
     /// list is locked meanwhile.
     var busyId: String?
+    /// A banner above the lists (a conflict, a failure). An optional view (`if let … { … }` in
+    /// the builder) that is nil adds nothing.
     @ViewBuilder var notice: Notice
     let onPick: (PickedPlace) -> Void
     var onNewContainer: (_ spaceId: String, _ spaceName: String) -> Void = { _, _ in }
     /// No spaces at all: make one.
     var onNewSpace: () -> Void = {}
+    /// Where the filter text lives; the view keeps its own when nil (`PlacePickerHost` binds
+    /// its model's `query`, so the model's sections match what shows).
+    var filterText: Binding<String>?
+    /// Plays `.choice` and ignores picks while busy before calling `onPick`. `PlacePickerHost`
+    /// turns it off: its model's `pick(_:)` does both.
+    var handlesPickFeedback = true
 
     @Environment(\.haptics) private var haptics
-    @State private var query = ""
+    @State private var ownQuery = ""
     @State private var arrived = false
     @FocusState private var filterFocused: Bool
 
     private var allowNew: Bool { allowsNewContainer ?? mode.allowsNewContainerByDefault }
     private var locked: Bool { busyId != nil }
+    private var query: String { filterText?.wrappedValue ?? ownQuery }
+    private var queryBinding: Binding<String> { filterText ?? $ownQuery }
+
+    /// Whether there is a notice to show: not `EmptyView`, and not an optional view that is nil.
+    private var hasNotice: Bool {
+        if Notice.self == EmptyView.self { return false }
+        if let optional = notice as? any PlacePickerOptionalNotice { return !optional.isNone }
+        return true
+    }
 
     var body: some View {
         // One container, so the search field and the arrival focus survive the switch from the
@@ -64,12 +84,22 @@ struct PlacePicker<Notice: View>: View {
                     SkeletonView(variant: .options).padding()
                 }
             } else if let failure {
-                ErrorStateView(cause: .failed(failure), onRetry: onRetry)
+                // Centred while it fits, scrolling once it does not, so Try again stays reachable
+                // at the largest text sizes (the state view does not scroll by itself).
+                GeometryReader { proxy in
+                    ScrollView {
+                        ErrorStateView(cause: .failed(failure), onRetry: onRetry)
+                            .frame(maxWidth: .infinity, minHeight: proxy.size.height)
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                }
             } else {
                 list
             }
         }
-        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: Text(verbatim: placeholder))
+        // UI tests find the filter as `app.searchFields.firstMatch` (or by its placeholder): the
+        // stock search field takes no accessibility identifier, so RN's `place-filter` is not set.
+        .searchable(text: queryBinding, placement: .navigationBarDrawer(displayMode: .always), prompt: Text(verbatim: placeholder))
         .searchFocused($filterFocused)
         .textInputAutocapitalization(mode == .open ? .characters : .never)
         .autocorrectionDisabled()
@@ -77,7 +107,7 @@ struct PlacePicker<Notice: View>: View {
             // On arrival only (RN `autoFocus`), not each time a pushed form comes back.
             guard !arrived else { return }
             arrived = true
-            if query.isEmpty && !initialQuery.isEmpty { query = initialQuery }
+            if query.isEmpty && !initialQuery.isEmpty { queryBinding.wrappedValue = initialQuery }
             if autoFocusesFilter ?? mode.autoFocusesFilter { filterFocused = true }
         }
     }
@@ -96,7 +126,7 @@ struct PlacePicker<Notice: View>: View {
         let noMatch = PlacePickerRules.noMatchMessage(query: query, options: options, sections: sections)
         let nothingAtAll = PlacePickerRules.isNothingAtAll(loading: isLoading, options: options, spaces: spaces, allowNewContainer: allowNew)
         return List {
-            if !(Notice.self == EmptyView.self) {
+            if hasNotice {
                 Section {
                     notice
                 }
@@ -278,11 +308,24 @@ struct PlacePicker<Notice: View>: View {
     }
 
     private func pick(_ place: PickedPlace) {
+        guard handlesPickFeedback else {
+            onPick(place)
+            return
+        }
         // Locked while a pick saves; VoiceOver can still activate a row.
         guard !locked else { return }
         haptics(.choice)
         onPick(place)
     }
+}
+
+/// An optional view (what `if let … { … }` builds), so a nil notice adds no empty section.
+private protocol PlacePickerOptionalNotice {
+    var isNone: Bool { get }
+}
+
+extension Optional: PlacePickerOptionalNotice where Wrapped: View {
+    fileprivate var isNone: Bool { self == nil }
 }
 
 extension PlacePicker where Notice == EmptyView {
@@ -304,14 +347,17 @@ extension PlacePicker where Notice == EmptyView {
         busyId: String? = nil,
         onPick: @escaping (PickedPlace) -> Void,
         onNewContainer: @escaping (_ spaceId: String, _ spaceName: String) -> Void = { _, _ in },
-        onNewSpace: @escaping () -> Void = {}
+        onNewSpace: @escaping () -> Void = {},
+        filterText: Binding<String>? = nil,
+        handlesPickFeedback: Bool = true
     ) {
         self.init(
             mode: mode, options: options, spaces: spaces, recentIds: recentIds, isLoading: isLoading, failure: failure,
             onRetry: onRetry, currentContainerId: currentContainerId, selectedContainerId: selectedContainerId,
             showsDropZone: showsDropZone, allowsNewContainer: allowsNewContainer, autoFocusesFilter: autoFocusesFilter,
             placeholder: placeholder, initialQuery: initialQuery, busyId: busyId, notice: { EmptyView() }, onPick: onPick,
-            onNewContainer: onNewContainer, onNewSpace: onNewSpace
+            onNewContainer: onNewContainer, onNewSpace: onNewSpace, filterText: filterText,
+            handlesPickFeedback: handlesPickFeedback
         )
     }
 }
@@ -337,6 +383,15 @@ extension PlacePicker where Notice == EmptyView {
     NavigationStack {
         PlacePicker(mode: .move, options: ComponentsFixtures.options, spaces: ComponentsFixtures.spaces, recentIds: [], currentContainerId: "c-chest", busyId: "c-bin") {
             BannerView(tone: .warning, title: "Moved meanwhile", message: "Pick again?", live: .off)
+        } onPick: { _ in }
+    }
+}
+
+#Preview("Move, no notice (an optional notice that is nil)") {
+    @Previewable @State var conflict: String?
+    NavigationStack {
+        PlacePicker(mode: .move, options: ComponentsFixtures.options, spaces: ComponentsFixtures.spaces, recentIds: [], currentContainerId: "c-chest") {
+            if let conflict { BannerView(tone: .warning, message: conflict, live: .off) }
         } onPick: { _ in }
     }
 }

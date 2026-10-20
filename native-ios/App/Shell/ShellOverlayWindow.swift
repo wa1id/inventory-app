@@ -36,17 +36,21 @@ final class ShellOverlayHostingController<Content: View>: UIHostingController<Co
 }
 
 /// Installs the overlay window once the gate has passed and keeps it showing only while there is
-/// something to show (a toast, the removed-phone layer); hidden, it can change nothing.
+/// something to show (a toast, the removed-phone layer); hidden, it can change nothing. While a
+/// confirmation or action sheet is up (``ShellDialogTracker``) a toast does not count: the window
+/// is above system alerts, so the toast would cover the dialog's buttons and take their taps.
 @MainActor
 final class ShellOverlayController {
     let state = ShellOverlayState()
     private let app: AppContainer
     private let tabBarChrome: ShellTabBarChrome?
+    private let dialogs: ShellDialogTracker
     private(set) var window: ShellOverlayWindow?
 
-    init(app: AppContainer, tabBarChrome: ShellTabBarChrome? = nil) {
+    init(app: AppContainer, tabBarChrome: ShellTabBarChrome? = nil, dialogs: ShellDialogTracker = .shared) {
         self.app = app
         self.tabBarChrome = tabBarChrome
+        self.dialogs = dialogs
     }
 
     /// Creates the window on `scene`, once.
@@ -71,6 +75,7 @@ final class ShellOverlayController {
         withObservationTracking {
             _ = app.toasts.current
             _ = app.connection.state
+            _ = dialogs.isShowingDialog
         } onChange: { [weak self] in
             Task { @MainActor in self?.follow() }
         }
@@ -84,7 +89,8 @@ final class ShellOverlayController {
         // (as for a system alert), so the screens and sheets under the layer go quiet.
         window.accessibilityViewIsModal = revoked
         window.rootViewController?.view.accessibilityViewIsModal = revoked
-        window.isHidden = !(revoked || app.toasts.current != nil)
+        let showsToast = app.toasts.current != nil && !dialogs.isShowingDialog
+        window.isHidden = !(revoked || showsToast)
     }
 }
 
