@@ -165,6 +165,9 @@ struct CameraPanel: View {
     var title: String?
     let message: String
     var actions: [CameraPanelAction] = []
+    /// A symbol before the words (the capture screen's notices lead with a warning triangle, RN
+    /// `CameraNotice`); decorative. Not drawn while busy, where the spinner stands.
+    var systemImage: String?
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -180,6 +183,10 @@ struct CameraPanel: View {
                 if tone == .busy {
                     ProgressView()
                         .tint(.white)
+                } else if let systemImage {
+                    Image(systemName: systemImage)
+                        .font(.title3)
+                        .accessibilityHidden(true)
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     if let title {

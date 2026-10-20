@@ -235,8 +235,8 @@ stores and seams: `toasts: app.toasts`, `confirm: app.platform.confirm`,
 | Scan tab | `ScanModel(permission: app.makeCameraPermission(purpose: .scan), qr: { app.repositories.qr }, haptics:, telemetry:, clock:, navigate:)`. Call `focusGained()`/`focusLost()` from `\.isScreenFocused`, and `tabReselected()` on `reselections[.scan]`. Draw `QrScannerView(model: scan.scanner, managesFocus: false) { CameraPanel(scan.panel) { … } }`. |
 | Label link | `LabelLinkModel(token:qr:invalidator:toasts:confirm:haptics:rememberPlace:navigate:)`. Call `start()` on appear and register `close()` with `router.onRemoval(of: address)`. |
 | Sticker link cover | Its own `QrScannerModel(title:permission:)` with the default `managesFocus: true`. Pass the changing title through `QrScannerView(title:)`, because `QrScannerModel.title` is a `let`. Overlay its own `CameraPanel`, also over the permission screen. |
-| Capture | `CaptureModel(route:deliverPhoto:permission:photos:fastCapture:items:invalidator:toasts:haptics:…, navigate:)` with `deliverPhoto: { app.router.results.deliver(request, $0) }` when there is a request, `photos: app.imageStore` and `fastCapture: app.fastCapture`. `CaptureNavigation` maps to the router (see the file's comment). Wire `camera.reportEvents(to: model)` and register `disappeared()` with `onRemoval`. Attach `.captureLibraryPicker` once at the root, and pass `CameraPermissionView(isProcessing: model.processing)`. Stop the session when the screen loses focus, since the review is pushed over the live camera: `CameraPreview(camera:runs: isScreenFocused && …)`. |
-| Quick Snap review | `QuickSnapReviewModel(route:items:photos:isPaired:invalidator:toasts:confirm:haptics:…, navigate:)`. Call `reload()` on appear, on focus gain and on revision change. `QuickSnapReviewNavigation` maps to the router (see the file). |
+| Capture | `CaptureModel(route:deliverPhoto:permission:photos:fastCapture:items:invalidator:toasts:haptics:…, navigate:)` with `deliverPhoto: { app.router.results.deliver(request, $0) }` when there is a request, `photos: app.imageStore` and `fastCapture: app.fastCapture`. `CaptureNavigator(router:address:).navigate(_:)` maps `CaptureNavigation` to the router (back closes the cover, the Add sheet replaces it, the review is pushed inside it, and popping the review closes the camera under it). Wire `camera.reportEvents(to: model)` and register `disappeared()` with `onRemoval`. Attach `.captureLibraryPicker` once at the root, and pass `CameraPermissionView(isProcessing: model.processing)`. Stop the session when the screen loses focus, since the review is pushed over the live camera: `CameraPreview(camera:runs: isScreenFocused && …)`. Built in `App/Screens/Capture` (the camera seam is `CaptureCameraFeed`; DEBUG builds stand in for the simulator's missing camera, see `CaptureDemo`). |
+| Quick Snap review | `QuickSnapReviewModel(route:items:photos:isPaired:invalidator:toasts:confirm:haptics:…, navigate:)`, driven like a query: `.inventoryQuery(model)` (focus and revision), `.refreshable { await model.refresh() }`, `reload()` for Try again. `QuickSnapReviewNavigator(router:address:)` maps `QuickSnapReviewNavigation` to the router. |
 | Add sheet | Built: `AddSheet(params:)` makes `app.makeAddSheetModel(params:address:)` (every store wired, routing `AddSheetModel.Routing.router(_:address:)`: the camera for a result, Snap several and "Save and add another" with a photo replacing the sheet, `AddSheetRoutes`). Its own Cancel (`add-cancel`) calls `router.requestClose`, guarded by `.sheetCloseGuard { await model.confirmCancel() }`; the thumbnail shows `model.photoOptionsSheet()` with `app.platform.actionSheets`. `.interactiveDismissDisabled(model.interactiveDismissDisabled \|\| model.isPickingPlace)`. The place step swaps in `PlacePickerHost(mode: .choose, selectedContainerId:, showsDropZone: true) { model.pickPlace($0) }` (§5.1) with Back (`add-back`, `model.closePlaceStep()`). Demo states: `AddDemo` (`-demoArea add -demoState …`). |
 | Move / file | `MoveModel(items:filing:request:routeResults: app.router.results, recentPlaces: app.recentPlaces, …, isFocused: { router.isFocused(address) }, close: { router.close(address) })`. Keep `loaded` current with `move.follow(query)` (the sheet's `item:<id>` read) before the picker is first built. Embed `PlacePickerHost(mode: move.pickerMode, currentContainerId:busyId: move.busyId) { place in Task { await move.pick(place) } }` (§5.1), which reads the lists and runs the inline create itself, with the notice in `.pinnedNotice { … }` above it (a list row scrolled away is neither seen nor announced). |
 | Edit forms | `DirtyGuard(confirm:title:dirty:saving:revoked:)`, plus `.sheetCloseGuard { await guard.attemptClose() }` and `.interactiveDismissDisabled(guard.interactiveDismissDisabled)`. |
@@ -420,7 +420,7 @@ All are in the app target (module `Inventory`). Logic and copy behind them live 
 | `CameraGlassIconButton(systemImage:label:isSelected: = nil, identifier:action:)` | A round 48 pt glass button. A toggle that is on turns tape yellow and reads as selected. |
 | `CameraTitlePill(text:systemImage:updatesFrequently: = false, identifier:announces: = false)` | White text on a glass capsule (RN `StatusPill`): the scanner title or the running count. Capped at AX1. `announces` reads each new text (queued). |
 | `ScannerReticle(isLocked:)` | The four corner brackets. Tape yellow once a code locks. |
-| `CameraPanel(tone:title:message:actions:)`, `CameraPanel(_ panel: ScanPanel, perform:)`; `CameraPanelAction(id:label:systemImage:perform:)` | A notice over the picture: hint, busy or error (the coral edge). Busy and error notices are announced. Scan ids are `scan-again`, `scan-try-again` and `scan-type-code`. |
+| `CameraPanel(tone:title:message:actions:systemImage:)`, `CameraPanel(_ panel: ScanPanel, perform:)`; `CameraPanelAction(id:label:systemImage:perform:)` | A notice over the picture: hint, busy or error (the coral edge), with an optional leading symbol (the capture notices' warning triangle). Busy and error notices are announced. Scan ids are `scan-again`, `scan-try-again` and `scan-type-code`. |
 | `MediaPalette` | Camera-only colours: `tape`, `errorBar`, `reticle`, `glassTint`, `qrInk`, `qrPaper`. |
 | `.captureLibraryPicker(isPresented:onFinish:)`; `CaptureLibraryPickGate`, `CaptureLibraryFile` | The photo library picker. Attach it once at the capture screen's root. It answers each presentation exactly once (`.picked`, `.cancelled` or `.failed`). |
 | `QrCodeRenderer.modules(for:) -> CGImage?`; `QrCodeImage(payload:side:quietZone:)` | A QR symbol (error correction M, margin trimmed) drawn crisp. |
@@ -428,10 +428,11 @@ All are in the app target (module `Inventory`). Logic and copy behind them live 
 | `QrLabelShareLink(token:name:shortCode:)` | "Share label…" with the 1024 px picture (`qr-share`). Apply `.disabled(busy)` while the screen works. |
 | `QrLabelPicture.render(payload:cardSize:)`, `.pngData(payload:cardSize:)`, `.write(payload:shortCode:cardSize:in:) throws -> URL` | The 1024 px share picture; `write` saves `label-<code>.png` (temporary directory by default). |
 
-Capture chrome that does not exist yet and belongs to the capture screen: the Into pill, the
-shutter and its flash, the mode picker, Done, the last-shot tile and the camera notice (warning
-icon, error bar, "Type it instead"). Build them from `CameraGlassIconButton`, `CameraTitlePill`,
-`CameraPanel` and `SegmentedChoice(onCamera: true)`.
+The capture screen's own chrome (the Into pill, the shutter and its flash, Done, the last-shot
+tile, the reticle) is in `App/Screens/Capture/CaptureChrome.swift`, built on
+`CameraGlassIconButton`, `CameraTitlePill`, `CameraPanel` and `SegmentedChoice(onCamera: true)`.
+`LocationLine` measured one line and drew two inside the camera's top row, so the Into pill
+draws its pieces in stock stacks (`ViewThatFits`: one line, else the tape under the words).
 
 ## 4. Rules that are easy to miss
 
@@ -454,6 +455,10 @@ icon, error bar, "Type it instead"). Build them from `CameraGlassIconButton`, `C
   (`else { Color.clear }`, as in §1.2): `ScreenFrame { if let model { … } }` with no model is an
   empty view, SwiftUI never calls its `onAppear`, and the screen stays blank, title included.
 - A screen under a sheet is unfocused. Stop cameras, scanners and timers there.
+- Status text over a camera picture: the cover's bar is hidden, so `.toolbarColorScheme` does
+  nothing, and `.preferredColorScheme(.dark)` darkens the whole presentation and is not undone
+  by setting it back to nil (a screen pushed over the camera stays dark). The capture screen
+  uses `.statusBarHidden(live camera in front)`, as the system Camera does.
 - `EmptyStateView` and `ErrorStateView` are `ContentUnavailableView`s and do not scroll. Put
   them in a `List` or `ScrollView` so their text and buttons stay reachable at AX5. As a `List`
   row a long heading can be cut to one line at default sizes ("Your inventory could not…");
