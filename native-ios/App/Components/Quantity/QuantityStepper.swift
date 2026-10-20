@@ -130,6 +130,11 @@ struct QuantityStepper: View {
             @unknown default: break
             }
         }
+        // A double tap types a number too (RN's `activate` action), rather than landing on
+        // whichever cell sits under the element's centre.
+        .accessibilityAction {
+            if !isDisabled { fieldFocused = true }
+        }
         .accessibilityAction(named: Text(verbatim: L10n.Quantity.typeNumber)) {
             if !isDisabled { fieldFocused = true }
         }
