@@ -151,7 +151,10 @@ private struct SpaceEditForm: View {
                     identifier: "space-save",
                     action: save
                 )
+                .accessibilityShowsLargeContentViewer()
             }
+            // RN's button cap for pinned chrome (08 §6: 1.6 → xxxLarge).
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         }
         .placesDirtyGuard(model.dirtyGuard)
         .onChange(of: model.nameFocusRequests) { focus = .name }

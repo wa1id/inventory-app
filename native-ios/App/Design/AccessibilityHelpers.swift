@@ -31,16 +31,10 @@ extension View {
         }
     }
 
-    /// Announces `text` to VoiceOver when this view appears and whenever `text` changes, unless
-    /// `enabled` is false (RN live regions, which VoiceOver does not read).
+    /// Announces `text` to VoiceOver when this view first appears and whenever `text` changes,
+    /// unless `enabled` is false (RN live regions, which VoiceOver does not read). Appearing again
+    /// with the same words (a list row scrolled back into view, a re-render) says nothing.
     func announcesOnChange(_ text: String, enabled: Bool = true, queued: Bool = false) -> some View {
-        task(id: enabled ? text : nil) {
-            guard enabled else { return }
-            if queued {
-                ComponentAnnouncer.announceQueued(text)
-            } else {
-                ComponentAnnouncer.announce(text)
-            }
-        }
+        modifier(ComponentAnnouncementModifier(text: text, enabled: enabled, queued: queued))
     }
 }

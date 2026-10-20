@@ -67,20 +67,21 @@ final class HomeListScroller {
     func scrollToTop(animated: Bool) {
         guard let scrollView else { return }
         scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: -scrollView.adjustedContentInset.top), animated: animated)
-        settleAtTop(scrollView, passes: 3, after: animated ? 0.45 : 0.05)
+        settleAtTop(scrollView, passes: 3, after: animated ? 0.45 : 0.05, animated: animated)
     }
 
     /// The large title comes back on the way up, which moves the top (the bar's inset grows):
-    /// once the scroll has ended, go the rest of the way. Never while she is touching the list.
-    private func settleAtTop(_ scrollView: UIScrollView, passes: Int, after delay: TimeInterval) {
+    /// once the scroll has ended, go the rest of the way, animated only as the scroll was (never
+    /// under Reduce Motion). Never while she is touching the list.
+    private func settleAtTop(_ scrollView: UIScrollView, passes: Int, after delay: TimeInterval, animated: Bool) {
         guard passes > 0 else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self, weak scrollView] in
             guard let self, let scrollView, scrollView.window != nil,
                   !scrollView.isTracking, !scrollView.isDragging, !scrollView.isDecelerating else { return }
             let top = -scrollView.adjustedContentInset.top
             guard scrollView.contentOffset.y - top > 1 else { return }
-            scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: top), animated: true)
-            self.settleAtTop(scrollView, passes: passes - 1, after: 0.45)
+            scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: top), animated: animated)
+            self.settleAtTop(scrollView, passes: passes - 1, after: animated ? 0.45 : 0.15, animated: animated)
         }
     }
 

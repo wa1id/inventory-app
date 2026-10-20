@@ -47,6 +47,8 @@ struct LinkStickerScreen: View {
         // scrolls to hold it.
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("screen-link-sticker")
+        // VoiceOver's escape closes the cover, as its close button does.
+        .accessibilityAction(.escape) { close() }
         .onAppear {
             guard model == nil else { return }
             let made = Self.makeModel(app: app, containerId: containerId, address: address)
@@ -114,10 +116,18 @@ private struct LinkStickerContent: View {
             onClose: close,
             closeIdentifier: "link-close",
             makeFeed: makeFeed
-        )
-        .overlay(alignment: .bottom) {
+        ) {
+            // Over the picture, the scanner's own footer: under its title row whatever the title's
+            // height (two lines at large sizes), scrolling when it is taller than the room left.
             if let panel = model.panel {
-                LinkStickerNotice(panel: panel) { model.perform($0) }
+                LinkStickerNotice(panel: panel, placement: .footer) { model.perform($0) }
+            }
+        }
+        .overlay(alignment: .bottom) {
+            // The permission screen and a camera that failed draw no footer: over those, as RN
+            // overlaid it.
+            if let panel = model.panel, !model.scanner.permission.isGranted || !model.scanner.showsFooter {
+                LinkStickerNotice(panel: panel, placement: .overlay) { model.perform($0) }
             }
         }
     }
@@ -126,21 +136,34 @@ private struct LinkStickerContent: View {
 /// The notice over the bottom of the sticker camera (RN `Panel`): it scrolls when large text
 /// makes it taller than the room under the title, so its button stays reachable.
 private struct LinkStickerNotice: View {
+    enum Placement {
+        /// In the scanner's footer, which places and scrolls it.
+        case footer
+        /// Over a screen with no footer (the permission screen), clear of its close button.
+        case overlay
+    }
+
     let panel: LinkStickerPanel
+    let placement: Placement
     let perform: (LinkStickerPanel.Action) -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Clear of the close button, the title and the torch.
-            Spacer(minLength: 72)
-            ViewThatFits(in: .vertical) {
-                notice
-                ScrollView { notice }
-                    .scrollBounceBehavior(.basedOnSize)
+        switch placement {
+        case .footer:
+            notice
+        case .overlay:
+            VStack(spacing: 0) {
+                // Clear of the close button.
+                Spacer(minLength: 72)
+                ViewThatFits(in: .vertical) {
+                    notice
+                    ScrollView { notice }
+                        .scrollBounceBehavior(.basedOnSize)
+                }
             }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
         }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 16)
     }
 
     private var notice: some View {

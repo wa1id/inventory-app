@@ -139,6 +139,10 @@ private struct ScanScreenContent: View {
                     }
                 }
             }
+            // RN's testID on the camera frame; a container of its own, so the torch and the
+            // panel's buttons keep theirs.
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("scan-camera")
             // The scene ends at the tab bar, as in RN: behind the bar is the page, not the
             // picture, so its glass and the ink of the selected tab read as on every other tab
             // (over a dark picture the glass turns dark and the ink would vanish). The page is a
@@ -178,6 +182,8 @@ private struct ScanScreenContent: View {
         // one container to take the screen's identifier (`screen-scan`) it would replace the
         // button's own (`scan-back-to-camera`).
         .accessibilityElement(children: .contain)
+        // The list is swapped in for the camera, not pushed: VoiceOver's escape goes back to it.
+        .accessibilityAction(.escape) { scan.backToCamera() }
     }
 }
 

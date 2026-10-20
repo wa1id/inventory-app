@@ -22,6 +22,7 @@ import InventoryStrings
 /// | `request` | the camera the Add sheet opens for one photo: no mode picker, no Type it instead |
 /// | `flash` | the single camera with the flash on |
 /// | `singleShot` | the single camera taking a photo by itself: it hands over to the Add sheet carrying it |
+/// | `singleProcessing` | the single camera taking a photo that is never done saving: the busy shutter ("Saving…") |
 /// | `fast` | Quick Snap before the first shot (Done dimmed) |
 /// | `fastShots` | Quick Snap taking three shots by itself; recognition answers after 8 s: "Identifying 3…", then "2 identified · 1 to name" |
 /// | `fastDone` | Quick Snap taking two shots and pressing Done by itself: the review pushed over the camera |
@@ -44,8 +45,19 @@ enum CaptureDemo {
     @MainActor
     static func container(state: String, platform: AppPlatform) -> AppContainer? {
         CaptureStandIn.current = standIn(for: state)
+        holdsPhotos = state == "singleProcessing"
         guard state == "fastShots" else { return nil }
         return recognizingContainer(platform: platform)
+    }
+
+    /// `singleProcessing`: the capture screens store photos that never finish saving.
+    @MainActor private static var holdsPhotos = false
+
+    /// The photo store a capture screen saves through: the app's, or one that never finishes
+    /// for `singleProcessing`.
+    @MainActor
+    static func photos(_ base: any PhotoStoring) -> any PhotoStoring {
+        holdsPhotos ? CaptureDemoHeldPhotos(base: base) : base
     }
 
     /// Opens the state's screen once the main shell shows.
@@ -53,7 +65,7 @@ enum CaptureDemo {
     static func run(state: String, app: AppContainer) async {
         let router = app.router
         switch state {
-        case "single", "flash", "didNotStart", "singleShot":
+        case "single", "flash", "didNotStart", "singleShot", "singleProcessing":
             router.present(.cover(.capture(CaptureRoute(containerId: await toolChestId(app) ?? DropZone.containerId), request: nil)))
         case "request", "permissionRequest":
             let containerId = await toolChestId(app) ?? DropZone.containerId
@@ -106,7 +118,7 @@ enum CaptureDemo {
         let script: Script = switch state {
         case "flash": Script(flashOn: true)
         case "fastShots": Script(shots: [.photo, .photo, .photo])
-        case "singleShot": Script(shots: [.photo])
+        case "singleShot", "singleProcessing": Script(shots: [.photo])
         case "fastDone": Script(shots: [.photo, .photo], finishes: true)
         case "didNotStart": Script(failsToStart: true)
         case "noPhoto": Script(shots: [.fails])
@@ -139,9 +151,10 @@ enum CaptureDemo {
         return containers.first { $0.container.name == "Tool chest" }?.container.id
     }
 
-    /// The review pushed over a Quick Snap camera, as Done leaves it. The push waits for the
-    /// cover to be up: a stack presented with a screen already pushed has no destination for it
-    /// yet.
+    /// The review pushed over a Quick Snap camera, as Done leaves it: through `CaptureNavigator`,
+    /// so popping the review closes the camera under it, as after a real set. The push waits for
+    /// the cover to be up: a stack presented with a screen already pushed has no destination for
+    /// it yet.
     @MainActor
     private static func openReview(_ app: AppContainer, _ route: QuickSnapReviewRoute) async {
         let camera = app.router.present(.cover(.capture(CaptureRoute(containerId: route.containerId, mode: .fast), request: nil)))
@@ -204,6 +217,32 @@ enum CaptureDemo {
             ),
             platform: platform
         )
+    }
+}
+
+/// The app's photo store, except that a new photo is never done saving (`singleProcessing`).
+private struct CaptureDemoHeldPhotos: PhotoStoring {
+    let base: any PhotoStoring
+
+    func storeItemPhoto(_ source: ImageSource, cropToAspect aspect: CGSize?) async throws -> StoredImage {
+        try await Task.sleep(for: .seconds(3600))
+        throw CancellationError()
+    }
+
+    func writeStoredPhoto(photoId: String, bytes: Data) async throws -> StoredImage {
+        try await base.writeStoredPhoto(photoId: photoId, bytes: bytes)
+    }
+
+    func readStoredPhoto(_ uri: String) async -> Data? {
+        await base.readStoredPhoto(uri)
+    }
+
+    func deleteStoredPhotos(_ uris: [String?]) {
+        base.deleteStoredPhotos(uris)
+    }
+
+    func hasRoomForPhoto(estimatedBytes: Int64) -> Bool {
+        base.hasRoomForPhoto(estimatedBytes: estimatedBytes)
     }
 }
 

@@ -104,27 +104,36 @@ struct PlaceRow: View {
     let onPress: () -> Void
 
     var body: some View {
-        Group {
-            switch PlaceRowContent.resolve(hit, spaces: spaces, containers: containers) {
-            case .space(let space):
+        switch PlaceRowContent.resolve(hit, spaces: spaces, containers: containers) {
+        case .space(let space):
+            // RN wrapped the joined rows in a view with the hit's testID (`place-row-<id>`); the
+            // row inside keeps its own (`space-row-<id>`, `container-row-<id>`). A container
+            // element, so the wrapper's identifier never replaces the row's.
+            VStack(spacing: 0) {
                 SpaceRow(space: space, tileSize: 48, terms: terms, onPress: onPress)
-            case .container(let container):
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier(PlaceRowText.placeIdentifier(hit.id))
+        case .container(let container):
+            VStack(spacing: 0) {
                 ContainerRow(container: container, context: .search, terms: terms, onPress: onPress)
-            case .hit(let hit):
-                ListRow(
-                    action: onPress,
-                    showsChevron: true,
-                    minHeight: 48,
-                    accessibilityLabel: PlaceRowText.hitAccessibilityLabel(hit),
-                    identifier: PlaceRowText.placeIdentifier(hit.id)
-                ) {
-                    TypeTile(type: .other, size: 48)
-                } content: {
-                    PlaceName(name: hit.title, terms: terms)
-                    Text(verbatim: hit.subtitle)
-                        .textRole(.meta)
-                        .foregroundStyle(.secondary)
-                }
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier(PlaceRowText.placeIdentifier(hit.id))
+        case .hit(let hit):
+            ListRow(
+                action: onPress,
+                showsChevron: true,
+                minHeight: 48,
+                accessibilityLabel: PlaceRowText.hitAccessibilityLabel(hit),
+                identifier: PlaceRowText.placeIdentifier(hit.id)
+            ) {
+                TypeTile(type: .other, size: 48)
+            } content: {
+                PlaceName(name: hit.title, terms: terms)
+                Text(verbatim: hit.subtitle)
+                    .textRole(.meta)
+                    .foregroundStyle(.secondary)
             }
         }
     }

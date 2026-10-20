@@ -88,6 +88,7 @@ struct ItemDetailBody: View {
         // A name that arrives while one is typed is said, as RN's live region was; from here
         // rather than the field's row, which the list does not draw while it is scrolled away.
         .announcesOnChange(nameNotice ?? "", enabled: nameNotice != nil)
+        .announcesOnChange(L10n.Errors.refreshFailed, enabled: model?.showsRefreshBanner == true && model?.stored != nil)
         // A container, so the screen's identifier does not replace its controls' own.
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("screen-item")
@@ -167,7 +168,10 @@ struct ItemDetailBody: View {
                     BannerView(
                         tone: .info,
                         message: L10n.Errors.refreshFailed,
-                        primary: BannerAction(label: L10n.Common.tryAgain) { model.retry() }
+                        primary: BannerAction(label: L10n.Common.tryAgain) { model.retry() },
+                        // Announced by the screen, once (a row scrolled away and back would
+                        // say it again).
+                        live: .off
                     )
                 }
                 .listRowInsets(EdgeInsets())
@@ -270,6 +274,9 @@ struct ItemDetailBody: View {
             }
         }
         .frame(maxWidth: .infinity, minHeight: layout.isStacked ? nil : DesignMetrics.thumbDetail, alignment: .leading)
+        // The title is its own heading, as RN's was (a header View around the name): without a
+        // photo button in the row, the list would otherwise read the whole row as one element.
+        .accessibilityElement(children: .contain)
         .onGeometryChange(for: Bool.self) { [barBottom] proxy in
             barBottom > 0 && proxy.frame(in: .global).maxY <= barBottom
         } action: { collapsed in

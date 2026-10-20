@@ -53,6 +53,9 @@ struct HomeSummaryLines: View {
                 .textRole(.caption)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        // One element with the icon's room in it (the icon is not read): the server glyph drawn
+        // into the text's own frame read as clipped text to the accessibility audit.
+        .accessibilityElement(children: .combine)
         .foregroundStyle(reconnecting ? AnyShapeStyle(DesignColor.signal) : AnyShapeStyle(.secondary))
     }
 }
@@ -111,7 +114,8 @@ struct HomeTotalLine: View {
             .textRole(.meta)
             .foregroundStyle(Color.primary)
             .fixedSize(horizontal: false, vertical: true)
-            .accessibilityElement(children: .ignore)
+            // The text is one element already; a new element around it read as a control to the
+            // accessibility audit (a 18 pt "hit area" on plain text).
             .accessibilityLabel(Text(verbatim: text.accessibilityLabel))
     }
 
@@ -238,6 +242,16 @@ struct HomeFillingState<Banner: View, Content: View>: View {
 extension HomeFillingState where Banner == EmptyView {
     init(placement: Placement = .center, @ViewBuilder content: () -> Content) {
         self.init(placement: placement, banner: nil, content: content)
+    }
+}
+
+/// RN `animateNextLayout` (08 §8.1, §8.3) for the screens-a screens: a layout change (Home's
+/// title lines going compact, a filed drop-zone row leaving, Technical details opening) fades
+/// and moves over 180 ms, and happens at once under Reduce Motion.
+enum HomeLayoutMotion {
+    static func animation(reduceMotion: Bool) -> Animation? {
+        let length = Motion.duration(reduceMotion: reduceMotion).expand
+        return length == 0 ? nil : .easeInOut(duration: Double(length) / 1000)
     }
 }
 

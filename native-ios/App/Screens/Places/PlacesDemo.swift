@@ -3,6 +3,7 @@ import Foundation
 import InventoryAppModels
 import InventoryCore
 import Synchronization
+import UIKit
 
 /// DEBUG demo hooks for the places area: space and container screens and their forms.
 ///
@@ -21,6 +22,7 @@ import Synchronization
 /// | `refreshProblem` | a space or container screen's reads work once, then fail; 4 s in, a refresh shows the banner | `space:Garage`, `container:Tool_chest` (`RUN_SETTLE_SECONDS=10`) |
 /// | `contentsProblem` | a space's containers and a container's items cannot be read at all (the failed contents, never "empty") | `space:Garage`, `container:Tool_chest` |
 /// | `goneSpace`, `goneContainer` | pushes a space or container that does not exist | none |
+/// | `arrival` | adds "Spirit level" to the Tool chest just before it opens: its row is picked out for a moment (RN `ArrivalHighlight`; `RUN_SETTLE_SECONDS=2`, or 3 with Reduce Motion) | `container:Tool_chest` |
 ///
 /// Forms with no state open empty or seeded: `spaceNew`, `containerNew:Garage`, `spaceEdit:Garage`,
 /// `containerEdit:Tool_chest`; the drop zone's are locked (`containerEdit:Drop_zone`).
@@ -51,6 +53,8 @@ enum PlacesDemo {
             app.router.push(.space(id: "deleted-elsewhere"))
         case "goneContainer":
             app.router.push(.container(id: "deleted-elsewhere"))
+        case "arrival":
+            await addArrival(app)
         default:
             if let script = Script(rawValue: state) {
                 self.script = script
@@ -105,6 +109,21 @@ enum PlacesDemo {
             ShellDemo.log.error("places demo: could not add the Workshop")
         }
         app.database.invalidate()
+    }
+
+    /// An item that has just arrived in the Tool chest, as from the Add sheet.
+    @MainActor
+    private static func addArrival(_ app: AppContainer) async {
+        let repositories = app.repositories
+        guard let chest = try? await repositories.containers.listAllWithSpace().first(where: { $0.container.name == "Tool chest" }) else {
+            ShellDemo.log.error("places demo: no Tool chest for the arrival")
+            return
+        }
+        _ = try? await repositories.items.create(ItemDraft(containerId: chest.container.id, name: "Spirit level", category: "Tools"))
+        app.database.invalidate()
+        // Which highlight to expect: a fade, or a longer hold that ends at once.
+        let reduced = UIAccessibility.isReduceMotionEnabled
+        ShellDemo.log.info("places demo: arrival with Reduce Motion \(reduced ? "on" : "off", privacy: .public)")
     }
 
     @MainActor

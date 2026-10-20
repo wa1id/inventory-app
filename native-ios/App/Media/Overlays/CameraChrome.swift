@@ -14,9 +14,10 @@ enum MediaPalette {
     static let errorBar = Color(red: 1, green: 0x95 / 255, blue: 0x73 / 255)
     /// The scanner's reticle while it looks (white at 85 %, RN `camera.reticle`).
     static let reticle = Color.white.opacity(0.85)
-    /// A dark tint under the glass so white text stays readable over a bright scene (RN drew a
-    /// 62 % dark chip).
-    static let glassTint = Color.black.opacity(0.35)
+    /// A dark tint under the glass so white text stays readable over a bright scene: RN's camera
+    /// chip, `rgba(12,14,13,0.62)` (08 §4.5). A lighter 35 % black left white words at about
+    /// 2.4:1 over a white wall, and a notice's white-tinted buttons lower still.
+    static let glassTint = Color(red: 12 / 255, green: 14 / 255, blue: 13 / 255).opacity(0.62)
     /// The QR label is black on white in both schemes, so every scanner reads it (08 §4.5).
     static let qrInk = Color.black
     static let qrPaper = Color.white
@@ -151,6 +152,11 @@ struct CameraPanelAction: Identifiable {
 ///
 /// Error and busy notices are announced to VoiceOver when they appear and whenever their words
 /// change, as `"<title>. <message>"`; the standing hint is not news and is not announced.
+///
+/// At the largest text sizes the words take at most ``wordsHeightShare`` of the window and
+/// scroll inside the panel, so the picture stays in view and the buttons stay on screen under
+/// them; the buttons' labels stop at RN's button cap (`.xxxLarge`, 08 §6) and show in the Large
+/// Content Viewer on a long press.
 struct CameraPanel: View {
     enum Tone: Hashable {
         /// The standing hint: no announcement.
@@ -170,6 +176,17 @@ struct CameraPanel: View {
     var systemImage: String?
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.shellWindowSize) private var windowSize
+    /// The words' own height, to cap the scrolling area at it.
+    @State private var wordsHeight: CGFloat = 0
+
+    /// The most of the window's height the words take before they scroll inside the panel.
+    static var wordsHeightShare: CGFloat { 0.3 }
+
+    /// The words' height limit: a share of the window, none until the window is measured.
+    static func wordsCap(windowHeight: CGFloat) -> CGFloat {
+        windowHeight > 0 ? (windowHeight * wordsHeightShare).rounded() : .infinity
+    }
 
     /// What VoiceOver hears when the panel appears (nil for the hint).
     var announcement: String? {
@@ -178,33 +195,23 @@ struct CameraPanel: View {
     }
 
     var body: some View {
+        let cap = Self.wordsCap(windowHeight: windowSize.height)
         VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .center, spacing: 12) {
-                if tone == .busy {
-                    ProgressView()
-                        .tint(.white)
-                } else if let systemImage {
-                    Image(systemName: systemImage)
-                        .font(.title3)
-                        .accessibilityHidden(true)
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    if let title {
-                        Text(title)
-                            .font(.headline)
-                            .accessibilityAddTraits(.isHeader)
-                    }
-                    Text(message)
-                        .font(.body)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .fixedSize(horizontal: false, vertical: true)
+            // Always the same scroll view, so the words keep their identity (and are announced
+            // once) when their height crosses the cap; it scrolls only when it must.
+            ScrollView {
+                words
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { wordsHeight = $0 }
             }
+            .scrollBounceBehavior(.basedOnSize)
+            .scrollDisabled(wordsHeight <= cap)
+            .scrollIndicatorsFlash(trigger: wordsHeight > cap)
+            .frame(height: min(wordsHeight, cap))
             if !actions.isEmpty {
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 8) { buttons }
-                    VStack(alignment: .leading, spacing: 8) { buttons }
-                }
+                // Side by side while they fit, each under the last when not: one tree either way,
+                // so a change of text size keeps the buttons and VoiceOver's place on them.
+                WrappingHStack(horizontalSpacing: 8, verticalSpacing: 8, alignment: .center) { buttons }
+                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
             }
         }
         .foregroundStyle(.white)
@@ -225,6 +232,32 @@ struct CameraPanel: View {
         .onChange(of: announcement) { announce() }
     }
 
+    private var words: some View {
+        HStack(alignment: .center, spacing: 12) {
+            if tone == .busy {
+                // The words say what is under way (and are announced); the spinner is decoration.
+                ProgressView()
+                    .tint(.white)
+                    .accessibilityHidden(true)
+            } else if let systemImage {
+                Image(systemName: systemImage)
+                    .font(.title3)
+                    .accessibilityHidden(true)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                if let title {
+                    Text(title)
+                        .font(.headline)
+                        .accessibilityAddTraits(.isHeader)
+                }
+                Text(message)
+                    .font(.body)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
     @ViewBuilder private var buttons: some View {
         ForEach(actions) { action in
             Button(action: action.perform) {
@@ -238,9 +271,10 @@ struct CameraPanel: View {
                 .fixedSize(horizontal: false, vertical: true)
             }
             .buttonStyle(.bordered)
-            // A capsule around a label that wraps to three lines at the largest sizes is an oval.
+            // A capsule around a label that wraps to more lines at the largest sizes is an oval.
             .buttonBorderShape(dynamicTypeSize.isAccessibilitySize ? .roundedRectangle : .automatic)
             .tint(.white)
+            .accessibilityShowsLargeContentViewer()
             .accessibilityIdentifier(action.id)
         }
     }

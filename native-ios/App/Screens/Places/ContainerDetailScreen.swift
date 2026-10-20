@@ -82,7 +82,6 @@ private struct ContainerDetailContent: View {
     let model: ContainerDetailModel
 
     @Environment(AppContainer.self) private var app
-    private let layout = LayoutScale()
 
     var body: some View {
         ScreenFrame(.detail) {
@@ -118,14 +117,21 @@ private struct ContainerDetailContent: View {
                         .buttonStyle(.bordered)
                         .buttonSizing(.fitted)
                         .accessibilityLabel(Text(verbatim: L10n.Container.takePhotoA11y))
+                        .accessibilityShowsLargeContentViewer()
                         .accessibilityIdentifier("items-capture")
                         LoadingButton(label: L10n.Container.addHere, glyph: .plus, fullWidth: true, identifier: "items-add", action: addHere)
+                            .accessibilityShowsLargeContentViewer()
                     }
                 }
+                // Pinned chrome stops at RN's button cap (08 §6: 1.6 → xxxLarge), as RN's did:
+                // uncapped, "Add here" took two lines beside the camera and the bar a fifth of the
+                // screen at AX5. The large content viewer shows both labels at full size.
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
             }
         }
         .navigationTitle(model.title)
         .navigationBarTitleDisplayMode(.large)
+        .announcesOnChange(L10n.Errors.refreshFailed, enabled: model.blocking == nil && model.showsRefreshBanner)
     }
 
     private func list(_ container: ContainerWithCounts) -> some View {
@@ -142,6 +148,9 @@ private struct ContainerDetailContent: View {
                         tone: .info,
                         message: L10n.Errors.refreshFailed,
                         primary: BannerAction(label: L10n.Common.tryAgain) { model.reloadAll() },
+                        // Announced by the screen, once (a row scrolled away and back would
+                        // say it again).
+                        live: .off,
                         chrome: .row,
                         identifier: "refresh-banner"
                     )
@@ -157,38 +166,58 @@ private struct ContainerDetailContent: View {
         .refreshable { await model.refresh() }
     }
 
+    /// The crumb, the type and count, the code and the QR entry. At the largest sizes the crumb
+    /// and the subline stop at RN's caps for their roles (08 §6: label and meta 2.0 → AX1) and
+    /// the QR button at the button cap (1.6 → xxxLarge), so the head no longer fills the first
+    /// screen at AX5 and the contents start on it; the code and the QR entry share a line while
+    /// they fit.
     private func head(_ container: ContainerWithCounts) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            if let crumb = model.crumb {
-                ContainerSpaceCrumb(crumb: crumb) { app.router.openSpace(crumb.id) }
-            } else if model.keepsCrumbRoom {
-                // Keeps the head from jumping when the space arrives.
-                Color.clear.frame(height: DesignMetrics.minTouchTarget).accessibilityHidden(true)
-            }
-            Text(verbatim: model.subline)
-                .textRole(.meta)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            AdaptiveStack(horizontalAlignment: .leading, spacing: 12) {
-                Tape(code: container.shortCode, size: .large)
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(Text(verbatim: model.codeAccessibilityLabel))
-                    .accessibilityAddTraits(.isStaticText)
-                if !layout.isStacked { Spacer(minLength: 0) }
-                LoadingButton(
-                    label: model.qrLabel,
-                    glyph: .qr,
-                    variant: .secondary,
-                    size: .small,
-                    accessibilityLabel: model.qrAccessibilityLabel,
-                    identifier: "container-qr"
-                ) {
-                    app.router.push(.qrLabel(containerId: model.id))
+            Group {
+                if let crumb = model.crumb {
+                    ContainerSpaceCrumb(crumb: crumb) { app.router.openSpace(crumb.id) }
+                } else if model.keepsCrumbRoom {
+                    // Keeps the head from jumping when the space arrives.
+                    Color.clear.frame(height: DesignMetrics.minTouchTarget).accessibilityHidden(true)
                 }
+                Text(verbatim: model.subline)
+                    .textRole(.meta)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+            // One line while they fit, the QR entry under the code when not: a layout, not a
+            // `ViewThatFits` swap, so growing text keeps the views (UI-KIT §4).
+            ComponentFitOrStack(horizontalSpacing: 12, verticalSpacing: 12) {
+                codeTape(container)
+                qrButton
             }
             .padding(.top, 12)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func codeTape(_ container: ContainerWithCounts) -> some View {
+        Tape(code: container.shortCode, size: .large)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text(verbatim: model.codeAccessibilityLabel))
+            .accessibilityAddTraits(.isStaticText)
+    }
+
+    private var qrButton: some View {
+        LoadingButton(
+            label: model.qrLabel,
+            glyph: .qr,
+            variant: .secondary,
+            size: .small,
+            accessibilityLabel: model.qrAccessibilityLabel,
+            identifier: "container-qr"
+        ) {
+            app.router.push(.qrLabel(containerId: model.id))
+        }
+        .fixedSize()
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+        .accessibilityShowsLargeContentViewer()
     }
 
     @ViewBuilder
@@ -204,7 +233,9 @@ private struct ContainerDetailContent: View {
             } header: {
                 HStack(spacing: 6) {
                     Text(verbatim: L10n.Container.inHere)
-                    Text(verbatim: "\(rows.count)").foregroundStyle(.secondary)
+                    // Set apart by weight, in the header's own colour: a second dimming (the
+                    // header is secondary already) left the count under 3:1.
+                    Text(verbatim: "\(rows.count)").fontWeight(.regular).monospacedDigit()
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(.isHeader)
@@ -295,14 +326,15 @@ private struct ContainerContentRow: View {
                 }
                 isArriving = true
                 highlight = 1
-                try? await Task.sleep(for: .milliseconds(600 + (reduceMotion ? 1200 : 0)))
+                let timing = ContainerDetailModel.arrivalTiming(reduceMotion: reduceMotion)
+                try? await Task.sleep(for: .milliseconds(timing.holdMs))
                 guard !Task.isCancelled else {
                     // Gone mid-hold (the row was opened at once, or scrolled away): drop the
                     // highlight rather than keep it on when the row shows again.
                     clearArrival()
                     return
                 }
-                let fade = Motion.motionMs(1200, reduced: reduceMotion)
+                let fade = timing.fadeMs
                 if fade == 0 {
                     highlight = 0
                     isArriving = false
@@ -325,7 +357,15 @@ private struct ContainerContentRow: View {
         ZStack(alignment: .leading) {
             Color(uiColor: .secondarySystemGroupedBackground)
             Color(uiColor: .systemFill).opacity(highlight)
-            Rectangle().fill(Color.accentColor).frame(width: 3).opacity(highlight)
+            // RN drew the bar the row's full height on its edge; here the first and last rows
+            // are clipped to the card's round corners, which cut the bar off at both ends. A
+            // capsule set in from the edge and the ends stays whole on every row.
+            Capsule()
+                .fill(Color.accentColor)
+                .frame(width: 3)
+                .padding(.vertical, 12)
+                .padding(.leading, 6)
+                .opacity(highlight)
         }
         .accessibilityHidden(true)
     }

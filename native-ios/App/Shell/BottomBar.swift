@@ -37,6 +37,9 @@ struct BottomBar<Secondary: View, Primary: View>: View {
         self.primary = primary()
     }
 
+    /// The largest text size the bar's labels take (RN `button` maxScale 1.6; 08 §6).
+    static var maximumTextSize: DynamicTypeSize { .xxxLarge }
+
     /// RN `stacked`: font scale ≥ 1.35 (`.xxxLarge`) or a window narrower than 360 pt
     /// (``LayoutScale``'s rule; a width of 0 is not measured yet).
     static func isStacked(dynamicTypeSize: DynamicTypeSize, windowWidth: CGFloat) -> Bool {
@@ -51,6 +54,12 @@ struct BottomBar<Secondary: View, Primary: View>: View {
         buttons
             .buttonSizing(.flexible)
             .controlSize(.large)
+            // Pinned chrome, like a toolbar: the labels stop growing at RN's button cap
+            // (`button` maxScale 1.6, `.xxxLarge`; 08 §6), so at the largest sizes two stacked
+            // buttons take a fifth of the screen rather than two fifths and the content keeps the
+            // room. Long-pressing a button shows its label in the Large Content Viewer, as the
+            // system bars do.
+            .dynamicTypeSize(...Self.maximumTextSize)
             .frame(maxWidth: DesignMetrics.contentMaxWidth)
             .padding(.horizontal, 16)
             .padding(.top, 12)
@@ -69,19 +78,14 @@ struct BottomBar<Secondary: View, Primary: View>: View {
     @ViewBuilder
     private var buttons: some View {
         if let secondary {
-            if stacks {
-                VStack(spacing: 12) {
-                    primary
-                    secondary
-                }
-            } else {
-                BottomBarRow(primaryFit: primaryFit) {
-                    secondary
-                    primary
-                }
+            // One tree for both shapes, so a change of text size keeps the buttons (and
+            // VoiceOver's place on them) rather than building new ones.
+            BottomBarRow(primaryFit: primaryFit, stacked: stacks) {
+                secondary.accessibilityShowsLargeContentViewer()
+                primary.accessibilityShowsLargeContentViewer()
             }
         } else {
-            primary
+            primary.accessibilityShowsLargeContentViewer()
         }
     }
 
@@ -108,14 +112,22 @@ extension BottomBar where Secondary == EmptyView {
 }
 
 /// Two cells side by side: 1 : 1.4, or the second sized to fit (at least 120 pt) and the first
-/// taking the rest; both proposed the taller one's height.
+/// taking the rest; both proposed the taller one's height. Stacked, the second (the primary) sits
+/// on top and each takes the full width (RN's `column-reverse`). The secondary is first in the
+/// tree in both shapes, as in RN, so VoiceOver meets the buttons in the same order either way.
 private struct BottomBarRow: Layout {
     var primaryFit: Bool
+    var stacked = false
     var spacing: CGFloat = 12
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         guard subviews.count == 2 else {
             return subviews.first?.sizeThatFits(proposal) ?? .zero
+        }
+        if stacked {
+            let sizes = subviews.map { $0.sizeThatFits(ProposedViewSize(width: proposal.width, height: nil)) }
+            let width = proposal.width ?? sizes.map(\.width).max() ?? 0
+            return CGSize(width: width, height: sizes[0].height + spacing + sizes[1].height)
         }
         let width = proposal.width ?? (subviews[0].sizeThatFits(.unspecified).width + spacing + subviews[1].sizeThatFits(.unspecified).width)
         let (first, second) = widths(width, subviews)
@@ -129,6 +141,13 @@ private struct BottomBarRow: Layout {
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         guard subviews.count == 2 else {
             subviews.first?.place(at: bounds.origin, proposal: ProposedViewSize(bounds.size))
+            return
+        }
+        if stacked {
+            let width = ProposedViewSize(width: bounds.width, height: nil)
+            let primaryHeight = subviews[1].sizeThatFits(width).height
+            subviews[1].place(at: bounds.origin, proposal: width)
+            subviews[0].place(at: CGPoint(x: bounds.minX, y: bounds.minY + primaryHeight + spacing), proposal: width)
             return
         }
         let (first, second) = widths(bounds.width, subviews)

@@ -334,6 +334,12 @@ struct PlacesContainerDetailModelTests {
         #expect(!model.claimsArrival(old))
     }
 
+    @Test("the highlight holds 600 ms then fades over 1200 ms; under Reduce Motion it holds 1800 ms and goes at once")
+    func arrivalTiming() {
+        #expect(ContainerDetailModel.arrivalTiming(reduceMotion: false) == .init(holdMs: 600, fadeMs: 1200))
+        #expect(ContainerDetailModel.arrivalTiming(reduceMotion: true) == .init(holdMs: 1800, fadeMs: 0))
+    }
+
     @Test("pull to refresh re-reads all three and waits for them")
     func refreshReadsAll() async {
         let containers = PlacesFakeContainers()

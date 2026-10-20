@@ -77,6 +77,7 @@ struct SpaceNewSheet: View {
 private struct SpaceNewForm: View {
     let model: SpaceNewModel
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @FocusState private var focus: SpaceFieldsFocus?
 
     var body: some View {
@@ -88,7 +89,8 @@ private struct SpaceNewForm: View {
                     // under the field is not left behind the bottom bar.
                     Task {
                         try? await Task.sleep(for: .milliseconds(400))
-                        withAnimation { proxy.scrollTo(Self.lastPresetID, anchor: .top) }
+                        // A programmatic scroll is not animated under Reduce Motion (08 §8.3).
+                        withAnimation(reduceMotion ? nil : .default) { proxy.scrollTo(Self.lastPresetID, anchor: .top) }
                     }
                 }
         }
@@ -134,7 +136,10 @@ private struct SpaceNewForm: View {
                     identifier: "space-create-custom",
                     action: create
                 )
+                .accessibilityShowsLargeContentViewer()
             }
+            // RN's button cap for pinned chrome (08 §6: 1.6 → xxxLarge).
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         }
         .placesDirtyGuard(model.dirtyGuard)
     }

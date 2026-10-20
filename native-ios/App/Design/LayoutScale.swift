@@ -43,11 +43,80 @@ private struct WindowWidthReader: ViewModifier {
     }
 }
 
+private struct WindowSizeReader: ViewModifier {
+    @State private var size: CGSize = .zero
+
+    func body(content: Content) -> some View {
+        content
+            .environment(\.layoutWindowWidth, size.width > 0 ? size.width : .infinity)
+            .environment(\.shellWindowSize, size)
+            .onGeometryChange(for: CGSize.self) { proxy in
+                CGSize(
+                    width: proxy.size.width + proxy.safeAreaInsets.leading + proxy.safeAreaInsets.trailing,
+                    height: proxy.size.height + proxy.safeAreaInsets.top + proxy.safeAreaInsets.bottom
+                )
+            } action: { size = $0 }
+    }
+}
+
 extension View {
     /// Measures this view's width as the window width for ``LayoutScale``. Apply once, at the
     /// root of a window.
     func measuresLayoutWindowWidth() -> some View {
         modifier(WindowWidthReader())
+    }
+
+    /// Measures this view as the window, for roots outside `RootView` (the galleries): sets both
+    /// `\.layoutWindowWidth` and the shell's `\.shellWindowSize`, which the bottom bar and the
+    /// camera notices size themselves by.
+    func measuresComponentWindow() -> some View {
+        modifier(WindowSizeReader())
+    }
+}
+
+/// Two pieces on one line, the first at the leading edge and the second at the trailing edge, or
+/// the second under the first (both leading) when they do not fit side by side: what a
+/// `ViewThatFits { HStack; VStack }` draws, without swapping one copy of the views for another.
+/// A swap rebuilds the views when the text grows, which loses VoiceOver's place and makes Xcode's
+/// Dynamic Type audit lose track of every text inside ("partially unsupported").
+struct ComponentFitOrStack: Layout {
+    var horizontalSpacing: CGFloat = 12
+    var verticalSpacing: CGFloat = 12
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        guard subviews.count == 2 else { return subviews.first?.sizeThatFits(proposal) ?? .zero }
+        let first = subviews[0].sizeThatFits(.unspecified), second = subviews[1].sizeThatFits(.unspecified)
+        let sideBySide = first.width + horizontalSpacing + second.width
+        guard let width = proposal.width else {
+            return CGSize(width: sideBySide, height: max(first.height, second.height))
+        }
+        if sideBySide <= width + WrappingHStack.fitTolerance {
+            return CGSize(width: width, height: max(first.height, second.height))
+        }
+        let narrow = ProposedViewSize(width: width, height: nil)
+        let stackedFirst = subviews[0].sizeThatFits(narrow), stackedSecond = subviews[1].sizeThatFits(narrow)
+        return CGSize(width: width, height: stackedFirst.height + verticalSpacing + stackedSecond.height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        guard subviews.count == 2 else {
+            subviews.first?.place(at: bounds.origin, proposal: ProposedViewSize(bounds.size))
+            return
+        }
+        let first = subviews[0].sizeThatFits(.unspecified), second = subviews[1].sizeThatFits(.unspecified)
+        if first.width + horizontalSpacing + second.width <= bounds.width + WrappingHStack.fitTolerance {
+            let height = max(first.height, second.height)
+            subviews[0].place(at: CGPoint(x: bounds.minX, y: bounds.minY + (height - first.height) / 2), proposal: ProposedViewSize(first))
+            subviews[1].place(at: CGPoint(x: bounds.maxX - second.width, y: bounds.minY + (height - second.height) / 2), proposal: ProposedViewSize(second))
+            return
+        }
+        let narrow = ProposedViewSize(width: bounds.width, height: nil)
+        let stackedFirst = subviews[0].sizeThatFits(narrow), stackedSecond = subviews[1].sizeThatFits(narrow)
+        subviews[0].place(at: bounds.origin, proposal: ProposedViewSize(width: min(stackedFirst.width, bounds.width), height: stackedFirst.height))
+        subviews[1].place(
+            at: CGPoint(x: bounds.minX, y: bounds.minY + stackedFirst.height + verticalSpacing),
+            proposal: ProposedViewSize(width: min(stackedSecond.width, bounds.width), height: stackedSecond.height)
+        )
     }
 }
 

@@ -170,7 +170,6 @@ struct FieldMessage: View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Image(glyph: .warning)
                 .font(.footnote.weight(.semibold))
-                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
             Text(verbatim: text)
                 .textRole(.meta)
                 .fontWeight(.semibold)

@@ -69,8 +69,11 @@ private struct AddSheetContent: View {
     @Environment(\.screenAddress) private var address
     @Environment(\.isScreenFocused) private var isScreenFocused
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @FocusState private var nameFocus: NameField?
     @FocusState private var detailsFocus: ItemDetailsField?
+    /// The keyboard is up (any field: the name, the details, the stepper's typed count).
+    @State private var keyboardShown = false
 
     /// The name field, the only one the sheet moves focus to.
     enum NameField: Hashable {
@@ -131,13 +134,41 @@ private struct AddSheetContent: View {
             await model.loadPlaces()
         }
         .task { await focusNameOnArrival() }
-        .onChange(of: model.nameFocusRequest) { _, _ in nameFocus = .name }
+        .onChange(of: model.nameFocusRequest) { _, _ in focusNameBySheet() }
+        // However the place step opens (Somewhere else…, a demo, VoiceOver), the form's keyboard
+        // goes with the form rather than staying up over the picker.
+        .onChange(of: model.isPickingPlace) { _, picking in
+            if picking { dismissKeyboard() }
+        }
+        // A failed save while typing at an accessibility size: the notice has no room beside
+        // the keyboard (`AddSaveProblemNotice`), so the keyboard goes and the notice shows.
+        .onChange(of: model.problem) { _, problem in
+            if problem != nil, isCramped { dismissKeyboard() }
+        }
+        .modifier(AddSheetAnnouncements(model: model))
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            keyboardShown = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            keyboardShown = false
+        }
+    }
+
+    /// Typing at an accessibility text size: the keyboard leaves little room between the pinned
+    /// chrome (the connection banner, the save notice, the bar), so the connection banner and
+    /// the save notice step aside and the bar's two buttons share a row, and the name field
+    /// stays in sight, on a 667 pt phone too.
+    private var isCramped: Bool {
+        keyboardShown && dynamicTypeSize.isAccessibilitySize
     }
 
     // MARK: Form step
 
     private var formStep: some View {
-        ScreenFrame(.modal) {
+        // While typing at an accessibility size the connection banner steps aside too (it takes
+        // a third of a 667 pt phone at AX1 and is never announced); it is back with the keyboard
+        // gone.
+        ScreenFrame(.modal, banner: isCramped ? false : nil) {
             ScrollViewReader { proxy in
                 FormLayout(contentIdentifier: AddSheet.screenIdentifier) {
                     // Above the fields, so it is seen whatever was scrolled to. A 404 here means
@@ -145,12 +176,16 @@ private struct AddSheetContent: View {
                     if let problem = model.problem {
                         // A new notice per save, so a second failure in the same words is
                         // announced again (RN remounted it).
-                        SaveNotice(copy: problem, identifier: "add-save-problem")
+                        AddSaveProblemNotice(copy: problem, layout: isCramped ? .tucked : (keyboardShown ? .compact : .full))
                             .id(model.saveAttempts)
                     }
                 } content: {
                     formSections
                 }
+                // A drag that reaches the keyboard puts it away, as in Edit details: at the
+                // largest sizes the keyboard covers most of the form, and the stepper's number
+                // pad has no key of its own to close it (its count is taken as typed).
+                .scrollDismissesKeyboard(.interactively)
                 .onChange(of: model.scrollToTopRequest) { _, _ in
                     // Centring the first row asks for an offset above the top, which the list
                     // clamps to its very top (section spacing included); `.top` would push the
@@ -167,7 +202,9 @@ private struct AddSheetContent: View {
                 #endif
             }
         } bottomBar: {
-            BottomBar(primaryFit: true) {
+            // While typing at an accessibility size the two buttons share a row (each label
+            // wraps) instead of stacking, so the bar takes one row above the keyboard.
+            BottomBar(primaryFit: true, stackOnLarge: !isCramped) {
                 LoadingButton(
                     label: L10n.Add.saveAndAnother,
                     variant: .secondary,
@@ -178,6 +215,7 @@ private struct AddSheetContent: View {
                 ) {
                     Task { await model.save(andAnother: true) }
                 }
+                .accessibilityShowsLargeContentViewer()
             } primary: {
                 LoadingButton(
                     label: L10n.Add.save,
@@ -189,11 +227,12 @@ private struct AddSheetContent: View {
                 ) {
                     Task { await model.save(andAnother: false) }
                 }
+                .accessibilityShowsLargeContentViewer()
             }
-            // Pinned chrome caps its text (as the connection banner does): uncapped, the two
-            // stacked buttons and the keyboard leave no room for the form at AX5, and the
+            // Pinned chrome stops at RN's button cap (08 §6: 1.6 → xxxLarge): uncapped, the two
+            // stacked buttons and the keyboard left no room for the form at AX5, and the
             // secondary label was cut short instead of wrapping.
-            .dynamicTypeSize(...DynamicTypeSize.accessibility2)
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         }
     }
 
@@ -205,6 +244,8 @@ private struct AddSheetContent: View {
                     tone: .info,
                     message: L10n.Add.draft,
                     primary: BannerAction(label: L10n.Add.clearDraft, identifier: "add-draft-clear") { model.clearRestored() },
+                    // The sheet announces it, once (`announcements`).
+                    live: .off,
                     chrome: .row,
                     identifier: "add-draft"
                 )
@@ -220,7 +261,8 @@ private struct AddSheetContent: View {
         if model.savedNext {
             Section {
                 // A new banner per save: said again after each "Save and add another".
-                BannerView(tone: .info, glyph: .check, message: L10n.Add.savedNext, chrome: .row, identifier: "add-saved-next")
+                // The sheet announces it, once per save (`announcements`).
+                BannerView(tone: .info, glyph: .check, message: L10n.Add.savedNext, live: .off, chrome: .row, identifier: "add-saved-next")
                     .id(model.saveAttempts)
             }
         }
@@ -246,6 +288,8 @@ private struct AddSheetContent: View {
                     primary: BannerAction(label: L10n.Common.tryAgain, identifier: "add-places-retry") {
                         Task { await model.loadPlaces() }
                     },
+                    // The sheet announces it, once (`announcements`).
+                    live: .off,
                     chrome: .row
                 )
             }
@@ -423,7 +467,9 @@ private struct AddSheetContent: View {
         }
         // VoiceOver's escape (two-finger scrub) goes back to the form, as RN's Back and swipe
         // did (app/item/new.tsx:327-331); the sheet resists the swipe here, so escape would
-        // otherwise do nothing.
+        // otherwise do nothing. On a container element, so the action is in the chain of every
+        // element of the step whatever has focus.
+        .accessibilityElement(children: .contain)
         .accessibilityAction(.escape) { model.closePlaceStep() }
     }
 
@@ -478,6 +524,16 @@ private struct AddSheetContent: View {
         try? await Task.sleep(for: .milliseconds(500))
         guard !Task.isCancelled, !model.isPickingPlace else { return }
         if let address, !app.router.isFocused(address) { return }
+        focusNameBySheet()
+    }
+
+    /// The sheet moving focus to the name by itself (on arrival, after a save). DEBUG builds
+    /// skip it with `-demoKeyboardDown YES`, so a state can be seen and audited without the
+    /// keyboard over the lower half of the form.
+    private func focusNameBySheet() {
+        #if DEBUG
+        if AddDemo.keepsKeyboardDown { return }
+        #endif
         nameFocus = .name
     }
 
@@ -486,6 +542,57 @@ private struct AddSheetContent: View {
         nameFocus = nil
         detailsFocus = nil
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
+
+/// The form's banners read out by the sheet rather than by their rows, as RN's live regions
+/// were, once per change: a list builds its rows lazily, so a row scrolled away and back (or
+/// the form coming back from the place step) would say its words again.
+private struct AddSheetAnnouncements: ViewModifier {
+    let model: AddSheetModel
+
+    func body(content: Content) -> some View {
+        content
+            .announcesOnChange(L10n.Add.draft, enabled: model.restored)
+            .announcesOnChange(L10n.Add.placesFailed, enabled: model.showsPlacesFailed)
+            // "Saved. Add the next one." is said again after each Save and add another.
+            .task(id: model.savedNext ? model.saveAttempts : -1) {
+                if model.savedNext { ComponentAnnouncer.announce(L10n.Add.savedNext) }
+            }
+    }
+}
+
+/// Why the last save did not happen (`SaveNotice`: a warning banner, `add-save-problem`), pinned
+/// above the form. Its text stops at AX1, as the connection banner pinned above it does (RN
+/// capped banner text at 2×, 08 §6).
+///
+/// The keyboard takes most of the pinned notice's room (it may use 40 % of what is left), so
+/// while typing the notice gives way to the name field: at the standard sizes its message
+/// stops at two lines (a whole card, rather than one cut off mid-sentence; VoiceOver still
+/// reads it all), and at the accessibility sizes, where the keyboard, the connection banner and
+/// the bar leave about one field's height, it folds away. It stays mounted throughout, so it is
+/// not announced again when the keyboard goes and it is back in full. A save that fails while
+/// typing at those sizes puts the keyboard away, so the notice is seen as well as heard.
+private struct AddSaveProblemNotice: View {
+    enum Layout {
+        case full, compact, tucked
+    }
+
+    let copy: SaveNoticeCopy
+    let layout: Layout
+
+    var body: some View {
+        // One container whatever its height, so a new layout is not a new notice to announce.
+        VStack(spacing: 0) {
+            BannerView(tone: .warning, title: copy.title, message: copy.message, live: .off, identifier: "add-save-problem")
+                .lineLimit(layout == .compact ? 2 : nil)
+                .frame(height: layout == .tucked ? 0 : nil, alignment: .top)
+                .clipped()
+                .accessibilityHidden(layout == .tucked)
+        }
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+        // Once per failed save: the sheet keys the notice by the attempt.
+        .announcesOnChange(FeedbackText.bannerAnnouncement(title: copy.title, message: copy.message))
     }
 }
 

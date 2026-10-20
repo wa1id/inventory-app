@@ -61,13 +61,12 @@ private struct ToastCard: View {
     private var isError: Bool { record.tone == .error }
 
     var body: some View {
-        let durations = Motion.duration(reduceMotion: reduceMotion)
         card
             .opacity(leaving ? 0 : (appeared ? 1 : 0))
-            .offset(y: (appeared || reduceMotion ? 0 : 8) + drag)
-            .animation(.shellCurve(Motion.Easing.exit, ms: durations.toastOut), value: leaving)
+            .offset(y: (appeared ? 0 : ComponentMotion.toastRise(reduceMotion: reduceMotion)) + drag)
+            .animation(ComponentMotion.toastOut(reduceMotion: reduceMotion), value: leaving)
             .onAppear {
-                withAnimation(.shellCurve(Motion.Easing.out, ms: durations.toastIn)) { appeared = true }
+                withAnimation(ComponentMotion.toastIn(reduceMotion: reduceMotion)) { appeared = true }
             }
             .simultaneousGesture(touchAndSwipe)
             .accessibilityElement(children: .contain)
@@ -151,10 +150,8 @@ private struct ToastCard: View {
                 let dy = value.translation.height
                 if dy > ToastCenter.Layout.swipeDismissDistance, abs(dy) > abs(value.translation.width) {
                     toasts.dismiss(record.id)
-                } else if reduceMotion {
-                    drag = 0
                 } else {
-                    withAnimation(.spring) { drag = 0 }
+                    withAnimation(ComponentMotion.toastSettle(reduceMotion: reduceMotion)) { drag = 0 }
                 }
                 toasts.resume()
             }

@@ -174,7 +174,10 @@ private struct ContainerEditForm: View {
                     identifier: "container-save",
                     action: save
                 )
+                .accessibilityShowsLargeContentViewer()
             }
+            // RN's button cap for pinned chrome (08 §6: 1.6 → xxxLarge).
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         }
         .placesDirtyGuard(model.dirtyGuard)
     }

@@ -159,11 +159,20 @@ BottomBar { primary }
   side the split is 1 : 1.4. With `primaryFit` the primary takes the width of its label (at
   least 120 pt) and the secondary takes the rest.
 - The buttons stack, primary on top, at `.xxxLarge` text and up or in a window narrower than
-  360 pt (`LayoutScale`'s rule).
+  360 pt (`LayoutScale`'s rule). Both shapes are one view tree (a layout, not two branches), so a
+  change of text size keeps the buttons and VoiceOver's place on them.
+- The labels stop growing at `.xxxLarge` (`BottomBar.maximumTextSize`, RN's `button` maxScale
+  1.6; 08 §6), as the system's toolbars do: two stacked buttons stay under a quarter of the
+  screen at AX5 (they took about 40 %), and a long press shows a label in the Large Content
+  Viewer. Xcode's audit reports these labels as "Dynamic Type partially unsupported"; tests
+  except them with that reason.
 - While the screen is focused, the bar registers its height with `ToastCenter`, so toasts
   float above it.
 - Put `LoadingButton(…, fullWidth: true)` in both slots: the bar sets
   `.buttonSizing(.flexible)` and `.controlSize(.large)`.
+- With the keyboard up the bar rises above it and the focused field scrolls clear of the bar
+  (`UITests/ComponentsBottomBarUITests` checks Household's join form at the default size and
+  AX5).
 
 Forms in sheets: use `ScreenFrame(.modal) { FormLayout { notice } content: { … } } bottomBar:
 { BottomBar { … } }`. The two-closure `FormLayout(notice:content:)` has no bar of its own. The
@@ -249,7 +258,7 @@ stores and seams: `toasts: app.toasts`, `confirm: app.platform.confirm`,
 | Capture | `CaptureModel(route:deliverPhoto:permission:photos:fastCapture:items:invalidator:toasts:haptics:…, navigate:)` with `deliverPhoto: { app.router.results.deliver(request, $0) }` when there is a request, `photos: app.imageStore` and `fastCapture: app.fastCapture`. `CaptureNavigator(router:address:).navigate(_:)` maps `CaptureNavigation` to the router (back closes the cover, the Add sheet replaces it, the review is pushed inside it, and popping the review closes the camera under it). Wire `camera.reportEvents(to: model)` and register `disappeared()` with `onRemoval`. Attach `.captureLibraryPicker` once at the root, and pass `CameraPermissionView(isProcessing: model.processing)`. Stop the session when the screen loses focus, since the review is pushed over the live camera: `CameraPreview(camera:runs: isScreenFocused && …)`. Built in `App/Screens/Capture` (the camera seam is `CaptureCameraFeed`; DEBUG builds stand in for the simulator's missing camera, see `CaptureDemo`). |
 | Quick Snap review | `QuickSnapReviewModel(route:items:photos:isPaired:invalidator:toasts:confirm:haptics:…, navigate:)`, driven like a query: `.inventoryQuery(model)` (focus and revision), `.refreshable { await model.refresh() }`, `reload()` for Try again. `QuickSnapReviewNavigator(router:address:)` maps `QuickSnapReviewNavigation` to the router. |
 | Add sheet | `AddSheet(params:)` makes `app.makeAddSheetModel(params:address:)` (every store wired, routing `AddSheetModel.Routing.router(_:address:)`: the camera for a result, Snap several and "Save and add another" with a photo replacing the sheet, `AddSheetRoutes`). Its own Cancel (`add-cancel`) calls `router.requestClose`, guarded by `.sheetCloseGuard { await model.confirmCancel() }`; the thumbnail shows `model.photoOptionsSheet()` with `app.platform.actionSheets`. `.interactiveDismissDisabled(model.interactiveDismissDisabled \|\| model.isPickingPlace)`. The place step swaps in `PlacePickerHost(mode: .choose, selectedContainerId:, showsDropZone: true) { model.pickPlace($0) }` (§5.1) with Back (`add-back`, `model.closePlaceStep()`). Demo states: `AddDemo` (`-demoArea add -demoState …`). |
-| Move / file | `MoveModel(items:filing:request:routeResults: app.router.results, recentPlaces: app.recentPlaces, …, isFocused: { router.isFocused(address) }, close: { router.close(address) })`. Keep `loaded` current with `move.follow(query)` (the sheet's `item:<id>` read) before the picker is first built. Embed `PlacePickerHost(mode: move.pickerMode, currentContainerId:busyId: move.busyId) { place in Task { await move.pick(place) } }` (§5.1), which reads the lists and runs the inline create itself, with the notice in `.pinnedNotice { … }` above it (a list row scrolled away is neither seen nor announced). |
+| Move / file | `MoveModel(items:filing:request:routeResults: app.router.results, recentPlaces: app.recentPlaces, …, isFocused: { router.isFocused(address) }, close: { router.close(address) })`. Keep `loaded` current with `move.follow(query)` (the sheet's `item:<id>` read) before the picker is first built. Embed `PlacePickerHost(mode: move.pickerMode, currentContainerId:busyId: move.busyId) { place in Task { await move.pick(place) } }` (§5.1), which reads the lists and runs the inline create itself, with the notice in `.pinnedNotice { … }` above it, or passed as the host's `notice:`, which pins it the same way (a list row scrolled away is neither seen nor announced). |
 | Edit forms | `DirtyGuard(confirm:title:dirty:saving:revoked:)`, plus `.sheetCloseGuard { await guard.attemptClose() }` and `.interactiveDismissDisabled(guard.interactiveDismissDisabled)`. |
 | Item screen naming | `NameItModel(itemId:updatedAt:incomingName:items:invalidator:haptics:announce:onNamed:)`. `WhereCard(actionFocus:)` moves VoiceOver to "File it…". |
 | Camera permission anywhere | `app.makeCameraPermission(purpose:)` (container telemetry, a fake platform in previews and tests). `CameraPermissionModel.device(purpose:)` is for galleries and tests. |
@@ -300,11 +309,15 @@ stores and seams: `toasts: app.toasts`, `confirm: app.platform.confirm`,
 - **Galleries** (`App/Shared/DebugGallery.swift`): `-gallery components -galleryPage N` (0–17:
   tokens, item rows chip and tools, place rows, where card, quantity, banners, buttons, empty
   and error, inputs, pickers, three place-picker pages, space form, item details, thumbs, taps;
-  long pages take `-galleryAnchor <section>`), `-gallery media -galleryPage N` (0–11:
-  permission, scanner states, QR card, share picture, camera preview) and
+  long pages take `-galleryAnchor <section>`, or `-gallerySection <title>` to show one section
+  alone), `-gallery media -galleryPage N` (0–11: permission, scanner states, QR card, share
+  picture, camera preview) and
   `-gallery foundation -galleryPage N` (0–7: `PlacePickerHost` in move, file, choose, bind, open,
   move busy with a notice, nothing at all, no match; a bar under the title shows the last
   pick, `foundation-picked`). Add a gallery for your area by adding a case to `DebugGallery`.
+  The galleries measure their window (`.measuresComponentWindow()`), so the bottom bar and the
+  camera notices size themselves as in the app. `UITests/ComponentsGalleryAuditUITests` runs
+  Xcode's accessibility audit on every page at the default size and at AX5 (§4).
 - **Screenshots.**
   - `scripts/mac.sh run out.png -demo YES` builds and launches; `mac.sh launch out.png …` only
     relaunches. Each launch argument reaches the app as given, so quote one with spaces or a `>`;
@@ -312,7 +325,16 @@ stores and seams: `toasts: app.toasts`, `confirm: app.platform.confirm`,
   - `mac.sh openurl inventory://c/<token> out.png` opens a link. On a running app, iOS 26 asks
     "Open in Inventory?" first.
   - Add `APPEARANCE=dark` and `CONTENT_SIZE=accessibility-extra-extra-extra-large` to check dark
-    mode and the largest text.
+    mode and the largest text. The launch argument
+    `-UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL` (or
+    `UICTContentSizeCategoryL`) sets the text size for one launch without touching the
+    simulator's setting; UI tests use it, so they never inherit the size of an earlier run.
+  - `DEVICE=se` (375 × 667 pt) and `DEVICE=ipad` take the same commands on a second simulator.
+  - Reduce Motion: `mac.sh shell 'xcrun simctl spawn $udid defaults write com.apple.Accessibility
+    ReduceMotionEnabled -bool true'`, then relaunch the app (`defaults delete …` turns it off
+    again). The launch argument `-UIReduceMotionPreference YES` does nothing: the app still reads
+    Reduce Motion as off. Timing that depends on it is tested in hosted tests with the flag
+    passed in (`HomeLayoutMotion.animation(reduceMotion:)`, `Motion.duration(reduceMotion:)`).
   - Look at every screenshot with the Read tool.
 - **Tests.**
   - `mac.sh test`: package logic, the place for screen-model tests.
@@ -326,6 +348,12 @@ stores and seams: `toasts: app.toasts`, `confirm: app.platform.confirm`,
     horizontalSizeClass:)` hosts a view in a window of any size and size class (a Split View
     window), and hands it the scene's real phase (`\.scenePhase` is active on an iPhone, so cameras
     start; the iPad simulator can keep the test host's scene inactive).
+  - Accessibility audits: `app.auditScreen(_:types:except:reportOnly:)`
+    (`UITests/Support/AccessibilityAudit.swift`) runs Xcode's audit and fails on each issue no
+    `AuditException(type, element:, because:)` covers. `UITests/ScreensAuditUITests.swift`
+    audits the main states of every screen (the first screen of each) at the default size and
+    at AX5, with `AuditException.componentsDefaults(in:)` plus each state's own exceptions
+    written next to it; `UITests/ComponentsGalleryAuditUITests.swift` audits the galleries (§4).
 
 ## 2. Shared components
 
@@ -340,18 +368,20 @@ All are in the app target (module `Inventory`). Logic and copy behind them live 
 |---|---|
 | `Color(spaceHex: String?)` | A stored space colour through `safeColor`; junk draws grey. |
 | `Color(.tape)`, `Color(.tapeInk)`, `Color(.searchMark)`, `Color(.pipRing)`, `Color.accentColor` (ink) | Asset colours. Tape only where yellow carries meaning (U2), never as a text or control tint. |
-| `DesignColor.signal`, `.signalWash` | Errors and "None left" (system red), and the warning banner's wash. |
+| `DesignColor.signal`, `.signalWash` | Errors and "None left" as text, and the warning banner's wash: RN's tokens (`#B3361A` / `#FF9573`, wash `#FBECE7` / `#3A231C`), not the system red, which is 3.5:1 on white and fails AA for text. At least 4.5:1 on every surface and on the wash in both schemes (`ComponentsContrastTests`). Stock destructive buttons keep the system red. |
 | `DesignMetrics` | `contentMaxWidth` 640, `narrowWidth` 360, `minTouchTarget` 44, `thumbSmall/thumb/thumbPhoto/thumbDetail` 48/56/76/88, `thumbRadius`, `cardRadius`, tile sizes. |
 | `SpaceTileSurface` `.cell/.page/.plain` | The opaque surface a space tile is mixed onto. |
 | `.readableContentWidth()` | The 640 pt centred column. |
 | `Glyph` (`.systemName`, `Glyph.container(_:)`), `Image(glyph:)`, `Label(_:glyph:)` | The RN icon names as SF Symbols. |
-| `.textRole(_ role: TextRole, header: Bool? = nil)` | RN type scale on Dynamic Type: `display, title, whereCard, itemTitle, heading, code, name, where, body, section, label, meta, aside, caption, factLabel, badge, tapeS/M/L, stepper, stepperL`. Headings get the header trait. Fixed-geometry roles are capped. |
-| `LayoutScale()` (a `DynamicProperty`: `isStacked`, `isNarrow`; `static isStacked(dynamicTypeSize:windowWidth:)`) | Stack at `.xxxLarge` and up or below 360 pt. Use it as `private let layout = LayoutScale()`. |
-| `.measuresLayoutWindowWidth()` | Sets `\.layoutWindowWidth` from this view's width. Only for roots outside `RootView` (galleries). |
-| `AdaptiveStack(horizontalAlignment:verticalAlignment:spacing:forceStacked:) { }` | An HStack that becomes a VStack when `LayoutScale` says so. |
-| `WrappingHStack(horizontalSpacing: 6, verticalSpacing: 2, alignment: .center)` | A wrapping row (`Layout`): the location line, chips. |
+| `.textRole(_ role: TextRole, header: Bool? = nil)` | RN type scale on Dynamic Type: `display, title, whereCard, itemTitle, heading, code, name, where, body, section, label, meta, aside, caption, factLabel, badge, tapeS/M/L, stepper, stepperL`. Every role is a system text style, so it scales. Headings get the header trait. Only the fixed-geometry roles are capped (08 §6): `badge` at `.xxLarge`, `tapeS/M/L`, `stepper`, `stepperL` at `.xxxLarge`; the other roles get no clamp at all. |
+| `LayoutScale()` (a `DynamicProperty`: `isStacked`, `isNarrow`; `static isStacked(dynamicTypeSize:windowWidth:)`) | Stack at `.xxxLarge` and up or below 360 pt. Use it as `private let layout = LayoutScale()`, and switch shapes with `AnyLayout` (§4). |
+| `.measuresLayoutWindowWidth()`, `.measuresComponentWindow()` | Set `\.layoutWindowWidth` (and, the second, the shell's `\.shellWindowSize`) from this view's size. Only for roots outside `RootView` (the galleries use the second). |
+| `AdaptiveStack(horizontalAlignment:verticalAlignment:spacing:forceStacked:) { }` | An HStack that becomes a VStack when `LayoutScale` says so (one tree, `AnyLayout`). |
+| `WrappingHStack(horizontalSpacing: 6, verticalSpacing: 2, alignment: .center)` | A wrapping row (`Layout`): the location line, chips, a camera notice's buttons. `sizeThatFits` and `placeSubviews` share one arrangement with `WrappingHStack.fitTolerance` (1 pt) of slack, so a line placed in its measured width rounded to the pixel grid draws as it measured (it used to measure one line and draw two over the camera; `ComponentsWrappingLayoutTests`). |
+| `ComponentFitOrStack(horizontalSpacing: 12, verticalSpacing: 12) { first; second }` | Two pieces on one line (first leading, second trailing), or the second under the first when they do not fit: `ViewThatFits { HStack; VStack }` without swapping views (the where card's footer). |
+| `ComponentMotion` | The components' animations from RN's tokens, nil or zero under Reduce Motion (08 §8.3): `expand(reduceMotion:)` (the chip's stepper), `toastIn/toastOut/toastSettle(reduceMotion:)`, `toastRise(reduceMotion:)`, `curve(_:ms:)`. Pass `\.accessibilityReduceMotion`. |
 | `.accessibilityIdentifierIfPresent(_:)`, `.accessibilityLabelIfPresent(_:)`, `.accessibilityHintIfPresent(_:)` | Optional accessibility modifiers. |
-| `.announcesOnChange(_ text:, enabled: = true, queued: = false)`, `ComponentAnnouncer.announce(_:)` / `.announceQueued(_:)` | The one way announcements are posted. |
+| `.announcesOnChange(_ text:, enabled: = true, queued: = false)`, `ComponentAnnouncer.announce(_:)` / `.announceQueued(_:)` | The one way announcements are posted. `announcesOnChange` speaks when its view first appears and when the text changes; appearing again with the same words (a list row scrolled back into view, a re-render) says nothing, and turning `enabled` off forgets what was said (a field error shown again is news). It posts through `\.componentAnnounce`, which hosted tests replace with a recorder. |
 
 ### Primitives
 
@@ -369,12 +399,12 @@ All are in the app target (module `Inventory`). Logic and copy behind them live 
 
 | Init | Purpose |
 |---|---|
-| `LoadingButton(label:glyph:variant: = .primary, size: = .regular, isLoading:isDisabled:fullWidth:accessibilityLabel:accessibilityHint:identifier:action:)` | The app's button. Busy keeps its label, ignores presses, shows a spinner after 150 ms and reads "Loading…". `ButtonVariant` is `.primary` (filled ink, the only filled control on a screen), `.secondary`, `.quiet` or `.destructive`; `ButtonSize` is `.regular` or `.small`. |
+| `LoadingButton(label:glyph:variant: = .primary, size: = .regular, isLoading:isDisabled:fullWidth:accessibilityLabel:accessibilityHint:identifier:action:)` | The app's button. Busy keeps its label, ignores presses, shows a spinner after 150 ms and reads "Loading…". `ButtonVariant` is `.primary` (filled ink, the only filled control on a screen), `.secondary`, `.quiet` or `.destructive`; `ButtonSize` is `.regular` or `.small`. A borderless one (quiet, destructive) takes at least 44 × 44 pt, which draws nothing more ("Not now" under a banner was a 20 pt target). |
 | `.buttonVariant(_:size:)` | A variant's stock style on any `Button`. For `.primary`, prefer `LoadingButton`: a bare `.borderedProminent` label is unreadable on the light ink in dark mode. |
-| `BannerView(tone:glyph:title:message:primary:secondary:onDismiss:live: = .polite, chrome: = .card, identifier:)`; `BannerAction(label:accessibilityHint:isLoading:identifier:action:)` | An inline notice. `tone` is `.info` or `.warning`, `chrome` is `.card` or `.row`, and `live: .off` keeps it from being announced. |
+| `BannerView(tone:glyph:title:message:primary:secondary:onDismiss:live: = .polite, chrome: = .card, identifier:)`; `BannerAction(label:accessibilityHint:isLoading:identifier:action:)` | An inline notice. `tone` is `.info` or `.warning`, `chrome` is `.card` or `.row`, and `live: .off` keeps it from being announced. It is announced when it appears and when its words change, never again because its list row scrolled back into view (`ComponentsAnnouncementTests`). Only its leading icon is capped (at `.xxxLarge`, RN `inlineIconSize`, 08 §5); the warning title is `DesignColor.signal` on `.signalWash`. |
 | `SuggestionBannerView(state:onRetry:onRefresh:chrome:)` | The photo-suggestion banner from `AddSheetModel.suggestionBanner`. |
 | `SaveNotice(copy: SaveNoticeCopy, action:identifier:)` | A failed save in plain words, announced at once. |
-| `EmptyStateView(title:message:glyph:primary:secondary:identifier:)`; `StateAction(label:glyph:isLoading:identifier:action:)` | An empty list and the next step. |
+| `EmptyStateView(title:message:glyph:primary:secondary:identifier:)`; `StateAction(label:glyph:isLoading:identifier:action:)` | An empty list and the next step. With an `identifier` the state is a container first (`.accessibilityElement(children: .contain)`, §4), so its buttons keep their own identifiers (`move-no-containers`). The same holds for `ErrorStateView`'s `identifier`. |
 | `ErrorStateView(cause: ErrorStateView.Cause?, context: = .read, subject: = .list, title: = nil, body: = nil, onRetry: = nil, secondary: StateAction? = nil, identifier: = nil)` | A failed read with Try again (`error-retry`) and an optional quiet second button (`error-secondary` unless the action has an id). `Cause` is `.failed(error)` or `.gone`; nil means the screen gives both texts (the boot gate). The heading is announced. |
 | `SkeletonView(variant: = .rows, rows: = 6, thumb: = 56, label: = "Loading…")`; variants `.rows/.list/.options/.detail/.grid` | The shape of what loads, after 180 ms. Static, one VoiceOver element. |
 | `CenteredStateScroll { state }` | A state view that fills the screen (error, gone, locked): centred while it fits, scrolling once it does not, so its heading and buttons stay reachable at AX5. |
@@ -386,16 +416,16 @@ All are in the app target (module `Inventory`). Logic and copy behind them live 
 
 | Init | Purpose |
 |---|---|
-| `ListRow(action:showsChevron:isSelected:isDisabled:minHeight: = 44, alignment:accessibilityLabel:accessibilityHint:identifier:) { leading } content: { } aside: { }` (an init without `aside:` too) | The base row: a plain `Button` in a `List`, so the list draws the highlight. `isDisabled` draws undimmed and reads as a dimmed button. A pressable row needs `accessibilityLabel`. |
-| `RowWithTool { row } tool: { control }` | A row and its control as siblings (their own VoiceOver stops; a tap on the control never opens the row). It stacks at large sizes; stacked, the whole line under the row is inert, so a tap beside the control does nothing (the chip row's stacked line too). |
+| `ListRow(action:showsChevron:isSelected:isDisabled:minHeight: = 44, alignment:accessibilityLabel:accessibilityHint:identifier:) { leading } content: { } aside: { }` (an init without `aside:` too) | The base row: a plain `Button` in a `List`, so the list draws the highlight. `isDisabled` is a real disabled button drawn undimmed (a style that leaves the label as drawn), so VoiceOver hears a dimmed button. A pressable row needs `accessibilityLabel`. The text column is its own accessibility container (a lone name would otherwise take the whole row, tape included, as its frame, and the audit measured the tape's yellow as the name's contrast). At `.xxxLarge` and up the aside goes under the text through a layout, not a second branch, so the row's views survive a change of text size. |
+| `RowWithTool { row } tool: { control }` | A row and its control as siblings (their own VoiceOver stops; a tap on the control never opens the row). It stacks at large sizes (an `AnyLayout` swap, one tree); stacked, the whole line under the row is inert, so a tap beside the control does nothing (the chip row's stacked line too). |
 | `.absorbsListRowTaps()` | Stops taps on the blank parts of a control area from opening the row. |
 | `ItemRow(item:line: = .where, tool: = .none, terms:now:thumb: = 56, identifier:onPress:)` | An item: name over "where is it". `ItemRowLine` is `.where`, `.detail` or `.added`. `Tool` is `.chip(model, isExpanded:onToggle:)` (or the helper `.chip(model, itemId:expandedId: Binding<String?>)`), `.stepper(model)`, `.file { }`, `.delete { }` or `.none`. It keeps its model in step with the item. |
 | `SpaceRow(space:tileSize: = 56, terms:onPress:)` | A space with its counts. |
 | `ContainerRow(container: ContainerRowData, context: = .space, terms:onPress:)` | A container with its tape. The `.search` context adds its location and contents. |
-| `PlaceRow(hit:spaces:containers:terms:onPress:)` | A search hit drawn as a space or container row. |
-| `LocationLine(place: some PlaceLike, size: = .row, showsContainer: = true, onCamera: = false, links: = nil)`; sizes `.row/.card/.inline`; `LocationLine.Links(openSpace:openContainer:)` | "Space › Container" with its tape. The only way a location is drawn. |
-| `WhereCard(place:name:links: = nil, actionFocus: AccessibilityFocusState<Bool>.Binding? = nil, onMove:)` | The item screen's "Kept in" card with Move or "File it…". |
-| `SettingsRow(label:value:tone: = .normal, glyph:identifier:)` | A settings line. Put it in a `NavigationLink` or a `DisclosureGroup` label. |
+| `PlaceRow(hit:spaces:containers:terms:onPress:)` | A search hit drawn as a space or container row, inside RN's wrapper `place-row-<hit id>` (a container element, so the row keeps `space-row-<id>` / `container-row-<id>`); a hit the lists do not know yet is a row with `place-row-<hit id>` itself. |
+| `LocationLine(place: some PlaceLike, size: = .row, showsContainer: = true, onCamera: = false, links: = nil)`; sizes `.row/.card/.inline`; `LocationLine.Links(openSpace:openContainer:)` | "Space › Container" with its tape. The only way a location is drawn. It flows in a `WrappingHStack`, which now draws what it measured, also over the camera. |
+| `WhereCard(place:name:links: = nil, actionFocus: AccessibilityFocusState<Bool>.Binding? = nil, onMove:)` | The item screen's "Kept in" card with Move or "File it…". The footer (tape or note, then the action) is a `ComponentFitOrStack`. |
+| `SettingsRow(label:value:tone: = .normal, glyph:identifier:)` | A settings line: the icon in its own column (growing to 1.6×, then capped), then a stock `LabeledContent`. Not a `Label`, whose narrow title column at AX5 broke "Household" inside the word: the words take the rest of the row and wrap between words, and at the accessibility sizes the icon goes above them so they get the whole width (an `AnyLayout` swap). Put it in a `NavigationLink` or a `DisclosureGroup` label. |
 | `FactRow(label:) { content }`, `FactRow(label:text:)`, `FactRow(label:selectableText:)` | A labelled fact on the item screen. |
 
 ### Quantity
@@ -423,7 +453,7 @@ All are in the app target (module `Inventory`). Logic and copy behind them live 
 | `SegmentedChoice(options: [SegmentOption], selection:accessibilityLabel:onCamera:isDisabled:accessibilityHint:)`; `SegmentOption(value:label:glyph:identifier:)` | A stock segmented picker, on glass over the camera. It drops option glyphs. |
 | `EmojiPicker(label:value:color:options:)`, `SwatchPicker(label:value:palette:)`, `TypeGrid(label:value:)` | Space icon, space colour and container type. They play `.choice`. |
 | `SpreadGrid(tileWidth:minGap:rowGap:maxColumns:)` | Fixed tiles spread edge to edge (`Layout`). |
-| `PlacePicker(mode:options:spaces:recentIds:isLoading:failure:onRetry:currentContainerId:selectedContainerId:showsDropZone:allowsNewContainer:autoFocusesFilter:placeholder:initialQuery:busyId:notice:onPick:onNewContainer:onNewSpace:filterText:handlesPickFeedback:)` (`notice:` optional; an optional view that is nil adds no section) | The drawing of the one place picker. **Screens embed `PlacePickerHost` instead** (§5.1), which reads, opens the forms and drives this view (`filterText:` binds its model's query, `handlesPickFeedback: false` leaves the haptic and the busy guard to the model). Present it inside a `NavigationStack` (it uses `.searchable`; the stock field takes no identifier, so UI tests find it by its placeholder, §4). |
+| `PlacePicker(mode:options:spaces:recentIds:isLoading:failure:onRetry:currentContainerId:selectedContainerId:showsDropZone:allowsNewContainer:autoFocusesFilter:placeholder:initialQuery:busyId:notice:onPick:onNewContainer:onNewSpace:filterText:handlesPickFeedback:)` (`notice:` optional; an optional view that is nil adds nothing) | The drawing of the one place picker. **Screens embed `PlacePickerHost` instead** (§5.1), which reads, opens the forms and drives this view (`filterText:` binds its model's query, `handlesPickFeedback: false` leaves the haptic and the busy guard to the model). The notice is pinned above the lists (`.pinnedNotice`), never a list row, so it is seen and announced however far the list scrolled and stays undimmed while a pick saves; it is decided by type, so one that comes and goes keeps the list. Present it inside a `NavigationStack` (it uses `.searchable`; the stock field takes no identifier, so UI tests find it by its placeholder, §4). |
 
 ## 3. Media views (`App/Media`)
 
@@ -434,12 +464,12 @@ All are in the app target (module `Inventory`). Logic and copy behind them live 
 | `CameraPreviewLayerView(camera:)`, `CameraTapToFocusLayer(focus:onFocus:)`, `CameraFocusSquare()`, `CameraPreviewUIView` | The parts `CameraPreview` is built from. |
 | `CameraPermissionView(model:isPaired: = false, onLibrary:onManual:onCancel:closeIdentifier: = "camera-close", isProcessing: = false)` | The one permission screen (rationale or Settings), with the ways on without the camera. It re-reads on activation. |
 | `CameraPermissionModel.device(purpose:telemetry:)`, `CameraAuthorizationAccess` | The AVFoundation permission. Screens use `app.makeCameraPermission(purpose:)`. |
-| `QrScannerView(model:title:onManual:onClose:closeIdentifier:torchIdentifier: = "scanner-torch", managesFocus: = true, makeFeed:) { footer }` (a no-footer init too) | Camera, reticle, torch and title pill, the permission screen, and the failure panel. It reports focus to the model unless `managesFocus: false`. |
+| `QrScannerView(model:title:onManual:onClose:closeIdentifier:torchIdentifier: = "scanner-torch", managesFocus: = true, makeFeed:) { footer }` (a no-footer init too) | Camera, reticle, torch and title pill, the permission screen, and the failure panel. It reports focus to the model unless `managesFocus: false`. The footer is drawn as given (one tree at every size); a `CameraPanel` keeps itself to part of the window. |
 | `QrScannerFeed`, `QrScannerBridge(model:feed:)`, `StandInQrScannerFeed()` | The feed seam. The stand-in draws a fake scene for galleries and tests. |
 | `CameraGlassIconButton(systemImage:label:isSelected: = nil, identifier:action:)` | A round 48 pt glass button. A toggle that is on turns tape yellow and reads as selected. |
 | `CameraTitlePill(text:systemImage:updatesFrequently: = false, identifier:announces: = false)` | White text on a glass capsule (RN `StatusPill`): the scanner title or the running count. Capped at AX1. `announces` reads each new text (queued). |
 | `ScannerReticle(isLocked:)` | The four corner brackets. Tape yellow once a code locks. |
-| `CameraPanel(tone:title:message:actions:systemImage:)`, `CameraPanel(_ panel: ScanPanel, perform:)`; `CameraPanelAction(id:label:systemImage:perform:)` | A notice over the picture: hint, busy or error (the coral edge), with an optional leading symbol (the capture notices' warning triangle). Busy and error notices are announced. Scan ids are `scan-again`, `scan-try-again` and `scan-type-code`. |
+| `CameraPanel(tone:title:message:actions:systemImage:)`, `CameraPanel(_ panel: ScanPanel, perform:)`; `CameraPanelAction(id:label:systemImage:perform:)` | A notice over the picture: hint, busy or error (the coral edge), with an optional leading symbol (the capture notices' warning triangle). Busy and error notices are announced; the busy spinner is hidden from VoiceOver. At the largest sizes its words take at most `CameraPanel.wordsHeightShare` (30 %) of `\.shellWindowSize` and scroll inside the panel, and the buttons stay under them, side by side or wrapped (a `WrappingHStack`), their labels capped at `.xxxLarge` (RN button cap) with the Large Content Viewer. Scan ids are `scan-again`, `scan-try-again` and `scan-type-code`. |
 | `MediaPalette` | Camera-only colours: `tape`, `errorBar`, `reticle`, `glassTint`, `qrInk`, `qrPaper`. |
 | `.captureLibraryPicker(isPresented:onFinish:)`; `CaptureLibraryPickGate`, `CaptureLibraryFile` | The photo library picker. Attach it once at the capture screen's root. It answers each presentation exactly once (`.picked`, `.cancelled` or `.failed`). |
 | `QrCodeRenderer.modules(for:) -> CGImage?`; `QrCodeImage(payload:side:quietZone:)` | A QR symbol (error correction M, margin trimmed) drawn crisp. |
@@ -451,7 +481,11 @@ The capture screen's own chrome (the Into pill, the shutter and its flash, Done,
 tile, the reticle) is in `App/Screens/Capture/CaptureChrome.swift`, built on
 `CameraGlassIconButton`, `CameraTitlePill`, `CameraPanel` and `SegmentedChoice(onCamera: true)`.
 `LocationLine` measured one line and drew two inside the camera's top row, so the Into pill
-draws its pieces in stock stacks (`ViewThatFits`: one line, else the tape under the words).
+draws its pieces in stock stacks (`ViewThatFits`: one line, else the tape under the words). The
+cause was `WrappingHStack`: placed in its measured width rounded down to the pixel grid, the
+last piece no longer fitted and dropped to an unmeasured second line. It now arranges with 1 pt
+of slack in both passes, so the pill could use `LocationLine(size: .inline, onCamera: true)`
+again (and lose the `ViewThatFits` swap, §4).
 
 ## 4. Rules that are easy to miss
 
@@ -491,7 +525,43 @@ draws its pieces in stock stacks (`ViewThatFits`: one line, else the tape under 
 - UI tests: Home's search field ("Find anything") stays in the hierarchy under a sheet, so
   `app.searchFields.firstMatch` can be Home's. Find a picker's field by its placeholder
   (`placeholderValue == "Container, space or code"`). In a picker sheet the bottom rows sit under
-  the search field at the bottom: filter first, or tap a row higher up.
+  the search field at the bottom: filter first, or tap a row higher up. The stock `.searchable`
+  field takes no accessibility identifier (no SwiftUI API sets one, and reaching into the
+  `UISearchBar` is a UIKit hack), so RN's `search-input` and `place-filter` do not exist; keep UI
+  tests on `app.searchFields`. VoiceOver reads its placeholder: an `.accessibilityLabel` on
+  the prompt `Text` does not reach the field (a hosted test showed the field's label stays the
+  placeholder), so RN's "Search the household" and "Find a container" are not set.
+- Shapes that change with the text size (stacked rows, a control under its text, buttons that
+  wrap): switch with `AnyLayout`, `AdaptiveStack`, `ComponentFitOrStack`, `WrappingHStack` or a
+  `Layout` of your own, never `if layout.isStacked { A } else { B }` or `ViewThatFits`. Those
+  build new views as the text grows: VoiceOver loses its place, state in them resets, and Xcode's
+  Dynamic Type audit reports every text inside as "Dynamic Type font sizes are partially
+  unsupported" (a lab page proved it: the same text passes under `AnyLayout` and fails under
+  `if/else`).
+- Size caps: only fixed-geometry text (tapes, badges, stepper digits; `TextRole.maximumSize`),
+  pinned chrome at RN's caps (the connection banner and camera pills at AX1, the bottom bar's and
+  camera notices' buttons at `.xxxLarge`) and the type grid's names under their 72 pt tiles. Each
+  cap shows in the audit as "partially unsupported"; except it with its 08 §6 reason. Icons beside
+  text scale with it (only the banner's leading icon and the settings icon stop at 1.6×, RN
+  `inlineIconSize`, and a row's chevron, which would take the words' room).
+- Accessibility audits: `app.auditScreen(_:types:except:)` (`UITests/Support/AccessibilityAudit.swift`).
+  An `AuditException` can be narrowed with `AuditException(type, Match(…), because:)`: by the
+  issue's description (`"Contrast nearly passed"` never lets a `"Contrast failed"` through), the
+  element's identifier, label (exact, prefix, pattern or a test), type, where its frame starts
+  (`minY`), or an issue tied to no element. `AuditException.componentsDefaults(in: app)`
+  (`UITests/Support/ComponentsAuditExceptions.swift`) holds what the shared components need
+  everywhere, each with its reason: stock secondary colours ("nearly passed"); text under the
+  bottom scroll edge effect (the last 130 pt); space tile glyphs (data, fixed size, 08 §4.3); the
+  fixed-geometry caps (tape codes, badge counts, stepper digits, the camera pill, the shell's
+  Cancel); text that growing text pushes off the screen (from 38 % of the window down; a lab
+  proved the same row passes at the top); and the stock search and single-line text fields.
+  Screens add their own next to their test. The galleries run the Dynamic Type audit in a pass
+  of its own, last, since it changes the text size while it runs. They are audited at the
+  default size and at AX5 by `UITests/ComponentsGalleryAuditUITests.swift`, long pages one
+  section at a time (`-gallerySection <title>`). A UI test reaches AX5 without touching the
+  simulator by launching with `-UIPreferredContentSizeCategoryName
+  UICTContentSizeCategoryAccessibilityXXXL` (the Dynamic Type audit cannot change that size, so
+  leave `.dynamicType` out there).
 - Simulator caveats: colour emoji draw as "?" boxes on the build Mac's simulator, and the camera
   is unavailable (galleries use `discover: { nil }` or `StandInQrScannerFeed`; DEBUG `-demo`
   builds stand in for the capture camera, `CaptureDemo`). A run with
@@ -524,8 +594,9 @@ PlacePickerHost(
     initialQuery: String = "",
     autoFocusesFilter: Bool? = nil,        // nil: only .open
     @ViewBuilder notice: () -> Notice,     // optional (an init without it); `if let` works.
-                                           // A list row: prefer `.pinnedNotice` (§2) for one
-                                           // that must be seen and announced after a pick.
+                                           // Pinned above the lists (`.pinnedNotice`, §2), not
+                                           // a list row: seen and announced however far the
+                                           // list scrolled, undimmed while a pick saves.
     onPick: @escaping (PickedPlace) -> Void
 )
 
@@ -706,13 +777,21 @@ tests in `AppTests/<Area>/` and UI tests in `UITests/<Area>UITests.swift`.
 
 | Screen | Built from | Demo |
 |---|---|---|
-| `HomeScreen()` (`screen-home`) | `app.home` (`HomeModel`), `HomeSections`, `HomeTotalLineText`, `HomeSearchFieldRules`, `app.makeRowQuantityModels()`; views in `HomeSectionViews.swift` (`HomeTitleNote`, `HomeSummaryLines`, `HomeSectionHeader`, `HomeTotalLine`, `HomeDropZoneCard`, `HomeFillingState`, `.homeStateRow()`), `HomeListScroller`, `HomeTransitionProbe` | (none); `-demoSeed empty`; `-demoArea home -demoState search`, `searchPlaces`, `noResults`, `misspelt` (a corrected search), `noticeDismissed`, `empty`, `emptyLocal`, `paired`, `pairedEmpty`, `serverError`, `refreshFailed` and `reconnecting` (`RUN_SETTLE_SECONDS=8`) |
+| `HomeScreen()` (`screen-home`) | `app.home` (`HomeModel`), `HomeSections`, `HomeTotalLineText`, `HomeSearchFieldRules`, `app.makeRowQuantityModels()`; views in `HomeSectionViews.swift` (`HomeTitleNote`, `HomeSummaryLines`, `HomeSectionHeader`, `HomeTotalLine`, `HomeDropZoneCard`, `HomeFillingState`, `.homeStateRow()`, `HomeLayoutMotion`), `HomeListScroller`, `HomeTransitionProbe`; the list is `home-list` | (none); `-demoSeed empty`; `-demoArea home -demoState search`, `searchPlaces`, `noResults`, `misspelt` (a corrected search), `noticeDismissed`, `empty`, `emptyLocal`, `paired`, `pairedEmpty`, `serverError`, `refreshFailed` and `reconnecting` (`RUN_SETTLE_SECONDS=8`) |
 | `SpacesScreen()` (`screen-spaces`) | `SpacesScreenModel(repositories:revision:isPaired:)` | `-demoTab spaces`; `-demoSeed empty -demoTab spaces`; with `-demoArea home -demoState refreshFailed` |
 | `DropZoneScreen()` (`screen-drop-zone`) | `app.dropZone` and `DropZoneScreenModel` (`DropZoneScreen.makeModel(app:)`); filing presents the Move sheet for a `MoveResult` | `-demoTab dropZone`; `-demoArea home -demoState backlog -demoTab dropZone`, `filed`, `serverError` |
 
 The household summary and "where it lives" are a plain first row under the large title (they
 wrap at AX5), the search field is the stock `.searchable` (no `search-input` id; UI tests use
-`app.searchFields`), and empty and error states are centred `ContentUnavailableView`s.
+`app.searchFields`; VoiceOver reads its placeholder), and empty and error states are centred `ContentUnavailableView`s. The clear
+haptic is inferred (`HomeSearchFieldRules.isClear`: emptied in one step from two or more
+characters), since the stock field does not report its clear button; clearing a one-letter
+query plays nothing.
+`HomeLayoutMotion.animation(reduceMotion:)` is RN's `animateNextLayout` (180 ms, none under
+Reduce Motion) for Home's compact title lines, a filed drop-zone row and Settings' Technical
+details; `HomeListScroller` scrolls without animation under Reduce Motion, its settling passes
+included. Home's DEBUG `debug-home-reselections` (the re-tap counter ShellModalUITests reads)
+sits just off the left edge, out of screenshots and audits.
 `HomeDemo.container(state:platform:)` builds the paired states on `HomeDemoHouseholdTransport`.
 
 ### 6.2 Account (`App/Screens/Account`)
@@ -725,9 +804,19 @@ wrap at AX5), the search field is the stock `.searchable` (no `search-input` id;
 | `BackupScreen()` (`screen-backup`) | `app.makeBackupScreenModel()` (`BackupScreenModel`, laid out by `body`) | `backupOff`, `backupUnreadable`, `backupRestoreOffer`, `backupReveal`, `backupKeptCode` (`RUN_SETTLE_SECONDS=10`), each with `-demoRoute backup` |
 | `OnboardingScreen()` (`screen-onboarding`), the root while onboarding is pending | `app.makeOnboardingFlow()` (`OnboardingFlowModel`), the shared `AccountJoinForm` | `onboarding`, `onboardingJoin`, `onboardingJoined` (also `-demoOnboarding YES`) |
 
-`HouseholdModel.isJoining` keeps one join at a time across every join form. The demo
-scenarios are `AccountDemoScenario` (20 cases) on `AccountDemoServer` and
-`AccountDemoKeychain`; previews use `AccountPreviewHost`.
+`HouseholdModel.isJoining` keeps one join at a time across every join form. The join form
+scrolls the focused name field to the middle once the keyboard is up (the form keeps a field
+above the keyboard, not above the bar that rises with it), and onboarding gives it its 480 pt
+column (`AccountJoinForm(columnWidth:)`). Settings' Technical details is a stock
+`DisclosureGroup` with a plain `Label`, so the group's own button reads "Technical details"
+(a `SettingsRow` there was an element of its own beside the group's button). The stock
+chevron still shows in the XCUITest hierarchy as an unlabelled child of that button; check
+it with VoiceOver on a device.
+Swapped-in steps move VoiceOver to their heading: onboarding's steps, and the Backup page's
+parts when Turn on, "I have saved it", Show recovery code or a restore changes it
+(`BackupFocusPart`). Onboarding's Join step answers VoiceOver's escape with Back, and its
+pinned buttons grow to AX1 at most. The demo scenarios are `AccountDemoScenario` (20 cases)
+on `AccountDemoServer` and `AccountDemoKeychain`; previews use `AccountPreviewHost`.
 
 ### 6.3 Labels (`App/Screens/Labels`)
 
@@ -740,14 +829,18 @@ scenarios are `AccountDemoScenario` (20 cases) on `AccountDemoServer` and
 
 Over the camera the Scan tab hides the status bar (a tab root cannot set its own style). The
 camera screens put `.accessibilityElement(children: .contain)` before their `screen-*`
-identifier (§4). `LabelsDemoTransport` serves the paired and failing lookups.
+identifier (§4); the Scan tab's camera frame keeps RN's `scan-camera` the same way. VoiceOver's
+escape goes from the typed-code list back to the camera, and closes the sticker cover. The
+sticker cover's notice is the scanner's footer over the picture (under the title, however many
+lines it takes), and an overlay only over the permission screen or a camera that failed.
+`LabelsDemoTransport` serves the paired and failing lookups.
 
 ### 6.4 Places (`App/Screens/Places`)
 
 | Screen | Built from | Demo |
 |---|---|---|
 | `SpaceDetailScreen(id:)` (`screen-space`) | `SpaceDetailModel` (`SpaceDetailScreen.makeModel(app:id:)`) | `-demoTab spaces -demoRoute space:Garage`; `-demoArea places -demoState many -demoTab spaces -demoRoute space:Workshop`, `empty … space:Shed`, `contentsProblem … space:Garage`, `refreshProblem … space:Garage` (`RUN_SETTLE_SECONDS=10`), `goneSpace` |
-| `ContainerDetailScreen(id:)` (`screen-container`) | `ContainerDetailModel` (`ContainerDetailScreen.makeModel(app:id:)`), rows with the compact write-through stepper from `app.makeRowQuantityModels()` | `-demoRoute container:Tool_chest`; `-demoArea places -demoState many -demoRoute container:Parts_drawer`, `empty … container:Spare_crate`, `contentsProblem … container:Tool_chest`, `refreshProblem …` (`RUN_SETTLE_SECONDS=10`), `goneContainer` |
+| `ContainerDetailScreen(id:)` (`screen-container`) | `ContainerDetailModel` (`ContainerDetailScreen.makeModel(app:id:)`), rows with the compact write-through stepper from `app.makeRowQuantityModels()` | `-demoRoute container:Tool_chest`; `-demoArea places -demoState many -demoRoute container:Parts_drawer`, `empty … container:Spare_crate`, `contentsProblem … container:Tool_chest`, `refreshProblem …` (`RUN_SETTLE_SECONDS=10`), `goneContainer`, `arrival … container:Tool_chest` (the "just added" highlight, `RUN_SETTLE_SECONDS=3`; the demo seeds everything at launch, so every row is fresh then) |
 | `SpaceNewSheet(request:)` (`screen-space-new`) | `SpaceNewModel` (`SpaceNewSheet.makeModel(app:request:address:)`): presets as form rows, then `SpaceFields(heading:)` | `-demoRoute spaceNew`; `-demoArea places -demoState errors -demoRoute spaceNew`, `saveProblem` |
 | `SpaceEditSheet(id:)` (`screen-space-edit`) | `SpaceEditModel` (`SpaceEditSheet.makeModel(app:id:address:)`), `PlacesDeleteRow` | `-demoRoute spaceEdit:Garage`; `-demoArea places -demoState saveGone …`, `deleteConfirm …` |
 | `ContainerNewSheet(spaceId:request:)` (`screen-container-new`) | `ContainerNewModel` (`ContainerNewSheet.makeModel(app:spaceId:request:address:)`) | `-demoRoute containerNew:Garage`; `-demoArea places -demoState saveProblem -demoRoute containerNew:Garage` |
@@ -785,12 +878,56 @@ It draws its own Cancel (`add-cancel`, which asks before discarding typing) and 
 
 | Screen | Built from | Demo (`-demoArea capture -demoState …`) |
 |---|---|---|
-| `CaptureScreen(route:request:)` (`screen-capture`), a cover | `CaptureModel`, `CaptureNavigator(router:address:)`, the camera seam `CaptureCameraFeed` (`CaptureCameraSource`), `CaptureCameraView` and the chrome in `CaptureChrome.swift`; hosted tests use `CaptureScreen(route:request:feed:permission:)` | `single`, `singleShot` (`RUN_SETTLE_SECONDS=7`), `request`, `flash`, `fast`, `fastShots`, `fastDone` (7), `didNotStart`, `noPhoto`, `notices` (8), `permission`, `blocked`, `permissionRequest`; `-demoRoute quickSnap`, `capture:Tool_chest` |
+| `CaptureScreen(route:request:)` (`screen-capture`), a cover | `CaptureModel`, `CaptureNavigator(router:address:)`, the camera seam `CaptureCameraFeed` (`CaptureCameraSource`), `CaptureCameraView` and the chrome in `CaptureChrome.swift`; hosted tests use `CaptureScreen(route:request:feed:permission:)` | `single`, `singleShot` (`RUN_SETTLE_SECONDS=7`), `singleProcessing` (the busy shutter, "Saving…": the demo's photo store never finishes, `CaptureDemo.photos(_:)`), `request`, `flash`, `fast`, `fastShots`, `fastDone` (7), `didNotStart`, `noPhoto`, `notices` (8), `permission`, `blocked`, `permissionRequest`; `-demoRoute quickSnap`, `capture:Tool_chest` |
 | `QuickSnapReviewScreen(route:)` (`screen-review`), pushed inside the camera's cover | `QuickSnapReviewModel` with `.inventoryQuery(model)`, `QuickSnapReviewNavigator(router:address:)`, `QuickSnapReviewSwipeBack` | `reviewArriving` (9), `reviewSavingFirst`, `reviewNamed` (9), `reviewToName` (9), `reviewStalled` (38), `reviewNothing`, `reviewEmptied` (9) |
 
 Over the live camera the status bar is hidden (§4). Under `-demo` on the simulator,
 `CaptureDemo` installs a stand-in camera with permission granted for every capture screen,
 including the Add sheet's; a device and release builds use the real camera.
+
+### 6.8 Accessibility checks for §6.4–6.7
+
+- **Audits.** `UITests/ScreensAuditUITests.swift` (every area's main states, §1.9). The Add
+  states run with `-demoKeyboardDown YES` (the sheet then never focuses the name by itself),
+  because the audit measures rows behind the keyboard against the keys. A busy build Mac can
+  make XCTest give up on an audit ("failed to complete in time"); the helper tries that one
+  error again. The audit is timing-sensitive (rows fading in, text under a bar's glass, the
+  keyboard rising): before adding an exception, export the run's screenshots
+  (`xcrun xcresulttool export attachments`) and check what the audited state looked like.
+- **Semantics.** `UITests/ScreensBAccessibilityUITests.swift` reads labels, element types and
+  frames: the container head as RN spoke it, the Add place step's Back, the name field in sight
+  while typing offline at AX5, the busy shutter. Run it with `DEVICE=se` too.
+- **Announcements.** A banner or status line that is a `List` row is not what announces it: rows
+  are built lazily, so one scrolled away and back (or a form back from the Add place step)
+  would say its words again. The row's banner gets `live: .off` and the screen announces with
+  `.announcesOnChange(…, enabled:)` (the refresh banners of the space, container and item
+  screens, the review's status and refresh banner, the Add sheet's draft, "Saved. Add the next
+  one." once per save, and "could not be loaded"). Pinned notices and the camera's notices are
+  not rows and announce themselves.
+- **Largest sizes.** On these screens text keeps scaling, except where it is pinned chrome or a
+  head that filled the first screen at AX5; there it stops at RN's cap for its role (08 §6):
+  every bottom bar at the button cap (`.xxxLarge`, with the large content viewer on its
+  buttons), the container head's crumb and type line and the space head's counts at AX1 (meta
+  and label 2.0), the container's QR entry at `.xxxLarge`, the Add sheet's save notice at AX1
+  (as the connection banner). While the keyboard is up at an accessibility size the Add sheet's
+  save notice folds away (it stays mounted, so it is not announced again), the connection
+  banner steps aside (`ScreenFrame(banner: false)`) and the bar's two buttons share a row, so
+  the name field stays in sight on a 667 pt phone too; at the standard sizes the notice's
+  message stops at two lines while typing. A save that fails while typing at an accessibility
+  size puts the keyboard away. The audits record these caps as RN-parity exceptions.
+- **Reduce Motion.** The simulator setting is
+  `scripts/mac.sh shell 'xcrun simctl spawn $udid defaults write com.apple.Accessibility ReduceMotionEnabled -bool true'`
+  (`DEVICE=…` for the other simulators; relaunch the app; `false` turns it off again). The
+  launch argument `-UIReduceMotionPreference YES` does not change
+  `UIAccessibility.isReduceMotionEnabled`. `-demoArea places -demoState arrival` logs which one it
+  sees (category `demo`). Under Reduce Motion: the Add sheet's step swap and its scroll to the top
+  are instant, New space's scroll to "Your own" is not animated, the container's arrival
+  highlight holds 1800 ms and goes at once (`ContainerDetailModel.arrivalTiming(reduceMotion:)`),
+  the review's rows leave without the 180 ms layout animation, the shutter's press dims instead
+  of shrinking and its flash is skipped, and the photo viewer settles back at once
+  (`PhotoViewerGesture.settleMilliseconds(reduceMotion:)`); its fade in and out stays: it moves
+  nothing (a cross-fade is what Reduce Motion substitutes for movement), and RN's
+  `animation: 'fade'` transition was not reduced either.
 
 ## 7. The shell
 
