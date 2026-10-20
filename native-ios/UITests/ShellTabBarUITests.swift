@@ -20,11 +20,11 @@ final class ShellTabBarUITests: XCTestCase {
         app = nil
     }
 
-    /// A tab item by RN's testID, or by its label when the identifier did not reach the button.
+    /// A tab item by RN's testID (the bottom bar on an iPhone, the top bar on an iPad).
     private func tab(_ identifier: String, label: String) -> XCUIElement {
-        let byIdentifier = app.tabBars.buttons[identifier]
-        if byIdentifier.waitForExistence(timeout: 3) { return byIdentifier }
-        return app.tabBars.buttons[label]
+        let item = app.shellTab(identifier)
+        XCTAssertTrue(item.waitForExistence(timeout: 5), "no \(label) tab")
+        return item
     }
 
     private func screen(_ identifier: String) -> XCUIElement {
@@ -88,10 +88,12 @@ final class ShellTabBarUITests: XCTestCase {
 
     func testTabItemsCarryRNsIdentifiersAndTheDropZoneBadgeLabel() throws {
         for identifier in ["tab-home", "tab-spaces", "tab-add", "tab-scan", "tab-drop-zone"] {
-            XCTAssertTrue(app.tabBars.buttons[identifier].waitForExistence(timeout: 5), "missing \(identifier)")
+            XCTAssertTrue(app.shellTab(identifier).waitForExistence(timeout: 5), "missing \(identifier)")
         }
-        print("tab labels: \(app.tabBars.buttons.allElementsBoundByIndex.map { "\($0.identifier)=\($0.label)|value=\(String(describing: $0.value))" })")
-        XCTAssertEqual(app.tabBars.buttons["tab-add"].label, "Add an item")
-        XCTAssertTrue(app.tabBars.buttons["tab-drop-zone"].label.hasPrefix("Drop zone, 4 waiting"))
+        let dropZone = app.shellTab("tab-drop-zone")
+        print("tab labels: add=\(app.shellTab("tab-add").label) dropZone=\(dropZone.label)|value=\(String(describing: dropZone.value))")
+        XCTAssertEqual(app.shellTab("tab-add").label, "Add an item")
+        // RN's label carries the count ("Drop zone, 4 waiting"); the bar adds no second count.
+        XCTAssertEqual(dropZone.label, "Drop zone, 4 waiting")
     }
 }
