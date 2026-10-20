@@ -143,7 +143,10 @@ private struct AddSheetContent: View {
                     // Above the fields, so it is seen whatever was scrolled to. A 404 here means
                     // the container went, not the item.
                     if let problem = model.problem {
+                        // A new notice per save, so a second failure in the same words is
+                        // announced again (RN remounted it).
                         SaveNotice(copy: problem, identifier: "add-save-problem")
+                            .id(model.saveAttempts)
                     }
                 } content: {
                     formSections
@@ -216,7 +219,9 @@ private struct AddSheetContent: View {
         // Under the field, so the field itself does not move while typing.
         if model.savedNext {
             Section {
+                // A new banner per save: said again after each "Save and add another".
                 BannerView(tone: .info, glyph: .check, message: L10n.Add.savedNext, chrome: .row, identifier: "add-saved-next")
+                    .id(model.saveAttempts)
             }
         }
 
@@ -354,6 +359,9 @@ private struct AddSheetContent: View {
         } content: {
             if let place = entry.wherePlace {
                 LocationLine(place: place, size: .row)
+                    // The separator starts where the text column does (at the pip), as under the
+                    // drop zone's name; the list would otherwise start it at the space name.
+                    .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
             } else {
                 Text(verbatim: L10n.Add.dropZone).textRole(.name)
                 Text(verbatim: L10n.Add.sortLater).textRole(.meta).foregroundStyle(.secondary)
@@ -413,6 +421,10 @@ private struct AddSheetContent: View {
             }
             .accessibilityIdentifier(AddSheet.screenIdentifier)
         }
+        // VoiceOver's escape (two-finger scrub) goes back to the form, as RN's Back and swipe
+        // did (app/item/new.tsx:327-331); the sheet resists the swipe here, so escape would
+        // otherwise do nothing.
+        .accessibilityAction(.escape) { model.closePlaceStep() }
     }
 
     // MARK: Actions

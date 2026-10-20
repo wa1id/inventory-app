@@ -207,6 +207,28 @@ final class AddSheetUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Suggested from your photo"].exists)
     }
 
+    /// Photo options › Retake (RN app/item/new.tsx:407-416): the photo goes, then the camera opens
+    /// over the sheet once the action sheet has gone; closed without a shot, no photo is left and
+    /// the suggested name stays.
+    func testRetakeDropsThePhotoAndOpensTheCamera() throws {
+        launch(["-demoArea", "add", "-demoState", "offered"])
+        XCTAssertTrue(app.staticTexts["Suggested from your photo"].waitForExistence(timeout: 15))
+
+        app.buttons["item-photo-options"].tap()
+        let retake = app.buttons["Retake"]
+        XCTAssertTrue(retake.waitForExistence(timeout: 5))
+        retake.tap()
+        XCTAssertTrue(screen("screen-capture").waitForExistence(timeout: 5))
+        attachScreenshot("retake-camera")
+
+        app.buttons["capture-close"].tap()
+        XCTAssertTrue(waitForAbsence(screen("screen-capture")))
+        XCTAssertTrue(app.buttons["item-photo-take"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["item-photo-options"].exists)
+        XCTAssertFalse(app.staticTexts["Suggested from your photo"].exists)
+        XCTAssertEqual(nameField.value as? String, "Cordless drill")
+    }
+
     func testAFailedSaveSaysSoAndKeepsTheTyping() throws {
         launch(["-demoArea", "add", "-demoState", "saveProblem"])
         XCTAssertTrue(screen("add-save-problem").waitForExistence(timeout: 15))
@@ -222,6 +244,51 @@ final class AddSheetUITests: XCTestCase {
         XCTAssertTrue(update.waitForExistence(timeout: 15))
         update.tap()
         XCTAssertTrue(app.staticTexts["Details updated for “Angle grinder”"].waitForExistence(timeout: 10))
+    }
+
+    /// RN focused the name once, on arrival (app/item/new.tsx:290-310). Coming back from the
+    /// camera must not bring the keyboard up again over the form (and the suggestion banner).
+    func testTheNameTakesFocusOnArrivalOnlyOnce() throws {
+        launch()
+        openFromTheTab()
+        let focused = expectation(for: NSPredicate(format: "hasKeyboardFocus == true"), evaluatedWith: nameField)
+        XCTAssertEqual(XCTWaiter().wait(for: [focused], timeout: 5), .completed, "focused on arrival")
+
+        app.buttons["item-photo-take"].tap()
+        XCTAssertTrue(screen("screen-capture").waitForExistence(timeout: 5))
+        app.buttons["capture-close"].tap()
+        XCTAssertTrue(waitForAbsence(screen("screen-capture")))
+        XCTAssertTrue(screen("screen-add").exists)
+
+        // Longer than the arrival delay: the keyboard stays down.
+        Thread.sleep(forTimeInterval: 2)
+        XCTAssertEqual(nameField.value(forKey: "hasKeyboardFocus") as? Bool, false, "the name took focus again after the camera")
+        XCTAssertEqual(app.keyboards.count, 0)
+    }
+
+    /// "More details" opens Category, Tags and Notes, and closes over them again (RN
+    /// `toggleDetails`, app/item/new.tsx:364-371); a category saves with the item.
+    func testMoreDetailsOpensAndClosesTheDetails() throws {
+        launch()
+        openFromTheTab()
+        typeName("Wood screws")
+        // The disclosure row's button carries RN's testID (its label text repeats it).
+        let toggle = app.buttons["item-more-details"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 5))
+        XCTAssertFalse(app.textFields["item-category"].exists)
+
+        toggle.tap()
+        let category = app.textFields["item-category"]
+        XCTAssertTrue(category.waitForExistence(timeout: 5))
+        category.tap()
+        category.typeText("Hardware")
+        attachScreenshot("details-open")
+
+        toggle.tap()
+        XCTAssertTrue(waitForAbsence(category), "closed over what is typed")
+        app.buttons["item-save"].tap()
+        XCTAssertTrue(waitForAbsence(screen("screen-add")))
+        XCTAssertEqual(toastMessage(), "Saved in the drop zone.")
     }
 
     func testSnapSeveralKeepsTheTypingForTheNextOpen() throws {

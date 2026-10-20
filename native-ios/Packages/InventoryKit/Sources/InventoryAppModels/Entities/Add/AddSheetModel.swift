@@ -97,6 +97,11 @@ public final class AddSheetModel {
     public private(set) var nameFocusRequest = 0
     /// Bumped when the form should scroll back to the top.
     public private(set) var scrollToTopRequest = 0
+    /// Bumped each time a save starts (past validation). The view keys the save problem and
+    /// "Saved. Add the next one." by it, so the same outcome twice in a row is a new notice and
+    /// is announced again: RN cleared both when a save started and set them after its await,
+    /// which remounted the banner, while here the two changes may land in one update.
+    public private(set) var saveAttempts = 0
 
     /// This phone's recent places as they were when the sheet opened.
     public let recentIds: [String]
@@ -266,8 +271,11 @@ public final class AddSheetModel {
     /// The name the stepper's labels use, or nil while unnamed.
     public var stepperItemName: String? { typedName.isEmpty ? nil : typedName }
 
-    /// "Your containers could not be loaded": the read failed with nothing loaded.
-    public var showsPlacesFailed: Bool { placesCause != nil && places == nil }
+    /// "Your containers could not be loaded": the newest read failed with nothing loaded. Not
+    /// while a read is running (Try again, or a re-read on focus or a new revision): RN reported
+    /// a query's cause only once its current read had settled (`useInventoryQuery`), so the
+    /// banner goes while it reads and a retry that fails again shows, and announces, it anew.
+    public var showsPlacesFailed: Bool { placesCause != nil && places == nil && !placesLoading }
 
     /// While saving, the sheet resists a swipe-down.
     public var interactiveDismissDisabled: Bool { saving != nil }
@@ -559,6 +567,7 @@ public final class AddSheetModel {
         let suggestionAtSave = suggestion
         savingGuard = true
         saving = andAnother ? .another : .save
+        saveAttempts += 1
         problem = nil
         savedNext = false
 
