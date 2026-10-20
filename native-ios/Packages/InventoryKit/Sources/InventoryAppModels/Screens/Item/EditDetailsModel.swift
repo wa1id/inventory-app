@@ -111,6 +111,8 @@ public final class EditDetailsModel {
     public let dirtyGuard: DirtyGuard
     /// Bumped when the name field should take focus (an invalid name).
     public private(set) var nameFocusRequests = 0
+    /// A save went through; the sheet is closing (or may close at once).
+    public private(set) var saved = false
 
     @ObservationIgnored private let items: any ItemsRepository
     @ObservationIgnored private let invalidator: any InventoryInvalidating
@@ -214,7 +216,11 @@ public final class EditDetailsModel {
     // MARK: Actions
 
     /// The sheet's Cancel: refused while a save writes (RN disables it), else asks when dirty.
+    /// Once a save went through there is nothing to lose: the sheet closes, even if it was not in
+    /// front when the save finished (RN left it open then, `saving`, with Cancel disabled for
+    /// good; a link or Quick Snap opened mid-save would leave it stuck).
     public func attemptClose() async -> Bool {
+        if saved { return true }
         if saving { return false }
         return await dirtyGuard.attemptClose()
     }
@@ -259,6 +265,7 @@ public final class EditDetailsModel {
         if case .saved = outcome {
             // Still "saving" while the sheet closes, so the guard lets it go and a second tap
             // cannot save again.
+            saved = true
             telemetry.event("item_updated")
             categories.record(parsed.category)
             // Only from the front: closed some other way mid-save (the removed-phone layer),

@@ -234,7 +234,7 @@ stores and seams: `toasts: app.toasts`, `confirm: app.platform.confirm`,
 | Capture | `CaptureModel(route:deliverPhoto:permission:photos:fastCapture:items:invalidator:toasts:haptics:…, navigate:)` with `deliverPhoto: { app.router.results.deliver(request, $0) }` when there is a request, `photos: app.imageStore` and `fastCapture: app.fastCapture`. `CaptureNavigation` maps to the router (see the file's comment). Wire `camera.reportEvents(to: model)` and register `disappeared()` with `onRemoval`. Attach `.captureLibraryPicker` once at the root, and pass `CameraPermissionView(isProcessing: model.processing)`. Stop the session when the screen loses focus, since the review is pushed over the live camera: `CameraPreview(camera:runs: isScreenFocused && …)`. |
 | Quick Snap review | `QuickSnapReviewModel(route:items:photos:isPaired:invalidator:toasts:confirm:haptics:…, navigate:)`. Call `reload()` on appear, on focus gain and on revision change. `QuickSnapReviewNavigation` maps to the router (see the file). |
 | Add sheet | `AddSheetModel(params:…, routing: AddSheetModel.Routing(isFocused:close:replaceWithCapture:takePhoto:))`, `recognize: app.recognize`, `drafts: app.drafts`. Map `takePhoto` to `router.presentForResult(StoredImage.self) { .cover(.capture(…, request: $0)) }`. Set `.interactiveDismissDisabled(model.interactiveDismissDisabled \|\| model.isPickingPlace)`. The place step is `PlacePickerHost(mode: .choose, selectedContainerId:, showsDropZone: true) { model.pickPlace($0) }` (§5.1). |
-| Move / file | `MoveModel(items:filing:request:routeResults: app.router.results, recentPlaces: app.recentPlaces, …, isFocused: { router.isFocused(address) }, close: { router.close(address) })`. Embed `PlacePickerHost(mode: move.pickerMode, currentContainerId:busyId: move.busyId) { notice } onPick: { place in Task { await move.pick(place) } }` (§5.1); it reads the lists and runs the inline create itself. |
+| Move / file | `MoveModel(items:filing:request:routeResults: app.router.results, recentPlaces: app.recentPlaces, …, isFocused: { router.isFocused(address) }, close: { router.close(address) })`. Keep `loaded` current with `move.follow(query)` (the sheet's `item:<id>` read) before the picker is first built. Embed `PlacePickerHost(mode: move.pickerMode, currentContainerId:busyId: move.busyId) { place in Task { await move.pick(place) } }` (§5.1), which reads the lists and runs the inline create itself, with the notice in `.pinnedNotice { … }` above it (a list row scrolled away is neither seen nor announced). |
 | Edit forms | `DirtyGuard(confirm:title:dirty:saving:revoked:)`, plus `.sheetCloseGuard { await guard.attemptClose() }` and `.interactiveDismissDisabled(guard.interactiveDismissDisabled)`. |
 | Item screen naming | `NameItModel(itemId:updatedAt:incomingName:items:invalidator:haptics:announce:onNamed:)`. `WhereCard(actionFocus:)` moves VoiceOver to "File it…". |
 | Camera permission anywhere | `app.makeCameraPermission(purpose:)` (container telemetry, a fake platform in previews and tests). `CameraPermissionModel.device(purpose:)` is for galleries and tests. |
@@ -393,7 +393,8 @@ All are in the app target (module `Inventory`). Logic and copy behind them live 
 | `CodeInput(label:value:length:hint:error:identifier:onSubmit:)` | A household or recovery code: grouped, normalised, and Return submits. |
 | `ItemDetailsFields(values: Binding<ItemFormValues>, suggestions:focus: FocusState<ItemDetailsField?>.Binding)` | Category (with recent-category chips), Tags and Notes. |
 | `SpaceFields(values:nameError:onSubmit:previewMeta:previewFallbackName:focus:)` | Space name, icon and colour, with a live row preview. |
-| `FormLayout { notice } content: { }` and `FormLayout { notice } content: { } bottomBar: { }` | A form with a notice inset above it (see 1.4 for the bar). |
+| `FormLayout { notice } content: { }` and `FormLayout { notice } content: { } bottomBar: { }` | A form with a notice pinned above it (see 1.4 for the bar). |
+| `.pinnedNotice { notice }` | A notice pinned above scrolling content, outside it, so it is seen and announced however far the content was scrolled (list rows are built lazily: one scrolled away is neither). At the largest sizes a long notice takes at most 40 % of the height and scrolls within it. `FormLayout` uses it; an optional notice that is nil adds nothing. |
 | `TagChip(label:isSelected:identifier:action:)` | A tag pill. It is tappable with an action. |
 | `ChoiceList(options: [ChoiceOption], selection:accessibilityLabel:)`; `ChoiceOption(value:title:subtitle:leading:identifier:)` | A short single choice with checkmarks. |
 | `SegmentedChoice(options: [SegmentOption], selection:accessibilityLabel:onCamera:isDisabled:accessibilityHint:)`; `SegmentOption(value:label:glyph:identifier:)` | A stock segmented picker, on glass over the camera. It drops option glyphs. |
@@ -472,15 +473,18 @@ PlacePickerHost(
     placeholder: String = L10n.Picker.filter,
     initialQuery: String = "",
     autoFocusesFilter: Bool? = nil,        // nil: only .open
-    @ViewBuilder notice: () -> Notice,     // optional (an init without it); `if let` works
+    @ViewBuilder notice: () -> Notice,     // optional (an init without it); `if let` works.
+                                           // A list row: prefer `.pinnedNotice` (§2) for one
+                                           // that must be seen and announced after a pick.
     onPick: @escaping (PickedPlace) -> Void
 )
 
 // Move / File:
-PlacePickerHost(mode: move.pickerMode, currentContainerId: item.containerId, busyId: move.busyId) {
-    if let notice = move.notice { BannerView(tone: .warning, message: notice.message) }
-} onPick: { place in
+PlacePickerHost(mode: move.pickerMode, currentContainerId: item.containerId, busyId: move.busyId) { place in
     Task { await move.pick(place) }
+}
+.pinnedNotice {
+    if let notice = move.notice { BannerView(tone: .warning, message: notice.message, live: .assertive) }
 }
 ```
 

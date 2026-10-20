@@ -58,7 +58,10 @@ struct ItemEditSheet: View {
         .accessibilityIdentifier("screen-item-edit")
         .onAppear {
             guard model == nil else { return }
-            model = Self.makeModel(app: app, id: id, address: address)
+            let made = Self.makeModel(app: app, id: id, address: address)
+            // The connection as it is now; the change below may have run before the model.
+            made.setRevoked(app.connection.state == .revoked)
+            model = made
         }
         .onChange(of: app.connection.state, initial: true) { _, state in
             model?.setRevoked(state == .revoked)

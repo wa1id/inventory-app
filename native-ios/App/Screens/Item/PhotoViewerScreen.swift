@@ -120,7 +120,7 @@ struct PhotoViewerScreen: View {
         case .photo(let uri):
             Group {
                 if let picture, picture.uri == uri {
-                    PhotoZoomView(
+                    ItemPhotoZoomView(
                         image: picture.image,
                         accessibilityLabel: model.accessibilityLabel,
                         onDrag: { dy in drag = dy },
@@ -241,7 +241,7 @@ struct ItemPhotoPicture {
 /// The zoomable picture: a `UIScrollView` (pinch 1…4×, centred, bounce on zoom, pan when zoomed)
 /// with the swipe-down drag, which UIKit's scroll view gestures leave alone only when not zoomed
 /// in (RN `ScrollView maximumZoomScale={4} centerContent bouncesZoom`).
-struct PhotoZoomView: UIViewRepresentable {
+struct ItemPhotoZoomView: UIViewRepresentable {
     let image: UIImage
     let accessibilityLabel: String
     /// The picture follows a downward drag by this much.
@@ -249,11 +249,11 @@ struct PhotoZoomView: UIViewRepresentable {
     /// The finger lifted (or the drag was cancelled, 0) this far down.
     let onDragEnd: (CGFloat) -> Void
 
-    func makeUIView(context: Context) -> PhotoZoomScrollView {
-        PhotoZoomScrollView()
+    func makeUIView(context: Context) -> ItemPhotoZoomScrollView {
+        ItemPhotoZoomScrollView()
     }
 
-    func updateUIView(_ view: PhotoZoomScrollView, context: Context) {
+    func updateUIView(_ view: ItemPhotoZoomScrollView, context: Context) {
         view.show(image)
         view.imageView.accessibilityLabel = accessibilityLabel
         view.onDrag = onDrag
@@ -261,8 +261,8 @@ struct PhotoZoomView: UIViewRepresentable {
     }
 }
 
-/// The scroll view behind ``PhotoZoomView``.
-final class PhotoZoomScrollView: UIScrollView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
+/// The scroll view behind ``ItemPhotoZoomView``.
+final class ItemPhotoZoomScrollView: UIScrollView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
     let imageView = UIImageView()
     private let dismissPan = UIPanGestureRecognizer()
     var onDrag: (CGFloat) -> Void = { _ in }

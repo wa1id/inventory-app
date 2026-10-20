@@ -70,9 +70,12 @@ struct MoveSheet: View {
     @ViewBuilder
     private func content(_ query: InventoryQuery<ItemWithContext?>, _ move: MoveModel) -> some View {
         if let item = move.item {
-            PlacePickerHost(mode: move.pickerMode, currentContainerId: item.containerId, busyId: move.busyId) {
-                // Above the picker rather than in its list, so it is seen however far the list
-                // was scrolled.
+            PlacePickerHost(mode: move.pickerMode, currentContainerId: item.containerId, busyId: move.busyId) { place in
+                Task { await move.pick(place) }
+            }
+            // Above the picker rather than in its list (RN move.tsx:80-94), so it is seen and
+            // announced however far the list was scrolled: a list row off screen is neither.
+            .pinnedNotice {
                 if let notice = move.notice {
                     BannerView(
                         tone: .warning,
@@ -82,8 +85,6 @@ struct MoveSheet: View {
                         identifier: "move-notice"
                     )
                 }
-            } onPick: { place in
-                Task { await move.pick(place) }
             }
         } else if let cause = query.cause {
             ItemStateScroll {

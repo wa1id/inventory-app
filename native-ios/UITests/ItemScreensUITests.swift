@@ -84,6 +84,24 @@ final class ItemScreensUITests: XCTestCase {
         XCTAssertEqual(element("where-container").label, "Red bin")
     }
 
+    func testMoveNoticeStaysInSightWhileThePickerScrolls() throws {
+        // The item is deleted elsewhere, then a pick finds it gone: the notice with Close.
+        launch("move:Cordless_drill", ["-demoArea", "item", "-demoState", "moveGone"])
+        let notice = element("move-notice")
+        XCTAssertTrue(notice.waitForExistence(timeout: 15))
+        // Pinned above the picker (RN move.tsx), not a row of it: scrolling the list to its end
+        // leaves the notice and its Close where they were.
+        let list = app.collectionViews.firstMatch
+        XCTAssertTrue(list.exists)
+        list.swipeUp()
+        list.swipeUp()
+        XCTAssertTrue(notice.isHittable)
+        let close = app.buttons["move-notice-close"]
+        XCTAssertTrue(close.isHittable)
+        close.tap()
+        XCTAssertTrue(element("screen-move").waitForNonExistence(timeout: 5))
+    }
+
     func testFilingRunGoesOnToTheNextWaitingItem() throws {
         launch("itemFiling:HDMI_cable")
         XCTAssertTrue(app.buttons["item-file"].waitForExistence(timeout: 15))

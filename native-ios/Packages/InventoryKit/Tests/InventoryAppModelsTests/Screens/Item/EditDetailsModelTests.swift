@@ -152,8 +152,33 @@ struct ItemScreensEditDetailsModelTests {
         // A second tap saves nothing more.
         await harness.model.save()
         #expect(await items.updates.count == 1)
-        // While saving, Cancel does nothing (RN disables it).
+        // Saved: Cancel closes without asking.
+        #expect(await harness.model.attemptClose())
+        #expect(harness.confirms.asked.isEmpty)
+    }
+
+    @Test("while a save writes, Cancel does nothing (RN disables it); once saved it closes, even when the sheet was not in front")
+    func cancelWhileSaving() async {
+        let items = EntitiesFakeItems(updates: [.value(EntitiesFixtures.item(updatedAt: 11))], lastRead: .value(Self.drill))
+        let harness = Harness(items: items)
+        await harness.load()
+        harness.model.values.notes = "Charger in the red bin"
+        await items.setHoldUpdates(true)
+        harness.model.startSave()
+        for _ in 0..<1000 where await items.heldCount == 0 { await Task.yield() }
+        #expect(harness.model.saving)
         #expect(await harness.model.attemptClose() == false)
+        #expect(harness.confirms.asked.isEmpty)
+
+        // A link opened over the sheet mid-save: the save does not close it...
+        harness.focused = false
+        await items.releaseNextUpdate()
+        await harness.model.saveTask?.value
+        #expect(harness.log.entries == ["invalidate"])
+        #expect(harness.model.saved)
+        // ...and back in front, Cancel still can.
+        #expect(await harness.model.attemptClose())
+        #expect(harness.confirms.asked.isEmpty)
     }
 
     @Test("closed some other way mid-save, the sheet is not closed again; the toast still shows")

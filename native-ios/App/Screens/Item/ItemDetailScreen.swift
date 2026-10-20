@@ -85,6 +85,9 @@ struct ItemDetailBody: View {
             ToolbarItem(placement: .primaryAction) { SearchButton() }
         }
         .nowTicker(ticker)
+        // A name that arrives while one is typed is said, as RN's live region was; from here
+        // rather than the field's row, which the list does not draw while it is scrolled away.
+        .announcesOnChange(nameNotice ?? "", enabled: nameNotice != nil)
         // A container, so the screen's identifier does not replace its controls' own.
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("screen-item")
@@ -120,6 +123,12 @@ struct ItemDetailBody: View {
             if let model, model.stored != nil { await ItemDemo.itemLoaded(model, app: app) }
         }
         #endif
+    }
+
+    /// The name field's line about a name that arrived meanwhile, while the field shows.
+    private var nameNotice: String? {
+        guard let model, model.isNaming else { return nil }
+        return model.nameField?.notice
     }
 
     // MARK: States
@@ -451,8 +460,6 @@ struct ItemNameField: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        // A name that arrives while typing is said, as RN's live region was.
-        .announcesOnChange(model.notice ?? "", enabled: model.notice != nil)
         .onChange(of: fieldFocused) { _, focused in model.focused = focused }
         .onChange(of: autoFocus, initial: true) { _, focus in
             if focus { fieldFocused = true }

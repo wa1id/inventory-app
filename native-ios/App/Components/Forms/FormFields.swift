@@ -137,38 +137,21 @@ struct SpaceFields: View {
 /// notice above the form, the fields scrolling, and the primary action in a bar at the bottom
 /// that the keyboard pushes up rather than covers.
 ///
-/// At the accessibility text sizes the notice scrolls as the form's first row instead: pinned,
-/// a long one would fill the sheet and push the fields and the bar off screen.
+/// The notice stays pinned above the fields (``SwiftUI/View/pinnedNotice(_:)``), so it is seen
+/// and announced however far the form was scrolled; at the largest text sizes a long one takes
+/// at most part of the height and scrolls within it, so the fields and the bar stay on screen.
 struct FormLayout<Notice: View, Content: View, BottomBar: View>: View {
     @ViewBuilder var notice: Notice
     @ViewBuilder var content: Content
     @ViewBuilder var bottomBar: BottomBar
 
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
     private var hasNotice: Bool { !(Notice.self == EmptyView.self) }
-    private var pinsNotice: Bool { !dynamicTypeSize.isAccessibilitySize }
 
     var body: some View {
         Form {
-            if hasNotice && !pinsNotice {
-                Section {
-                    notice
-                }
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
-            }
             content
         }
-        .safeAreaInset(edge: .top, spacing: 0) {
-            if hasNotice && pinsNotice {
-                notice
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .readableContentWidth()
-                    .background(Color(uiColor: .systemGroupedBackground))
-            }
-        }
+        .modifier(PinnedNoticeInset(isEmpty: !hasNotice, notice: notice))
         .modifier(FormLayoutBottomBar(hasBar: !(BottomBar.self == EmptyView.self)) {
             bottomBar
                 .padding(.horizontal, 16)
@@ -184,6 +167,66 @@ extension FormLayout where BottomBar == EmptyView {
     /// stacks its buttons at large sizes.
     init(@ViewBuilder notice: () -> Notice, @ViewBuilder content: () -> Content) {
         self.init(notice: notice, content: content, bottomBar: { EmptyView() })
+    }
+}
+
+extension View {
+    /// Pins `notice` (a failed save, a conflict, a move that did not happen) above this
+    /// scrolling content, outside it, as RN's `FormLayout` and the Move sheet did: a list row
+    /// would scroll away, and a row off screen is neither seen nor announced, since SwiftUI
+    /// builds list rows lazily. A long notice at the largest text sizes takes at most
+    /// ``PinnedNoticeInset/heightShare`` of the height and scrolls within it, so the content and
+    /// the bottom bar stay on screen. An optional notice that is nil adds nothing.
+    func pinnedNotice<Notice: View>(@ViewBuilder _ notice: () -> Notice) -> some View {
+        modifier(PinnedNoticeInset(isEmpty: Notice.self == EmptyView.self, notice: notice()))
+    }
+}
+
+/// See ``SwiftUI/View/pinnedNotice(_:)``.
+struct PinnedNoticeInset<Notice: View>: ViewModifier {
+    /// The most of the content's height a pinned notice takes before it scrolls.
+    static var heightShare: CGFloat { 0.4 }
+
+    let isEmpty: Bool
+    let notice: Notice
+
+    /// The notice's own height, and the height of the content and the notice together.
+    @State private var noticeHeight: CGFloat = 0
+    @State private var contentHeight: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        if isEmpty {
+            content
+        } else {
+            content
+                .safeAreaInset(edge: .top, spacing: 0) { pinned }
+                // Measured outside the inset, which shrinks the content by the notice's height.
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
+        }
+    }
+
+    private var cap: CGFloat {
+        contentHeight > 0 ? (contentHeight * Self.heightShare).rounded() : .infinity
+    }
+
+    private var pinned: some View {
+        // Always the same scroll view, so the banner keeps its identity (and is announced
+        // once) when its height crosses the cap; it scrolls only when it must.
+        ScrollView {
+            VStack(spacing: 0) {
+                notice
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+            }
+            .readableContentWidth()
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { noticeHeight = $0 }
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .scrollDisabled(noticeHeight <= cap)
+        // Shows that a capped notice scrolls.
+        .scrollIndicatorsFlash(trigger: noticeHeight > cap)
+        .frame(height: min(noticeHeight, cap))
+        .background(Color(uiColor: .systemGroupedBackground))
     }
 }
 
