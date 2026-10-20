@@ -22,6 +22,8 @@ The code is written on Linux and compiled on the Mac over SSH. There is no Swift
 
 Each checkout, including each git worktree, gets its own folder and simulator on the Mac, so parallel work never collides. Full logs land in `native-ios/.build-logs/`, and stdout shows a filtered summary.
 
+`test`, `build`, `apptest`, `uitest` and `run` first take one of `MAC_SLOTS` (default 4) build slots, so many parallel checkouts don't exhaust the Mac's memory. While all slots are busy the command prints a waiting line and blocks, so run long commands in the background rather than letting a tool timeout kill them. When a worktree's work is finished and committed, run `mac.sh clean` to free its folder and simulator on the Mac.
+
 ## Code
 
 - Swift 6 language mode with complete strict concurrency. No `@unchecked Sendable` or `nonisolated(unsafe)` without a comment that justifies it.

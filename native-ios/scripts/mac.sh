@@ -18,6 +18,7 @@
 #
 # run, launch and openurl honour APPEARANCE=light|dark and CONTENT_SIZE=<simctl content size,
 # e.g. large, accessibility-extra-extra-extra-large>, and wait RUN_SETTLE_SECONDS (default 4).
+# test, build, apptest, uitest and run wait for one of MAC_SLOTS (default 4) build slots.
 # Full logs go to native-ios/.build-logs/<command>.log; stdout gets a filtered summary.
 set -euo pipefail
 
@@ -52,8 +53,25 @@ summarize() {
     | grep -v "^ld: warning" | awk '!seen[$0]++' | head -200 || true
 }
 
+# Compiles and test runs take one of MAC_SLOTS slots (default 4), so parallel checkouts don't
+# swamp the Mac's memory. Every checkout runs on this machine, so the locks live here. The
+# slot is held on fd 9 until this script exits.
+take_slot() {
+  local slots="${MAC_SLOTS:-4}" dir="$HOME/.cache/inventory-mac-slots" waited=0 i
+  mkdir -p "$dir"
+  while :; do
+    for i in $(seq 1 "$slots"); do
+      exec 9>"$dir/slot-$i.lock"
+      if flock -n 9; then return 0; fi
+    done
+    if [ "$waited" -eq 0 ]; then echo "[mac] all $slots build slots are busy; waiting…" >&2; waited=1; fi
+    sleep 5
+  done
+}
+
 run_logged() {
   local name="$1" cmd="$2" status=0
+  case "$name" in test|build|apptest|uitest|run) take_slot ;; esac
   remote "$cmd" >"$LOG_DIR/$name.log" 2>&1 || status=$?
   summarize <"$LOG_DIR/$name.log"
   if [ "$status" -eq 0 ]; then echo "[$name] OK (log: $LOG_DIR/$name.log)"; else echo "[$name] FAILED with exit $status (log: $LOG_DIR/$name.log)"; fi
@@ -132,6 +150,6 @@ case "$cmd" in
     echo "removed ~/$REMOTE_ROOT and simulator $SIM_NAME on $MAC_HOST"
     ;;
   *)
-    sed -n '2,21p' "${BASH_SOURCE[0]}"
+    sed -n '2,22p' "${BASH_SOURCE[0]}"
     ;;
 esac
