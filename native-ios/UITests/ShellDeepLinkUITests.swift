@@ -69,7 +69,8 @@ final class ShellDeepLinkUITests: XCTestCase {
         XCTAssertTrue(screen("screen-onboarding").waitForExistence(timeout: 5))
         XCTAssertFalse(screen("screen-label").exists)
 
-        app.buttons["onboarding-start"].tap()
+        // Welcome's "Use this phone on its own" finishes onboarding (the gate flips by itself).
+        app.buttons["onboarding-local"].tap()
         XCTAssertTrue(screen("screen-label").waitForExistence(timeout: 10))
         XCTAssertTrue(app.tabBars.buttons["tab-home"].isSelected)
         app.navigationBars.buttons.element(boundBy: 0).tap()
@@ -86,7 +87,7 @@ final class ShellDeepLinkUITests: XCTestCase {
 
         // Opened by URL, the app may start without the demo arguments, on this simulator's own
         // (empty) inventory: then onboarding comes first and the link waits for it.
-        let onboarding = app.buttons["onboarding-start"]
+        let onboarding = app.buttons["onboarding-local"]
         if onboarding.waitForExistence(timeout: 5) { onboarding.tap() }
         XCTAssertTrue(screen("screen-label").waitForExistence(timeout: 15))
         attachScreenshot("deeplink-cold")
