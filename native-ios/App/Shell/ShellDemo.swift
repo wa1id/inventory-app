@@ -91,10 +91,12 @@ enum ShellDemo {
     @MainActor private static var ran = false
 }
 
-/// Every request answered 401, as for a phone removed from the household.
+/// Every request answered 401, as for a phone removed from the household. The answer takes
+/// 1.5 s, so a route opened with `-demoOpen` is up when the removed-phone layer arrives.
 private struct ShellDemoUnauthorizedTransport: HTTPTransport {
     func send(_ request: URLRequest) async throws -> HTTPResponse {
-        HTTPResponse(status: 401, headers: ["content-type": "application/json"], body: Data(#"{"error":"unauthorized"}"#.utf8))
+        try await Task.sleep(for: .milliseconds(1500))
+        return HTTPResponse(status: 401, headers: ["content-type": "application/json"], body: Data(#"{"error":"unauthorized"}"#.utf8))
     }
 }
 #endif

@@ -90,7 +90,7 @@ final class ShellTabBarUITests: XCTestCase {
         for identifier in ["tab-home", "tab-spaces", "tab-add", "tab-scan", "tab-drop-zone"] {
             XCTAssertTrue(app.tabBars.buttons[identifier].waitForExistence(timeout: 5), "missing \(identifier)")
         }
-        print("tab labels: \(app.tabBars.buttons.allElementsBoundByIndex.map { "\($0.identifier)=\($0.label)" })")
+        print("tab labels: \(app.tabBars.buttons.allElementsBoundByIndex.map { "\($0.identifier)=\($0.label)|value=\(String(describing: $0.value))" })")
         XCTAssertEqual(app.tabBars.buttons["tab-add"].label, "Add an item")
         XCTAssertTrue(app.tabBars.buttons["tab-drop-zone"].label.hasPrefix("Drop zone, 4 waiting"))
     }

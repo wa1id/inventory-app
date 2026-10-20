@@ -15,25 +15,32 @@ final class ShellOverlayState {
 struct ToastHost: View {
     let toasts: ToastCenter
     let overlay: ShellOverlayState
+    var tabBarChrome: ShellTabBarChrome?
 
     var body: some View {
+        // Laid out inside the safe area, so its bottom inset is known (a reader that ignores the
+        // safe area reports none, which put the toast over the home indicator). Chrome heights are
+        // measured from the window's bottom edge, so the inset comes off them.
         GeometryReader { geometry in
-            let bottom = (toasts.chromeHeight ?? Double(geometry.safeAreaInsets.bottom)) + ToastCenter.Layout.gap
+            let chrome = ShellTabBarChrome.toastChrome(registered: toasts.chromeHeight, tabBar: tabBarChrome?.height)
+            let inset = Double(geometry.safeAreaInsets.bottom)
+            let bottom = max(0, (chrome ?? inset) - inset) + ToastCenter.Layout.gap
             ZStack(alignment: .bottom) {
                 Color.clear
                 if let record = toasts.current {
                     ToastCard(record: record, leaving: toasts.leaving, toasts: toasts)
                         .id(record.id)
+                        // The card alone, measured before the padding that lifts it: the padding
+                        // reaches down over the tab bar and bottom bars, whose touches must pass.
+                        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { overlay.cardFrame = $0 }
+                        .onDisappear { overlay.cardFrame = nil }
                         .frame(maxWidth: ToastCenter.Layout.maxWidth)
                         .padding(.horizontal, 16)
                         .padding(.bottom, bottom)
-                        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { overlay.cardFrame = $0 }
-                        .onDisappear { overlay.cardFrame = nil }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .ignoresSafeArea()
     }
 }
 

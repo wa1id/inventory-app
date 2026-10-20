@@ -35,8 +35,13 @@ struct ShellOverlayWindowTests {
         await ShellTestWait.until("the card laid out") { overlay.state.cardFrame != nil }
         let card = try #require(overlay.state.cardFrame)
 
-        // Outside the card: through to the app's window. Inside: the card.
+        // Outside the card: through to the app's window, above it and below it (where the tab
+        // bar and bottom bars are). Inside: the card.
+        #expect(card.width <= ToastCenter.Layout.maxWidth + 0.5)
+        #expect(card.maxY < window.bounds.maxY - ToastCenter.Layout.gap)
         #expect(window.hitTest(CGPoint(x: window.bounds.midX, y: 120), with: nil) == nil)
+        #expect(window.hitTest(CGPoint(x: card.midX, y: (card.maxY + window.bounds.maxY) / 2), with: nil) == nil)
+        #expect(window.hitTest(CGPoint(x: card.midX, y: window.bounds.maxY - 2), with: nil) == nil)
         #expect(window.hitTest(CGPoint(x: card.midX, y: card.midY), with: nil) != nil)
 
         // The removed-phone layer captures everything and is modal for VoiceOver.

@@ -41,10 +41,12 @@ final class ShellOverlayHostingController<Content: View>: UIHostingController<Co
 final class ShellOverlayController {
     let state = ShellOverlayState()
     private let app: AppContainer
+    private let tabBarChrome: ShellTabBarChrome?
     private(set) var window: ShellOverlayWindow?
 
-    init(app: AppContainer) {
+    init(app: AppContainer, tabBarChrome: ShellTabBarChrome? = nil) {
         self.app = app
+        self.tabBarChrome = tabBarChrome
     }
 
     /// Creates the window on `scene`, once.
@@ -53,7 +55,7 @@ final class ShellOverlayController {
         let window = ShellOverlayWindow(windowScene: scene)
         window.windowLevel = .alert + 1
         window.backgroundColor = .clear
-        let host = ShellOverlayHostingController(rootView: ShellOverlayRoot(app: app, state: state))
+        let host = ShellOverlayHostingController(rootView: ShellOverlayRoot(app: app, state: state, tabBarChrome: tabBarChrome))
         host.view.backgroundColor = .clear
         window.rootViewController = host
         let state = state
@@ -78,6 +80,9 @@ final class ShellOverlayController {
         guard let window else { return }
         let revoked = app.connection.state == .revoked
         window.capturesAllTouches = revoked
+        // On the window as well as its content: VoiceOver skips the windows beside a modal one
+        // (as for a system alert), so the screens and sheets under the layer go quiet.
+        window.accessibilityViewIsModal = revoked
         window.rootViewController?.view.accessibilityViewIsModal = revoked
         window.isHidden = !(revoked || app.toasts.current != nil)
     }
@@ -87,10 +92,11 @@ final class ShellOverlayController {
 struct ShellOverlayRoot: View {
     let app: AppContainer
     let state: ShellOverlayState
+    let tabBarChrome: ShellTabBarChrome?
 
     var body: some View {
         ZStack {
-            ToastHost(toasts: app.toasts, overlay: state)
+            ToastHost(toasts: app.toasts, overlay: state, tabBarChrome: tabBarChrome)
             if app.connection.state == .revoked {
                 RevokedOverlay()
                     .transition(.opacity)

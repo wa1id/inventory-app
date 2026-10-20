@@ -74,24 +74,50 @@ struct NavigationHelperTests {
     }
 
     @Test(
-        "focusSearch asks Home to focus after the transition only when screens close on the way",
+        "focusSearch asks Home to focus after the transition only when screens animate away on the way",
         arguments: [
             (name: "from another tab's root", setup: 0, afterTransition: false),
-            (name: "from a pushed screen", setup: 1, afterTransition: true),
+            // Per-tab stacks: Spaces keeps its stack and the tab switch is instant.
+            (name: "from a screen pushed on another tab", setup: 1, afterTransition: false),
             (name: "from a sheet", setup: 2, afterTransition: true),
+            (name: "from a screen pushed on Home", setup: 3, afterTransition: true),
+            (name: "from a screen pushed inside a cover", setup: 4, afterTransition: true),
         ]
     )
     func focusSearch(name: String, setup: Int, afterTransition: Bool) {
         let router = navigationRouter()
         router.selectTab(.spaces)
-        if setup == 1 { router.push(.space(id: "s1")) }
-        if setup == 2 { router.present(.sheet(.spaceNew(request: nil))) }
+        switch setup {
+        case 1: router.push(.space(id: "s1"))
+        case 2: router.present(.sheet(.spaceNew(request: nil)))
+        case 3:
+            router.selectTab(.home)
+            router.push(.item(id: "i1", filing: false))
+        case 4:
+            router.openQuickSnap()
+            router.push(.item(id: "i1", filing: false))
+        default: break
+        }
 
         router.focusSearch()
 
         #expect(router.searchFocus.pending == HomeSearchFocus.Request(afterTransition: afterTransition))
         #expect(router.selectedTab == .home)
         #expect(router.modals.isEmpty)
+        #expect(router.path(.home).isEmpty)
+        #expect(router.path(.spaces).count == (setup == 1 ? 1 : 0))
+    }
+
+    @Test("the search focus's transition fallback runs on the router's clock")
+    func focusFallbackOnTheRoutersClock() async {
+        let clock = ManualClock()
+        let router = navigationRouter(clock: clock)
+        router.present(.sheet(.spaceNew(request: nil)))
+        router.focusSearch()
+        router.searchFocus.homeFocusChanged(true)
+        #expect(router.searchFocus.isWaitingForTransition)
+        await clock.advance(by: HomeSearchFocus.transitionFallback)
+        #expect(router.searchFocus.focusRequests == 1)
     }
 
     @Test("openQuickSnap presents the camera in fast mode on the drop zone, with nobody waiting")

@@ -44,6 +44,9 @@ private struct ShellFocusDriving<Model: ShellFocusDriven>: ViewModifier {
             }
             // A screen taken away while in front (a reset) must not keep reading in the background.
             .onDisappear { model.focusChanged(false, revision: nil) }
+            // ...and one that comes back while its focus never changed (it disappeared without
+            // losing focus) catches up. Repeating the current focus is a no-op for every model.
+            .onAppear { model.focusChanged(isScreenFocused, revision: app.database.revision) }
     }
 }
 
@@ -57,5 +60,6 @@ private struct ShellNowTicking: ViewModifier {
                 ticker.focusChanged(focused)
             }
             .onDisappear { ticker.focusChanged(false) }
+            .onAppear { ticker.focusChanged(isScreenFocused) }
     }
 }

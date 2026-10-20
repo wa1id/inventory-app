@@ -92,6 +92,12 @@ public struct RouterState: Sendable, Hashable {
         !modals.isEmpty || !path(selectedTab).isEmpty
     }
 
+    /// Whether going to Home's root animates screens away: something is presented, or Home is the
+    /// tab in front with screens pushed on it (``Router/focusSearch()``).
+    public var closesScreensOnTheWayHome: Bool {
+        !modals.isEmpty || (selectedTab == .home && !path(.home).isEmpty)
+    }
+
     /// Every screen shown, tab roots included.
     public var addresses: Set<ScreenAddress> {
         Set(orderedAddresses)

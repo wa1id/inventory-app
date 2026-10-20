@@ -11,7 +11,8 @@ struct ShellTabBarTests {
     func tabBar() async throws {
         let app = AppContainer.preview()
         await app.boot.run()
-        let host = try ShellTestWindow(MainShell().shellEnvironment(app))
+        let tabBarChrome = ShellTabBarChrome()
+        let host = try ShellTestWindow(MainShell().shellEnvironment(app).environment(\.shellTabBarChrome, tabBarChrome))
         defer { host.close() }
 
         var controller: UITabBarController?
@@ -49,14 +50,26 @@ struct ShellTabBarTests {
         #expect(tabBar.items?.map(\.accessibilityIdentifier) == AppTab.allCases.map(\.accessibilityIdentifier))
         #expect(tabBar.gestureRecognizers?.contains { ($0 as? UILongPressGestureRecognizer)?.minimumPressDuration == 0.35 } == true)
 
-        // The tab bar is the toasts' bottom chrome while nothing is presented.
-        await ShellTestWait.until("the chrome registration") { app.toasts.chromeHeight != nil }
-        let chrome = try #require(app.toasts.chromeHeight)
+        // The tab bar is the toasts' bottom chrome while nothing is presented. It never registers
+        // with ToastCenter, where it could outrank a pushed screen's bottom bar.
+        await ShellTestWait.until("the chrome report") { tabBarChrome.height != nil }
+        let chrome = try #require(tabBarChrome.height)
         #expect(chrome > 40 && chrome < 200)
+        #expect(app.toasts.chromeHeight == nil)
         app.router.present(.sheet(.spaceNew(request: nil)))
-        await ShellTestWait.until("the chrome released under a sheet") { app.toasts.chromeHeight == nil }
+        await ShellTestWait.until("the chrome released under a sheet") { tabBarChrome.height == nil }
         app.router.dismissTop()
-        await ShellTestWait.until("the chrome back") { app.toasts.chromeHeight != nil }
+        await ShellTestWait.until("the chrome back") { tabBarChrome.height != nil }
+    }
+
+    @Test("the toast floats above the taller of the focused screen's bottom bar and the tab bar")
+    func toastChrome() {
+        #expect(ShellTabBarChrome.toastChrome(registered: nil, tabBar: nil) == nil)
+        #expect(ShellTabBarChrome.toastChrome(registered: nil, tabBar: 83) == 83)
+        #expect(ShellTabBarChrome.toastChrome(registered: 150, tabBar: nil) == 150)
+        // A pushed screen's bottom bar over the tab bar, whichever reported last.
+        #expect(ShellTabBarChrome.toastChrome(registered: 160, tabBar: 83) == 160)
+        #expect(ShellTabBarChrome.toastChrome(registered: 40, tabBar: 83) == 83)
     }
 
     @Test("a search button on another tab's pushed screen lands on Home and asks its field to focus once")

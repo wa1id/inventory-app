@@ -23,6 +23,11 @@ struct HomeScreen: View {
                     app.toasts.show(ToastOptions(message: L10n.Move.failed, tone: .error))
                 }
                 .accessibilityIdentifier("debug-toast-error")
+                // For the UI tests: how many re-taps of Home reached the screen.
+                Text(verbatim: "\(app.router.reselections[.home] ?? 0)")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("debug-home-reselections")
                 #endif
             }
         }

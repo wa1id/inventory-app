@@ -16,4 +16,8 @@ extension EnvironmentValues {
     /// Posts a VoiceOver announcement that interrupts (error states, the removed-phone layer).
     /// The shell sets it from the platform; previews stay silent.
     @Entry var shellAnnounce: @MainActor @Sendable (String) -> Void = { _ in }
+
+    /// The tab bar's toast chrome, shared by the main shell's tab bar and the overlay's toast.
+    /// The root view sets it; nil elsewhere (previews put the toast above the safe area).
+    @Entry var shellTabBarChrome: ShellTabBarChrome?
 }

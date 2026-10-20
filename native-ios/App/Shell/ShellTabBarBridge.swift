@@ -7,18 +7,20 @@ import InventoryAppModels
 ///   touch is on the Add item;
 /// - every item carries RN's testID as its accessibility identifier;
 /// - the Drop zone badge is yellow tape with dark text (U2);
-/// - while the tab shell is in front, the bar's height is the toasts' bottom chrome.
+/// - while the tab shell is in front, the bar's height is the toasts' bottom chrome
+///   (``ShellTabBarChrome``).
 ///
 /// (VoiceOver's labels, the Add hint and its "Quick Snap" action are on the tabs' SwiftUI labels
 /// in ``MainShell``.) The bar is found from the window's view controllers and its item buttons by
 /// position (five buttons, Add in the middle). No private API.
 struct ShellTabBarBridge: UIViewRepresentable {
     let app: AppContainer
+    let chrome: ShellTabBarChrome?
     let waiting: Int
     let shellFocused: Bool
 
     func makeCoordinator() -> ShellTabBarCoordinator {
-        ShellTabBarCoordinator(app: app)
+        ShellTabBarCoordinator(app: app, chrome: chrome)
     }
 
     func makeUIView(context: Context) -> ShellTabBarProbe {
@@ -71,20 +73,21 @@ final class ShellTabBarCoordinator: NSObject, UIGestureRecognizerDelegate {
     static let tapeInk = UIColor(red: 0x1D / 255, green: 0x1A / 255, blue: 0x0E / 255, alpha: 1)
 
     private let app: AppContainer
+    private let chrome: ShellTabBarChrome?
     private weak var tabBar: UITabBar?
     private var longPress: UILongPressGestureRecognizer?
-    private var chrome: ToastCenter.ChromeRegistration?
     private var waiting = 0
     private var shellFocused = true
     private var attachAttempts = 0
-    /// The chrome height registered, so an unchanged bar never re-registers (a registration
-    /// re-renders the toast host).
+    /// The chrome height reported, so an unchanged bar never reports again (a report re-renders
+    /// the toast host).
     private var registeredHeight: Double?
     private var lastBarFrame: CGRect = .null
     private var refreshScheduled = false
 
-    init(app: AppContainer) {
+    init(app: AppContainer, chrome: ShellTabBarChrome?) {
         self.app = app
+        self.chrome = chrome
     }
 
     func update(waiting: Int, shellFocused: Bool) {
@@ -274,16 +277,38 @@ final class ShellTabBarCoordinator: NSObject, UIGestureRecognizerDelegate {
             if measured > 0 { height = measured }
         }
         guard height != registeredHeight else { return }
-        releaseChrome()
-        if let height {
-            chrome = app.toasts.registerChrome(height: height)
-            registeredHeight = height
-        }
+        registeredHeight = height
+        chrome?.height = height
     }
 
     private func releaseChrome() {
-        if let chrome { app.toasts.unregisterChrome(chrome) }
-        chrome = nil
         registeredHeight = nil
+        chrome?.height = nil
+    }
+}
+
+/// The tab bar's height while the tab shell is in front, for the toast's position.
+///
+/// Kept apart from `ToastCenter`'s chrome registrations, where the newest wins: with per-tab
+/// stacks the bar stays on screen under a pushed screen whose bottom bar (measured from the
+/// window's bottom, so taller) has registered, and a later report from the bar (it moved, it
+/// came back from hiding) must not put the toast down over that bottom bar. The toast floats
+/// above the taller of the two.
+@MainActor
+@Observable
+final class ShellTabBarChrome {
+    /// From the bar's top edge to the window's bottom edge; nil while the bar is hidden or
+    /// something is presented over the tab shell.
+    var height: Double?
+
+    /// How far above the window's bottom edge the toast's chrome reaches: the taller of the
+    /// focused screen's registered bar and the tab bar, nil when neither is there.
+    static func toastChrome(registered: Double?, tabBar: Double?) -> Double? {
+        switch (registered, tabBar) {
+        case let (registered?, tabBar?): max(registered, tabBar)
+        case let (registered?, nil): registered
+        case let (nil, tabBar?): tabBar
+        case (nil, nil): nil
+        }
     }
 }

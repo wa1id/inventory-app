@@ -62,9 +62,10 @@ struct ScreenFrame<Content: View, Bottom: View>: View {
         if kind == .camera {
             // Always over a black picture: dark, with white controls (the ink accent would vanish).
             content
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .modifier(ScreenFrameBottomBar(hasBar: Bottom.self != EmptyView.self) { bottomBar })
                 .environment(\.colorScheme, .dark)
                 .tint(.white)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color.black.ignoresSafeArea())
         } else {
             framed

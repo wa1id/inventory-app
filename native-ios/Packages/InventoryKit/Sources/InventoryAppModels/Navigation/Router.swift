@@ -61,18 +61,18 @@ public final class Router {
 
     /// - Parameters:
     ///   - results: the app's one result registry.
-    ///   - searchFocus: Home's search-focus request.
+    ///   - searchFocus: Home's search-focus request; by default one on `clock`.
     ///   - haptics: plays the Add tab's `tap` and `longPress`.
-    ///   - clock: measures the long-press suppression.
+    ///   - clock: measures the long-press suppression and the search focus's transition fallback.
     public init(
         results: RouteResults = RouteResults(),
-        searchFocus: HomeSearchFocus = HomeSearchFocus(),
+        searchFocus: HomeSearchFocus? = nil,
         haptics: @escaping HapticPlayer = { _ in },
         clock: any Clock<Duration> = ContinuousClock()
     ) {
         state = RouterState()
         self.results = results
-        self.searchFocus = searchFocus
+        self.searchFocus = searchFocus ?? HomeSearchFocus(clock: clock)
         self.haptics = haptics
         stopwatch = Stopwatch(clock)
     }
@@ -184,8 +184,13 @@ public final class Router {
 
     /// The search buttons: Home with the keyboard up. When screens are closed on the way, Home
     /// waits for the transition before focusing (RN `focusSearch`).
+    ///
+    /// RN asked `router.canDismiss()`, because every pushed screen sat over the one tab shell and
+    /// was popped on the way. With per-tab stacks only what is presented, and Home's own stack
+    /// while Home is the tab in front, animate away; another tab's stack stays where it is and the
+    /// tab switch itself is instant, so Home focuses at once (RouterState.closesScreensOnTheWayHome).
     public func focusSearch() {
-        searchFocus.request(afterTransition: state.canDismiss)
+        searchFocus.request(afterTransition: state.closesScreensOnTheWayHome)
         goToTab(.home)
     }
 

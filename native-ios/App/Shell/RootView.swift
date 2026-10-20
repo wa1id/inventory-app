@@ -10,6 +10,7 @@ struct RootView: View {
     @Environment(AppContainer.self) private var app
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
     @State private var overlay: ShellOverlayController?
+    @State private var tabBarChrome = ShellTabBarChrome()
 
     var body: some View {
         let phase = app.boot.phase
@@ -39,6 +40,7 @@ struct RootView: View {
             windowSize = size
         }
         .environment(\.shellWindowSize, windowSize)
+        .environment(\.shellTabBarChrome, tabBarChrome)
         .task { await app.boot.run() }
         .onChange(of: phase, initial: true) { _, phase in
             app.rootPhaseChanged(phase)
@@ -56,7 +58,7 @@ struct RootView: View {
     @State private var windowSize: CGSize = .zero
 
     private func installOverlay(on scene: UIWindowScene) {
-        if overlay == nil { overlay = ShellOverlayController(app: app) }
+        if overlay == nil { overlay = ShellOverlayController(app: app, tabBarChrome: tabBarChrome) }
         overlay?.install(on: scene)
     }
 }

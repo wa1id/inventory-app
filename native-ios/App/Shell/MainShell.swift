@@ -18,6 +18,7 @@ import InventoryStrings
 ///   presented over it.
 struct MainShell: View {
     @Environment(AppContainer.self) private var app
+    @Environment(\.shellTabBarChrome) private var tabBarChrome
 
     var body: some View {
         let router = app.router
@@ -58,7 +59,7 @@ struct MainShell: View {
         }
         .tabViewStyle(.sidebarAdaptable)
         .background {
-            ShellTabBarBridge(app: app, waiting: waiting, shellFocused: router.isTabShellFocused)
+            ShellTabBarBridge(app: app, chrome: tabBarChrome, waiting: waiting, shellFocused: router.isTabShellFocused)
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
         }
@@ -74,6 +75,10 @@ struct MainShell: View {
         .onChange(of: app.database.revision) { _, revision in
             dropZone.revisionChanged(revision)
         }
+        // Replaying onboarding takes the tabs away (RN unmounted DropZoneProvider): the shared
+        // read stops following writes until they are back.
+        .onDisappear { dropZone.focusChanged(false) }
+        .onAppear { dropZone.focusChanged(router.isTabShellFocused, revision: app.database.revision) }
     }
 }
 

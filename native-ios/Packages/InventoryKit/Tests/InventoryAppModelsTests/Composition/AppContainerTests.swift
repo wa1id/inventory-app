@@ -98,7 +98,7 @@ private struct CompositionFixture {
     let telemetry = RecordingTelemetry()
     let container: AppContainer
 
-    init(onboardingCompleted: Bool = false) throws {
+    init(onboardingCompleted: Bool = false, clock: any Clock<Duration> = ContinuousClock()) throws {
         let directory = try TemporaryDirectory(prefix: "composition")
         self.directory = directory
         preferences = CompositionRecordingPreferences(onboardingCompleted ? [PreferenceKey.onboardingCompleted: "true"] : [:])
@@ -122,6 +122,7 @@ private struct CompositionFixture {
                 return store
             },
             transport: CompositionRoutingTransport(household: homeServer, worker: worker, sends: sends),
+            clock: clock,
             telemetry: TelemetryReporter(sink: telemetry)
         )
     }
@@ -194,6 +195,7 @@ struct CompositionAppContainerTests {
         let failures = CompositionCounter()
         let app = AppContainer.test(
             resolver: PhotoPathResolver(documents: directory.documents, caches: directory.caches),
+            config: AppConfig(syncEndpoint: "https://sync.example"),
             openDatabase: {
                 failures.increment()
                 if failures.count == 1 { throw ShellTestError("migrate") }
@@ -201,10 +203,20 @@ struct CompositionAppContainerTests {
             }
         )
         await app.boot.run()
+        await app.boot.syncAccountTask?.value
         #expect(app.boot.phase == .failed)
+        // No database for the backup: Turn on creates nothing.
+        #expect(await app.sync.enable() == .notStarted(.notConfigured))
+
         await app.database.retry()
         #expect(app.database.status == .ready)
         #expect(app.boot.phase == .onboarding)
+        // The reopened database reached the backup: Turn on creates the account (its first backup
+        // fails offline, which still reveals the code).
+        let enabled = await app.sync.enable()
+        #expect(enabled.account != nil)
+        #expect(enabled != .notStarted(.notConfigured))
+        await app.sync.waitForBackgroundWork()
     }
 
     @Test("app activity reaches sync, then the connection, and the lifecycle remembers it")
@@ -220,6 +232,27 @@ struct CompositionAppContainerTests {
         app.activityChanged(.background)
         #expect(seen == [.active, .background])
         #expect(app.lifecycle.activity == .background)
+    }
+
+    @Test("the connection hears the app come back: a paired phone re-reads on a resume 5 s after the last")
+    func activityReachesTheConnection() async throws {
+        let clock = ManualClock()
+        let fixture = try CompositionFixture(onboardingCompleted: true, clock: clock)
+        let app = fixture.container
+        await app.boot.run()
+        try await app.household.pair(bootstrapSecret: "MMWKYM2H78ABCDEFGHJKMNPQRS", deviceName: "Anna’s iPhone")
+        #expect(app.connection.state == .online)
+
+        // The first activation only starts the resume clock (RN: the screens read anyway).
+        let armed = app.database.revision
+        app.activityChanged(.active)
+        #expect(app.database.revision == armed)
+        app.activityChanged(.background)
+        await clock.advance(by: .seconds(6))
+
+        // Back to the front more than 5 s later: one re-read, from the connection.
+        app.activityChanged(.active)
+        #expect(app.database.revision == armed + 1)
     }
 
     @Test("the stable repositories follow the session: local, the household while paired, local again")

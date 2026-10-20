@@ -27,6 +27,7 @@ struct QuickSnapReviewScreen: View {
                         app.router.replaceModal(containing: address, with: .cover(.capture(next, request: nil)))
                     }
                 }
+                .accessibilityIdentifier("review-keep-shooting")
                 Button(L10n.Review.done) {
                     if let address, let level = app.router.state.modalLevel(containing: address) {
                         app.router.close(app.router.modals[level].address)

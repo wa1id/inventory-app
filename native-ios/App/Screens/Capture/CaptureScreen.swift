@@ -30,6 +30,15 @@ struct CaptureScreen: View {
                     if let address { app.router.close(address) }
                 }
                 .accessibilityIdentifier("capture-close")
+                if request == nil {
+                    // `CaptureNavigation.addItem`: the camera is replaced by the Add sheet.
+                    Button(L10n.Capture.manual) {
+                        if let address {
+                            app.router.replaceModal(containing: address, with: .sheet(.addItem(AddParams(containerId: route.containerId))))
+                        }
+                    }
+                    .accessibilityIdentifier("capture-manual")
+                }
                 if route.mode == .fast {
                     Button(L10n.Capture.done) {
                         app.router.push(.quickSnapReview(QuickSnapReviewRoute(containerId: route.containerId, since: route.since ?? 0, expected: 0)))
