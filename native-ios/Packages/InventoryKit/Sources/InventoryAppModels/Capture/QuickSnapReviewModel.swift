@@ -37,11 +37,12 @@ public enum QuickSnapReviewPlaceholder: Sendable {
 /// needs a name, and the way back.
 ///
 /// The model holds no session state of its own beyond what RN derived: the rows are a filtered
-/// read of the container (``read()``), re-run by the view whenever the screen gains focus, the
-/// revision changes while it is in front, or the person pulls to refresh, as with every
-/// `InventoryQuery` (key ``queryKey``). Call ``reload()`` for each such trigger; a read that
-/// finishes after a newer one started is dropped. Rows therefore appear when their pipeline
-/// finishes, as in RN (05 §6.1, Q14).
+/// read of the container (``read()``), re-run whenever the screen gains focus, the revision
+/// changes while it is in front, or the person pulls to refresh, as with every `InventoryQuery`
+/// (key ``queryKey``). The view reports those triggers with ``focusChanged(_:revision:)``,
+/// ``revisionChanged(_:)`` and ``refresh()``; ``reload()`` is Try again. A read that finishes
+/// after a newer one started is dropped. Rows therefore appear when their pipeline finishes, as
+/// in RN (05 §6.1, Q14).
 ///
 /// "Saving N more…" holds only while the set changes: a 30 s timer on the injected clock restarts
 /// whenever a row lands, is named or goes, and when it fires the status becomes "Some photos may
@@ -85,6 +86,14 @@ public final class QuickSnapReviewModel {
     @ObservationIgnored private var leaving = false
     @ObservationIgnored private var stallTask: Task<Void, Never>?
     @ObservationIgnored private var stallArmedFor: (signature: String, waiting: Bool)?
+    /// Whether the screen is in front, as the view last said.
+    @ObservationIgnored private var isFocused = false
+    /// The revision the rows were last read for (RN `seenRevision`).
+    @ObservationIgnored private var seenRevision: Int?
+    /// The newest revision the view reported.
+    @ObservationIgnored private var latestRevision: Int?
+    /// The read a focus gain, a revision change or a refresh started (tests await it).
+    @ObservationIgnored public private(set) var readTask: Task<Void, Never>?
 
     /// - Parameters:
     ///   - items: The items repository in use now (local, or the household's).
@@ -149,6 +158,42 @@ public final class QuickSnapReviewModel {
         }
         isLoading = false
         rearmStall()
+    }
+
+    /// The screen gained or lost focus (RN `useInventoryQuery`'s focus effect). Gaining it reads
+    /// again, catching up with `revision` (or the newest one reported), as one read; a screen
+    /// behind the item screen or a sheet reads nothing until it is in front again. While focused,
+    /// a newer revision reads too. The same shape as `InventoryQuery.focusChanged(_:revision:)`,
+    /// so the shell's focus driving can run it.
+    // RN: src/hooks/useInventoryQuery.ts:28-52
+    public func focusChanged(_ focused: Bool, revision: Int? = nil) {
+        if let revision { latestRevision = revision }
+        let gained = focused && !isFocused
+        isFocused = focused
+        guard focused, gained || latestRevision != seenRevision else { return }
+        seenRevision = latestRevision
+        startRead()
+    }
+
+    /// The database revision changed (a pipeline landed, Done on the camera, a delete): read again,
+    /// only while in front (RN re-ran the query on `invalidate()` while focused).
+    public func revisionChanged(_ revision: Int) {
+        latestRevision = revision
+        guard isFocused, revision != seenRevision else { return }
+        seenRevision = revision
+        startRead()
+    }
+
+    /// Pull to refresh: reads again and returns once that read has settled.
+    public func refresh() async {
+        startRead()
+        await readTask?.value
+    }
+
+    private func startRead() {
+        readTask = Task { [weak self] in
+            await self?.reload()
+        }
     }
 
     /// A settled read, applied as RN's derived state did (`landed` grows, hiding resets).

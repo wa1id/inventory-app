@@ -61,6 +61,8 @@ final class ShellModalUITests: XCTestCase {
         XCTAssertTrue(screen("screen-home").waitForExistence(timeout: 15))
         app.buttons["Quick Snap"].firstMatch.tap()
         XCTAssertTrue(screen("screen-capture").waitForExistence(timeout: 5))
+        // Quick Snap opens in fast mode; Type it instead is the single camera's keyboard button.
+        app.segmentedControls.buttons["One item"].tap()
 
         app.buttons["capture-manual"].tap()
 
@@ -76,10 +78,15 @@ final class ShellModalUITests: XCTestCase {
         XCTAssertTrue(screen("screen-home").waitForExistence(timeout: 15))
         app.buttons["Quick Snap"].firstMatch.tap()
         XCTAssertTrue(screen("screen-capture").waitForExistence(timeout: 5))
+        // Done with no shot just closes the camera; one shot (the demo's stand-in camera) makes
+        // a set that ends on the review.
+        app.buttons["capture-shutter"].tap()
+        let shot = expectation(for: NSPredicate(format: "label == 'Done, 1 photo taken'"), evaluatedWith: app.buttons["capture-done"])
+        XCTAssertEqual(XCTWaiter().wait(for: [shot], timeout: 10), .completed)
         app.buttons["capture-done"].tap()
         XCTAssertTrue(screen("screen-review").waitForExistence(timeout: 5))
 
-        app.buttons["review-keep-shooting"].tap()
+        app.buttons["fast-review-more"].tap()
 
         XCTAssertTrue(screen("screen-capture").waitForExistence(timeout: 5))
         XCTAssertTrue(waitForAbsence(screen("screen-review")))
