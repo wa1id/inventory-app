@@ -7,13 +7,16 @@ import InventoryStrings
 ///
 /// - Each destination tab has its own navigation stack bound to the router.
 /// - Add is a tab the selection binding refuses: tapping it plays `tap` and presents the Add sheet
-///   without switching tabs; a 350 ms long press opens Quick Snap (``ShellTabBarBridge``).
+///   without switching tabs; a 350 ms long press opens Quick Snap (``ShellTabBarBridge``), on the
+///   bottom bar, the iPad's top bar and its sidebar alike.
 /// - Selecting the selected tab again sends its re-tap signal (`Router.reselections`).
 /// - Home's focus feeds `Router.searchFocus`, so a search button elsewhere ends in one
 ///   `focusRequests` bump once Home is in front.
 /// - The Drop zone badge counts what waits there (none at 0 or before the first read, "99+" above
 ///   99), drawn as yellow tape: waiting is not an alarm.
-/// - Sidebar-adaptable, for iPad (U4). Sheets and covers come from the router's modal stack.
+/// - Sidebar-adaptable, for iPad (U4): the bottom bar on an iPhone and in a narrow iPad window,
+///   the top bar or the sidebar in a wide one; each tab's stack keeps the readable column
+///   (``ShellReadableColumn``). Sheets and covers come from the router's modal stack.
 /// - The shared drop-zone read follows the tab shell's focus: in front unless something is
 ///   presented over it.
 struct MainShell: View {
@@ -59,7 +62,15 @@ struct MainShell: View {
         }
         .tabViewStyle(.sidebarAdaptable)
         .background {
-            ShellTabBarBridge(app: app, chrome: tabBarChrome, waiting: waiting, shellFocused: router.isTabShellFocused)
+            ShellTabBarBridge(
+                app: app,
+                chrome: tabBarChrome,
+                waiting: waiting,
+                shellFocused: router.isTabShellFocused,
+                // The Scan tab's root draws on black (the camera): an iPad's top bar and sidebar
+                // go dark over it, so the selected item's ink stays readable.
+                darkChrome: router.selectedTab == .scan && router.path(.scan).isEmpty
+            )
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
         }
