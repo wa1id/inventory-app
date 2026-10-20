@@ -69,6 +69,18 @@ struct HomeScreensHostedTests {
         #expect(!app.router.searchFocus.isWaitingForTransition)
     }
 
+    @Test("a new Home over the kept model starts with the field let go (replaying onboarding)")
+    func newHomeLetsGoOfTheField() async throws {
+        let app = AppContainer.preview()
+        // The Home before the replay left its field focused; the model outlives it.
+        app.home.setFieldFocused(true)
+        #expect(app.home.isCompact)
+        let host = try ShellTestWindow(RootView().shellEnvironment(app))
+        defer { host.close() }
+        await ShellTestWait.until("the main shell") { app.boot.phase == .main && app.router.acceptsNavigation }
+        await ShellTestWait.until("the title lines back") { !app.home.isCompact }
+    }
+
     // MARK: Re-taps
 
     @Test("the scroller finds the list it sits behind")

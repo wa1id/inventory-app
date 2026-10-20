@@ -204,6 +204,19 @@ final class HomeUITests: XCTestCase {
         XCTAssertTrue(keyboardIsUp)
     }
 
+    func testASearchButtonOnAnotherTabPopsHomesOwnStackAndComesBackWithTheKeyboardUp() throws {
+        launch()
+        app.buttons["home-settings"].tap()
+        XCTAssertTrue(screen("screen-settings").waitForExistence(timeout: 5))
+        app.tabBars.buttons["tab-spaces"].tap()
+        XCTAssertTrue(screen("screen-spaces").waitForExistence(timeout: 5))
+
+        app.buttons["spaces-search"].tap()
+        XCTAssertTrue(screen("screen-home").waitForExistence(timeout: 5))
+        XCTAssertTrue(waitForAbsence(screen("screen-settings")))
+        XCTAssertTrue(keyboardIsUp)
+    }
+
     func testNoSpacesYetOffersTheFirstOne() throws {
         launch(["-demoSeed", "empty", "-demoTab", "spaces"], showing: "screen-spaces")
         let start = app.buttons["spaces-empty"]

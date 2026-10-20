@@ -70,7 +70,10 @@ struct HomeScreen: View {
             home.submitSearch()
             searchFieldFocused = false
         }
-        .onChange(of: searchPresented) { _, presented in
+        // Initial too: `app.home` outlives this view (replaying onboarding makes a new Home over
+        // the same model), so a field left focused by the last Home must not keep this one
+        // compact with no search showing.
+        .onChange(of: searchPresented, initial: true) { _, presented in
             withAnimation(layoutAnimation) { home.setFieldFocused(presented) }
         }
         .onChange(of: app.router.searchFocus.focusRequests) { _, _ in
