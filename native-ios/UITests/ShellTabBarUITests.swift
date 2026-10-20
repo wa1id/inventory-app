@@ -49,7 +49,7 @@ final class ShellTabBarUITests: XCTestCase {
         XCTAssertFalse(screen("screen-capture").exists)
 
         // Closing the sheet lands back on Spaces: Add never became the selected tab.
-        app.buttons["item-cancel"].tap()
+        app.buttons["add-cancel"].tap()
         XCTAssertTrue(screen("screen-spaces").waitForExistence(timeout: 5))
         XCTAssertFalse(screen("screen-add").exists)
         XCTAssertTrue(tab("tab-spaces", label: "Spaces").isSelected)
@@ -78,7 +78,7 @@ final class ShellTabBarUITests: XCTestCase {
         tab("tab-add", label: "Add an item").tap()
         XCTAssertTrue(screen("screen-add").waitForExistence(timeout: 5))
         attachScreenshot("add-sheet")
-        app.buttons["item-cancel"].tap()
+        app.buttons["add-cancel"].tap()
         XCTAssertTrue(screen("screen-home").waitForExistence(timeout: 5))
 
         tab("tab-add", label: "Add an item").press(forDuration: 1.0)

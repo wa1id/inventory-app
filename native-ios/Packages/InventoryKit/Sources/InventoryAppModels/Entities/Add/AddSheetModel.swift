@@ -17,10 +17,12 @@ import Observation
 ///
 /// The view binds the fields to ``name``, ``category``, ``tags`` and ``notes`` (each a user
 /// edit) and the stepper to ``quantity``/``setQuantity(_:)``. It calls ``start()`` once when
-/// the sheet appears, ``loadPlaces()`` on appear and whenever the inventory revision changes,
-/// and ``sheetClosed()`` when the sheet is dismissed (not when the place step is pushed). It
-/// focuses the name field when ``nameFocusRequest`` changes and scrolls to the top when
-/// ``scrollToTopRequest`` changes. Camera and navigation go through ``Routing``.
+/// the sheet appears, ``loadPlaces()`` whenever the sheet is in front with a new inventory
+/// revision (as RN re-read on focus), and ``sheetClosed()`` when the sheet's route is removed
+/// (not when the place step shows). It focuses the name field when ``nameFocusRequest``
+/// changes and scrolls to the top when ``scrollToTopRequest`` changes. Camera and navigation
+/// go through ``Routing`` (``Routing/router(_:address:)`` on the app's router;
+/// `AppContainer.makeAddSheetModel(params:address:)` builds the whole thing).
 @MainActor
 @Observable
 public final class AddSheetModel {
@@ -95,6 +97,11 @@ public final class AddSheetModel {
     public private(set) var nameFocusRequest = 0
     /// Bumped when the form should scroll back to the top.
     public private(set) var scrollToTopRequest = 0
+    /// Bumped each time a save starts (past validation). The view keys the save problem and
+    /// "Saved. Add the next one." by it, so the same outcome twice in a row is a new notice and
+    /// is announced again: RN cleared both when a save started and set them after its await,
+    /// which remounted the banner, while here the two changes may land in one update.
+    public private(set) var saveAttempts = 0
 
     /// This phone's recent places as they were when the sheet opened.
     public let recentIds: [String]
@@ -264,8 +271,11 @@ public final class AddSheetModel {
     /// The name the stepper's labels use, or nil while unnamed.
     public var stepperItemName: String? { typedName.isEmpty ? nil : typedName }
 
-    /// "Your containers could not be loaded": the read failed with nothing loaded.
-    public var showsPlacesFailed: Bool { placesCause != nil && places == nil }
+    /// "Your containers could not be loaded": the newest read failed with nothing loaded. Not
+    /// while a read is running (Try again, or a re-read on focus or a new revision): RN reported
+    /// a query's cause only once its current read had settled (`useInventoryQuery`), so the
+    /// banner goes while it reads and a retry that fails again shows, and announces, it anew.
+    public var showsPlacesFailed: Bool { placesCause != nil && places == nil && !placesLoading }
 
     /// While saving, the sheet resists a swipe-down.
     public var interactiveDismissDisabled: Bool { saving != nil }
@@ -380,6 +390,11 @@ public final class AddSheetModel {
         isPickingPlace = true
     }
 
+    /// Back in the place step (the button, RN `add-back`): the form again, the place unchanged.
+    public func closePlaceStep() {
+        isPickingPlace = false
+    }
+
     /// A place picked in the place step; back to the form.
     public func pickPlace(_ chosen: PickedPlace) {
         switch chosen {
@@ -472,7 +487,15 @@ public final class AddSheetModel {
     /// The header's Cancel: asks before discarding typing or a photo, deletes the photo on
     /// discard, forgets the draft and closes. Ignored while saving.
     public func cancel() async {
-        guard !savingGuard else { return }
+        if await confirmCancel() { routing.close() }
+    }
+
+    /// What the header's Cancel asks before the sheet closes (the sheet's close guard,
+    /// `.sheetCloseGuard`): with typing or a photo, "Discard this item?" first, and on Discard the
+    /// photo's files go. Then the draft is forgotten. True when the sheet may close now; false
+    /// for "Keep editing", and while saving (RN `cancel`, app/item/new.tsx:438-454).
+    public func confirmCancel() async -> Bool {
+        guard !savingGuard else { return false }
         if hasContent {
             let discard = await confirmPresenter.confirm(
                 ConfirmOptions(
@@ -482,13 +505,31 @@ public final class AddSheetModel {
                     cancelLabel: L10n.Forms.keepEditing
                 )
             )
-            guard discard else { return }
+            // A save started while the question was up owns the photo now.
+            guard discard, !savingGuard else { return false }
             recognitionURI = nil
             photos.deleteStoredPhotos(AddSheetRules.photoFiles(photo))
         }
         drafts.clearDraft(owner: owner)
         leave()
-        routing.close()
+        return true
+    }
+
+    /// The thumbnail's photo options (RN `photoOptions`, app/item/new.tsx:407-421; 07 §0.8):
+    /// Retake (the photo goes, then the camera opens) and Remove photo (destructive), with the
+    /// system Cancel last. Nil while saving or without a photo, when the thumbnail offers nothing.
+    /// Show it with the platform's action sheet presenter.
+    public func photoOptionsSheet() -> ShellActionSheet? {
+        guard !savingGuard, photo != nil else { return nil }
+        return ShellActionSheet(options: [
+            ShellActionSheet.Option(label: L10n.Add.retake) { [weak self] in
+                guard let self else { return }
+                Task { await self.retakePhoto() }
+            },
+            ShellActionSheet.Option(label: L10n.Add.removePhoto, destructive: true) { [weak self] in
+                self?.removePhoto()
+            },
+        ])
     }
 
     /// "Snap several at once…": replaces the sheet with Quick Snap for the current place; the
@@ -526,6 +567,7 @@ public final class AddSheetModel {
         let suggestionAtSave = suggestion
         savingGuard = true
         saving = andAnother ? .another : .save
+        saveAttempts += 1
         problem = nil
         savedNext = false
 

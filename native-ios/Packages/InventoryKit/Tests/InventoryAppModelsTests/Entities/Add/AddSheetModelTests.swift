@@ -53,7 +53,7 @@ struct EntitiesAddSheetModelTests {
     final class Harness {
         let items: EntitiesFakeItems
         let spaces: EntitiesFakeSpaces
-        let containers: EntitiesFakeContainers
+        let containers: any ContainersRepository
         let photos = EntitiesPhotoSpy()
         let drafts: AddDraftStore
         let recognizer: EntitiesRecognizer
@@ -71,7 +71,7 @@ struct EntitiesAddSheetModelTests {
         init(
             items: EntitiesFakeItems = EntitiesFakeItems(),
             spaces: EntitiesFakeSpaces = EntitiesFakeSpaces(),
-            containers: EntitiesFakeContainers = EntitiesFakeContainers(),
+            containers: any ContainersRepository = EntitiesFakeContainers(),
             recognizer: EntitiesRecognizer = EntitiesRecognizer(),
             drafts: AddDraftStore? = nil,
             confirm: SharedSeamsConfirmScript = SharedSeamsConfirmScript()

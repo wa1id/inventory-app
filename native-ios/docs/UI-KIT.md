@@ -237,7 +237,7 @@ stores and seams: `toasts: app.toasts`, `confirm: app.platform.confirm`,
 | Sticker link cover | Its own `QrScannerModel(title:permission:)` with the default `managesFocus: true`. Pass the changing title through `QrScannerView(title:)`, because `QrScannerModel.title` is a `let`. Overlay its own `CameraPanel`, also over the permission screen. |
 | Capture | `CaptureModel(route:deliverPhoto:permission:photos:fastCapture:items:invalidator:toasts:haptics:…, navigate:)` with `deliverPhoto: { app.router.results.deliver(request, $0) }` when there is a request, `photos: app.imageStore` and `fastCapture: app.fastCapture`. `CaptureNavigation` maps to the router (see the file's comment). Wire `camera.reportEvents(to: model)` and register `disappeared()` with `onRemoval`. Attach `.captureLibraryPicker` once at the root, and pass `CameraPermissionView(isProcessing: model.processing)`. Stop the session when the screen loses focus, since the review is pushed over the live camera: `CameraPreview(camera:runs: isScreenFocused && …)`. |
 | Quick Snap review | `QuickSnapReviewModel(route:items:photos:isPaired:invalidator:toasts:confirm:haptics:…, navigate:)`. Call `reload()` on appear, on focus gain and on revision change. `QuickSnapReviewNavigation` maps to the router (see the file). |
-| Add sheet | `AddSheetModel(params:…, routing: AddSheetModel.Routing(isFocused:close:replaceWithCapture:takePhoto:))`, `recognize: app.recognize`, `drafts: app.drafts`. Map `takePhoto` to `router.presentForResult(StoredImage.self) { .cover(.capture(…, request: $0)) }`. Set `.interactiveDismissDisabled(model.interactiveDismissDisabled \|\| model.isPickingPlace)`. The place step is `PlacePickerHost(mode: .choose, selectedContainerId:, showsDropZone: true) { model.pickPlace($0) }` (§5.1). |
+| Add sheet | Built: `AddSheet(params:)` makes `app.makeAddSheetModel(params:address:)` (every store wired, routing `AddSheetModel.Routing.router(_:address:)`: the camera for a result, Snap several and "Save and add another" with a photo replacing the sheet, `AddSheetRoutes`). Its own Cancel (`add-cancel`) calls `router.requestClose`, guarded by `.sheetCloseGuard { await model.confirmCancel() }`; the thumbnail shows `model.photoOptionsSheet()` with `app.platform.actionSheets`. `.interactiveDismissDisabled(model.interactiveDismissDisabled \|\| model.isPickingPlace)`. The place step swaps in `PlacePickerHost(mode: .choose, selectedContainerId:, showsDropZone: true) { model.pickPlace($0) }` (§5.1) with Back (`add-back`, `model.closePlaceStep()`). Demo states: `AddDemo` (`-demoArea add -demoState …`). |
 | Move / file | `MoveModel(items:filing:request:routeResults: app.router.results, recentPlaces: app.recentPlaces, …, isFocused: { router.isFocused(address) }, close: { router.close(address) })`. Keep `loaded` current with `move.follow(query)` (the sheet's `item:<id>` read) before the picker is first built. Embed `PlacePickerHost(mode: move.pickerMode, currentContainerId:busyId: move.busyId) { place in Task { await move.pick(place) } }` (§5.1), which reads the lists and runs the inline create itself, with the notice in `.pinnedNotice { … }` above it (a list row scrolled away is neither seen nor announced). |
 | Edit forms | `DirtyGuard(confirm:title:dirty:saving:revoked:)`, plus `.sheetCloseGuard { await guard.attemptClose() }` and `.interactiveDismissDisabled(guard.interactiveDismissDisabled)`. |
 | Item screen naming | `NameItModel(itemId:updatedAt:incomingName:items:invalidator:haptics:announce:onNamed:)`. `WhereCard(actionFocus:)` moves VoiceOver to "File it…". |
@@ -397,7 +397,7 @@ All are in the app target (module `Inventory`). Logic and copy behind them live 
 | `CodeInput(label:value:length:hint:error:identifier:onSubmit:)` | A household or recovery code: grouped, normalised, and Return submits. |
 | `ItemDetailsFields(values: Binding<ItemFormValues>, suggestions:focus: FocusState<ItemDetailsField?>.Binding)` | Category (with recent-category chips), Tags and Notes. |
 | `SpaceFields(values:nameError:onSubmit:previewMeta:previewFallbackName:focus:heading:)` | Space name, icon and colour, with a live row preview. `heading` (default none) is a prominent header over the fields ("Your own" on New space). |
-| `FormLayout { notice } content: { }` and `FormLayout { notice } content: { } bottomBar: { }` | A form with a notice pinned above it (see 1.4 for the bar). |
+| `FormLayout(contentIdentifier: = nil) { notice } content: { }` and `FormLayout { notice } content: { } bottomBar: { }` | A form with a notice pinned above it (see 1.4 for the bar). `contentIdentifier` puts the screen's `screen-*` identifier on the form alone (§4). |
 | `.pinnedNotice { notice }` | A notice pinned above scrolling content, outside it, so it is seen and announced however far the content was scrolled (list rows are built lazily: one scrolled away is neither). At the largest sizes a long notice takes at most 40 % of the height and scrolls within it, so it never fills the screen. `FormLayout` uses it; an optional notice that is nil adds nothing. |
 | `TagChip(label:isSelected:identifier:action:)` | A tag pill. It is tappable with an action. |
 | `ChoiceList(options: [ChoiceOption], selection:accessibilityLabel:)`; `ChoiceOption(value:title:subtitle:leading:identifier:)` | A short single choice with checkmarks. |
@@ -441,10 +441,14 @@ icon, error bar, "Type it instead"). Build them from `CameraGlassIconButton`, `C
   `describeError` through `ErrorStateView` or `SaveNoticeCopy`. Copy RN never had goes in your
   area's `scripts/strings/native/<area>.ts` (§5.4).
 - Keep RN's testIDs as accessibility identifiers. The UI tests depend on `screen-*`, the `tab-*`
-  identifiers, `sheet-close` and others. Put `.accessibilityElement(children: .contain)` before a
-  screen's `.accessibilityIdentifier("screen-…")`: on a plain stack the outer identifier replaces
-  the identifiers of the buttons inside it (`LoadingButton`s in the bottom bar and in the content
-  then answer to `screen-…` and their own ids find nothing).
+  identifiers, `sheet-close` and others.
+- Where the `screen-*` identifier goes matters: on a plain stack or around a whole `ScreenFrame`
+  the outer identifier replaces the identifiers of the controls inside it that are not list
+  rows (the bottom bar's `LoadingButton`s, a `FormLayout` notice: `item-save` read as
+  `screen-add`), and on a `Group` of sections it replaces the rows'. Either put it on the list
+  itself (`FormLayout(contentIdentifier:)`, the `List`, `PlacePickerHost`), or put
+  `.accessibilityElement(children: .contain)` before it (screens with no list, such as the
+  cameras).
 - Never use `onDisappear` for "this screen is gone"; use `router.onRemoval(of:)`.
 - A screen that makes its model in `onAppear` must draw something before the model exists
   (`else { Color.clear }`, as in §1.2): `ScreenFrame { if let model { … } }` with no model is an

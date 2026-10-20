@@ -158,6 +158,10 @@ struct FormLayout<Notice: View, Content: View, BottomBar: View>: View {
     @ViewBuilder var notice: Notice
     @ViewBuilder var content: Content
     @ViewBuilder var bottomBar: BottomBar
+    /// The screen's `screen-*` identifier, set on the form alone. Around the whole screen it
+    /// would also replace the identifiers of the notice and of the bar's buttons (which sit
+    /// outside the list); on the rows, theirs.
+    var contentIdentifier: String?
 
     /// Decided by type, never by value, so a notice that comes and goes keeps the form's
     /// identity (and its focus). A nil optional notice measures zero, so it adds nothing.
@@ -167,6 +171,7 @@ struct FormLayout<Notice: View, Content: View, BottomBar: View>: View {
         Form {
             content
         }
+        .accessibilityIdentifierIfPresent(contentIdentifier)
         .modifier(PinnedNoticeInset(isEmpty: !hasNotice, notice: notice))
         .modifier(FormLayoutBottomBar(hasBar: !(BottomBar.self == EmptyView.self)) {
             bottomBar
@@ -181,8 +186,8 @@ extension FormLayout where BottomBar == EmptyView {
     /// Without a bar of its own: inside the app, put the form in `ScreenFrame(.modal)` and pass
     /// the shell's `BottomBar` as the frame's `bottomBar`, which also lifts toasts above it and
     /// stacks its buttons at large sizes.
-    init(@ViewBuilder notice: () -> Notice, @ViewBuilder content: () -> Content) {
-        self.init(notice: notice, content: content, bottomBar: { EmptyView() })
+    init(contentIdentifier: String? = nil, @ViewBuilder notice: () -> Notice, @ViewBuilder content: () -> Content) {
+        self.init(notice: notice, content: content, bottomBar: { EmptyView() }, contentIdentifier: contentIdentifier)
     }
 }
 
