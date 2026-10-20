@@ -283,7 +283,8 @@ stores and seams: `toasts: app.toasts`, `confirm: app.platform.confirm`,
 - **DEBUG launch arguments** (`App/Shell/ShellDemo.swift`; §5.3 has the details and the
   seeded names):
   - `-demo YES` runs the sample inventory in memory; add `-demoOnboarding YES` to start on
-    onboarding, or `-demoSeed empty` to start with no inventory.
+    onboarding, `-demoSeed empty` to start with no inventory, or `-demoSeed large` for the
+    10 000-item one (§5.3).
   - `-demoHousehold offline|revoked` shows the connection banner after 2.5 s, or the
     removed-phone layer.
   - `-demoArea <area> -demoState <state>`: your area's own hook (`<Area>Demo`).
@@ -612,6 +613,18 @@ Examples: `'container:Tool_chest>containerEdit:Tool_chest'`, `'add>containerNew:
 **`-demoSeed empty`** starts with no inventory (onboarding done). `-demoOnboarding YES` starts
 on onboarding; `-demoHousehold offline|revoked` joins a household that is unreachable or
 answers 401.
+
+**`-demoSeed large`** starts with 10 000 items for performance work (`ShellDemoLargeSeed` in
+`ShellDemo.swift`, rows from `PerfInventorySeed` in `InventoryStorage/Seeding/`;
+docs/PERFORMANCE.md): 20 spaces, 250 containers with short codes (40 with labels), about 300
+items waiting in the drop zone, 500 in the Workshop's **Parts bin** (`BIN-P4RT`), accented names
+("Crème brûlée torch", "Bügeleisen", "Zoë’s …"), categories, tags, notes, quantities from 0 to 500, 320
+photos (copies of 4 drawn pictures, each row its own files) and six recent places. It is the
+same inventory every launch, written at boot, the rows in one transaction (Home drawn 1.1–1.2 s
+after launch on the simulator; `-demoRoute` specs wait for it, but give screenshots
+`RUN_SETTLE_SECONDS=10`). The small inventory's places and newest items are in it too (Garage, Tool chest `CAB-J92R` with its label, Cordless drill, HDMI cable, Bike pump
+newest), so `container:Tool_chest`, `item:Cordless_drill`, `move:Cordless_drill` and
+`container:Parts_bin` work; `item:` specs see the 100 newest items only.
 
 **`-demoArea <area> -demoState <state>`**: each area has `App/Screens/<Area>/<Area>Demo.swift`
 (home, account, labels, places, item, add, capture) with two hooks it fills in itself; nobody

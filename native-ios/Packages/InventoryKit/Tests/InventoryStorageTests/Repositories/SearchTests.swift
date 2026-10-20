@@ -246,10 +246,14 @@ struct SearchPerformanceTests {
 
         #expect(try await repos.items.countAll() == 10_000)
 
-        let clock = ContinuousClock()
-        let started = clock.now
-        let results = try await repos.search.search("widget 4242")
-        let elapsed = clock.now - started
+        // The CPU time of the thread that ran the search, measured inside the read: a test
+        // process starved for seconds on a loaded Mac does not add to it, as it would to
+        // wall-clock time, while an O(n²) search still blows through the second.
+        let (results, elapsed) = try await repos.store.queue.read { db in
+            let started = clock_gettime_nsec_np(CLOCK_THREAD_CPUTIME_ID)
+            let results = try repos.search.search("widget 4242", in: db)
+            return (results, Duration.nanoseconds(Int64(clock_gettime_nsec_np(CLOCK_THREAD_CPUTIME_ID) - started)))
+        }
 
         #expect(results.items.map(\.name) == ["Widget 4242"])
         #expect(elapsed < .milliseconds(1000))

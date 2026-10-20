@@ -2,10 +2,12 @@
 import Foundation
 import OSLog
 import SwiftUI
+import Synchronization
 import InventoryAppModels
 import InventoryCore
 import InventoryNetwork
 import InventoryServices
+import InventoryStorage
 import InventoryStrings
 
 /// Debug builds only: launch arguments that put the shell in a state for screenshots, since the
@@ -14,7 +16,8 @@ import InventoryStrings
 ///
 /// - `-demo YES`: the sample inventory in memory (nothing on the device is read or written);
 ///   `-demoOnboarding YES` starts on onboarding; `-demoSeed empty` starts with an empty
-///   inventory (onboarding done).
+///   inventory (onboarding done); `-demoSeed large` with the 10 000-item one
+///   (``ShellDemoLargeSeed``, docs/PERFORMANCE.md).
 /// - `-demoHousehold offline|revoked`: joined to a household whose server is unreachable (the
 ///   connection banner after 2.5 s) or answers 401 (the removed-phone layer).
 /// - `-demoArea <area> -demoState <state>`: the area's own hook (`<Area>Demo` in
@@ -54,6 +57,13 @@ enum ShellDemo {
             HouseholdSession(origin: "https://box.example", token: "demo-token", deviceId: "demo-device", deviceName: "iPhone", householdName: "Home")
         }
         let transport: any HTTPTransport = household == "revoked" ? ShellDemoUnauthorizedTransport() : ShellOfflineTransport()
+        if defaults.string(forKey: "demoSeed") == "large" {
+            return ShellDemoLargeSeed.container(
+                platform: platform,
+                onboardingCompleted: !defaults.bool(forKey: "demoOnboarding"),
+                householdSession: session,
+                transport: transport)
+        }
         return AppContainer.preview(
             platform: platform,
             seed: defaults.string(forKey: "demoSeed") != "empty",
@@ -318,6 +328,145 @@ struct ShellDemoInventory {
         let wanted = spec.replacingOccurrences(of: "_", with: " ")
         return stored.caseInsensitiveCompare(spec) == .orderedSame || stored.caseInsensitiveCompare(wanted) == .orderedSame
     }
+}
+
+/// `-demoSeed large`: the 10 000-item inventory of ``PerfInventorySeed`` (20 spaces, 250
+/// containers, 300 items waiting in the drop zone, 500 in the Workshop's "Parts bin"
+/// `BIN-P4RT`), with 320 photos and six recent places, in a database file in a temporary
+/// directory. Built at boot, the rows in one transaction (Home drawn 1.1–1.2 s after launch on
+/// the simulator, logged under the `demo` category); `docs/UI-KIT.md` §5.3 and
+/// docs/PERFORMANCE.md list what it holds.
+///
+/// The small demo inventory's places and newest items are in it too (Tool chest `CAB-J92R` with
+/// its label, Cordless drill, HDMI cable, …), so the usual `-demoRoute` specs still work.
+enum ShellDemoLargeSeed {
+    /// Photo rows, each with files of its own.
+    static let photoCount = 320
+    /// Distinct pictures encoded; the photos are copies of them under their own names, so
+    /// every row decodes its own file without 320 WebP encodes at launch.
+    static let pictureCount = 4
+
+    /// How long the last build took: drawing and storing the photos, then writing the rows.
+    struct BuildTiming: Sendable {
+        var photos: Duration
+        var rows: Duration
+    }
+
+    /// The last build's timing, for the performance tests.
+    static let lastBuild = Mutex<BuildTiming?>(nil)
+
+    @MainActor
+    static func container(
+        platform: AppPlatform,
+        onboardingCompleted: Bool,
+        householdSession: HouseholdSession?,
+        transport: any HTTPTransport
+    ) -> AppContainer {
+        let root = URL.temporaryDirectory.appending(path: "inventory-large-\(UUID().uuidString)", directoryHint: .isDirectory)
+        let resolver = PhotoPathResolver(
+            documents: root.appending(path: "Documents", directoryHint: .isDirectory),
+            caches: root.appending(path: "Library/Caches", directoryHint: .isDirectory)
+        )
+        let preferences = InMemoryPreferences(onboardingCompleted ? [PreferenceKey.onboardingCompleted: "true"] : [:])
+        let keychain = InMemoryKeychain()
+        if let householdSession { try? HouseholdSessionStore(keychain: keychain).save(householdSession) }
+        return AppContainer(
+            dependencies: AppContainer.Dependencies(
+                config: AppConfig(),
+                keychain: keychain,
+                preferences: preferences,
+                openDatabase: { try await open(resolver: resolver, preferences: preferences) },
+                transport: transport,
+                networkTelemetry: NetworkTelemetry(event: { _, _ in }, error: { _, _ in }),
+                photoPathResolver: resolver,
+                protectedData: HouseholdModel.ProtectedDataGate(isAvailable: { true }, waitUntilAvailable: {}),
+                bootSystem: .inert
+            ),
+            platform: platform
+        )
+    }
+
+    /// The database file with the inventory written, the photos on disk and the recent places
+    /// remembered.
+    static func open(resolver: PhotoPathResolver, preferences: any PreferenceStoring) async throws -> DatabaseStore {
+        let started = ContinuousClock.now
+        let store = try DatabaseStore.temporary()
+        try await store.migrate()
+        let photos = await makePhotos(resolver: resolver)
+        let photosDone = ContinuousClock.now
+        let summary = try await store.queue.write { db in
+            let summary = try PerfInventorySeed.write(.large, photos: photos, now: epochMillis(), in: db)
+            // The Tool chest's label is the small demo's, so `label:<token>` and the deep link open it.
+            try db.execute(
+                sql: "UPDATE qr_bindings SET token = ? WHERE container_id = (SELECT id FROM containers WHERE short_code = 'CAB-J92R')",
+                arguments: [AppContainerPreviewData.toolChestLabelToken])
+            return summary
+        }
+        let recent = RecentPlacesStore(preferences: preferences)
+        for id in summary.recentPlaceIds.reversed() { recent.remember(id) }
+        let timing = BuildTiming(photos: photosDone - started, rows: ContinuousClock.now - photosDone)
+        lastBuild.withLock { $0 = timing }
+        ShellDemo.log.info("-demoSeed large: \(summary.itemCount, privacy: .public) items, \(summary.photoCount, privacy: .public) photos; photos \(timing.photos, privacy: .public), rows \(timing.rows, privacy: .public)")
+        return store
+    }
+
+    /// ``photoCount`` photos, copies of ``pictureCount`` drawn pictures stored like captures.
+    static func makePhotos(resolver: PhotoPathResolver) async -> [ItemPhotoInput] {
+        let images = ImageStore(resolver: resolver, telemetry: ShellDemoSilentTelemetry())
+        var pictures: [StoredImage] = []
+        for index in 0..<pictureCount {
+            guard let image = drawPicture(index), let stored = try? await images.storeItemPhoto(.image(image), cropToAspect: nil) else { continue }
+            pictures.append(stored)
+        }
+        guard !pictures.isEmpty else { return [] }
+        let fileManager = FileManager.default
+        let directory = resolver.itemPhotosDirectory
+        var photos: [ItemPhotoInput] = []
+        photos.reserveCapacity(photoCount)
+        for index in 0..<photoCount {
+            let picture = pictures[index % pictures.count]
+            let name = "large-\(index).webp"
+            let thumbName = "large-\(index)-thumb.webp"
+            guard let full = resolver.resolve(picture.uri), let thumb = resolver.resolve(picture.thumbUri),
+                  (try? fileManager.copyItem(at: full, to: directory.appending(path: name, directoryHint: .notDirectory))) != nil,
+                  (try? fileManager.copyItem(at: thumb, to: directory.appending(path: thumbName, directoryHint: .notDirectory))) != nil
+            else { continue }
+            photos.append(ItemPhotoInput(
+                uri: resolver.storedURI(forPhotoNamed: name),
+                thumbUri: resolver.storedURI(forPhotoNamed: thumbName),
+                width: picture.width, height: picture.height, byteSize: picture.byteSize))
+        }
+        return photos
+    }
+
+    /// A 400 × 300 picture: a tinted ground, a darker disc and a light bar, different per index.
+    /// Small and few, because the Debug build's WebP encoder is slow (12 at 640 × 480 took 4 s).
+    static func drawPicture(_ index: Int) -> CGImage? {
+        let width = 400, height = 300
+        guard let space = CGColorSpace(name: CGColorSpace.sRGB),
+              let context = CGContext(
+                  data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0, space: space,
+                  bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)
+        else { return nil }
+        let hue = CGFloat(index) / CGFloat(pictureCount)
+        let ground = UIColor(hue: hue, saturation: 0.35, brightness: 0.9, alpha: 1).cgColor
+        let disc = UIColor(hue: hue, saturation: 0.65, brightness: 0.55, alpha: 1).cgColor
+        let bar = UIColor(hue: (hue + 0.5).truncatingRemainder(dividingBy: 1), saturation: 0.25, brightness: 0.95, alpha: 1).cgColor
+        context.setFillColor(ground)
+        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        context.setFillColor(disc)
+        let side = CGFloat(100 + (index % 4) * 25)
+        context.fillEllipse(in: CGRect(x: CGFloat(50 + (index * 37) % 160), y: CGFloat(40 + (index * 53) % 110), width: side, height: side))
+        context.setFillColor(bar)
+        context.fill(CGRect(x: 0, y: CGFloat(12 + (index * 29) % 250), width: CGFloat(width), height: 24))
+        return context.makeImage()
+    }
+}
+
+/// The image store's telemetry, dropped: the `photo_stored` events of the demo's pictures say nothing.
+private struct ShellDemoSilentTelemetry: TelemetrySink {
+    func event(_ name: String, _ payload: TelemetryPayload) {}
+    func error(_ name: String, _ payload: TelemetryPayload) {}
 }
 
 /// Every request answered 401, as for a phone removed from the household. The answer takes

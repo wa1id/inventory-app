@@ -51,7 +51,10 @@ actor PlacesGate {
 
     /// Waits (bounded) until `count` calls have reached the gate.
     func waitForArrivals(_ count: Int) async {
-        for _ in 0..<100_000 {
+        // A real-time limit, not a count of yields: a loaded Mac can hold the model's tasks back
+        // for seconds. The wait ends as soon as the condition holds.
+        let deadline = ContinuousClock.now.advanced(by: .seconds(60))
+        while ContinuousClock.now < deadline {
             if arrivals >= count { return }
             await Task.yield()
         }

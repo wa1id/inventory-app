@@ -326,7 +326,10 @@ func captureTestEventually(
     _ condition: @MainActor () -> Bool,
     sourceLocation: SourceLocation = #_sourceLocation
 ) async {
-    for _ in 0..<2000 {
+    // A real-time limit, not a count of yields: a loaded Mac can hold the model's tasks back
+    // for seconds. The wait ends as soon as the condition holds.
+    let deadline = ContinuousClock.now.advanced(by: .seconds(60))
+    while ContinuousClock.now < deadline {
         if condition() { return }
         await Task.yield()
     }

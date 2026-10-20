@@ -34,9 +34,11 @@ private final class Recorder: Sendable {
 
     func stop() { listener.cancel() }
 
-    /// Waits until `count` values arrived (or a second passed).
+    /// Waits until `count` values arrived (or `networkPatience` of real time passed: a loaded
+    /// Mac can hold the listener's task back for seconds).
     func waitFor(_ count: Int) async -> [Reachability] {
-        for _ in 0..<100 where values.count < count {
+        let deadline = ContinuousClock.now.advanced(by: networkPatience)
+        while values.count < count, ContinuousClock.now < deadline {
             try? await Task.sleep(for: .milliseconds(10))
         }
         return values
@@ -112,9 +114,7 @@ struct ReachabilityTests {
         let hub = ReachabilityHub()
         let recorder = Recorder(hub)
         recorder.stop()
-        for _ in 0..<100 where hub.subscriberCount > 0 {
-            try await Task.sleep(for: .milliseconds(10))
-        }
+        await networkEventually("the listener unsubscribed") { hub.subscriberCount == 0 }
         #expect(hub.subscriberCount == 0)
         _ = try await fetchWithToken(200, hub: hub)
         try await Task.sleep(for: .milliseconds(50))
@@ -156,9 +156,7 @@ struct ReachabilityTests {
         do {
             _ = hub.updates()
         }
-        for _ in 0..<100 where hub.subscriberCount > 0 {
-            try await Task.sleep(for: .milliseconds(10))
-        }
+        await networkEventually("the listener unsubscribed") { hub.subscriberCount == 0 }
         #expect(hub.subscriberCount == 0)
     }
 

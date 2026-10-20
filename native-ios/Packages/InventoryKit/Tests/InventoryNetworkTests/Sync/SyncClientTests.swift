@@ -13,16 +13,19 @@ private let code = "MMWKYM2H78ABCDEFGHJKMNPQRS"
 private let photoId = "11111111-2222-4333-8444-555555555555"
 private let webp = Data("RIFF\u{0}\u{0}\u{0}\u{0}WEBPVP8 bytes".utf8)
 
+/// The deadline runs on `clock`: by default one that never moves, so no exchange times out
+/// because the test process was slow; the deadline tests move their own.
 private func client(
     _ server: StubServer,
     endpoint: String? = endpoint,
     key: String? = nil,
     timeout: Duration = .seconds(5),
+    clock: ManualClock = ManualClock(),
     telemetry: RecordingTelemetry = RecordingTelemetry()
 ) -> SyncClient {
     SyncClient(
         recoveryCode: code, endpoint: endpoint, key: key, timeout: timeout,
-        transport: server.transport, telemetry: telemetry.telemetry
+        transport: server.transport, clock: clock, telemetry: telemetry.telemetry
     )
 }
 
@@ -253,21 +256,34 @@ struct SyncClientFailureTests {
     }
 
     @Test("the total deadline reads as timeout")
-    func deadlineIsTimeout() async {
-        let server = StubServer(reply: .status(204, delay: .seconds(10)))
-        let started = ContinuousClock.now
-        #expect(await client(server, timeout: .milliseconds(100)).deletePhoto(id: photoId).failureReason == .timeout)
-        #expect(ContinuousClock.now - started < .seconds(5))
+    func deadlineIsTimeout() async throws {
+        let clock = ManualClock()
+        // The Worker holds its answer for an hour: only the deadline ends the exchange.
+        let server = StubServer(reply: .status(204, delay: .seconds(3600)))
+        let sync = client(server, timeout: .milliseconds(100), clock: clock)
+        let call = Task { await sync.deletePhoto(id: photoId) }
+        try await clock.waitForSleepers(1, timeout: networkPatience)
+        await server.waitForRequests(1)
+        await clock.advance(by: .milliseconds(99))
+        #expect(clock.pendingSleeperCount == 1)
+        await clock.advance(by: .milliseconds(1))
+        let outcome = try #require(await networkResult(of: call))
+        #expect(outcome.get().failureReason == .timeout)
     }
 
     @Test("the deadline covers the whole body, not just the first byte")
-    func deadlineCoversBody() async {
+    func deadlineCoversBody() async throws {
         // The 200 and its headers arrive at once; only the body is late (a slow 32 MiB snapshot download).
-        let server = StubServer(reply: .slowBody(status: 200, headers: ["x-snapshot-schema-version": "7"], body: Data(count: 1024), bodyDelay: .seconds(10)))
-        let started = ContinuousClock.now
-        #expect(await client(server, timeout: .milliseconds(200)).downloadBackup() == .failure(.timeout))
-        #expect(ContinuousClock.now - started < .seconds(5))
-        // The same body in time is a download.
+        let clock = ManualClock()
+        let server = StubServer(reply: .slowBody(status: 200, headers: ["Content-Type": "application/octet-stream", "x-snapshot-schema-version": "7"], body: Data(count: 1024), bodyDelay: .seconds(3600)))
+        let sync = client(server, timeout: .milliseconds(200), clock: clock)
+        let call = Task { await sync.downloadBackup() }
+        try await clock.waitForSleepers(1, timeout: networkPatience)
+        await server.waitForHead()
+        await clock.advance(by: .milliseconds(200))
+        let outcome = try #require(await networkResult(of: call))
+        #expect(outcome.get() == .failure(.timeout))
+        // The same body in time is a download (the deadline's clock never moves here).
         let prompt = StubServer(reply: .slowBody(status: 200, headers: ["x-snapshot-schema-version": "7"], body: Data(count: 1024), bodyDelay: .milliseconds(10)))
         #expect(await client(prompt).downloadBackup() == .success(BackupDownload(bytes: Data(count: 1024), schemaVersion: 7)))
     }
@@ -294,10 +310,11 @@ struct SyncClientFailureTests {
 
     @Test("a cancelled caller reads as server_error, never as offline or timeout")
     func cancellationIsServerError() async {
-        let server = StubServer(reply: .status(204, delay: .seconds(10)))
+        let server = StubServer(reply: .status(204, delay: .seconds(3600)))
         let sync = client(server)
         let task = Task { await sync.deletePhoto(id: photoId) }
-        try? await Task.sleep(for: .milliseconds(100))
+        // Cancelled mid-exchange: the Worker has the request and holds its answer.
+        await server.waitForRequests(1)
         task.cancel()
         #expect(await task.value.failureReason == .serverError)
     }

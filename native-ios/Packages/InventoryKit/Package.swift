@@ -73,6 +73,9 @@ let package = Package(
         .testTarget(name: "InventoryNetworkTests", dependencies: ["InventoryNetwork", "InventoryTestSupport"], resources: [.copy("Fixtures")]),
         .testTarget(name: "InventoryServicesTests", dependencies: ["InventoryServices", "InventoryTestSupport", .product(name: "GRDB", package: "GRDB.swift")], resources: [.copy("Fixtures")]),
         .testTarget(name: "InventoryAppModelsTests", dependencies: ["InventoryAppModels", "InventoryTestSupport", .product(name: "GRDB", package: "GRDB.swift")], resources: [.copy("Fixtures")]),
+        // Search and list reads on the 10 000-item inventory (docs/PERFORMANCE.md): regression
+        // guards on CPU time, and a measure-only report behind INVENTORY_PERF=1.
+        .testTarget(name: "InventoryPerformanceTests", dependencies: ["InventoryStorage", "InventoryAppModels", "InventoryTestSupport", .product(name: "GRDB", package: "GRDB.swift")]),
     ],
     swiftLanguageModes: [.v6]
 )
