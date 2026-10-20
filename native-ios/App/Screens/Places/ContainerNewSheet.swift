@@ -98,18 +98,23 @@ private struct ContainerNewForm: View {
     @Environment(\.screenAddress) private var address
 
     var body: some View {
-        if model.isSpaceGone {
-            // The space was deleted, probably on another phone: nothing to add to.
-            ScreenFrame(.modal) {
-                PlacesFullScreenState {
-                    ErrorStateView(cause: .gone, subject: .space, secondary: StateAction(label: L10n.Common.goBack) {
-                        if let address { app.router.close(address) }
-                    })
+        Group {
+            if model.isSpaceGone {
+                // The space was deleted, probably on another phone: nothing to add to.
+                ScreenFrame(.modal) {
+                    PlacesFullScreenState {
+                        ErrorStateView(cause: .gone, subject: .space, secondary: StateAction(label: L10n.Common.goBack) {
+                            if let address { app.router.close(address) }
+                        })
+                    }
                 }
+            } else {
+                form
             }
-        } else {
-            form
         }
+        // Over the gone state too, as RN's guard sat above its early return: typing is still
+        // asked about on Cancel.
+        .placesDirtyGuard(model.dirtyGuard)
     }
 
     private var form: some View {
@@ -164,7 +169,6 @@ private struct ContainerNewForm: View {
                 )
             }
         }
-        .placesDirtyGuard(model.dirtyGuard)
     }
 
     private func save() {

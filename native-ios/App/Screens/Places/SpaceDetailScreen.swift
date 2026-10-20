@@ -14,6 +14,7 @@ struct SpaceDetailScreen: View {
     let id: String
 
     @Environment(AppContainer.self) private var app
+    @Environment(\.screenAddress) private var address
     @State private var model: SpaceDetailModel?
 
     init(id: String) {
@@ -47,8 +48,11 @@ struct SpaceDetailScreen: View {
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("screen-space")
         .onAppear {
-            // An old link to the drop zone's system space goes to its tab instead.
+            // An old link to the drop zone's system space goes to its tab instead. The screen
+            // takes itself off its stack first (RN's goToTab popped it), or the tab it was pushed
+            // on would bounce to the drop zone every time it shows.
             if id == DropZone.spaceId {
+                if let address { app.router.close(address) }
                 app.router.goToTab(.dropZone)
                 return
             }
@@ -159,12 +163,12 @@ private struct SpaceDetailContent: View {
                     glyph: .box,
                     primary: StateAction(label: L10n.Spaces.NoContainers.action, glyph: .plus, identifier: "containers-empty", action: newContainer)
                 )
-                .listRowBackground(Color.clear)
+                .placesStateRow()
             }
         case .failed(let cause):
             Section {
                 ErrorStateView(cause: .failed(cause), onRetry: { model.containers.reload() })
-                    .listRowBackground(Color.clear)
+                    .placesStateRow()
             }
         case .loading:
             Section {

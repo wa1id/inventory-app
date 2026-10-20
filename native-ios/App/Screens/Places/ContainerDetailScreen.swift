@@ -16,6 +16,7 @@ struct ContainerDetailScreen: View {
     let id: String
 
     @Environment(AppContainer.self) private var app
+    @Environment(\.screenAddress) private var address
     @State private var model: ContainerDetailModel?
 
     init(id: String) {
@@ -49,8 +50,11 @@ struct ContainerDetailScreen: View {
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("screen-container")
         .onAppear {
-            // The drop zone is a real container row, but its screen is the Drop zone tab.
+            // The drop zone is a real container row, but its screen is the Drop zone tab. The
+            // screen takes itself off its stack first (RN's goToTab popped it), or the tab it was
+            // pushed on would bounce to the drop zone every time it shows.
             if id == DropZone.containerId {
+                if let address { app.router.close(address) }
                 app.router.goToTab(.dropZone)
                 return
             }
@@ -214,12 +218,12 @@ private struct ContainerDetailContent: View {
                     primary: StateAction(label: L10n.Container.addHere, glyph: .plus, identifier: "items-empty", action: addHere),
                     secondary: StateAction(label: L10n.Container.takePhoto, glyph: .camera, identifier: "items-capture-empty", action: takePhoto)
                 )
-                .listRowBackground(Color.clear)
+                .placesStateRow()
             }
         case .failed(let cause):
             Section {
                 ErrorStateView(cause: .failed(cause), onRetry: { model.items.reload() })
-                    .listRowBackground(Color.clear)
+                    .placesStateRow()
             }
         }
     }
@@ -283,11 +287,21 @@ private struct ContainerContentRow: View {
         ItemRow(item: item, line: .detail, tool: .stepper(model.quantities.model(for: item)), onPress: onPress)
             .listRowBackground(isArriving ? arrivalBackground : nil)
             .task(id: item.id) {
-                guard model.claimsArrival(item) else { return }
+                guard model.claimsArrival(item) else {
+                    // Decided already: the row came back (after a push, or scrolled away and
+                    // back) with nothing left to pick out, so a hold cut short is not left on.
+                    clearArrival()
+                    return
+                }
                 isArriving = true
                 highlight = 1
                 try? await Task.sleep(for: .milliseconds(600 + (reduceMotion ? 1200 : 0)))
-                guard !Task.isCancelled else { return }
+                guard !Task.isCancelled else {
+                    // Gone mid-hold (the row was opened at once, or scrolled away): drop the
+                    // highlight rather than keep it on when the row shows again.
+                    clearArrival()
+                    return
+                }
                 let fade = Motion.motionMs(1200, reduced: reduceMotion)
                 if fade == 0 {
                     highlight = 0
@@ -300,6 +314,11 @@ private struct ContainerContentRow: View {
                     }
                 }
             }
+    }
+
+    private func clearArrival() {
+        highlight = 0
+        isArriving = false
     }
 
     private var arrivalBackground: some View {

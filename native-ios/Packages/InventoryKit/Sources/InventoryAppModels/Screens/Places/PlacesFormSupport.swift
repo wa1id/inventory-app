@@ -51,19 +51,19 @@ enum PlacesReads {
     /// a screen's reads; the spinner shows only for the pull, as RN's `usePullToRefresh`).
     @MainActor
     static func refresh(_ queries: [any PlacesRefreshing]) async {
-        for query in queries { query.startReload() }
-        for query in queries { await query.settled() }
+        for query in queries { query.placesReload() }
+        for query in queries { await query.placesSettled() }
     }
 }
 
 /// A query a screen can reload and wait for, whatever its value type.
 @MainActor
 protocol PlacesRefreshing: AnyObject {
-    func startReload()
-    func settled() async
+    func placesReload()
+    func placesSettled() async
 }
 
 extension InventoryQuery: PlacesRefreshing {
-    func startReload() { reload() }
-    func settled() async { await readTask?.value }
+    func placesReload() { reload() }
+    func placesSettled() async { await readTask?.value }
 }

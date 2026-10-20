@@ -41,6 +41,12 @@ final class PlacesUITests: XCTestCase {
         app.swipeDown(velocity: .fast)
     }
 
+    /// Waits until `element` is gone, not merely still there while a sheet slides away.
+    private func waitForAbsence(_ element: XCUIElement, timeout: TimeInterval = 5) {
+        expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: element)
+        waitForExpectations(timeout: timeout)
+    }
+
     /// Replaces what a field holds, wherever the cursor lands.
     private func replaceText(in field: XCUIElement, with text: String) {
         field.tap()
@@ -96,7 +102,7 @@ final class PlacesUITests: XCTestCase {
         replaceText(in: name, with: "Tool chest (red)")
         app.buttons["container-save"].tap()
         XCTAssertTrue(app.navigationBars["Tool chest (red)"].waitForExistence(timeout: 10))
-        XCTAssertFalse(element("screen-container-edit").exists)
+        waitForAbsence(element("screen-container-edit"))
     }
 
     func testCrumbOpensTheSpace() throws {
@@ -153,8 +159,8 @@ final class PlacesUITests: XCTestCase {
         attachScreenshot("delete-confirm")
         alert.buttons["Delete"].tap()
         XCTAssertTrue(element("screen-spaces").waitForExistence(timeout: 10))
-        XCTAssertFalse(element("screen-space-edit").exists)
-        XCTAssertFalse(element("screen-space").exists)
+        waitForAbsence(element("screen-space-edit"))
+        waitForAbsence(element("screen-space"))
     }
 
     func testDirtyFormAsksBeforeDiscarding() throws {
@@ -172,7 +178,17 @@ final class PlacesUITests: XCTestCase {
         app.buttons["sheet-close"].tap()
         XCTAssertTrue(alert.waitForExistence(timeout: 5))
         alert.buttons["Discard"].tap()
-        XCTAssertFalse(element("screen-container-new").waitForExistence(timeout: 2))
+        waitForAbsence(element("screen-container-new"))
+    }
+
+    func testUnreadContentsAreNeverShownAsEmpty() throws {
+        // The container reads, its items do not: Try again, never "This cabinet is empty".
+        launch(["-demoArea", "places", "-demoState", "contentsProblem", "-demoRoute", "container:Tool_chest"])
+        XCTAssertTrue(element("screen-container").waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["error-retry"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["items-empty"].exists)
+        XCTAssertFalse(app.buttons["items-add"].exists)
+        attachScreenshot("contents-not-read")
     }
 
     func testDropZoneFormsAreLocked() throws {

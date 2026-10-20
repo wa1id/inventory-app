@@ -273,5 +273,5 @@ final class PlacesScreenStub<Navigation> {
 /// Lets queued main-actor work and read tasks run.
 @MainActor
 func placesSettle(_ queries: any PlacesRefreshing...) async {
-    for query in queries { await query.settled() }
+    for query in queries { await query.placesSettled() }
 }

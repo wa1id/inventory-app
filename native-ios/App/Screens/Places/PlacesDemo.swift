@@ -19,6 +19,7 @@ import Synchronization
 /// | `saveGone` | updates find the record gone, and the next edit form saves once (the gone notice) | `spaceEdit:…`, `containerEdit:…` |
 /// | `deleteConfirm` | the next edit form presses Delete (the confirm shows) | `spaceEdit:…`, `containerEdit:…` |
 /// | `refreshProblem` | a space or container screen's reads work once, then fail; 4 s in, a refresh shows the banner | `space:Garage`, `container:Tool_chest` (`RUN_SETTLE_SECONDS=10`) |
+/// | `contentsProblem` | a space's containers and a container's items cannot be read at all (the failed contents, never "empty") | `space:Garage`, `container:Tool_chest` |
 /// | `goneSpace`, `goneContainer` | pushes a space or container that does not exist | none |
 ///
 /// Forms with no state open empty or seeded: `spaceNew`, `containerNew:Garage`, `spaceEdit:Garage`,
@@ -26,7 +27,7 @@ import Synchronization
 enum PlacesDemo {
     /// What the next places form or screen does once it shows.
     enum Script: String {
-        case filled, errors, saveProblem, saveGone, deleteConfirm, refreshProblem
+        case filled, errors, saveProblem, saveGone, deleteConfirm, refreshProblem, contentsProblem
     }
 
     /// Set by ``run(state:app:)``; read by every places form as it is made.
@@ -134,7 +135,7 @@ enum PlacesDemo {
         case .saveProblem:
             model.change(filled)
             Task { await model.createCustom() }
-        case .saveGone, .deleteConfirm, .refreshProblem:
+        case .saveGone, .deleteConfirm, .refreshProblem, .contentsProblem:
             break
         }
     }
@@ -160,7 +161,7 @@ enum PlacesDemo {
                 await model.save()
             case .deleteConfirm:
                 await model.delete()
-            case .refreshProblem:
+            case .refreshProblem, .contentsProblem:
                 break
             }
         }
@@ -177,7 +178,7 @@ enum PlacesDemo {
             model.setVisualType(.crate)
             model.setName("Paint tins")
             Task { await model.save() }
-        case .saveGone, .deleteConfirm, .refreshProblem:
+        case .saveGone, .deleteConfirm, .refreshProblem, .contentsProblem:
             break
         }
     }
@@ -196,7 +197,7 @@ enum PlacesDemo {
                 await model.save()
             case .deleteConfirm:
                 await model.delete()
-            case .refreshProblem:
+            case .refreshProblem, .contentsProblem:
                 break
             }
         }
@@ -230,7 +231,12 @@ enum PlacesDemo {
     /// The items the container screen reads.
     @MainActor
     static func items(_ base: CurrentItemsRepository) -> any ItemsRepository {
-        failure == .refresh ? PlacesDemoItems(base: base, reads: readLog) : base
+        switch failure {
+        case let failure? where failure == .refresh || failure == .contents:
+            PlacesDemoItems(base: base, failure: failure, reads: readLog)
+        default:
+            base
+        }
     }
 
     @MainActor
@@ -239,6 +245,7 @@ enum PlacesDemo {
         case .saveProblem: .offline
         case .saveGone: .gone
         case .refreshProblem: .refresh
+        case .contentsProblem: .contents
         default: nil
         }
     }
@@ -255,6 +262,8 @@ enum PlacesDemoFailure: Sendable {
     /// A screen's reads work the first time and fail after (a local failure, so the refresh
     /// banner shows).
     case refresh
+    /// The lists of what is inside (a space's containers, a container's items) always fail.
+    case contents
 
     static let offlineError = HouseholdHttpError(status: 0, code: "offline")
 }
@@ -296,7 +305,7 @@ struct PlacesDemoSpaces: SpacesRepository {
         switch failure {
         case .offline: throw PlacesDemoFailure.offlineError
         case .gone: return nil
-        case .refresh: return try await base.update(id, input)
+        case .refresh, .contents: return try await base.update(id, input)
         }
     }
 
@@ -318,6 +327,7 @@ struct PlacesDemoContainers: ContainersRepository {
 
     func listBySpace(_ spaceId: String) async throws -> [ContainerWithCounts] {
         if failure == .refresh { try reads.check("containers-of:\(spaceId)") }
+        if failure == .contents { throw PlacesDemoReadFailure() }
         return try await base.listBySpace(spaceId)
     }
 
@@ -335,7 +345,7 @@ struct PlacesDemoContainers: ContainersRepository {
         switch failure {
         case .offline: throw PlacesDemoFailure.offlineError
         case .gone: return nil
-        case .refresh: return try await base.update(id, input)
+        case .refresh, .contents: return try await base.update(id, input)
         }
     }
 
@@ -345,12 +355,14 @@ struct PlacesDemoContainers: ContainersRepository {
     }
 }
 
-/// Items whose container reads work once, then fail.
+/// Items whose container reads work once, then fail (`refresh`), or always fail (`contents`).
 struct PlacesDemoItems: ItemsRepository {
     let base: CurrentItemsRepository
+    let failure: PlacesDemoFailure
     let reads: PlacesDemoReadLog
 
     func listByContainer(_ containerId: String) async throws -> [ItemWithContext] {
+        if failure == .contents { throw PlacesDemoReadFailure() }
         try reads.check("items-of:\(containerId)")
         return try await base.listByContainer(containerId)
     }

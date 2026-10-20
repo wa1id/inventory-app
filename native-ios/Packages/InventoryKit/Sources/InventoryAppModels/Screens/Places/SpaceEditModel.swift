@@ -19,7 +19,8 @@ public final class SpaceEditModel {
     public enum Navigation: Sendable, Hashable {
         /// Saved: close the sheet (only while it is still in front).
         case close
-        /// Deleted: the Spaces tab, with everything presented closed (RN `goToTab('/spaces')`).
+        /// Deleted: the Spaces tab, with every sheet and pushed screen closed (RN
+        /// `goToTab('/spaces')`, which popped its one stack).
         case goToSpaces
     }
 

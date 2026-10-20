@@ -9,8 +9,9 @@ import InventoryStrings
 /// locked state instead of a form.
 ///
 /// Router calls: saved → `router.close(address)` (only while in front); deleted →
-/// `router.goToTab(.spaces)`; Go to Spaces (gone) → `router.goToTab(.spaces)`; the locked state →
-/// `router.goToTab(.dropZone)`.
+/// `router.dismissAll()` then `router.goToTab(.spaces)`, so no screen of the deleted space or its
+/// containers stays on any tab; Go to Spaces (gone) → `router.goToTab(.spaces)`; the locked
+/// state → `router.goToTab(.dropZone)`.
 struct SpaceEditSheet: View {
     let id: String
 
@@ -69,6 +70,10 @@ struct SpaceEditSheet: View {
                 case .close:
                     if let address { router.close(address) }
                 case .goToSpaces:
+                    // Every stack, not only the Spaces tab's: RN's goToTab popped its one stack,
+                    // so neither the deleted space nor one of its containers stays open on
+                    // another tab, as a container's delete does it (dismissAll).
+                    router.dismissAll()
                     router.goToTab(.spaces)
                 }
             }

@@ -445,7 +445,8 @@ icon, error bar, "Type it instead"). Build them from `CameraGlassIconButton`, `C
 - `EmptyStateView` and `ErrorStateView` are `ContentUnavailableView`s and do not scroll. Put
   them in a `List` or `ScrollView` so their text and buttons stay reachable at AX5. As a `List`
   row a long heading can be cut to one line at default sizes ("Your inventory could not…");
-  where the state fills the screen, prefer `GeometryReader { p in ScrollView { state.frame(maxWidth:
+  `.fixedSize(horizontal: false, vertical: true)` on the state lets it wrap there (the space and
+  container screens' contents states). Where the state fills the screen, prefer `GeometryReader { p in ScrollView { state.frame(maxWidth:
   .infinity, minHeight: p.size.height) }.scrollBounceBehavior(.basedOnSize) }` (centred while it
   fits, as `PlacePicker`'s failure state), and check the heading in a screenshot.
 - Simulator caveats: colour emoji draw as "?" boxes on the build Mac's simulator, and the camera

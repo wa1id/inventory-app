@@ -29,17 +29,21 @@ struct PlacesFullScreenState<Content: View>: View {
 }
 
 /// The skeleton while a screen's first read is out, padded like a page.
+///
+/// Not in a scroll view: a placeholder scroll view in front of the screen's list left the
+/// navigation bar's large title collapsed now and then when the list replaced it (the detail
+/// screens opened with the title small). The skeleton is static and has no buttons, so clipping
+/// it at the largest text sizes hides nothing.
 struct PlacesLoading: View {
     var variant: SkeletonView.Variant = .list
     var rows = 6
     var thumb: CGFloat? = DesignMetrics.thumb
 
     var body: some View {
-        ScrollView {
-            SkeletonView(variant: variant, rows: rows, thumb: thumb)
-                .padding(16)
-        }
-        .scrollDisabled(true)
+        SkeletonView(variant: variant, rows: rows, thumb: thumb)
+            .padding(16)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .clipped()
     }
 }
 
@@ -92,6 +96,14 @@ extension View {
         sheetCloseGuard { await guardModel.attemptClose() }
             .interactiveDismissDisabled(guardModel.interactiveDismissDisabled)
             .modifier(PlacesRevokedGuard(guardModel: guardModel))
+    }
+
+    /// An empty or error state as a row of a detail screen's list, under its head. Its heading
+    /// wraps: as a plain row, `ContentUnavailableView` cut it to one line ("Your inventory could
+    /// not…", "No containers in Grandma's bedr…") where RN wrapped.
+    func placesStateRow() -> some View {
+        fixedSize(horizontal: false, vertical: true)
+            .listRowBackground(Color.clear)
     }
 
     /// At large text sizes a form's notice scrolls with the form (`FormLayout`): when a save fails

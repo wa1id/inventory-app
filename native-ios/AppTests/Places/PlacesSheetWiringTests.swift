@@ -153,10 +153,13 @@ struct PlacesSheetWiringTests {
         #expect(try await app.repositories.containers.getById(chest.id) == nil)
     }
 
-    @Test("deleting a space goes to the Spaces tab with everything closed")
+    @Test("deleting a space goes to the Spaces tab with everything closed, other tabs' stacks too")
     func deleteSpaceGoesToSpaces() async throws {
         let app = await bootedApp(confirm: PlacesAppConfirm(answer: true))
         let attic = try await space(app, named: "Attic")
+        let clothes = try await container(app, named: "Winter clothes")
+        // One of its containers was opened from search on Home earlier.
+        app.router.push(.container(id: clothes.id))
         app.router.selectTab(.spaces)
         app.router.push(.space(id: attic.id))
         let modal = app.router.present(.sheet(.spaceEdit(id: attic.id)))
@@ -169,6 +172,8 @@ struct PlacesSheetWiringTests {
         #expect(app.router.modals.isEmpty)
         #expect(app.router.selectedTab == .spaces)
         #expect(app.router.path(.spaces).isEmpty)
+        // RN's goToTab popped its one stack: the deleted container's screen is not left on Home.
+        #expect(app.router.path(.home).isEmpty)
         #expect(try await app.repositories.spaces.getById(attic.id) == nil)
     }
 
