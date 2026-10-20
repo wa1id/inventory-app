@@ -953,7 +953,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "This phone’s inventory is empty, so backup is keeping the copy it already has rather than replacing it. It carries on once something is added. If that copy has things you want on this phone, restore it."
+            "value" : "This phone’s inventory is empty, so backup keeps the copy it already has instead of replacing it, and carries on once something is added. If that copy has things you want on this phone, restore it."
           }
         }
       }
@@ -1137,7 +1137,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Backup can’t be checked right now"
+            "value" : "Backup cannot be checked right now"
           }
         }
       }

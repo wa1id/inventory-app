@@ -2628,8 +2628,8 @@ public enum L10n {
         /// 03 B8: the keychain refused to read this phone's recovery code (often while the phone is locked). Turn on and Restore stay hidden until a read works; Try again (`common.tryAgain`) reads it again.
         public enum Unreadable {
             /// Native only (native/account.ts).
-            /// "Backup can’t be checked right now"
-            public static var title: String { L10nRuntime.text("backup.unreadable.title", "Backup can’t be checked right now") }
+            /// "Backup cannot be checked right now"
+            public static var title: String { L10nRuntime.text("backup.unreadable.title", "Backup cannot be checked right now") }
 
             /// Native only (native/account.ts).
             /// "This phone could not read its recovery code just now. This can happen while the phone is locked. Nothing has been changed or lost."
@@ -2647,8 +2647,8 @@ public enum L10n {
             public static var title: String { L10nRuntime.text("backup.restoreOffer.title", "Nothing to back up yet") }
 
             /// Native only (native/account.ts).
-            /// "This phone’s inventory is empty, so backup is keeping the copy it already has rather than replacing it. It carries on once something is added. If that copy has things you want on this phone, restore it."
-            public static var body: String { L10nRuntime.text("backup.restoreOffer.body", "This phone’s inventory is empty, so backup is keeping the copy it already has rather than replacing it. It carries on once something is added. If that copy has things you want on this phone, restore it.") }
+            /// "This phone’s inventory is empty, so backup keeps the copy it already has instead of replacing it, and carries on once something is added. If that copy has things you want on this phone, restore it."
+            public static var body: String { L10nRuntime.text("backup.restoreOffer.body", "This phone’s inventory is empty, so backup keeps the copy it already has instead of replacing it, and carries on once something is added. If that copy has things you want on this phone, restore it.") }
 
             /// Native only (native/account.ts).
             /// "Restore the saved copy…"

@@ -77,4 +77,28 @@ struct CompositionRowQuantityTests {
         #expect(toast.message == SavedQuantityModel.notSavedMessage(itemName: gone.name, kind: .gone))
         #expect(toast.tone == .error)
     }
+
+    @Test("the error toast names the item as its row shows it now, after a rename")
+    func errorToastAfterRename() async throws {
+        let fixture = try await fixture()
+        let app = fixture.app
+        let screws = try await item(app, name: "Wood screws", quantity: 2)
+        let models = app.makeRowQuantityModels()
+        let model = models.model(for: screws)
+
+        // The list re-read after a rename: the row asks for its model with the new name.
+        _ = try await app.repositories.items.update(screws.id, UpdateItemInput(name: "Deck screws"))
+        let renamed = try #require(try await app.repositories.items.getById(screws.id))
+        #expect(models.model(for: renamed) === model)
+        #expect(models.latestName(of: screws.id) == "Deck screws")
+
+        _ = try await app.repositories.items.delete(screws.id)
+        model.setQuantity(5)
+        await model.flushTask?.value
+        let toast = try #require(app.toasts.current)
+        #expect(toast.message == L10n.Quantity.notSavedNamed(name: "Deck screws", offline: false))
+
+        models.keep(only: [String]())
+        #expect(models.latestName(of: screws.id) == nil)
+    }
 }

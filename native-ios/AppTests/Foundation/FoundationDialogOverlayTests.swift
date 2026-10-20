@@ -78,6 +78,25 @@ struct FoundationDialogOverlayTests {
         #expect(!fixture.tracker.isShowingDialog)
     }
 
+    @Test("a SwiftUI dialog marked with tracksShellDialog hides the toast while it is up")
+    func swiftUIDialog() async throws {
+        let fixture = try await fixture()
+        defer { close(fixture) }
+        let flag = FoundationDialogFlag()
+        let probe = try ShellTestWindow(FoundationDialogProbe(flag: flag, tracker: fixture.tracker))
+        defer { probe.close() }
+        fixture.app.toasts.show(ToastOptions(message: "Moved to Tool chest (Garage)."))
+        await ShellTestWait.until("the toast's window") { !fixture.window.isHidden }
+
+        flag.asking = true
+        await ShellTestWait.until("the dialog counted") { fixture.tracker.isShowingDialog }
+        await ShellTestWait.until("the toast stepping aside") { fixture.window.isHidden }
+
+        flag.asking = false
+        await ShellTestWait.until("the dialog no longer counted") { !fixture.tracker.isShowingDialog }
+        await ShellTestWait.until("the toast back") { !fixture.window.isHidden }
+    }
+
     @Test("the overlay follows the tracker: a toast waits while a dialog counts as up")
     func followsTracker() async throws {
         let fixture = try await fixture()
@@ -88,5 +107,26 @@ struct FoundationDialogOverlayTests {
         #expect(fixture.window.isHidden)
         fixture.tracker.ended()
         await ShellTestWait.until("the toast back") { !fixture.window.isHidden }
+    }
+}
+
+/// Whether ``FoundationDialogProbe``'s dialog is up.
+@MainActor
+@Observable
+final class FoundationDialogFlag {
+    var asking = false
+}
+
+/// A view presenting a stock SwiftUI confirmation dialog, tracked like a shell dialog.
+private struct FoundationDialogProbe: View {
+    @Bindable var flag: FoundationDialogFlag
+    let tracker: ShellDialogTracker
+
+    var body: some View {
+        Color.clear
+            .confirmationDialog(Text(verbatim: "Remove the photo?"), isPresented: $flag.asking) {
+                Button(role: .destructive) {} label: { Text(verbatim: "Remove photo") }
+            }
+            .tracksShellDialog(isPresented: flag.asking, tracker: tracker)
     }
 }

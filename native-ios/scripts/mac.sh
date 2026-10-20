@@ -18,6 +18,8 @@
 #
 # run, launch and openurl honour APPEARANCE=light|dark and CONTENT_SIZE=<simctl content size,
 # e.g. large, accessibility-extra-extra-extra-large>, and wait RUN_SETTLE_SECONDS (default 4).
+# run and launch hand the app each launch argument as given (quote one that holds spaces or a
+# `>`, e.g. -demoRoute 'container:Tool chest>containerEdit:Tool chest').
 # test, build, apptest, uitest and run wait for one of MAC_SLOTS (default 4) build slots.
 # Full logs go to native-ios/.build-logs/<command>.log; stdout gets a filtered summary.
 set -euo pipefail
@@ -90,8 +92,20 @@ xcbuild_app() {
 boot_sim='{ xcrun simctl boot $udid 2>/dev/null || true; } && xcrun simctl bootstatus $udid -b >/dev/null && xcrun simctl ui $udid appearance '"${APPEARANCE:-light}"' && xcrun simctl ui $udid content_size '"${CONTENT_SIZE:-large}"
 
 launch_app() {
-  # $1 = launch arguments. Terminates the app, launches it with them, waits, then screenshots.
-  echo "{ xcrun simctl terminate \$udid $BUNDLE_ID 2>/dev/null || true; } && xcrun simctl launch \$udid $BUNDLE_ID $1 && sleep \${RUN_SETTLE_SECONDS:-4} && xcrun simctl io \$udid screenshot ~/$REMOTE_ROOT/screenshot.png"
+  # "$@" = launch arguments. Terminates the app, launches it with them, waits, then screenshots.
+  # Each argument is quoted for the Mac's shell, so one argument stays one (spaces, and the `>`
+  # that joins -demoRoute specs, are not reparsed there), and the settle time is this machine's.
+  # An argument holding several flags ("-demo YES -demoTab spaces") is still split on spaces.
+  local args="" arg word words
+  for arg in "$@"; do
+    if [[ $arg == -*" -"* ]]; then
+      read -ra words <<<"$arg"
+      for word in "${words[@]}"; do args+=" $(printf '%q' "$word")"; done
+    else
+      args+=" $(printf '%q' "$arg")"
+    fi
+  done
+  echo "{ xcrun simctl terminate \$udid $BUNDLE_ID 2>/dev/null || true; } && xcrun simctl launch \$udid $BUNDLE_ID$args && sleep ${RUN_SETTLE_SECONDS:-4} && xcrun simctl io \$udid screenshot ~/$REMOTE_ROOT/screenshot.png"
 }
 
 cmd="${1:-help}"
@@ -121,19 +135,19 @@ case "$cmd" in
     out="${1:-$LOG_DIR/screenshot.png}"
     shift || true
     sync_up
-    run_logged run "$ensure_sim && $(xcbuild_app build 'id=$udid' '') && $boot_sim && xcrun simctl install \$udid ~/$REMOTE_ROOT/DerivedData/Build/Products/Debug-iphonesimulator/Inventory.app && $(launch_app "$*")"
+    run_logged run "$ensure_sim && $(xcbuild_app build 'id=$udid' '') && $boot_sim && xcrun simctl install \$udid ~/$REMOTE_ROOT/DerivedData/Build/Products/Debug-iphonesimulator/Inventory.app && $(launch_app "$@")"
     scp -q "$MAC_HOST:$REMOTE_ROOT/screenshot.png" "$out" && echo "screenshot: $out"
     ;;
   launch)
     out="${1:-$LOG_DIR/screenshot.png}"
     shift || true
-    run_logged launch "$ensure_sim && $boot_sim && $(launch_app "$*")"
+    run_logged launch "$ensure_sim && $boot_sim && $(launch_app "$@")"
     scp -q "$MAC_HOST:$REMOTE_ROOT/screenshot.png" "$out" && echo "screenshot: $out"
     ;;
   openurl)
     url="${1:?usage: mac.sh openurl <url> [out.png]}"
     out="${2:-$LOG_DIR/screenshot.png}"
-    run_logged openurl "$ensure_sim && $boot_sim && xcrun simctl openurl \$udid '$url' && sleep \${RUN_SETTLE_SECONDS:-4} && xcrun simctl io \$udid screenshot ~/$REMOTE_ROOT/screenshot.png"
+    run_logged openurl "$ensure_sim && $boot_sim && xcrun simctl openurl \$udid '$url' && sleep ${RUN_SETTLE_SECONDS:-4} && xcrun simctl io \$udid screenshot ~/$REMOTE_ROOT/screenshot.png"
     scp -q "$MAC_HOST:$REMOTE_ROOT/screenshot.png" "$out" && echo "screenshot: $out"
     ;;
   screenshot)

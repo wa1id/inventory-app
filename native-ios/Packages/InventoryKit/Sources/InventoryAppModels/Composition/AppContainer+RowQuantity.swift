@@ -19,10 +19,14 @@ extension AppContainer {
         let haptics = platform.haptics
         let telemetry = telemetry
         let toasts = toasts
-        return ItemRowQuantityModels { item in
-            let name = item.name
+        // The toast names the item as its row shows it now (a rename after the model was made
+        // included), as RN's row read `item.name` at each render.
+        let book = RowQuantityModelsReference()
+        let models = ItemRowQuantityModels { item in
+            let id = item.id
+            let firstName = item.name
             return SavedQuantityModel(
-                itemId: item.id,
+                itemId: id,
                 quantity: item.quantity,
                 updatedAt: item.updatedAt,
                 items: items,
@@ -30,9 +34,18 @@ extension AppContainer {
                 haptics: haptics,
                 telemetry: telemetry,
                 onError: { kind in
+                    let name = book.models?.latestName(of: id) ?? firstName
                     toasts.show(ToastOptions(message: SavedQuantityModel.notSavedMessage(itemName: name, kind: kind), tone: .error))
                 }
             )
         }
+        book.models = models
+        return models
     }
+}
+
+/// The factory's models, held weakly by their own error toasts (no retain cycle).
+@MainActor
+private final class RowQuantityModelsReference {
+    weak var models: ItemRowQuantityModels?
 }

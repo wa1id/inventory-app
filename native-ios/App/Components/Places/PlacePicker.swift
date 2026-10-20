@@ -84,7 +84,15 @@ struct PlacePicker<Notice: View>: View {
                     SkeletonView(variant: .options).padding()
                 }
             } else if let failure {
-                ErrorStateView(cause: .failed(failure), onRetry: onRetry)
+                // Centred while it fits, scrolling once it does not, so Try again stays reachable
+                // at the largest text sizes (the state view does not scroll by itself).
+                GeometryReader { proxy in
+                    ScrollView {
+                        ErrorStateView(cause: .failed(failure), onRetry: onRetry)
+                            .frame(maxWidth: .infinity, minHeight: proxy.size.height)
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                }
             } else {
                 list
             }

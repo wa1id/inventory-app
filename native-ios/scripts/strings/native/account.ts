@@ -13,7 +13,7 @@ export const strings = {
      * works; Try again (`common.tryAgain`) reads it again.
      */
     unreadable: {
-      title: 'Backup can’t be checked right now',
+      title: 'Backup cannot be checked right now',
       body: 'This phone could not read its recovery code just now. This can happen while the phone is locked. Nothing has been changed or lost.',
       /** VoiceOver hint on Try again. */
       retryHint: 'Reads the recovery code again',
@@ -25,7 +25,7 @@ export const strings = {
      */
     restoreOffer: {
       title: 'Nothing to back up yet',
-      body: 'This phone’s inventory is empty, so backup is keeping the copy it already has rather than replacing it. It carries on once something is added. If that copy has things you want on this phone, restore it.',
+      body: 'This phone’s inventory is empty, so backup keeps the copy it already has instead of replacing it, and carries on once something is added. If that copy has things you want on this phone, restore it.',
       action: 'Restore the saved copy…',
       /** VoiceOver hint on the action. */
       actionHint: 'Replaces what is on this phone with the newest backup',

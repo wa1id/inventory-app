@@ -247,7 +247,9 @@ stores and seams: `toasts: app.toasts`, `confirm: app.platform.confirm`,
   overlay window above every sheet. They are announced (queued), and live twice as long while
   VoiceOver runs. While a confirmation or action sheet from `app.platform` is up the toast steps
   aside (the overlay is above system alerts and would cover their buttons) and comes back after;
-  its life keeps running. Models take `toasts: app.toasts`.
+  its life keeps running. A stock `.confirmationDialog` or `.alert` needs
+  `.tracksShellDialog(isPresented: flag)` (the flag it binds) for the same. Models take
+  `toasts: app.toasts`.
 - **Confirm.** `await app.platform.confirm.confirm(ConfirmOptions(title:body:confirmLabel:cancelLabel:destructive:))`
   returns true only for the confirm button. It shows as a system alert above every sheet.
 - **Action sheet.** `app.platform.actionSheets.showActionSheet(ShellActionSheet(title:options: [.init(label:destructive:handler:)], cancelLabel:))`.
@@ -275,8 +277,9 @@ stores and seams: `toasts: app.toasts`, `confirm: app.platform.confirm`,
   - `-demoArea <area> -demoState <state>`: your area's own hook (`<Area>Demo`).
   - `-demoTab spaces|scan|dropZone`.
   - `-demoRoute <spec>[><spec>…]` opens any route by the names in the inventory, e.g.
-    `container:Tool_chest>containerEdit:Tool_chest`. `-demoOpen settings|label|add|addOverSheet|capture|review|move`
-    still works (mapped onto routes).
+    `'container:Tool_chest>containerEdit:Tool_chest'` (quote a chain: `>` is a shell redirect).
+    `-demoOpen settings|label|add|addOverSheet|capture|review|move` still works (mapped onto
+    routes).
   - `-demoToast info|error|action`.
 - **Galleries** (`App/Shared/DebugGallery.swift`): `-gallery components -galleryPage N` (0–17:
   tokens, item rows chip and tools, place rows, where card, quantity, banners, buttons, empty
@@ -288,7 +291,8 @@ stores and seams: `toasts: app.toasts`, `confirm: app.platform.confirm`,
   pick, `foundation-picked`). Add a gallery for your area by adding a case to `DebugGallery`.
 - **Screenshots.**
   - `scripts/mac.sh run out.png -demo YES` builds and launches; `mac.sh launch out.png …` only
-    relaunches.
+    relaunches. Each launch argument reaches the app as given, so quote one with spaces or a `>`;
+    `RUN_SETTLE_SECONDS=8` waits longer before the screenshot (default 4).
   - `mac.sh openurl inventory://c/<token> out.png` opens a link. On a running app, iOS 26 asks
     "Open in Inventory?" first.
   - Add `APPEARANCE=dark` and `CONTENT_SIZE=accessibility-extra-extra-extra-large` to check dark
@@ -436,7 +440,11 @@ icon, error bar, "Type it instead"). Build them from `CameraGlassIconButton`, `C
 - Never use `onDisappear` for "this screen is gone"; use `router.onRemoval(of:)`.
 - A screen under a sheet is unfocused. Stop cameras, scanners and timers there.
 - `EmptyStateView` and `ErrorStateView` are `ContentUnavailableView`s and do not scroll. Put
-  them in a `List` or `ScrollView` so their text and buttons stay reachable at AX5.
+  them in a `List` or `ScrollView` so their text and buttons stay reachable at AX5. As a `List`
+  row a long heading can be cut to one line at default sizes ("Your inventory could not…");
+  where the state fills the screen, prefer `GeometryReader { p in ScrollView { state.frame(maxWidth:
+  .infinity, minHeight: p.size.height) }.scrollBounceBehavior(.basedOnSize) }` (centred while it
+  fits, as `PlacePicker`'s failure state), and check the heading in a screenshot.
 - Simulator caveats: colour emoji draw as "?" boxes on the build Mac's simulator, and the camera
   is unavailable (galleries use `discover: { nil }` or `StandInQrScannerFeed`).
 - Check every screen in light and dark mode, at AX5 and on a 360 pt-wide window. The iPad
@@ -519,7 +527,8 @@ shows the error toast "The quantity of “Wood screws” was not saved. …"
 (`SavedQuantityModel.notSavedMessage(itemName:kind:)`), as RN's `ItemRow` and
 `SavedQuantityStepper` did. Hand rows `.chip(quantities.model(for: item), itemId:expandedId:)`
 or `.stepper(quantities.model(for: item))`, and call `quantities.keep(only: ids)` after each
-read.
+read. The toast names the item as its row last asked for its model
+(`ItemRowQuantityModels.latestName(of:)`), so a rename made meanwhile is respected.
 
 ### 5.3 DEBUG demo: routes, seed and area hooks (`App/Shell/ShellDemo.swift`)
 
@@ -529,11 +538,13 @@ then the area hook's `run`, then `-demoRoute`, then `-demoToast`.
 
 **`-demoRoute <spec>[><spec>…]`** opens routes in order, 0.7 s apart. A spec is `name` or
 `name:argument`. Names match case-insensitively, the first match wins, and `_` stands for a
-space (`mac.sh` splits launch arguments on spaces; XCUITest launch arguments may use real
-spaces). A spec naming nothing known is logged (category `demo`) and skipped; the rest still
-open. Only a spec that names something reads the inventory first (through the household when
-joined); `add`, `settings` and the like open at once. A chain takes a few seconds after launch:
-give screenshots `RUN_SETTLE_SECONDS=8`.
+space, so a spec needs no quotes for its spaces; a quoted argument may hold real spaces. **Quote
+a chain** for `mac.sh` (`-demoRoute 'item:Cordless_drill>itemEdit:Cordless_drill'`): unquoted,
+the shell takes `>` as a redirect and the app gets only the first spec. A spec naming nothing
+known is logged (category `demo`) and skipped; the rest still open. Only a spec that names
+something reads the inventory first (through the household when joined); `add`, `settings` and
+the like open at once. A chain takes a few seconds after launch: give screenshots
+`RUN_SETTLE_SECONDS=8`.
 
 | Spec | Opens |
 |---|---|
@@ -549,8 +560,8 @@ give screenshots `RUN_SETTLE_SECONDS=8`.
 | `photo:<item>`, `linkSticker:<container>` | that cover |
 
 `item:` with no argument (also `move:`, `photo:`, …) names the unnamed Quick Snap shot.
-Examples: `container:Tool_chest>containerEdit:Tool_chest`, `add>containerNew:Garage`,
-`item:Cordless_drill>itemEdit:Cordless_drill`, `review`. `-demoOpen` maps onto specs:
+Examples: `'container:Tool_chest>containerEdit:Tool_chest'`, `'add>containerNew:Garage'`,
+`'item:Cordless_drill>itemEdit:Cordless_drill'`, `container:CAB-J92R` (by code), `review`. `-demoOpen` maps onto specs:
 `settings`, `label`, `add`, `addOverSheet` = `add>containerNew:Garage`, `capture` = `quickSnap`,
 `review`, `move` = `file:HDMI_cable`.
 
@@ -608,7 +619,7 @@ Already there for the Backup screen (account area), from `SyncModel`'s outcomes 
 | Key | When |
 |---|---|
 | `L10n.Backup.Unreadable.title`, `.body`, `.retryHint` | `sync.isAccountUnreadable`: hide Turn on and Restore; Try again (`L10n.Common.tryAgain`) calls `await sync.retryAccountLoad()` |
-| `L10n.Backup.RestoreOffer.title`, `.body`, `.action`, `.actionHint` | `sync.suggestsRestore`: the neutral Restore offer, calling `await sync.restoreFromAccount()` (it also reads right for a new user whose only backup is of an empty inventory) |
+| `L10n.Backup.RestoreOffer.title`, `.body`, `.action`, `.actionHint` | `sync.suggestsRestore`: the neutral Restore offer (it also reads right for a new user whose only backup is of an empty inventory). The action replaces this phone's inventory, which may no longer be empty (`suggestsRestore` stays until a backup is stored), so confirm first exactly as RN's Restore… did (`L10n.Backup.restoreConfirmTitle`, `.restoreConfirmBody`, destructive `.restoreConfirm`), then `await sync.restoreFromAccount()`; success is the `L10n.Backup.restored` toast with the success haptic |
 | `L10n.Backup.RestoreOffer.working` | the status line while `restoreFromAccount()` runs (the status is `.working`, whose own line says "Backing up…") |
 | `L10n.Backup.RestoreOffer.failedTitle` | `restoreFromAccount()` failed: the banner title over `BackupFailureReason.message` |
 | `L10n.Backup.keptExistingCode` | `enable()` returned `.backupHeldBack`: the code revealed is the one already on this phone |

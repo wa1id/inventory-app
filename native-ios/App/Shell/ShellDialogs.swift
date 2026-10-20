@@ -1,5 +1,6 @@
 import Observation
 import Synchronization
+import SwiftUI
 import UIKit
 import InventoryAppModels
 import InventoryStrings
@@ -117,6 +118,38 @@ final class ShellDialogTracker {
 
     func ended() {
         openCount = max(0, openCount - 1)
+    }
+}
+
+extension View {
+    /// Counts a SwiftUI `.confirmationDialog` or `.alert` that this view presents as a shell
+    /// dialog while `isPresented` is true, so a live toast steps aside instead of covering its
+    /// buttons and taking their taps (the overlay window sits above system alerts). Pass the flag
+    /// the dialog binds: `.confirmationDialog(…, isPresented: $asking) { … }.tracksShellDialog(isPresented: asking)`.
+    /// `app.platform.confirm` and `app.platform.actionSheets` are tracked already.
+    func tracksShellDialog(isPresented: Bool, tracker: ShellDialogTracker = .shared) -> some View {
+        modifier(ShellDialogTracking(isPresented: isPresented, tracker: tracker))
+    }
+}
+
+/// Counts one SwiftUI dialog in ``ShellDialogTracker`` while it is presented and this view is
+/// on screen (a view taken away with its dialog up stops counting).
+private struct ShellDialogTracking: ViewModifier {
+    let isPresented: Bool
+    let tracker: ShellDialogTracker
+    @State private var counted = false
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: isPresented, initial: true) { _, presented in update(presented) }
+            .onAppear { update(isPresented) }
+            .onDisappear { update(false) }
+    }
+
+    private func update(_ presented: Bool) {
+        guard presented != counted else { return }
+        counted = presented
+        if presented { tracker.began() } else { tracker.ended() }
     }
 }
 

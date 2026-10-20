@@ -19,6 +19,8 @@ public final class ItemRowQuantityModels {
 
     private let make: Make
     private var models: [String: SavedQuantityModel] = [:]
+    /// The name each held item had when its row last asked (``latestName(of:)``).
+    private var names: [String: String] = [:]
 
     public init(make: @escaping Make) {
         self.make = make
@@ -26,6 +28,7 @@ public final class ItemRowQuantityModels {
 
     /// The item's model, made on the first ask.
     public func model(for item: ItemWithContext) -> SavedQuantityModel {
+        names[item.id] = item.name
         if let model = models[item.id] { return model }
         let model = make(item)
         models[item.id] = model
@@ -36,6 +39,13 @@ public final class ItemRowQuantityModels {
     public func keep(only ids: some Sequence<String>) {
         let kept = Set(ids)
         models = models.filter { kept.contains($0.key) }
+        names = names.filter { kept.contains($0.key) }
+    }
+
+    /// The item's name as its row last drew it, so an error toast names a renamed item by its
+    /// new name (RN's row read `item.name` at each render); nil for an item never asked about.
+    public func latestName(of itemId: String) -> String? {
+        names[itemId]
     }
 
     /// How many models are held (for tests).

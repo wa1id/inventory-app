@@ -32,7 +32,7 @@ export const strings = {
   backup: {
     unreadable: {
       /** Doc comments become the catalog comment and the Swift doc. */
-      title: 'Backup can’t be checked right now',
+      title: 'Backup cannot be checked right now',
     },
   },
 };
