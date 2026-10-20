@@ -22,6 +22,9 @@ struct ConnectionBanner: View {
                 live: .off,
                 identifier: "banner-connection"
             )
+            // Pinned above the content, outside any scroll view: past RN's `meta` cap (maxScale
+            // 2.0, AX1; 08 §6) it would take half the screen at the largest sizes.
+            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
             .padding(.horizontal, 16)
             .padding(.top, 8)
             .padding(.bottom, 4)

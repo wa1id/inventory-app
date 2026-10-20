@@ -40,11 +40,13 @@ struct ShellPlaceholderQuery<Value: Sendable, Content: View>: View {
     @State private var query: InventoryQuery<Value>?
 
     var body: some View {
+        // A stack, not the content itself: content that is an empty `ForEach` (a list before its
+        // first read) is no view at all, so neither `onAppear` nor the query's driver would run.
         Group {
             if let query {
-                content(query.data).inventoryQuery(query)
+                VStack(spacing: 12) { content(query.data) }.inventoryQuery(query)
             } else {
-                content(nil)
+                VStack(spacing: 12) { content(nil) }
             }
         }
         .onAppear {
