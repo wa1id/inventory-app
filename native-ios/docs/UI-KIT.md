@@ -427,7 +427,7 @@ The capture screen's own chrome (the Into pill, the shutter and its flash, Done,
 tile, the reticle) is in `App/Screens/Capture/CaptureChrome.swift`, built on
 `CameraGlassIconButton`, `CameraTitlePill`, `CameraPanel` and `SegmentedChoice(onCamera: true)`.
 `LocationLine` measured one line and drew two inside the camera's top row, so the Into pill
-draws its pieces in a plain `HStack`.
+draws its pieces in stock stacks (`ViewThatFits`: one line, else the tape under the words).
 
 ## 4. Rules that are easy to miss
 
@@ -440,6 +440,10 @@ draws its pieces in a plain `HStack`.
   identifiers, `sheet-close` and others.
 - Never use `onDisappear` for "this screen is gone"; use `router.onRemoval(of:)`.
 - A screen under a sheet is unfocused. Stop cameras, scanners and timers there.
+- Status text over a camera picture: the cover's bar is hidden, so `.toolbarColorScheme` does
+  nothing, and `.preferredColorScheme(.dark)` darkens the whole presentation and is not undone
+  by setting it back to nil (a screen pushed over the camera stays dark). The capture screen
+  uses `.statusBarHidden(live camera in front)`, as the system Camera does.
 - `EmptyStateView` and `ErrorStateView` are `ContentUnavailableView`s and do not scroll. Put
   them in a `List` or `ScrollView` so their text and buttons stay reachable at AX5. As a `List`
   row a long heading can be cut to one line at default sizes ("Your inventory could not…");

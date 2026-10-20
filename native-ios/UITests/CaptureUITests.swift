@@ -85,6 +85,18 @@ final class CaptureUITests: XCTestCase {
         XCTAssertTrue(waitForAbsence(screen("screen-capture")))
     }
 
+    func testACameraThatCannotStartSaysSoAndStillOffersTyping() throws {
+        launch(["-demoArea", "capture", "-demoState", "didNotStart"])
+        XCTAssertTrue(screen("capture-error").waitForExistence(timeout: 15))
+        // No session, no shutter: a press could only fail (05 §4.4).
+        XCTAssertFalse(button("capture-shutter").isEnabled)
+
+        button("capture-error-manual").tap()
+
+        XCTAssertTrue(screen("screen-add").waitForExistence(timeout: 5))
+        XCTAssertTrue(waitForAbsence(screen("screen-capture")))
+    }
+
     func testFlashTogglesAndSaysSo() throws {
         launch(["-demoRoute", "capture"])
         let flash = button("capture-flash")
@@ -99,6 +111,7 @@ final class CaptureUITests: XCTestCase {
 
     func testAQuickSnapSetEndsOnTheReviewAndDoneSaysWhereTheItemsAre() throws {
         quickSnap(shots: 2)
+        XCTAssertEqual(screen("capture-into").label, "Photos go into the drop zone")
         XCTAssertTrue(screen("capture-status").waitForExistence(timeout: 10))
         attachScreenshot("quick-snap-two-shots")
 

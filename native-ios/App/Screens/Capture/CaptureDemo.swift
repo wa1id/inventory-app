@@ -21,8 +21,10 @@ import InventoryStrings
 /// | `single` | the single-photo camera into the Tool chest (the Into pill's location line) |
 /// | `request` | the camera the Add sheet opens for one photo: no mode picker, no Type it instead |
 /// | `flash` | the single camera with the flash on |
+/// | `singleShot` | the single camera taking a photo by itself: it hands over to the Add sheet carrying it |
 /// | `fast` | Quick Snap before the first shot (Done dimmed) |
 /// | `fastShots` | Quick Snap taking three shots by itself; recognition answers after 8 s: "Identifying 3…", then "2 identified · 1 to name" |
+/// | `fastDone` | Quick Snap taking two shots and pressing Done by itself: the review pushed over the camera |
 /// | `didNotStart` | a camera that could not start: the error notice with Type it instead |
 /// | `noPhoto` | Quick Snap whose capture failed before any shot: the error notice with Type it instead |
 /// | `notices` | Quick Snap with two shots saved, one dropped and a failed capture: both notices, the set locked (no Type it instead) |
@@ -51,14 +53,14 @@ enum CaptureDemo {
     static func run(state: String, app: AppContainer) async {
         let router = app.router
         switch state {
-        case "single", "flash", "didNotStart":
+        case "single", "flash", "didNotStart", "singleShot":
             router.present(.cover(.capture(CaptureRoute(containerId: await toolChestId(app) ?? DropZone.containerId), request: nil)))
         case "request", "permissionRequest":
             let containerId = await toolChestId(app) ?? DropZone.containerId
             Task {
                 _ = await router.presentForResult(StoredImage.self) { .cover(.capture(CaptureRoute(containerId: containerId), request: $0)) }
             }
-        case "fast", "fastShots", "noPhoto", "notices", "permission", "blocked":
+        case "fast", "fastShots", "fastDone", "noPhoto", "notices", "permission", "blocked":
             router.openQuickSnap()
         case "reviewArriving":
             let since = app.now() - 1
@@ -104,6 +106,8 @@ enum CaptureDemo {
         let script: Script = switch state {
         case "flash": Script(flashOn: true)
         case "fastShots": Script(shots: [.photo, .photo, .photo])
+        case "singleShot": Script(shots: [.photo])
+        case "fastDone": Script(shots: [.photo, .photo], finishes: true)
         case "didNotStart": Script(failsToStart: true)
         case "noPhoto": Script(shots: [.fails])
         case "notices": Script(shots: [.photo, .unreadable, .photo, .fails])

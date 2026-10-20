@@ -21,16 +21,31 @@ struct CaptureIntoPill: View {
     var body: some View {
         Group {
             if let place {
-                // The location line's inline form (pip, "Space › Container", tape) as a plain
-                // HStack: the shared `LocationLine` flows its pieces with a custom layout, which
+                // The location line's inline form (pip, "Space › Container", tape) in stock
+                // stacks: the shared `LocationLine` flows its pieces with a custom layout, which
                 // over the camera measured one line while drawing two, so the glass did not fit.
-                HStack(spacing: 6) {
-                    SpacePip(color: place.spaceColor, size: 10)
-                    Text(verbatim: place.pillLine)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Tape(code: place.containerShortCode, size: .small)
+                // Like the location line, the tape goes under the words when they need the room
+                // (large text on a narrow phone) rather than cutting the container's name.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 6) {
+                        SpacePip(color: place.spaceColor, size: 10)
+                        Text(verbatim: place.pillLine)
+                            .lineLimit(1)
+                            .fixedSize()
+                        Tape(code: place.containerShortCode, size: .small)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            SpacePip(color: place.spaceColor, size: 10)
+                                // Centred on the first line's lower-case letters.
+                                .alignmentGuide(.firstTextBaseline) { $0.height / 2 + 4 }
+                            Text(verbatim: place.pillLine)
+                                .lineLimit(3)
+                                .multilineTextAlignment(.leading)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Tape(code: place.containerShortCode, size: .small)
+                    }
                 }
                 .textRole(.meta)
                 .foregroundStyle(.white)
@@ -69,7 +84,9 @@ struct CaptureShutter: View {
         }
         .buttonStyle(CaptureShutterStyle(isBusy: isBusy))
         .disabled(isBusy || !isEnabled)
-        .opacity(isDimmed ? 0.5 : 1)
+        // A custom style draws no disabled state of its own: until the session runs (or when the
+        // camera could not start) the shutter takes no press, so it must not look as if it would.
+        .opacity(isDimmed || (!isEnabled && !isBusy) ? 0.5 : 1)
         .accessibilityLabel(Text(L10n.Capture.takePhoto))
         .accessibilityIdentifier("capture-shutter")
     }
@@ -212,6 +229,8 @@ struct CaptureDoneButton: View {
                 .font(.headline)
                 .foregroundStyle(.white)
                 .lineLimit(1)
+                // The side slot is a third of a narrow phone: shrink rather than cut off the count.
+                .minimumScaleFactor(0.6)
                 .padding(.horizontal, 16)
                 .frame(minWidth: 96, minHeight: captureSideSlot)
                 .contentShape(Capsule())

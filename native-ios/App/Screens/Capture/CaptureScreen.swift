@@ -84,6 +84,13 @@ struct CaptureScreen: View {
         .onChange(of: parts.into.data, initial: true) { _, place in
             model.intoLoaded(place ?? nil)
         }
+        // RN forced light status text over the camera (`<StatusBar style="light" />`): in light mode
+        // the dark text vanished over the picture. Natively the status bar goes, as in the system
+        // Camera, while the live camera is in front; the permission screen and the review pushed
+        // over the camera keep it. (A `.preferredColorScheme(.dark)` here would also turn the
+        // status text light, but setting it back to nil does not undo it, so the review stayed
+        // dark; `.toolbarColorScheme` does nothing while the bar is hidden.)
+        .statusBarHidden(model.permission.isGranted && isScreenFocused)
     }
 
     private func openLibrary(_ model: CaptureModel) {
@@ -164,13 +171,15 @@ struct CaptureCameraView: View {
                 CaptureShutterFlash(trigger: model.shotSerial)
                 VStack(spacing: 0) {
                     topRow
-                    Spacer(minLength: 16)
-                    bottomStack
-                        // RN's camera text (meta, caption, name) stops at 2×; past AX1 the
-                        // bottom stack would push the shutter off screen. Controls keep the
-                        // large content viewer.
-                        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+                        .layoutPriority(1)
+                    notices
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    controls
+                        .layoutPriority(1)
                 }
+                // RN's camera text (meta, caption, name) stops at 2×; past AX1 the notices and
+                // the controls would not fit. Controls keep the large content viewer.
+                .dynamicTypeSize(...DynamicTypeSize.accessibility1)
             }
         }
     }
@@ -200,7 +209,23 @@ struct CaptureCameraView: View {
         .padding(.top, 8)
     }
 
-    private var bottomStack: some View {
+    /// The notices and the status pill, just over the controls. Where they do not fit between the
+    /// top row and the controls (a 667 pt phone at the largest text sizes, with both notices up)
+    /// they scroll, rather than squeezing the controls until Done loses its count and the hint
+    /// its words.
+    private var notices: some View {
+        ViewThatFits(in: .vertical) {
+            noticeStack
+            ScrollView {
+                noticeStack
+            }
+            .scrollBounceBehavior(.basedOnSize)
+            .defaultScrollAnchor(.bottom)
+        }
+        .padding(.top, 16)
+    }
+
+    private var noticeStack: some View {
         VStack(spacing: 16) {
             if let error = model.error {
                 CameraPanel(
@@ -229,6 +254,14 @@ struct CaptureCameraView: View {
                 )
                 .allowsHitTesting(false)
             }
+        }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 16)
+    }
+
+    /// The mode picker, the shutter row and the hint, always at their full height.
+    private var controls: some View {
+        VStack(spacing: 16) {
             if model.showsModePicker {
                 modePicker
                     .frame(maxWidth: 320)
@@ -245,6 +278,7 @@ struct CaptureCameraView: View {
         }
         .padding(.horizontal, 24)
         .padding(.bottom, 16)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private var modePicker: some View {

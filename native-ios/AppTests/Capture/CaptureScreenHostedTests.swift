@@ -121,4 +121,35 @@ struct CaptureScreenHostedTests {
         await ShellTestWait.until("the stand-in stopped") { CaptureStandIn.lastFeed?.isRunning != true }
         #expect(try await app.repositories.items.countUnsorted() == before)
     }
+
+    @Test("the status bar goes over the live camera and comes back, in the system's scheme, on the review pushed over it")
+    func statusBarFollowsTheLiveCamera() async throws {
+        let (app, host) = try await shell(CaptureStandInFeed.Script())
+        defer { tearDown(host) }
+
+        let cover = app.router.present(.cover(.capture(.quickSnap, request: nil)))
+        await ShellTestWait.until("the stand-in running") { CaptureStandIn.lastFeed?.isRunning == true }
+        await ShellTestWait.until("the status bar hidden over the camera") { statusBarHidden(in: host) == true }
+
+        CaptureNavigator(router: app.router, address: cover.address)
+            .navigate(.review(QuickSnapReviewRoute(containerId: DropZone.containerId, since: app.now(), expected: 0)))
+        await ShellTestWait.until("the status bar back on the review") { statusBarHidden(in: host) == false }
+        // Nothing the camera set stays behind on the review (a colour-scheme preference did).
+        let presented = try #require(presentedController(in: host))
+        #expect(presented.traitCollection.userInterfaceStyle == host.window.traitCollection.userInterfaceStyle)
+    }
+
+    /// The top presented controller (the cover).
+    private func presentedController(in host: ShellTestWindow) -> UIViewController? {
+        var controller = host.window.rootViewController?.presentedViewController
+        while let next = controller?.presentedViewController { controller = next }
+        return controller
+    }
+
+    /// Whether the cover asks for no status bar, resolved as UIKit does through its children.
+    private func statusBarHidden(in host: ShellTestWindow) -> Bool? {
+        guard var controller = presentedController(in: host) else { return nil }
+        while let child = controller.childForStatusBarHidden { controller = child }
+        return controller.prefersStatusBarHidden
+    }
 }
