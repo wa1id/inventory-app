@@ -138,7 +138,11 @@ struct ItemRow: View {
         if layout.isStacked {
             VStack(alignment: .trailing, spacing: 4) {
                 mainRow()
+                // The chip's line is outside the row's pressable part: a tap on the blank space
+                // beside it does nothing rather than open the item.
                 chip
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .absorbsListRowTaps()
             }
         } else {
             let lineHalf = nameLineHalf

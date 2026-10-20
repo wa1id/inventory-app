@@ -144,7 +144,11 @@ struct RowWithTool<Row: View, Tool: View>: View {
         if layout.isStacked {
             VStack(alignment: .trailing, spacing: 4) {
                 row
-                tool.buttonStyle(.borderless).absorbsListRowTaps()
+                // The whole line under the row, not just the control, so a tap on the blank
+                // space beside the control does not open the row.
+                tool.buttonStyle(.borderless)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .absorbsListRowTaps()
             }
         } else {
             HStack(spacing: 8) {
