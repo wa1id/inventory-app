@@ -237,4 +237,43 @@ struct HouseholdJoinFormModelTests {
         #expect(results.compactMap { $0 }.count == 1)
         #expect(fixture.household.server.requests.count == 1)
     }
+
+    @Test("a second form made while the first still pairs shows Joining… and pairs nothing (U6)")
+    func secondFormWhileJoining() async throws {
+        let gate = HouseholdTestGate()
+        let fixture = try await JoinFixture { _ in
+            await gate.pass()
+            return .json(200, pairAnswer)
+        }
+        fixture.form.updateCode(validCode)
+        fixture.form.updateName("Kitchen")
+        // Onboarding's Join step made again after Back, or Household opened again: a new form
+        // over the same household while the first form's join runs.
+        let again = JoinFormModel(
+            household: fixture.household.household,
+            joinPreferences: HouseholdJoinPreferences(preferences: fixture.preferences),
+            localRepositories: { nil },
+            invalidator: fixture.invalidations,
+            haptics: fixture.haptics.player,
+            householdOrigin: "https://inventory.wystudio.be/",
+            deviceName: "iPhone",
+            initialDraft: fixture.form.draft
+        )
+        #expect(!again.isJoining)
+
+        let first = Task { await fixture.form.join() }
+        // The first form's pairing request is at the home server, unanswered.
+        await gate.arrived()
+        #expect(fixture.form.isJoining)
+        #expect(again.isJoining)
+        #expect(await again.join() == nil)
+        #expect(again.errors.isEmpty)
+        #expect(again.failure == nil)
+
+        await gate.release()
+        #expect(await first.value != nil)
+        #expect(fixture.household.server.requests.count == 1)
+        #expect(!again.isJoining)
+        #expect(!fixture.household.household.isJoining)
+    }
 }

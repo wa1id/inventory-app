@@ -72,7 +72,11 @@ struct SpaceDetailScreen: View {
 
     var body: some View {
         ScreenFrame(.detail) {
-            if let query { content(query).inventoryQuery(query) }
+            if let query {
+                content(query).inventoryQuery(query)
+            } else {
+                Color.clear  // never an empty view: SwiftUI runs no onAppear on one
+            }
         }
         .navigationTitle(query?.data??.name ?? "")
         .toolbar { ToolbarItem(placement: .primaryAction) { SearchButton() } }
@@ -438,6 +442,9 @@ icon, error bar, "Type it instead"). Build them from `CameraGlassIconButton`, `C
 - Keep RN's testIDs as accessibility identifiers. The UI tests depend on `screen-*`, the `tab-*`
   identifiers, `sheet-close` and others.
 - Never use `onDisappear` for "this screen is gone"; use `router.onRemoval(of:)`.
+- A screen that makes its model in `onAppear` must draw something before the model exists
+  (`else { Color.clear }`, as in §1.2): `ScreenFrame { if let model { … } }` with no model is an
+  empty view, SwiftUI never calls its `onAppear`, and the screen stays blank, title included.
 - A screen under a sheet is unfocused. Stop cameras, scanners and timers there.
 - `EmptyStateView` and `ErrorStateView` are `ContentUnavailableView`s and do not scroll. Put
   them in a `List` or `ScrollView` so their text and buttons stay reachable at AX5. As a `List`
