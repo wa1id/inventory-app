@@ -18,6 +18,9 @@ import Observation
 ///   (again after the field has been emptied); the text is never logged.
 /// - The summary is spoken when she presses the search key (``submit()``), or when the
 ///   results arrive if she pressed it before they did.
+/// - Native only: a query that finds nothing has its unknown words corrected against the
+///   inventory's own words (``SearchSpelling``) and is searched again; when that finds
+///   something, it is the answer, with ``correction`` saying what was searched instead.
 ///
 /// Strings compare as JS compares them (by UTF-16 code units).
 @MainActor
@@ -25,6 +28,21 @@ import Observation
 public final class SearchModel {
     /// The search itself: `repositories.search.search(trimmed)`, local or household.
     public typealias Search = @Sendable (String) async throws -> SearchResults
+    /// The words the inventory uses, for correcting a query that found nothing.
+    public typealias Vocabulary = @Sendable () async throws -> SearchVocabulary
+
+    /// A query that found nothing, answered by a corrected one (native only).
+    public struct Correction: Sendable, Hashable {
+        /// The query as typed (trimmed).
+        public var typed: String
+        /// The corrected query searched instead.
+        public var shown: String
+
+        public init(typed: String, shown: String) {
+            self.typed = typed
+            self.shown = shown
+        }
+    }
 
     /// Which run of a query answered: the revision and nonce it was read at (RN `run`).
     public struct Run: Hashable, Sendable {
@@ -37,7 +55,14 @@ public final class SearchModel {
         /// Nil until something settles (RN `''`, which no run equals).
         var run: Run?
         var results: SearchResults?
+        /// Set when ``results`` answer a corrected query.
+        var correction: Correction?
         var cause: (any Error)?
+    }
+
+    private struct Answer {
+        var results: SearchResults
+        var correction: Correction?
     }
 
     /// The field's text.
@@ -47,10 +72,13 @@ public final class SearchModel {
     /// Whether Home is focused, as last reported.
     public private(set) var isFocused = false
     public private(set) var run: Run
-    private var settled = Settled(query: "", run: nil, results: nil, cause: nil)
+    private var settled = Settled(query: "", run: nil, results: nil, correction: nil, cause: nil)
 
     @ObservationIgnored private var revision: Int
     @ObservationIgnored private var search: Search
+    @ObservationIgnored private var vocabulary: Vocabulary?
+    /// The words last read, and the revision they were read at.
+    @ObservationIgnored private var vocabularyCache: (revision: Int, words: SearchVocabulary)?
     @ObservationIgnored private let clock: any Clock<Duration>
     @ObservationIgnored private let telemetry: TelemetryReporter
     @ObservationIgnored private let rememberCategories: @MainActor @Sendable ([String?]) -> Void
@@ -72,6 +100,7 @@ public final class SearchModel {
     ///   - rememberCategories: feeds the categories of found items to the category memory
     ///     (`CategoryMemory.rememberCategories`).
     ///   - announce: speaks the results summary (a VoiceOver announcement).
+    ///   - vocabulary: the inventory's words, read when a query finds nothing; nil corrects nothing.
     ///   - search: the search.
     public init(
         revision: Int = 0,
@@ -79,6 +108,7 @@ public final class SearchModel {
         telemetry: TelemetryReporter = .shared,
         rememberCategories: @escaping @MainActor @Sendable ([String?]) -> Void = { _ in },
         announce: @escaping @MainActor @Sendable (String) -> Void = { _ in },
+        vocabulary: Vocabulary? = nil,
         search: @escaping Search
     ) {
         self.revision = revision
@@ -87,6 +117,7 @@ public final class SearchModel {
         self.telemetry = telemetry
         self.rememberCategories = rememberCategories
         self.announce = announce
+        self.vocabulary = vocabulary
         self.search = search
     }
 
@@ -98,6 +129,9 @@ public final class SearchModel {
     /// Results for ``settledQuery``, kept while it runs again and when a re-run fails; they may
     /// belong to an older query (see ``pending``).
     public var results: SearchResults? { settled.results }
+
+    /// What was searched instead when ``results`` answer a corrected query; nil otherwise.
+    public var correction: Correction? { settled.correction }
 
     /// Why the newest run of the current query failed, once it has; nil otherwise.
     public var cause: (any Error)? { isAnswered ? settled.cause : nil }
@@ -168,17 +202,22 @@ public final class SearchModel {
             announceWhenSettled = true
             return
         }
-        announce(Self.summary(results))
+        announce(Self.summary(results, correction: settled.correction))
     }
 
-    /// The repositories changed (joined or left): later searches use `search`.
-    public func setSearch(_ search: @escaping Search) {
+    /// The repositories changed (joined or left): later searches use `search` and `vocabulary`.
+    public func setSearch(_ search: @escaping Search, vocabulary: Vocabulary? = nil) {
         self.search = search
+        self.vocabulary = vocabulary
+        vocabularyCache = nil
     }
 
-    /// `L10n.Search.summary` for a result set (items and places).
-    public nonisolated static func summary(_ results: SearchResults) -> String {
-        L10n.Search.summary(items: results.items.count, places: results.locations.count)
+    /// `L10n.Search.summary` for a result set (items and places), after what was searched
+    /// instead when the query was corrected.
+    public nonisolated static func summary(_ results: SearchResults, correction: Correction? = nil) -> String {
+        let found = L10n.Search.summary(items: results.items.count, places: results.locations.count)
+        guard let correction else { return found }
+        return L10n.Search.Corrected.showing(typed: correction.typed, shown: correction.shown) + " " + found
     }
 
     // MARK: Running
@@ -208,14 +247,43 @@ public final class SearchModel {
                 do { try await clock.sleep(for: wait) } catch { return }
             }
             guard let started = self?.started(generation), started else { return }
-            let outcome: Result<SearchResults, any Error>
+            let outcome: Result<Answer, any Error>
             do {
-                outcome = .success(try await search(query))
+                var answer = Answer(results: try await search(query))
+                if Self.isEmpty(answer.results),
+                   let shown = await self?.correctedQuery(for: query, revision: run.seenRevision),
+                   let found = try? await search(shown), !Self.isEmpty(found) {
+                    answer = Answer(results: found, correction: Correction(typed: query, shown: shown))
+                }
+                outcome = .success(answer)
             } catch {
                 outcome = .failure(error)
             }
             self?.settle(outcome, query: query, run: run, generation: generation)
         }
+    }
+
+    private nonisolated static func isEmpty(_ results: SearchResults) -> Bool {
+        results.items.isEmpty && results.locations.isEmpty
+    }
+
+    /// The query to search instead of `query`, which found nothing, from the words read at
+    /// `revision` (read again once the revision moves on); nil without a vocabulary, when it
+    /// cannot be read, or when nothing needs correcting.
+    private func correctedQuery(for query: String, revision: Int) async -> String? {
+        guard let vocabulary else { return nil }
+        let words: SearchVocabulary
+        if let cached = vocabularyCache, cached.revision == revision {
+            words = cached.words
+        } else {
+            guard let read = try? await vocabulary() else { return nil }
+            vocabularyCache = (revision, read)
+            words = read
+        }
+        // Comparing against every known word is kept off the main actor.
+        return await Task.detached(priority: .userInitiated) {
+            SearchSpelling.correctedQuery(query, vocabulary: words)
+        }.value
     }
 
     /// Counts a search that reached the repository; false when it was superseded meanwhile.
@@ -225,23 +293,28 @@ public final class SearchModel {
         return true
     }
 
-    private func settle(_ outcome: Result<SearchResults, any Error>, query: String, run: Run, generation: Int) {
+    private func settle(_ outcome: Result<Answer, any Error>, query: String, run: Run, generation: Int) {
         guard generation == self.generation else { return }
         switch outcome {
-        case .success(let found):
-            settled = Settled(query: query, run: run, results: found, cause: nil)
+        case .success(let answer):
+            let found = answer.results
+            settled = Settled(query: query, run: run, results: found, correction: answer.correction, cause: nil)
             rememberCategories(found.items.map { $0.item.item.category })
             if !Self.same(loggedQuery, query) {
                 loggedQuery = query
-                telemetry.event("search_performed", [
+                var payload: TelemetryPayload = [
                     "termCount": .int(found.terms.count),
                     "resultCount": .int(found.items.count + found.locations.count),
                     "queryLength": .int(query.utf16.count),
-                ])
+                ]
+                if answer.correction != nil { payload["outcome"] = .string("corrected") }
+                telemetry.event("search_performed", payload)
             }
         case .failure(let error):
-            let kept = Self.same(settled.query, query) ? settled.results : nil
-            settled = Settled(query: query, run: run, results: kept, cause: error)
+            let same = Self.same(settled.query, query)
+            settled = Settled(
+                query: query, run: run, results: same ? settled.results : nil,
+                correction: same ? settled.correction : nil, cause: error)
         }
         announceIfWaiting()
         onSettle?()
@@ -253,7 +326,7 @@ public final class SearchModel {
         guard announceWhenSettled, !pending else { return }
         if let results {
             announceWhenSettled = false
-            announce(Self.summary(results))
+            announce(Self.summary(results, correction: settled.correction))
         } else if cause != nil {
             announceWhenSettled = false
         }

@@ -13,26 +13,31 @@ public struct HomeReads: Sendable {
     public var containers: @Sendable () async throws -> [ContainerWithSpace]
     /// `search.search(trimmed)`.
     public var search: SearchModel.Search
+    /// The inventory's words, for correcting a search that found nothing; nil corrects nothing.
+    public var vocabulary: SearchModel.Vocabulary?
 
     public init(
         spaces: @escaping @Sendable () async throws -> [SpaceWithCounts],
         recent: @escaping @Sendable (Int) async throws -> [ItemWithContext],
         containers: @escaping @Sendable () async throws -> [ContainerWithSpace],
-        search: @escaping SearchModel.Search
+        search: @escaping SearchModel.Search,
+        vocabulary: SearchModel.Vocabulary? = nil
     ) {
         self.spaces = spaces
         self.recent = recent
         self.containers = containers
         self.search = search
+        self.vocabulary = vocabulary
     }
 
     /// The reads over a set of repositories.
-    public init<Repositories: InventoryRepositories>(repositories: Repositories) {
+    public init<Repositories: InventoryRepositories>(repositories: Repositories, vocabulary: SearchModel.Vocabulary? = nil) {
         self.init(
             spaces: { try await repositories.spaces.listWithCounts() },
             recent: { try await repositories.items.listRecent(limit: $0) },
             containers: { try await repositories.containers.listAllWithSpace() },
-            search: { try await repositories.search.search($0) }
+            search: { try await repositories.search.search($0) },
+            vocabulary: vocabulary
         )
     }
 }
@@ -139,7 +144,7 @@ public final class HomeModel {
         self.rememberCategories = rememberCategories
         search = SearchModel(
             revision: revision, clock: clock, telemetry: telemetry,
-            rememberCategories: rememberCategories, announce: announce, search: reads.search)
+            rememberCategories: rememberCategories, announce: announce, vocabulary: reads.vocabulary, search: reads.search)
         spaces = InventoryQuery(key: "spaces", revision: revision, read: reads.spaces)
         recent = InventoryQuery(key: Self.recentKey(HomeList.recentFirst), revision: revision, read: Self.recentRead(reads, HomeList.recentFirst))
         containers = InventoryQuery(key: "containers-none", revision: revision, read: Self.noContainers)
@@ -248,7 +253,7 @@ public final class HomeModel {
         spaces.setRead(reads.spaces)
         recent.setRead(Self.recentRead(reads, recentLimit))
         containers.setRead(wantsPlaces ? reads.containers : Self.noContainers)
-        search.setSearch(reads.search)
+        search.setSearch(reads.search, vocabulary: reads.vocabulary)
     }
 
     // MARK: Outputs
@@ -333,6 +338,7 @@ public final class HomeModel {
             return [.field] + HomeDerivation.searchBody(
                 pending: search.pending,
                 results: search.results,
+                correction: search.correction,
                 cause: search.cause,
                 dim: dim,
                 mountSkeleton: mountSkeleton.value,

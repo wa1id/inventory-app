@@ -35,6 +35,24 @@ public struct LocalSearchRepository: SearchRepository {
         try await queue.read { db in try searchContainers(terms, in: db) }
     }
 
+    /// The words this inventory uses, for correcting a search that found nothing (native only,
+    /// ``SearchSpelling``).
+    public func vocabulary() async throws -> SearchVocabulary {
+        try await queue.read { db in try vocabulary(in: db) }
+    }
+
+    /// What the search SQL matches terms against: item names and categories (`search_text`), tag
+    /// names, and space and container names.
+    public func vocabulary(in db: Database) throws -> SearchVocabulary {
+        let texts = try String.fetchAll(db, sql: """
+            SELECT search_text FROM items
+            UNION ALL SELECT normalized_name FROM tags
+            UNION ALL SELECT name FROM spaces
+            UNION ALL SELECT name FROM containers WHERE name IS NOT NULL
+            """)
+        return SearchVocabulary(texts: texts)
+    }
+
     // MARK: SQL fragments
 
     /// Removes the ASCII separators people leave out when typing (`usbc` for `USB-C`):

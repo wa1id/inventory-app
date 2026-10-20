@@ -224,6 +224,7 @@ func callStringsAccessor(_ path: String, _ args: [ParityArg]) throws -> String? 
     case "search.none.body": return L10n.Search.None.body
     case "search.none.add": return L10n.Search.None.add(query: try args.string(0))
     case "search.failed": return L10n.Search.failed
+    case "search.corrected.showing": return L10n.Search.Corrected.showing(typed: try args.string(0), shown: try args.string(1))
     case "spaces.title": return L10n.Spaces.title
     case "spaces.count": return L10n.Spaces.count(spaces: try args.int(0))
     case "spaces.newSpace": return L10n.Spaces.newSpace

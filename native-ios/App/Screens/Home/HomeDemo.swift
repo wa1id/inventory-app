@@ -15,6 +15,7 @@ import InventoryServices
 /// | `search` | "batteries" typed: Items with the totals line (AA batteries in two containers) |
 /// | `searchPlaces` | "garage" typed: the summary, Spaces and containers, Kept in those places |
 /// | `noResults` | "zebra" typed: "Nothing called “zebra”" with Add “zebra”… |
+/// | `misspelt` | "drils" typed: corrected to "drill", with "No results for “drils”. Showing “drill” instead." |
 /// | `backlog` | thirty more items waiting in the drop zone (the card, the badge, a long list) |
 /// | `filed` | the drop zone emptied (Home without the card; "Everything is filed") |
 /// | `noticeDismissed` | the unpaired notice put away |
@@ -69,6 +70,8 @@ enum HomeDemo {
                 app.home.setQuery("garage")
             case "noResults":
                 app.home.setQuery("zebra")
+            case "misspelt":
+                app.home.setQuery("drils")
             case "backlog":
                 try await addBacklog(app)
             case "filed":

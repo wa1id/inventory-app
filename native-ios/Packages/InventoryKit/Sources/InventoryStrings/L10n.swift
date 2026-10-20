@@ -992,6 +992,15 @@ public enum L10n {
 
         /// "The search did not finish"
         public static var failed: String { L10nRuntime.text("search.failed", "The search did not finish") }
+
+        /// A search found nothing, so its misspelt or unknown words were corrected against the words the inventory itself uses, and the corrected search is shown instead. Above the results, and spoken before the results summary.
+        public enum Corrected {
+            /// Native only (native/home.ts).
+            /// "No results for “{typed}”. Showing “{shown}” instead."
+            public static func showing(typed: String, shown: String) -> String {
+                L10nRuntime.format("search.corrected.showing", "No results for “%1$@”. Showing “%2$@” instead.", [typed, shown])
+            }
+        }
     }
 
     public enum Spaces {

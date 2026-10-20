@@ -396,7 +396,7 @@ public final class AppContainer {
     /// model that cached one starts clean), then every screen reads again.
     private func sessionChanged() {
         dropZone.setRead(DropZoneModel.read(from: repositories))
-        homeModel?.setReads(HomeReads(repositories: repositories))
+        homeModel?.setReads(homeReads)
         database.invalidate()
     }
 
@@ -415,6 +415,17 @@ public final class AppContainer {
 
     // MARK: Screen models
 
+    /// Home's reads over the current repositories. A search that finds nothing is corrected
+    /// against the words of this phone's own database, local or joined (in a household it holds
+    /// what this phone had and wrote), so household search needs nothing new from the home server.
+    private var homeReads: HomeReads {
+        let database = database
+        return HomeReads(repositories: repositories, vocabulary: {
+            guard let local = await MainActor.run(body: { database.repositories }) else { return .empty }
+            return try await local.search.vocabulary()
+        })
+    }
+
     /// Home's model, made the first time Home shows and kept for the life of the app (the tab
     /// root never goes away while the main shell is up).
     public var home: HomeModel {
@@ -424,7 +435,7 @@ public final class AppContainer {
         let categories = categories
         let model = HomeModel(
             revision: database.revision,
-            reads: HomeReads(repositories: repositories),
+            reads: homeReads,
             dropZone: dropZone,
             context: HomeContext(
                 householdName: { household.session?.householdName },

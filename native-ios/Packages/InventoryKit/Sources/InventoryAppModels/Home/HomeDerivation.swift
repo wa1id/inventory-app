@@ -88,7 +88,7 @@ public enum HomeDerivation {
     /// The list below the field while something is typed (RN `searchBody`).
     ///
     /// - Parameters:
-    ///   - pending, results, cause: the search model's.
+    ///   - pending, results, correction, cause: the search model's.
     ///   - dim: older results are still shown (`showingOlder` and not yet past 600 ms).
     ///   - mountSkeleton: past 420 ms, the skeleton goes in above the older results, ready to
     ///     take over at 600 ms with no gap (it has its own 180 ms appear delay).
@@ -96,6 +96,7 @@ public enum HomeDerivation {
     public static func searchBody(
         pending: Bool,
         results: SearchResults?,
+        correction: SearchModel.Correction? = nil,
         cause: (any Error)?,
         dim: Bool,
         mountSkeleton: Bool,
@@ -103,7 +104,7 @@ public enum HomeDerivation {
     ) -> [HomeList.Entry] {
         if pending {
             if dim, let results {
-                let older = HomeList.resultEntries(results, refreshFailed: false)
+                let older = HomeList.resultEntries(results, refreshFailed: false, correction: correction)
                 return mountSkeleton ? [.status(.searching)] + older : older
             }
             return [.status(.searching)]
@@ -112,7 +113,7 @@ public enum HomeDerivation {
             return [.status(cause != nil ? .searchFailed : .searching)]
         }
         let refreshFailed = cause.map { !explainedElsewhere($0, connectionIsOnline: connectionIsOnline) } ?? false
-        return HomeList.resultEntries(results, refreshFailed: refreshFailed)
+        return HomeList.resultEntries(results, refreshFailed: refreshFailed, correction: correction)
     }
 
     /// The household summary's counts, or nil while they would be wrong: no spaces yet, the

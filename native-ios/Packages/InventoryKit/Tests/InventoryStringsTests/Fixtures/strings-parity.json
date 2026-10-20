@@ -636,6 +636,7 @@
   "scan.scanAgain",
   "scan.title",
   "scan.typeCode",
+  "search.corrected.showing",
   "search.failed",
   "search.items",
   "search.keptInThose",
@@ -25252,6 +25253,192 @@
     {
      "args": [],
      "expected": "The search did not finish"
+    }
+   ]
+  },
+  {
+   "path": "search.corrected.showing",
+   "kind": "function",
+   "params": [
+    "typed: string",
+    "shown: string"
+   ],
+   "cases": [
+    {
+     "args": [
+      {
+       "string": "Garage"
+      },
+      {
+       "string": "Garage"
+      }
+     ],
+     "expected": "No results for “Garage”. Showing “Garage” instead."
+    },
+    {
+     "args": [
+      {
+       "string": "Garage"
+      },
+      {
+       "string": ""
+      }
+     ],
+     "expected": "No results for “Garage”. Showing “” instead."
+    },
+    {
+     "args": [
+      {
+       "string": "Garage"
+      },
+      {
+       "string": "100% %@ *x*"
+      }
+     ],
+     "expected": "No results for “Garage”. Showing “100% %@ *x*” instead."
+    },
+    {
+     "args": [
+      {
+       "string": "Garage"
+      },
+      {
+       "string": "שלום"
+      }
+     ],
+     "expected": "No results for “Garage”. Showing “שלום” instead."
+    },
+    {
+     "args": [
+      {
+       "string": ""
+      },
+      {
+       "string": "Garage"
+      }
+     ],
+     "expected": "No results for “”. Showing “Garage” instead."
+    },
+    {
+     "args": [
+      {
+       "string": ""
+      },
+      {
+       "string": ""
+      }
+     ],
+     "expected": "No results for “”. Showing “” instead."
+    },
+    {
+     "args": [
+      {
+       "string": ""
+      },
+      {
+       "string": "100% %@ *x*"
+      }
+     ],
+     "expected": "No results for “”. Showing “100% %@ *x*” instead."
+    },
+    {
+     "args": [
+      {
+       "string": ""
+      },
+      {
+       "string": "שלום"
+      }
+     ],
+     "expected": "No results for “”. Showing “שלום” instead."
+    },
+    {
+     "args": [
+      {
+       "string": "100% %@ *x*"
+      },
+      {
+       "string": "Garage"
+      }
+     ],
+     "expected": "No results for “100% %@ *x*”. Showing “Garage” instead."
+    },
+    {
+     "args": [
+      {
+       "string": "100% %@ *x*"
+      },
+      {
+       "string": ""
+      }
+     ],
+     "expected": "No results for “100% %@ *x*”. Showing “” instead."
+    },
+    {
+     "args": [
+      {
+       "string": "100% %@ *x*"
+      },
+      {
+       "string": "100% %@ *x*"
+      }
+     ],
+     "expected": "No results for “100% %@ *x*”. Showing “100% %@ *x*” instead."
+    },
+    {
+     "args": [
+      {
+       "string": "100% %@ *x*"
+      },
+      {
+       "string": "שלום"
+      }
+     ],
+     "expected": "No results for “100% %@ *x*”. Showing “שלום” instead."
+    },
+    {
+     "args": [
+      {
+       "string": "שלום"
+      },
+      {
+       "string": "Garage"
+      }
+     ],
+     "expected": "No results for “שלום”. Showing “Garage” instead."
+    },
+    {
+     "args": [
+      {
+       "string": "שלום"
+      },
+      {
+       "string": ""
+      }
+     ],
+     "expected": "No results for “שלום”. Showing “” instead."
+    },
+    {
+     "args": [
+      {
+       "string": "שלום"
+      },
+      {
+       "string": "100% %@ *x*"
+      }
+     ],
+     "expected": "No results for “שלום”. Showing “100% %@ *x*” instead."
+    },
+    {
+     "args": [
+      {
+       "string": "שלום"
+      },
+      {
+       "string": "שלום"
+      }
+     ],
+     "expected": "No results for “שלום”. Showing “שלום” instead."
     }
    ]
   },

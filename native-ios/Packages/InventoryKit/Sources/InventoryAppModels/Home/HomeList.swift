@@ -253,8 +253,9 @@ public enum HomeList {
 
     /// Search results in the desk's order, because the item is the answer: the items that
     /// matched, then the spaces and containers that matched, then the items kept in those
-    /// places. Nothing found is a status, never an empty list.
-    public static func resultEntries(_ results: SearchResults, refreshFailed: Bool) -> [Entry] {
+    /// places. Nothing found is a status, never an empty list. A corrected query (native only)
+    /// says what was searched instead above the results, whatever the number of sections.
+    public static func resultEntries(_ results: SearchResults, refreshFailed: Bool, correction: SearchModel.Correction? = nil) -> [Entry] {
         let (direct, location) = splitMatches(results.items)
         let places = results.locations
 
@@ -267,7 +268,9 @@ public enum HomeList {
         // With one section, its title already says how many, so the summary would only repeat
         // it; the search key still announces it.
         let sections = [direct.isEmpty, places.isEmpty, location.isEmpty].filter { !$0 }.count
-        if sections > 1 {
+        if let correction {
+            entries.append(.summary(text: L10n.Search.Corrected.showing(typed: correction.typed, shown: correction.shown)))
+        } else if sections > 1 {
             entries.append(.summary(text: L10n.Search.summary(items: results.items.count, places: places.count)))
         }
 

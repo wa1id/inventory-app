@@ -7673,6 +7673,18 @@
         }
       }
     },
+    "search.corrected.showing" : {
+      "comment" : "Native only (native/home.ts). Arguments: typed (text), shown (text).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No results for “%1$@”. Showing “%2$@” instead."
+          }
+        }
+      }
+    },
     "search.failed" : {
       "extractionState" : "manual",
       "localizations" : {
