@@ -396,8 +396,8 @@ All are in the app target (module `Inventory`). Logic and copy behind them live 
 | `FieldMessage(text:)` | The red warning line under a field. |
 | `CodeInput(label:value:length:hint:error:identifier:onSubmit:)` | A household or recovery code: grouped, normalised, and Return submits. |
 | `ItemDetailsFields(values: Binding<ItemFormValues>, suggestions:focus: FocusState<ItemDetailsField?>.Binding)` | Category (with recent-category chips), Tags and Notes. |
-| `SpaceFields(values:nameError:onSubmit:previewMeta:previewFallbackName:focus:)` | Space name, icon and colour, with a live row preview. |
-| `FormLayout { notice } content: { }` and `FormLayout { notice } content: { } bottomBar: { }` | A form with a notice inset above it (see 1.4 for the bar). |
+| `SpaceFields(values:nameError:onSubmit:previewMeta:previewFallbackName:focus:heading:)` | Space name, icon and colour, with a live row preview. `heading` (default none) is a prominent header over the fields ("Your own" on New space). |
+| `FormLayout { notice } content: { }` and `FormLayout { notice } content: { } bottomBar: { }` | A form with a notice inset above it (see 1.4 for the bar). At large text (`LayoutScale` stacked) the notice is the form's first section instead, so it never fills the screen; an optional notice that is nil adds nothing. |
 | `TagChip(label:isSelected:identifier:action:)` | A tag pill. It is tappable with an action. |
 | `ChoiceList(options: [ChoiceOption], selection:accessibilityLabel:)`; `ChoiceOption(value:title:subtitle:leading:identifier:)` | A short single choice with checkmarks. |
 | `SegmentedChoice(options: [SegmentOption], selection:accessibilityLabel:onCamera:isDisabled:accessibilityHint:)`; `SegmentOption(value:label:glyph:identifier:)` | A stock segmented picker, on glass over the camera. It drops option glyphs. |
@@ -440,7 +440,10 @@ icon, error bar, "Type it instead"). Build them from `CameraGlassIconButton`, `C
   `describeError` through `ErrorStateView` or `SaveNoticeCopy`. Copy RN never had goes in your
   area's `scripts/strings/native/<area>.ts` (§5.4).
 - Keep RN's testIDs as accessibility identifiers. The UI tests depend on `screen-*`, the `tab-*`
-  identifiers, `sheet-close` and others.
+  identifiers, `sheet-close` and others. Put `.accessibilityElement(children: .contain)` before a
+  screen's `.accessibilityIdentifier("screen-…")`: on a plain stack the outer identifier replaces
+  the identifiers of the buttons inside it (`LoadingButton`s in the bottom bar and in the content
+  then answer to `screen-…` and their own ids find nothing).
 - Never use `onDisappear` for "this screen is gone"; use `router.onRemoval(of:)`.
 - A screen that makes its model in `onAppear` must draw something before the model exists
   (`else { Color.clear }`, as in §1.2): `ScreenFrame { if let model { … } }` with no model is an
@@ -449,7 +452,8 @@ icon, error bar, "Type it instead"). Build them from `CameraGlassIconButton`, `C
 - `EmptyStateView` and `ErrorStateView` are `ContentUnavailableView`s and do not scroll. Put
   them in a `List` or `ScrollView` so their text and buttons stay reachable at AX5. As a `List`
   row a long heading can be cut to one line at default sizes ("Your inventory could not…");
-  where the state fills the screen, prefer `GeometryReader { p in ScrollView { state.frame(maxWidth:
+  `.fixedSize(horizontal: false, vertical: true)` on the state lets it wrap there (the space and
+  container screens' contents states). Where the state fills the screen, prefer `GeometryReader { p in ScrollView { state.frame(maxWidth:
   .infinity, minHeight: p.size.height) }.scrollBounceBehavior(.basedOnSize) }` (centred while it
   fits, as `PlacePicker`'s failure state), and check the heading in a screenshot.
 - Simulator caveats: colour emoji draw as "?" boxes on the build Mac's simulator, and the camera

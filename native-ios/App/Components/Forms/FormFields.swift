@@ -88,20 +88,19 @@ struct SpaceFields: View {
     /// for one being edited.
     var previewFallbackName: String = L10n.SpaceForm.previewName
     var focus: FocusState<SpaceFieldsFocus?>.Binding
+    /// A prominent heading over the fields ("Your own" under New space's presets); none by default.
+    var heading: String?
 
     var body: some View {
-        Section {
-            LabeledTextField(
-                label: L10n.SpaceForm.nameLabel,
-                text: $values.name,
-                placeholder: L10n.SpaceForm.namePlaceholder,
-                error: nameError,
-                isRequired: true,
-                input: LabeledFieldInput(submitLabel: .done, onSubmit: onSubmit, capitalization: .sentences),
-                identifier: "space-name",
-                focus: focus,
-                field: .name
-            )
+        if let heading {
+            Section {
+                nameField
+            } header: {
+                Text(verbatim: heading).accessibilityAddTraits(.isHeader)
+            }
+            .headerProminence(.increased)
+        } else {
+            Section { nameField }
         }
         Section {
             EmojiPicker(label: L10n.SpaceForm.iconLabel, value: $values.icon, color: values.color)
@@ -131,22 +130,57 @@ struct SpaceFields: View {
             }
         }
     }
+
+    private var nameField: some View {
+        LabeledTextField(
+            label: L10n.SpaceForm.nameLabel,
+            text: $values.name,
+            placeholder: L10n.SpaceForm.namePlaceholder,
+            error: nameError,
+            isRequired: true,
+            input: LabeledFieldInput(submitLabel: .done, onSubmit: onSubmit, capitalization: .sentences),
+            identifier: "space-name",
+            focus: focus,
+            field: .name
+        )
+    }
 }
 
 /// The frame of the space and container sheets (RN `FormLayout`, 07 §4.14): a failed save's
 /// notice above the form, the fields scrolling, and the primary action in a bar at the bottom
 /// that the keyboard pushes up rather than covers.
+///
+/// At large text sizes (``LayoutScale``'s stacked rule) the notice is the form's first section
+/// instead, scrolling with it: pinned, it could fill the screen and leave no way to the fields.
+/// An optional notice that is nil adds nothing.
 struct FormLayout<Notice: View, Content: View, BottomBar: View>: View {
     @ViewBuilder var notice: Notice
     @ViewBuilder var content: Content
     @ViewBuilder var bottomBar: BottomBar
 
+    private let layout = LayoutScale()
+
+    /// Whether there is a notice: not `EmptyView`, and not an optional view that is nil.
+    private var hasNotice: Bool {
+        if Notice.self == EmptyView.self { return false }
+        if let optional = notice as? any FormLayoutOptionalNotice { return !optional.isNone }
+        return true
+    }
+
     var body: some View {
+        let inline = layout.isStacked
         Form {
+            if inline && hasNotice {
+                Section {
+                    notice
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+            }
             content
         }
         .safeAreaInset(edge: .top, spacing: 0) {
-            if !(Notice.self == EmptyView.self) {
+            if !inline && hasNotice {
                 notice
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
@@ -170,6 +204,15 @@ extension FormLayout where BottomBar == EmptyView {
     init(@ViewBuilder notice: () -> Notice, @ViewBuilder content: () -> Content) {
         self.init(notice: notice, content: content, bottomBar: { EmptyView() })
     }
+}
+
+/// An optional view (what `if let … { … }` builds), so a nil notice adds nothing.
+private protocol FormLayoutOptionalNotice {
+    var isNone: Bool { get }
+}
+
+extension Optional: FormLayoutOptionalNotice where Wrapped: View {
+    fileprivate var isNone: Bool { self == nil }
 }
 
 /// The form's own bottom bar, when it has one.
