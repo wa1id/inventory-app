@@ -45,6 +45,17 @@ Each checkout, including each git worktree, gets its own folder and simulator on
 - **Parity vectors:** where Swift must match JS byte for byte (tokenizer, folding, base32, ids, formatting, strings), generate expected outputs by running the real TypeScript. In a worktree, first link the dependencies: `ln -s /home/walid/inventory-app/node_modules node_modules` (it is gitignored). Then write a throwaway Jest test at `src/__vectors__/__tests__/<name>.test.ts` (the `logic` project only matches `__tests__/*.test.ts`) that writes JSON, run it with `npx jest --selectProjects logic src/__vectors__`, and delete the throwaway test afterwards. Commit the generated JSON under `Tests/<Target>/Fixtures/` and load it with `Bundle.module`.
 - Database fixtures at historical schema versions can be produced the same way with `src/db/nodeDatabase.ts`, which runs the real migrations on `node:sqlite`.
 
+### Time in tests
+
+`swift test` runs the whole package at once, and the build Mac also builds other checkouts, so a test process can be starved for several seconds: a 100 ms timer has been seen to wake six seconds late. Tests must not depend on how fast the machine is.
+
+- Never assert wall-clock durations. Inject the clock (every deadline, debounce and timer takes `clock:`) and drive it with `ManualClock`: `waitForSleepers` until the timer is armed, then `advance(by:)` exactly to the deadline. Pass `waitForSleepers` an explicit generous timeout (60 s) where the Mac may be loaded.
+- A fake that holds a call must let a cancelled caller go (as a GRDB read is interrupted), and every wait on it needs a generous real-time limit that records an issue, so a regressed model fails instead of hanging the run (`ScanTestLatch`, `HomePerfCancellableReads`, `labelsEventually`).
+- Real time is only a watchdog: `networkResult(of:)` (InventoryNetworkTests) and `ScanTestLatch.patience` fail a test that is still waiting after 30–60 s. Waits that poll (`StubServer.waitForRequests`, `.waitForHead`, `networkEventually`) end as soon as their condition holds.
+- Bound a polling wait by real time (60 s), never by a count of `Task.yield()`s: under load 100 000 yields have passed before the model's task ran.
+- Network clients in tests get a `ManualClock` that never moves unless the test is about the deadline, so no exchange times out because the process was slow.
+- Performance guards measure the CPU time of the thread that ran the work, inside the database closure, best of several runs, against limits far above what a quiet Mac measures (`InventoryPerformanceTests`, docs/PERFORMANCE.md). Measure-only reports run only with `INVENTORY_PERF=1` (`mac.sh shell 'cd Packages/InventoryKit && INVENTORY_PERF=1 swift test --scratch-path ~/inventory-native/<key>/spm-build --filter PerfReport'`).
+
 ## Git
 
 - Work on the branch you are given and commit only files under `native-ios/`. Never modify the RN app, the servers or the specs, unless your task says so.
