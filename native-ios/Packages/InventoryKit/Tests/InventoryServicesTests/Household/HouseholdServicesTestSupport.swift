@@ -157,9 +157,11 @@ func householdUploadReply(_ request: RecordedRequest) -> StubReply {
     return .json(201, #"{"id":"\#(photoId)","uri":"r2:household/primary/photos/\#(photoId).webp","thumbUri":"r2:household/primary/photos/\#(photoId)-thumb.webp","width":10,"height":10,"byteSize":3}"#)
 }
 
-/// Waits (in real time) until `condition` holds, for effects that cross URLSession.
+/// Waits (in real time) until `condition` holds, for effects that cross URLSession. It returns as
+/// soon as the condition holds; the long limit is for a loaded Mac, where a request took over
+/// 5 s to reach the stub (CONVENTIONS.md, "Time in tests").
 func householdEventually(
-    timeout: Duration = .seconds(5),
+    timeout: Duration = .seconds(60),
     _ condition: @Sendable () async -> Bool
 ) async -> Bool {
     let deadline = ContinuousClock.now.advanced(by: timeout)

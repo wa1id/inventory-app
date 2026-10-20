@@ -13,11 +13,14 @@ private let validBody = #"{"contractVersion":1,"suggestion":{"name":"Cordless Dr
 private let webpBytes = Data("RIFF\u{0}\u{0}\u{0}\u{0}WEBPVP8 fake-image".utf8)
 private let photoURL = URL(fileURLWithPath: "/photo.webp")
 
+/// The deadline runs on `clock`: by default one that never moves, so no request times out
+/// because the test process was slow; the deadline tests move their own.
 private func client(
     _ server: StubServer,
     endpoint: String? = endpoint,
     key: String? = nil,
     timeout: Duration = .seconds(5),
+    clock: ManualClock = ManualClock(),
     image: Data = webpBytes,
     telemetry: RecordingTelemetry = RecordingTelemetry()
 ) -> RecognitionClient {
@@ -26,6 +29,7 @@ private func client(
         key: key,
         timeout: timeout,
         transport: server.transport,
+        clock: clock,
         readImage: { _ in image },
         telemetry: telemetry.telemetry
     )
@@ -53,12 +57,17 @@ struct RecognitionClientTests {
     }
 
     @Test("classifies a timeout as recoverable")
-    func classifiesATimeoutAsRecoverable() async {
-        let server = StubServer(reply: .json(200, validBody, delay: .seconds(10)))
-        let started = ContinuousClock.now
-        let result = await client(server, timeout: .milliseconds(100)).recognize(imageAt: photoURL)
-        #expect(result == .failed(.timeout))
-        #expect(ContinuousClock.now - started < .seconds(5))
+    func classifiesATimeoutAsRecoverable() async throws {
+        let clock = ManualClock()
+        // The service holds its answer for an hour: only the deadline ends the request.
+        let server = StubServer(reply: .json(200, validBody, delay: .seconds(3600)))
+        let recognition = client(server, timeout: .milliseconds(100), clock: clock)
+        let call = Task { await recognition.recognize(imageAt: photoURL) }
+        try await clock.waitForSleepers(1, timeout: networkPatience)
+        await server.waitForRequests(1)
+        await clock.advance(by: .milliseconds(100))
+        let outcome = try #require(await networkResult(of: call))
+        #expect(outcome.get() == .failed(.timeout))
     }
 
     @Test("classifies a network failure as offline")
@@ -167,9 +176,16 @@ struct RecognitionClientTests {
     }
 
     @Test("the deadline covers the response body, not just the headers")
-    func theDeadlineCoversTheBody() async {
-        let server = StubServer(reply: .slowBody(status: 200, headers: ["Content-Type": "application/json"], body: Data(validBody.utf8), bodyDelay: .seconds(10)))
-        #expect(await client(server, timeout: .milliseconds(200)).recognize(imageAt: photoURL) == .failed(.timeout))
+    func theDeadlineCoversTheBody() async throws {
+        let clock = ManualClock()
+        let server = StubServer(reply: .slowBody(status: 200, headers: ["Content-Type": "application/json"], body: Data(validBody.utf8), bodyDelay: .seconds(3600)))
+        let recognition = client(server, timeout: .milliseconds(200), clock: clock)
+        let call = Task { await recognition.recognize(imageAt: photoURL) }
+        try await clock.waitForSleepers(1, timeout: networkPatience)
+        await server.waitForHead()
+        await clock.advance(by: .milliseconds(200))
+        let outcome = try #require(await networkResult(of: call))
+        #expect(outcome.get() == .failed(.timeout))
     }
 
     @Test("a name the server cut through an emoji is still a suggestion")
@@ -186,17 +202,24 @@ struct RecognitionClientTests {
     }
 
     @Test("the deadline covers the file read")
-    func theDeadlineCoversTheFileRead() async {
+    func theDeadlineCoversTheFileRead() async throws {
+        let clock = ManualClock()
         let server = StubServer(reply: .json(200, validBody))
         let slowRead = RecognitionClient(
             endpoint: endpoint, key: nil, timeout: .milliseconds(100), transport: server.transport,
+            clock: clock,
             readImage: { _ in
-                try await Task.sleep(for: .seconds(10))
+                // A read an hour long: only the deadline ends it.
+                try await Task.sleep(for: .seconds(3600))
                 return webpBytes
             },
             telemetry: RecordingTelemetry().telemetry
         )
-        #expect(await slowRead.recognize(imageAt: photoURL) == .failed(.timeout))
+        let call = Task { await slowRead.recognize(imageAt: photoURL) }
+        try await clock.waitForSleepers(1, timeout: networkPatience)
+        await clock.advance(by: .milliseconds(100))
+        let outcome = try #require(await networkResult(of: call))
+        #expect(outcome.get() == .failed(.timeout))
         #expect(server.requests.isEmpty)
     }
 

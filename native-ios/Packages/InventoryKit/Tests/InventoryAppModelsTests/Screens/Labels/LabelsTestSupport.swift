@@ -59,8 +59,10 @@ enum LabelsTestData {
     static var notFound: any Error { HouseholdHttpError(status: 404, code: "not_found") }
 }
 
-/// Polls `condition` on the main actor, letting the model's tasks run, until it holds (10 s at
-/// most, in real time).
+/// Polls `condition` on the main actor, letting the model's tasks run, until it holds
+/// (``ScanTestLatch/patience`` at most, in real time: a loaded Mac can hold the model's tasks
+/// back for seconds, and the wait ends as soon as the condition holds). A cancelled test stops
+/// waiting at once.
 @MainActor
 func labelsEventually(
     _ description: String,
@@ -68,8 +70,12 @@ func labelsEventually(
     _ condition: @MainActor () -> Bool
 ) async {
     let clock = ContinuousClock()
-    let deadline = clock.now.advanced(by: .seconds(10))
+    let deadline = clock.now.advanced(by: ScanTestLatch.patience)
     while !condition() {
+        if Task.isCancelled {
+            Issue.record("cancelled while waiting for: \(description)", sourceLocation: sourceLocation)
+            return
+        }
         if clock.now > deadline {
             Issue.record("never happened: \(description)", sourceLocation: sourceLocation)
             return

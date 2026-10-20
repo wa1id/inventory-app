@@ -570,7 +570,7 @@ struct NavigationRemovalTests {
 enum NavigationWait {
     @MainActor
     static func until(
-        timeout: Duration = .seconds(5),
+        timeout: Duration = .seconds(60),
         sourceLocation: SourceLocation = #_sourceLocation,
         _ condition: @MainActor () -> Bool
     ) async {

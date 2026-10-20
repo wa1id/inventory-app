@@ -1,6 +1,7 @@
 import Foundation
 import InventoryCore
 import InventoryTestSupport
+import Synchronization
 import Testing
 @testable import InventoryNetwork
 
@@ -8,20 +9,36 @@ import Testing
 struct TotalTimeoutTests {
     @Test("returns the operation's value when it finishes in time")
     func returnsTheValue() async throws {
-        let value = try await withTotalTimeout(.seconds(5)) { 42 }
+        // A clock that never moves: the answer wins however slowly the test runs.
+        let value = try await withTotalTimeout(.seconds(5), clock: ManualClock()) { 42 }
         #expect(value == 42)
     }
 
     @Test("throws DeadlineExceeded when the clock wins, and cancels the operation")
-    func deadlineWins() async {
-        let started = ContinuousClock.now
-        await #expect(throws: DeadlineExceeded.self) {
-            try await withTotalTimeout(.milliseconds(50)) {
-                try await Task.sleep(for: .seconds(10))
+    func deadlineWins() async throws {
+        let clock = ManualClock()
+        let operationCancelled = Mutex(false)
+        let exchange = Task {
+            try await withTotalTimeout(.milliseconds(50), clock: clock) {
+                do {
+                    // An answer an hour away: only the deadline ends this.
+                    try await Task.sleep(for: .seconds(3600))
+                } catch {
+                    operationCancelled.withLock { $0 = true }
+                    throw error
+                }
                 return 1
             }
         }
-        #expect(ContinuousClock.now - started < .seconds(5))
+        try await clock.waitForSleepers(1, timeout: networkPatience)
+        await clock.advance(by: .milliseconds(49))
+        #expect(clock.pendingSleeperCount == 1)
+        #expect(!operationCancelled.withLock { $0 })
+        await clock.advance(by: .milliseconds(1))
+        // The group returns only once the operation has stopped, so this also shows it was cut short.
+        let outcome = try #require(await networkResult(of: exchange))
+        #expect(throws: DeadlineExceeded.self) { try outcome.get() }
+        #expect(operationCancelled.withLock { $0 })
     }
 
     @Test("uses the injected clock")
@@ -29,11 +46,12 @@ struct TotalTimeoutTests {
         let clock = ManualClock()
         let exchange = Task {
             try await withTotalTimeout(.seconds(3600), clock: clock) {
-                try await Task.sleep(for: .seconds(10))
+                // Longer than any test run, however loaded the Mac: only the deadline ends it.
+                try await Task.sleep(for: .seconds(3600))
                 return 1
             }
         }
-        try await clock.waitForSleepers()
+        try await clock.waitForSleepers(1, timeout: networkPatience)
         #expect(clock.nextDeadline == ManualClock.Instant(offset: .seconds(3600)))
         await clock.advance(by: .seconds(3599))
         #expect(clock.pendingSleeperCount == 1)
@@ -43,32 +61,38 @@ struct TotalTimeoutTests {
 
     @Test("a body still arriving when the clock runs out is a deadline, through a real URLSession")
     func coversTheBody() async throws {
-        let server = StubServer(reply: .slowBody(status: 200, headers: [:], body: Data(count: 64), bodyDelay: .seconds(10)))
+        let clock = ManualClock()
+        let server = StubServer(reply: .slowBody(status: 200, headers: ["Content-Type": "application/octet-stream"], body: Data(count: 64), bodyDelay: .seconds(3600)))
         let transport = server.transport
         let request = URLRequest(url: try #require(URL(string: "https://slow.example/body")), method: "GET", deadline: .milliseconds(200))
-        let started = ContinuousClock.now
-        await #expect(throws: DeadlineExceeded.self) {
-            try await withTotalTimeout(.milliseconds(200)) { try await transport.send(request) }
+        let exchange = Task {
+            try await withTotalTimeout(.milliseconds(200), clock: clock) { try await transport.send(request) }
         }
-        #expect(ContinuousClock.now - started < .seconds(5))
+        try await clock.waitForSleepers(1, timeout: networkPatience)
+        // The status and headers are in; the body is an hour away.
+        await server.waitForHead()
+        await clock.advance(by: .milliseconds(200))
+        let outcome = try #require(await networkResult(of: exchange))
+        #expect(throws: DeadlineExceeded.self) { try outcome.get() }
     }
 
     @Test("passes the operation's own error through")
     func passesErrorsThrough() async {
         await #expect(throws: URLError(.notConnectedToInternet)) {
-            try await withTotalTimeout(.seconds(5)) { () -> Int in throw URLError(.notConnectedToInternet) }
+            try await withTotalTimeout(.seconds(5), clock: ManualClock()) { () -> Int in throw URLError(.notConnectedToInternet) }
         }
     }
 
     @Test("a cancelled caller is not a deadline")
-    func cancellationIsNotADeadline() async {
+    func cancellationIsNotADeadline() async throws {
+        let clock = ManualClock()
         let task = Task {
-            try await withTotalTimeout(.seconds(10)) {
-                try await Task.sleep(for: .seconds(10))
+            try await withTotalTimeout(.seconds(10), clock: clock) {
+                try await Task.sleep(for: .seconds(3600))
                 return 1
             }
         }
-        try? await Task.sleep(for: .milliseconds(50))
+        try await clock.waitForSleepers(1, timeout: networkPatience)
         task.cancel()
         do {
             _ = try await task.value

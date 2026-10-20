@@ -174,7 +174,7 @@ public final class ManualClock: Clock, Sendable {
     /// Waits until at least `count` tasks are asleep on this clock.
     ///
     /// - Throws: ``Timeout`` when they are not there after `timeout` of real time.
-    public func waitForSleepers(_ count: Int = 1, timeout: Duration = .seconds(10)) async throws {
+    public func waitForSleepers(_ count: Int = 1, timeout: Duration = .seconds(60)) async throws {
         try await withThrowingTaskGroup(of: Void.self) { group in
             group.addTask { try await self.registerWaiter(count) }
             group.addTask {

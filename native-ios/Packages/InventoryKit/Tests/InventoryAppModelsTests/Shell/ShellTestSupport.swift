@@ -19,7 +19,7 @@ enum ShellWait {
     @MainActor
     static func until(
         _ description: String = "condition",
-        timeout: Duration = .seconds(5),
+        timeout: Duration = .seconds(60),
         sourceLocation: SourceLocation = #_sourceLocation,
         _ condition: @MainActor () -> Bool
     ) async {

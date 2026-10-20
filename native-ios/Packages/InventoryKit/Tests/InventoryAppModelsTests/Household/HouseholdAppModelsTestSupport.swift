@@ -201,8 +201,10 @@ func householdSettle(_ rounds: Int = 20) async {
 }
 
 /// Waits (in real time) until `condition` holds, for effects that cross URLSession or streams.
+/// It returns as soon as the condition holds; the long limit is for a loaded Mac, where a
+/// request has taken over 5 s to reach the stub (CONVENTIONS.md, "Time in tests").
 @MainActor
-func householdWaitUntil(timeout: Duration = .seconds(5), _ condition: @MainActor () -> Bool) async -> Bool {
+func householdWaitUntil(timeout: Duration = .seconds(60), _ condition: @MainActor () -> Bool) async -> Bool {
     let deadline = ContinuousClock.now.advanced(by: timeout)
     while ContinuousClock.now < deadline {
         if condition() { return true }

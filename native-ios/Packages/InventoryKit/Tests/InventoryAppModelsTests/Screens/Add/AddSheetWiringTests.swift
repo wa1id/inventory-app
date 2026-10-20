@@ -15,7 +15,10 @@ struct AddSheetRoutingTests {
     private static let photo = StoredImage(uri: "file:///p.webp", thumbUri: "file:///p-thumb.webp", width: 1400, height: 1050, byteSize: 2048)
 
     private func until(_ condition: () -> Bool) async {
-        for _ in 0..<10_000 {
+        // A real-time limit, not a count of yields: a loaded Mac can hold the model's tasks back
+        // for seconds. The wait ends as soon as the condition holds.
+        let deadline = ContinuousClock.now.advanced(by: .seconds(60))
+        while ContinuousClock.now < deadline {
             if condition() { return }
             await Task.yield()
         }

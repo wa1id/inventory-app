@@ -9,12 +9,15 @@ import Testing
 // the Swift client, checks it is the request the RN client sends (method, path,
 // headers, JSON), and decodes the real server's answer.
 
+/// The deadline runs on a clock that never moves, so no exchange times out because the test
+/// process was slow (CONVENTIONS.md, "Time in tests").
 private func client(_ server: StubServer, token: String? = nil, contract: HouseholdContract, hub: ReachabilityHub? = nil, makeId: (@Sendable () -> String)? = nil) -> HouseholdClient {
     HouseholdClient(
         origin: contract.origin,
         token: token ?? contract.token,
         transport: server.transport,
         reachability: hub,
+        clock: ManualClock(),
         telemetry: RecordingTelemetry().telemetry,
         makeId: makeId ?? { newId() }
     )

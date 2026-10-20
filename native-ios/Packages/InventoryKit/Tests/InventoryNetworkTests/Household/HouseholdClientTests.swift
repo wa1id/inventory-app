@@ -10,10 +10,12 @@ import Testing
 
 private let origin = "https://inventory.wystudio.be"
 
-private func client(_ server: StubServer, origin: String = origin, token: String? = "tok", hub: ReachabilityHub? = nil, telemetry: RecordingTelemetry = RecordingTelemetry(), makeId: (@Sendable () -> String)? = nil) -> HouseholdClient {
+/// The deadline runs on `clock`: by default one that never moves, so no request times out
+/// because the test process was slow; the deadline tests move their own.
+private func client(_ server: StubServer, origin: String = origin, token: String? = "tok", hub: ReachabilityHub? = nil, clock: ManualClock = ManualClock(), telemetry: RecordingTelemetry = RecordingTelemetry(), makeId: (@Sendable () -> String)? = nil) -> HouseholdClient {
     HouseholdClient(
         origin: origin, token: token, transport: server.transport, reachability: hub,
-        telemetry: telemetry.telemetry, makeId: makeId ?? { newId() }
+        clock: clock, telemetry: telemetry.telemetry, makeId: makeId ?? { newId() }
     )
 }
 
@@ -405,13 +407,22 @@ struct HouseholdRequestRuleTests {
     func deadline() async throws {
         let hub = ReachabilityHub()
         let updates = hub.updates()
-        let server = StubServer(reply: .json(200, "{}", delay: .seconds(10)))
-        let started = ContinuousClock.now
-        let error = await httpError {
-            _ = try await client(server, hub: hub).request(HouseholdRequest(path: "/v1/spaces", timeout: .milliseconds(100)), as: IgnoredBody.self)
+        let clock = ManualClock()
+        // The home server holds its answer for an hour: only the deadline ends the request.
+        let server = StubServer(reply: .json(200, "{}", delay: .seconds(3600)))
+        let household = client(server, hub: hub, clock: clock)
+        let call = Task {
+            await httpError {
+                _ = try await household.request(HouseholdRequest(path: "/v1/spaces", timeout: .milliseconds(100)), as: IgnoredBody.self)
+            }
         }
+        try await clock.waitForSleepers(1, timeout: networkPatience)
+        await server.waitForRequests(1)
+        await clock.advance(by: .milliseconds(99))
+        #expect(clock.pendingSleeperCount == 1)
+        await clock.advance(by: .milliseconds(1))
+        let error = try #require(await networkResult(of: call)).get()
         #expect(error == HouseholdHttpError(status: 0, code: "timeout"))
-        #expect(ContinuousClock.now - started < .seconds(5))
         var iterator = updates.makeAsyncIterator()
         #expect(await iterator.next() == .offline)
     }
@@ -421,10 +432,18 @@ struct HouseholdRequestRuleTests {
         let hub = ReachabilityHub()
         let updates = hub.updates()
         let telemetry = RecordingTelemetry()
-        let server = StubServer(reply: .slowBody(status: 200, headers: ["Content-Type": "image/webp"], body: Data([7]), bodyDelay: .seconds(10)))
-        let error = await httpError {
-            _ = try await client(server, hub: hub, telemetry: telemetry).send(HouseholdRequest(path: "/v1/photos/p", timeout: .milliseconds(200)))
+        let clock = ManualClock()
+        let server = StubServer(reply: .slowBody(status: 200, headers: ["Content-Type": "image/webp"], body: Data([7]), bodyDelay: .seconds(3600)))
+        let household = client(server, hub: hub, clock: clock, telemetry: telemetry)
+        let call = Task {
+            await httpError {
+                _ = try await household.send(HouseholdRequest(path: "/v1/photos/p", timeout: .milliseconds(200)))
+            }
         }
+        try await clock.waitForSleepers(1, timeout: networkPatience)
+        await server.waitForHead()
+        await clock.advance(by: .milliseconds(200))
+        let error = try #require(await networkResult(of: call)).get()
         #expect(error == HouseholdHttpError(status: 0, code: "timeout"))
         // A timeout reports offline but, as in RN, logs nothing.
         #expect(telemetry.entries.isEmpty)
@@ -451,7 +470,7 @@ struct HouseholdRequestRuleTests {
     func cancellation() async throws {
         let hub = ReachabilityHub()
         let telemetry = RecordingTelemetry()
-        let server = StubServer(reply: .json(200, "{}", delay: .seconds(10)))
+        let server = StubServer(reply: .json(200, "{}", delay: .seconds(3600)))
         let household = client(server, hub: hub, telemetry: telemetry)
         let reported = Mutex<[Reachability]>([])
         let updates = hub.updates()
@@ -459,7 +478,8 @@ struct HouseholdRequestRuleTests {
             for await value in updates { reported.withLock { $0.append(value) } }
         }
         let task = Task { try await household.listSpaces() }
-        try await Task.sleep(for: .milliseconds(100))
+        // Cancelled mid-exchange: the home server has the request and holds its answer.
+        await server.waitForRequests(1)
         task.cancel()
         await #expect(throws: CancellationError.self) { _ = try await task.value }
         try await Task.sleep(for: .milliseconds(50))
