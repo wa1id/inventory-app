@@ -42,13 +42,11 @@ struct AddSheet: View {
             }
         } bottomBar: {
             BottomBar(primaryFit: true) {
-                Button(L10n.Add.saveAndAnother) {}
-                    .buttonStyle(.bordered)
+                LoadingButton(label: L10n.Add.saveAndAnother, variant: .secondary, fullWidth: true) {}
             } primary: {
-                Button(L10n.Add.save) {
+                LoadingButton(label: L10n.Add.save, fullWidth: true) {
                     if let address { app.router.close(address) }
                 }
-                .buttonStyle(.borderedProminent)
             }
         }
         .navigationTitle(L10n.Add.title)

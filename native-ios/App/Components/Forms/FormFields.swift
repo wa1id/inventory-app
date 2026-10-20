@@ -154,11 +154,34 @@ struct FormLayout<Notice: View, Content: View, BottomBar: View>: View {
                     .background(Color(uiColor: .systemGroupedBackground))
             }
         }
-        .safeAreaBar(edge: .bottom) {
+        .modifier(FormLayoutBottomBar(hasBar: !(BottomBar.self == EmptyView.self)) {
             bottomBar
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
                 .readableContentWidth()
+        })
+    }
+}
+
+extension FormLayout where BottomBar == EmptyView {
+    /// Without a bar of its own: inside the app, put the form in `ScreenFrame(.modal)` and pass
+    /// the shell's `BottomBar` as the frame's `bottomBar`, which also lifts toasts above it and
+    /// stacks its buttons at large sizes.
+    init(@ViewBuilder notice: () -> Notice, @ViewBuilder content: () -> Content) {
+        self.init(notice: notice, content: content, bottomBar: { EmptyView() })
+    }
+}
+
+/// The form's own bottom bar, when it has one.
+private struct FormLayoutBottomBar<Bar: View>: ViewModifier {
+    let hasBar: Bool
+    @ViewBuilder let bar: () -> Bar
+
+    func body(content: Content) -> some View {
+        if hasBar {
+            content.safeAreaBar(edge: .bottom) { bar() }
+        } else {
+            content
         }
     }
 }

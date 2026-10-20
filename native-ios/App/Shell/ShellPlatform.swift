@@ -1,4 +1,3 @@
-import AVFoundation
 import SwiftUI
 import UIKit
 import InventoryAppModels
@@ -20,8 +19,8 @@ enum ShellPlatform {
             openSettings: {
                 if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
             },
-            cameraAuthorization: { cameraAuthorization() },
-            requestCameraAccess: { await AVCaptureDevice.requestAccess(for: .video) },
+            cameraAuthorization: { CameraAuthorizationAccess.read() },
+            requestCameraAccess: { await CameraAuthorizationAccess.request() },
             confirm: dialogs,
             actionSheets: dialogs
         )
@@ -32,23 +31,10 @@ enum ShellPlatform {
     /// every other announcement interrupts.
     @MainActor
     static func announce(_ text: String, queued: Bool = false) {
-        guard !text.isEmpty else { return }
         if queued {
-            let attributed = NSAttributedString(string: text, attributes: [.accessibilitySpeechQueueAnnouncement: true])
-            UIAccessibility.post(notification: .announcement, argument: attributed)
+            ComponentAnnouncer.announceQueued(text)
         } else {
-            AccessibilityNotification.Announcement(text).post()
-        }
-    }
-
-    @MainActor
-    static func cameraAuthorization() -> CameraAuthorization {
-        switch AVCaptureDevice.authorizationStatus(for: .video) {
-        case .authorized: .authorized
-        case .denied: .denied
-        case .restricted: .restricted
-        case .notDetermined: .notDetermined
-        @unknown default: .denied
+            ComponentAnnouncer.announce(text)
         }
     }
 }

@@ -64,7 +64,7 @@ struct PlacePicker<Notice: View>: View {
                     SkeletonView(variant: .options).padding()
                 }
             } else if let failure {
-                ErrorStateView(cause: failure, onRetry: onRetry)
+                ErrorStateView(cause: .failed(failure), onRetry: onRetry)
             } else {
                 list
             }

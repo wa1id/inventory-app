@@ -32,8 +32,8 @@ struct ScreenFrame<Content: View, Bottom: View>: View {
         case plain
     }
 
-    /// Content never grows wider than this (RN `CONTENT_MAX_WIDTH`).
-    static var contentMaxWidth: CGFloat { 640 }
+    /// Content never grows wider than this (RN `CONTENT_MAX_WIDTH`, `DesignMetrics.contentMaxWidth`).
+    static var contentMaxWidth: CGFloat { DesignMetrics.contentMaxWidth }
 
     private let kind: Kind
     private let showsBanner: Bool

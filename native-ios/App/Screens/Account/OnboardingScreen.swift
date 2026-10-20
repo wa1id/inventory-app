@@ -10,9 +10,7 @@ struct OnboardingScreen: View {
     var body: some View {
         ScreenFrame(.detail, background: .plain) {
             ShellPlaceholderContent(title: L10n.Onboarding.title, systemImage: "shippingbox") {
-                Button(L10n.Onboarding.start) { app.onboarding.complete() }
-                    .buttonStyle(.borderedProminent)
-                    .accessibilityIdentifier("onboarding-start")
+                LoadingButton(label: L10n.Onboarding.start, identifier: "onboarding-start") { app.onboarding.complete() }
             }
         }
         .accessibilityIdentifier("screen-onboarding")

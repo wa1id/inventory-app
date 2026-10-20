@@ -6,10 +6,9 @@ import SwiftUI
 /// the colour scheme: it sits on a live picture, white on glass.
 enum MediaPalette {
     /// The label-tape yellow from the asset catalog: the camera accent (focus square, locked
-    /// reticle, a toggle that is on) and the code tape. Never a text or control tint.
-    static let tape = Color("Tape")
-    /// Ink on the tape (`#1D1A0E`, RN `tapeInk`), in both schemes.
-    static let tapeInk = Color(red: 0x1D / 255, green: 0x1A / 255, blue: 0x0E / 255)
+    /// reticle, a toggle that is on). The code tape itself is the components' `Tape`. Never a
+    /// text or control tint.
+    static let tape = Color(.tape)
     /// The error edge of a camera notice (`#FF9573`, RN `camera.errorBar`): coral text over a bright
     /// scene measures 2.5:1, so errors get this bar instead (08 §4.5).
     static let errorBar = Color(red: 1, green: 0x95 / 255, blue: 0x73 / 255)
@@ -60,6 +59,8 @@ struct CameraTitlePill: View {
     /// A running count (RN `live`): VoiceOver treats it as updating frequently.
     var updatesFrequently = false
     var identifier: String?
+    /// Also announces each new text, queued behind current speech (RN `live` on a running count).
+    var announces = false
 
     var body: some View {
         HStack(spacing: 6) {
@@ -83,6 +84,7 @@ struct CameraTitlePill: View {
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(updatesFrequently ? .updatesFrequently : [])
         .accessibilityIdentifier(identifier ?? "camera-pill")
+        .announcesOnChange(text, enabled: announces, queued: true)
     }
 }
 
@@ -238,7 +240,7 @@ struct CameraPanel: View {
 
     private func announce() {
         guard let announcement else { return }
-        AccessibilityNotification.Announcement(announcement).post()
+        ComponentAnnouncer.announce(announcement)
     }
 }
 

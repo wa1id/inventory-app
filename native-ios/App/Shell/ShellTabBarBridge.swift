@@ -69,8 +69,8 @@ final class ShellTabBarProbe: UIView {
 final class ShellTabBarCoordinator: NSObject, UIGestureRecognizerDelegate {
     /// RN `delayLongPress`.
     static let longPressDuration: TimeInterval = 0.35
-    /// Badge text on tape: the tape's ink in both appearances (08 §4).
-    static let tapeInk = UIColor(red: 0x1D / 255, green: 0x1A / 255, blue: 0x0E / 255, alpha: 1)
+    /// Badge text on tape: the tape's ink in both appearances (08 §4), the asset `Tape` uses.
+    static let tapeInk = UIColor(resource: .tapeInk)
 
     private let app: AppContainer
     private let chrome: ShellTabBarChrome?

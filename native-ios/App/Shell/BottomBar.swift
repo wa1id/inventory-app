@@ -37,9 +37,10 @@ struct BottomBar<Secondary: View, Primary: View>: View {
         self.primary = primary()
     }
 
-    /// RN `stacked`: font scale ≥ 1.35 (`.xxxLarge`) or a window narrower than 360 pt.
+    /// RN `stacked`: font scale ≥ 1.35 (`.xxxLarge`) or a window narrower than 360 pt
+    /// (``LayoutScale``'s rule; a width of 0 is not measured yet).
     static func isStacked(dynamicTypeSize: DynamicTypeSize, windowWidth: CGFloat) -> Bool {
-        dynamicTypeSize >= .xxxLarge || (windowWidth > 0 && windowWidth < 360)
+        LayoutScale.isStacked(dynamicTypeSize: dynamicTypeSize, windowWidth: windowWidth > 0 ? windowWidth : .infinity)
     }
 
     private var stacks: Bool {
@@ -50,7 +51,7 @@ struct BottomBar<Secondary: View, Primary: View>: View {
         buttons
             .buttonSizing(.flexible)
             .controlSize(.large)
-            .frame(maxWidth: ScreenFrame<EmptyView, EmptyView>.contentMaxWidth)
+            .frame(maxWidth: DesignMetrics.contentMaxWidth)
             .padding(.horizontal, 16)
             .padding(.top, 12)
             .padding(.bottom, 12)
@@ -154,9 +155,9 @@ private struct BottomBarRow: Layout {
         VStack {
             Spacer()
             BottomBar {
-                Button(AppTab.spaces.title) {}.buttonStyle(.bordered)
+                LoadingButton(label: AppTab.spaces.title, variant: .secondary, fullWidth: true) {}
             } primary: {
-                Button(AppTab.home.title) {}.buttonStyle(.borderedProminent)
+                LoadingButton(label: AppTab.home.title, fullWidth: true) {}
             }
         }
     }
@@ -167,9 +168,9 @@ private struct BottomBarRow: Layout {
         VStack {
             Spacer()
             BottomBar(primaryFit: true) {
-                Button(AppTab.add.accessibilityLabel()) {}.buttonStyle(.bordered)
+                LoadingButton(label: AppTab.add.accessibilityLabel(), variant: .secondary, fullWidth: true) {}
             } primary: {
-                Button(AppTab.home.title) {}.buttonStyle(.borderedProminent)
+                LoadingButton(label: AppTab.home.title, fullWidth: true) {}
             }
         }
     }

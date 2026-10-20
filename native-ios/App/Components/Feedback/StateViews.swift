@@ -56,41 +56,89 @@ struct EmptyStateView: View {
     }
 }
 
-/// A read that failed, in plain words, with Try again (RN `ErrorState`, 06 §15.1).
+/// A read that failed, in plain words, with Try again (RN `ErrorState`, 06 §15.1, 09 §7.3).
 ///
 /// The words come from `describeError`, never a raw code; the screen may give its own title or
-/// body. The heading is announced when it appears, so a failure never looks like "you own
-/// nothing" to a VoiceOver user either.
+/// body (from `L10n`, never an error's message). The heading is announced when it appears or
+/// changes, so a failure never looks like "you own nothing" to a VoiceOver user either.
+///
+/// Text precedence is RN's: when a ``Cause`` is given, or either override is missing, the copy
+/// comes from `describeError(cause, context, subject)`; `title` and `body` then override it.
+/// ``Cause/gone`` is RN's explicit `null` (a read that found the record deleted): pass it from
+/// the screen's own branch, never from an `InventoryQuery`'s nil `cause` (09 §5). A nil cause is
+/// RN's `undefined`: the screen supplies both texts (the boot gate), or anything unclassified
+/// reads as a local failure.
 struct ErrorStateView: View {
-    /// What was thrown, or nil for a read that found nothing (gone).
-    let cause: (any Error)?
-    var context: ErrorContext = .read
-    var subject: ErrorSubject = .list
-    var title: String?
-    var message: String?
+    /// What the failed read gave.
+    enum Cause {
+        /// It threw (`query.cause`).
+        case failed(any Error)
+        /// It answered nothing: the record is gone (RN `cause={null}`).
+        case gone
+    }
+
+    private let heading: String
+    private let message: String
     /// The query's own reload.
-    var onRetry: (() -> Void)?
-    var secondary: StateAction?
-    var identifier: String?
+    private let onRetry: (() -> Void)?
+    private let secondary: StateAction?
+    private let identifier: String?
+
+    /// - Parameters:
+    ///   - cause: what the read gave; nil when the screen supplies both texts itself.
+    ///   - onRetry: always the query's own reload (`error-retry`).
+    ///   - secondary: a quiet second button (`secondary.identifier`, else `error-secondary`).
+    init(
+        cause: Cause?,
+        context: ErrorContext = .read,
+        subject: ErrorSubject = .list,
+        title: String? = nil,
+        body: String? = nil,
+        onRetry: (() -> Void)? = nil,
+        secondary: StateAction? = nil,
+        identifier: String? = nil
+    ) {
+        let thrown: (any Error)? = switch cause {
+        case .failed(let error): error
+        case .gone: nil
+        // RN `undefined` with an override missing: anything unclassified reads as local.
+        case nil: ErrorStateUnspecified()
+        }
+        let words = FeedbackText.errorState(cause: thrown, context: context, subject: subject, title: title, body: body)
+        heading = words.title
+        message = words.body
+        self.onRetry = onRetry
+        self.secondary = secondary
+        self.identifier = identifier
+    }
 
     var body: some View {
-        let words = FeedbackText.errorState(cause: cause, context: context, subject: subject, title: title, body: message)
         ContentUnavailableView {
-            Label(words.title, glyph: .refresh)
+            Label(heading, glyph: .refresh)
         } description: {
-            Text(verbatim: words.body)
+            if !message.isEmpty { Text(verbatim: message) }
         } actions: {
             if let onRetry {
-                LoadingButton(label: L10n.Common.tryAgain, glyph: .refresh, variant: .secondary, action: onRetry)
+                LoadingButton(label: L10n.Common.tryAgain, glyph: .refresh, variant: .secondary, identifier: "error-retry", action: onRetry)
             }
             if let secondary {
-                LoadingButton(label: secondary.label, variant: .quiet, identifier: secondary.identifier, action: secondary.action)
+                LoadingButton(
+                    label: secondary.label,
+                    glyph: secondary.glyph,
+                    variant: .quiet,
+                    isLoading: secondary.isLoading,
+                    identifier: secondary.identifier ?? "error-secondary",
+                    action: secondary.action
+                )
             }
         }
         .accessibilityIdentifierIfPresent(identifier)
-        .announcesOnChange(words.title)
+        .announcesOnChange(heading)
     }
 }
+
+/// RN's `undefined` cause.
+private struct ErrorStateUnspecified: Error {}
 
 /// The shape of what is loading (RN `Skeleton`, 06 §15.1).
 ///
@@ -207,35 +255,6 @@ struct SkeletonView: View {
     }
 }
 
-/// White text in a glass capsule over the camera picture, readable on any scene
-/// (RN `StatusPill`). With `announces`, a change of text is announced (a running count).
-struct StatusPill: View {
-    let text: String
-    var glyph: Glyph?
-    var announces = false
-    var identifier: String?
-
-    var body: some View {
-        HStack(spacing: 6) {
-            if let glyph {
-                Image(glyph: glyph).accessibilityHidden(true)
-            }
-            Text(verbatim: text)
-                .textRole(.meta)
-                .lineLimit(2)
-        }
-        .foregroundStyle(.white)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .frame(minHeight: 36)
-        .glassEffect(.regular.tint(.black.opacity(0.35)), in: .capsule)
-        .environment(\.colorScheme, .dark)
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifierIfPresent(identifier)
-        .announcesOnChange(text, enabled: announces)
-    }
-}
-
 #Preview("Empty") {
     EmptyStateView(
         title: "Nothing waiting",
@@ -247,16 +266,13 @@ struct StatusPill: View {
 }
 
 #Preview("Error") {
-    ErrorStateView(cause: nil, subject: .item, onRetry: {})
+    ErrorStateView(cause: .gone, subject: .item, onRetry: {}, secondary: StateAction(label: L10n.Common.goToHome) {})
+}
+
+#Preview("Error, overrides only") {
+    ErrorStateView(cause: nil, title: L10n.Boot.failedTitle, body: L10n.Boot.failedBody, onRetry: {})
 }
 
 #Preview("Skeleton") {
     SkeletonView(variant: .list).padding()
-}
-
-#Preview("Status pill") {
-    ZStack {
-        LinearGradient(colors: [.orange, .black], startPoint: .top, endPoint: .bottom)
-        StatusPill(text: "3 photos taken", glyph: .layers, announces: true)
-    }
 }

@@ -40,6 +40,8 @@ struct RootView: View {
             windowSize = size
         }
         .environment(\.shellWindowSize, windowSize)
+        // The components' LayoutScale reads the same window width (infinite until measured).
+        .environment(\.layoutWindowWidth, windowSize.width > 0 ? windowSize.width : .infinity)
         .environment(\.shellTabBarChrome, tabBarChrome)
         .task { await app.boot.run() }
         .onChange(of: phase, initial: true) { _, phase in

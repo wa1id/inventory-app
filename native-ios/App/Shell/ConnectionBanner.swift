@@ -13,26 +13,18 @@ struct ConnectionBanner: View {
 
     var body: some View {
         if state == .offline {
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
-                Image(systemName: "icloud.slash")
-                    .foregroundStyle(.orange)
-                    .accessibilityHidden(true)
-                Text(L10n.Connection.reconnecting)
-                    .font(.subheadline)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                Button(L10n.Connection.retry, action: retry)
-                    .font(.subheadline.weight(.semibold))
-                    .buttonStyle(.borderless)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(.orange.opacity(0.14), in: .rect(cornerRadius: 14, style: .continuous))
+            // RN: a warning `Banner` with the cloud-off icon and Retry, `live="off"`.
+            BannerView(
+                tone: .warning,
+                glyph: .cloudOff,
+                message: L10n.Connection.reconnecting,
+                primary: BannerAction(label: L10n.Connection.retry, action: retry),
+                live: .off,
+                identifier: "banner-connection"
+            )
             .padding(.horizontal, 16)
             .padding(.top, 8)
             .padding(.bottom, 4)
-            .accessibilityElement(children: .contain)
-            .accessibilityIdentifier("banner-connection")
         }
     }
 }

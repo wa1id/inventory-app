@@ -109,7 +109,7 @@ struct CameraPermissionView: View {
                 .accessibilityElement(children: .combine)
                 .accessibilityIdentifier("camera-processing")
                 .onAppear {
-                    AccessibilityNotification.Announcement(L10n.Capture.saving).post()
+                    ComponentAnnouncer.announce(L10n.Capture.saving)
                 }
             }
         }

@@ -18,28 +18,20 @@ struct RevokedOverlay: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                ShellBrandMark()
+                BrandMark()
                 Text(L10n.Revoked.title)
                     .font(.title2.bold())
                     .accessibilityAddTraits(.isHeader)
                 Text(L10n.Revoked.body)
                     .foregroundStyle(.secondary)
                 VStack(spacing: 8) {
-                    Button(action: joinAgain) {
-                        Text(L10n.Revoked.join).frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .accessibilityIdentifier("revoked-join")
-                    Button(action: carryOnAlone) {
-                        Text(L10n.Revoked.local).frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderless)
-                    .accessibilityIdentifier("revoked-local")
+                    LoadingButton(label: L10n.Revoked.join, fullWidth: true, identifier: "revoked-join", action: joinAgain)
+                    LoadingButton(label: L10n.Revoked.local, variant: .quiet, fullWidth: true, identifier: "revoked-local", action: carryOnAlone)
                 }
                 .controlSize(.large)
                 .padding(.top, 8)
             }
-            .frame(maxWidth: ScreenFrame<EmptyView, EmptyView>.contentMaxWidth, alignment: .leading)
+            .frame(maxWidth: DesignMetrics.contentMaxWidth, alignment: .leading)
             .padding(.horizontal, 16)
             .padding(.top, 64)
             .padding(.bottom, 32)

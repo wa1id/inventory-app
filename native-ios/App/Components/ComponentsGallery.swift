@@ -324,8 +324,8 @@ private struct GalleryButtonsPage: View {
                     ZStack {
                         LinearGradient(colors: [.orange, .indigo], startPoint: .topLeading, endPoint: .bottomTrailing)
                         VStack(spacing: 12) {
-                            StatusPill(text: "3 photos taken", glyph: .layers)
-                            StatusPill(text: "Into Tool chest, Garage")
+                            CameraTitlePill(text: "3 photos taken", systemImage: Glyph.layers.systemName, updatesFrequently: true)
+                            CameraTitlePill(text: "Into Tool chest, Garage")
                         }
                     }
                     .frame(height: 140)
@@ -347,7 +347,7 @@ private struct GalleryStatesPage: View {
                 secondary: StateAction(label: "Add an item") {}
             )
             Divider()
-            ErrorStateView(cause: nil, subject: .item, onRetry: {}, secondary: StateAction(label: L10n.Common.goToHome) {})
+            ErrorStateView(cause: .gone, subject: .item, onRetry: {}, secondary: StateAction(label: L10n.Common.goToHome) {})
         }
         .background(Color(uiColor: .systemGroupedBackground))
     }

@@ -11,7 +11,7 @@ struct BootView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            ShellBrandMark()
+            BrandMark()
             Text(L10n.Boot.opening)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
