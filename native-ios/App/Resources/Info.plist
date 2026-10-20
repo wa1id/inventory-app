@@ -50,6 +50,18 @@
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 	</dict>
+	<key>UIApplicationShortcutItems</key>
+	<array>
+		<!-- Quick Snap (DECISIONS U5): the title is strings.tabs.quickSnapAction; the type is AppQuickAction.quickSnap. -->
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>com.wystudio.inventory.quickSnap</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Quick Snap</string>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>camera</string>
+		</dict>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UIRequiredDeviceCapabilities</key>

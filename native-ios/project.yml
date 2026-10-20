@@ -77,6 +77,20 @@ targets:
     dependencies:
       - target: Inventory
 
+  # UI tests (scripts/mac.sh uitest): the tab bar's Add tap and long press, driven like a person.
+  InventoryUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.wystudio.inventory.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Inventory
+    dependencies:
+      - target: Inventory
+
 schemes:
   Inventory:
     build:
@@ -94,3 +108,13 @@ schemes:
       config: Debug
     archive:
       config: Release
+
+  InventoryUITests:
+    build:
+      targets:
+        Inventory: all
+        InventoryUITests: [test]
+    test:
+      config: Debug
+      targets:
+        - InventoryUITests
