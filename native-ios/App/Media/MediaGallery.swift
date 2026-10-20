@@ -24,13 +24,16 @@ struct MediaGallery: View {
     ]
 
     var body: some View {
-        if Self.pages.indices.contains(page) {
-            Self.pages[page].view()
-        } else {
-            List(Self.pages.indices, id: \.self) { index in
-                Text(verbatim: "\(index). \(Self.pages[index].title)")
+        Group {
+            if Self.pages.indices.contains(page) {
+                Self.pages[page].view()
+            } else {
+                List(Self.pages.indices, id: \.self) { index in
+                    Text(verbatim: "\(index). \(Self.pages[index].title)")
+                }
             }
         }
+        .measuresComponentWindow()
     }
 }
 
@@ -153,6 +156,8 @@ private struct MediaGallerySharePicture: View {
                     .resizable()
                     .scaledToFit()
                     .border(Color.red, width: 1)
+                    // Gallery only: the picture the share sheet would get.
+                    .accessibilityLabel(Text(verbatim: "Share picture of the label CAB-J92R"))
                 Text(verbatim: "\(url.lastPathComponent) · \(Int(image.size.width * image.scale))×\(Int(image.size.height * image.scale)) px")
                     .font(.footnote.monospaced())
             } else if failed {

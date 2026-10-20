@@ -78,8 +78,22 @@ private struct TextRoleModifier: ViewModifier {
         content
             .font(role.font)
             .tracking(role.tracking)
-            .dynamicTypeSize(...(role.maximumSize ?? .accessibility5))
+            .modifier(TextRoleSizeCap(maximum: role.maximumSize))
             .accessibilityAddTraits(header ? .isHeader : [])
+    }
+}
+
+/// Caps a fixed-geometry role; every other role is left alone (no clamp at all, so nothing
+/// stands between the text and the system's size).
+private struct TextRoleSizeCap: ViewModifier {
+    let maximum: DynamicTypeSize?
+
+    func body(content: Content) -> some View {
+        if let maximum {
+            content.dynamicTypeSize(...maximum)
+        } else {
+            content
+        }
     }
 }
 

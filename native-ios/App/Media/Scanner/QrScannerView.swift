@@ -203,14 +203,12 @@ struct QrScannerView<Footer: View>: View {
         }
     }
 
-    /// The footer, or the failure panel in its place; it scrolls when large text makes it taller
-    /// than the room left under the title, so its buttons stay reachable.
+    /// The footer, or the failure panel in its place. A ``CameraPanel`` keeps itself to part of
+    /// the window at the largest text sizes (its words scroll inside it, its buttons stay under
+    /// them), so the picture stays in view; one tree at every size, so growing text never swaps
+    /// the panel for a copy in a scroll view.
     private var bottom: some View {
-        ViewThatFits(in: .vertical) {
-            bottomContent
-            ScrollView { bottomContent }
-                .scrollBounceBehavior(.basedOnSize)
-        }
+        bottomContent
     }
 
     @ViewBuilder private var bottomContent: some View {

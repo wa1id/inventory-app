@@ -87,6 +87,7 @@ struct LoadingButton: View {
             }
             .modifier(PrimaryLabelColor(isActive: variant == .primary && !isDisabled))
             .frame(maxWidth: fullWidth ? .infinity : nil)
+            .modifier(BorderlessTouchTarget(isBorderless: variant.isBorderless))
         }
         .buttonVariant(variant, size: size)
         .disabled(isDisabled)
@@ -101,6 +102,29 @@ struct LoadingButton: View {
         .accessibilityIdentifierIfPresent(identifier)
         .onChange(of: isLoading, initial: true) { _, loading in spinner.setActive(loading) }
     }
+}
+
+/// A borderless button (quiet, destructive) is only as tall as its text, so "Not now" under a
+/// banner was a 20 pt target. Its label takes at least 44 × 44 pt (RN: 40 pt plus slop), which
+/// draws nothing more, since the style has no background; the bordered styles draw their own
+/// control and keep the system's size.
+private struct BorderlessTouchTarget: ViewModifier {
+    let isBorderless: Bool
+
+    func body(content: Content) -> some View {
+        if isBorderless {
+            content
+                .frame(minWidth: DesignMetrics.minTouchTarget, minHeight: DesignMetrics.minTouchTarget)
+                .contentShape(Rectangle())
+        } else {
+            content
+        }
+    }
+}
+
+extension ButtonVariant {
+    /// Drawn as text with no control around it.
+    var isBorderless: Bool { self == .quiet || self == .destructive }
 }
 
 /// The page colour on the ink fill of a primary button (RN `onInk`); other variants keep the

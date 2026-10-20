@@ -175,17 +175,10 @@ struct WhereCard: View {
                 .foregroundStyle(.secondary)
             LocationLine(place: place, size: .card, links: links)
             // The action sits at the end of the row, after the tape or the note; it moves under
-            // them when they do not fit side by side.
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 12) {
-                    footerLead(copy)
-                    Spacer(minLength: 0)
-                    action(copy)
-                }
-                VStack(alignment: .leading, spacing: 12) {
-                    footerLead(copy)
-                    action(copy)
-                }
+            // them when they do not fit side by side (one tree either way).
+            ComponentFitOrStack(horizontalSpacing: 12, verticalSpacing: 12) {
+                footerLead(copy)
+                action(copy)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

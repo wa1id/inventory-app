@@ -19,7 +19,7 @@ struct FoundationGallery: View {
                 FoundationGalleryPicker(page: current)
             }
         }
-        .measuresLayoutWindowWidth()
+        .measuresComponentWindow()
     }
 }
 

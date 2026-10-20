@@ -79,8 +79,7 @@ struct BannerView: View {
             if let onDismiss {
                 Button(action: onDismiss) {
                     Image(glyph: .close)
-                        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-                        .frame(width: DesignMetrics.minTouchTarget, height: DesignMetrics.minTouchTarget)
+                        .frame(minWidth: DesignMetrics.minTouchTarget, minHeight: DesignMetrics.minTouchTarget)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)

@@ -41,7 +41,7 @@ struct EmptyStateView: View {
                 button(secondary, variant: primary == nil ? .secondary : .quiet)
             }
         }
-        .accessibilityIdentifierIfPresent(identifier)
+        .stateViewIdentifier(identifier)
     }
 
     private func button(_ action: StateAction, variant: ButtonVariant) -> some View {
@@ -132,13 +132,28 @@ struct ErrorStateView: View {
                 )
             }
         }
-        .accessibilityIdentifierIfPresent(identifier)
+        .stateViewIdentifier(identifier)
         .announcesOnChange(heading)
     }
 }
 
 /// RN's `undefined` cause.
 private struct ErrorStateUnspecified: Error {}
+
+extension View {
+    /// A state view's own identifier (RN `testID` on the state). The state is a container first
+    /// (UI-KIT §4, the `screen-*` rule): set on the bare `ContentUnavailableView`, the identifier
+    /// would replace those of its heading and buttons (`move-no-containers`, `error-retry`), so
+    /// UI tests and VoiceOver could no longer tell them apart.
+    @ViewBuilder
+    fileprivate func stateViewIdentifier(_ identifier: String?) -> some View {
+        if let identifier, !identifier.isEmpty {
+            accessibilityElement(children: .contain).accessibilityIdentifier(identifier)
+        } else {
+            self
+        }
+    }
+}
 
 /// The shape of what is loading (RN `Skeleton`, 06 §15.1).
 ///

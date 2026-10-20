@@ -135,24 +135,23 @@ struct ItemRow: View {
         let chip = QuantityChip(quantity: model.quantity, itemName: ItemRowText.displayName(item.name), itemId: item.id, isExpanded: isExpanded) {
             toggle(onToggle)
         }
-        if layout.isStacked {
-            VStack(alignment: .trailing, spacing: 4) {
-                mainRow()
-                // The chip's line is outside the row's pressable part: a tap on the blank space
-                // beside it does nothing rather than open the item.
-                chip
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .absorbsListRowTaps()
-            }
-        } else {
-            let lineHalf = nameLineHalf
-            ZStack(alignment: .topTrailing) {
-                mainRow(nameInset: chipWidth + 8, alignTop: true)
-                chip
-                    .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { chipWidth = $0 }
-                    // Centred on the name's first line.
-                    .alignmentGuide(.top) { dimensions in dimensions.height / 2 - lineHalf }
-            }
+        let stacked = layout.isStacked
+        let lineHalf = nameLineHalf
+        // One tree in both shapes (a layout swap, not two branches), so growing text keeps the
+        // row and its chip, and VoiceOver's place on them.
+        let shape = stacked
+            ? AnyLayout(VStackLayout(alignment: .trailing, spacing: 4))
+            : AnyLayout(ZStackLayout(alignment: .topTrailing))
+        shape {
+            mainRow(nameInset: stacked ? 0 : chipWidth + 8, alignTop: !stacked)
+            chip
+                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { chipWidth = $0 }
+                // Beside the name: centred on its first line.
+                .alignmentGuide(.top) { dimensions in stacked ? dimensions[.top] : dimensions.height / 2 - lineHalf }
+                // Stacked, the chip's line is outside the row's pressable part: a tap on the
+                // blank space beside it does nothing rather than open the item.
+                .frame(maxWidth: stacked ? .infinity : nil, alignment: .trailing)
+                .absorbsListRowTaps(stacked)
         }
     }
 
@@ -176,7 +175,7 @@ struct ItemRow: View {
     }
 
     private func toggle(_ onToggle: () -> Void) {
-        withAnimation(reduceMotion ? nil : .easeInOut(duration: Double(Motion.duration.expand) / 1000)) {
+        withAnimation(ComponentMotion.expand(reduceMotion: reduceMotion)) {
             onToggle()
         }
     }

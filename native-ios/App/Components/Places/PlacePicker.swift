@@ -44,8 +44,10 @@ struct PlacePicker<Notice: View>: View {
     /// The row showing a spinner while the pick saves (the drop zone's is its container id); the
     /// list is locked meanwhile.
     var busyId: String?
-    /// A banner above the lists (a conflict, a failure). An optional view (`if let … { … }` in
-    /// the builder) that is nil adds nothing.
+    /// A banner above the lists (a conflict, a failure, the label screen's heading), pinned
+    /// above them outside the scrolling list (``SwiftUI/View/pinnedNotice(_:)``), so it is seen
+    /// and announced however far the list was scrolled, and stays undimmed while a pick saves.
+    /// An optional view (`if let … { … }` in the builder) that is nil adds nothing.
     @ViewBuilder var notice: Notice
     let onPick: (PickedPlace) -> Void
     var onNewContainer: (_ spaceId: String, _ spaceName: String) -> Void = { _, _ in }
@@ -67,13 +69,6 @@ struct PlacePicker<Notice: View>: View {
     private var locked: Bool { busyId != nil }
     private var query: String { filterText?.wrappedValue ?? ownQuery }
     private var queryBinding: Binding<String> { filterText ?? $ownQuery }
-
-    /// Whether there is a notice to show: not `EmptyView`, and not an optional view that is nil.
-    private var hasNotice: Bool {
-        if Notice.self == EmptyView.self { return false }
-        if let optional = notice as? any PlacePickerOptionalNotice { return !optional.isNone }
-        return true
-    }
 
     var body: some View {
         // One container, so the search field and the arrival focus survive the switch from the
@@ -97,6 +92,9 @@ struct PlacePicker<Notice: View>: View {
                 list
             }
         }
+        // Decided by the notice's type, never its value, so a notice that comes and goes keeps
+        // the list (its scroll position, the filter's focus); a nil optional notice measures zero.
+        .pinnedNotice { notice }
         // UI tests find the filter as `app.searchFields.firstMatch` (or by its placeholder): the
         // stock search field takes no accessibility identifier, so RN's `place-filter` is not set.
         .searchable(text: queryBinding, placement: .navigationBarDrawer(displayMode: .always), prompt: Text(verbatim: placeholder))
@@ -126,13 +124,6 @@ struct PlacePicker<Notice: View>: View {
         let noMatch = PlacePickerRules.noMatchMessage(query: query, options: options, sections: sections)
         let nothingAtAll = PlacePickerRules.isNothingAtAll(loading: isLoading, options: options, spaces: spaces, allowNewContainer: allowNew)
         return List {
-            if hasNotice {
-                Section {
-                    notice
-                }
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
-            }
             if let noMatch {
                 Section {
                     Text(verbatim: noMatch)
@@ -183,9 +174,8 @@ struct PlacePicker<Notice: View>: View {
                     default: SpacePip(color: section.color, size: 12)
                     }
                 }
-                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 Text(verbatim: title)
-                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             // One heading element: the title, never the clock or plus beside it.
             .accessibilityElement(children: .ignore)
@@ -302,7 +292,6 @@ struct PlacePicker<Notice: View>: View {
     private var checkmark: some View {
         Image(glyph: .check)
             .font(.body.weight(.semibold))
-            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
             .foregroundStyle(Color.accentColor)
             .accessibilityHidden(true)
     }
@@ -317,15 +306,6 @@ struct PlacePicker<Notice: View>: View {
         haptics(.choice)
         onPick(place)
     }
-}
-
-/// An optional view (what `if let … { … }` builds), so a nil notice adds no empty section.
-private protocol PlacePickerOptionalNotice {
-    var isNone: Bool { get }
-}
-
-extension Optional: PlacePickerOptionalNotice where Wrapped: View {
-    fileprivate var isNone: Bool { self == nil }
 }
 
 extension PlacePicker where Notice == EmptyView {

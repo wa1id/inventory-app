@@ -50,19 +50,32 @@ struct WrappingHStack: Layout {
         }
     }
 
-    private func arrange(width: CGFloat?, subviews: Subviews) -> [Line] {
+    /// How far a line may run past the width it is given and still count as fitting.
+    ///
+    /// The width a parent places this layout in is the width it measured, rounded to the pixel
+    /// grid: up to a pixel narrower than the sum of the children's fractional text widths. Without
+    /// the slack, a line that just fitted when measured no longer fitted when placed, so the last
+    /// piece (the tape) dropped to a second line drawn outside the one-line height that was
+    /// reported: the location line over the camera "measured one line and drew two", and its
+    /// glass did not fit. A point of overrun is invisible beside the 6 pt gaps.
+    static let fitTolerance: CGFloat = 1
+
+    /// The lines for a given width. `sizeThatFits` and `placeSubviews` both go through here, with
+    /// the same tolerance, so what is drawn is what was measured.
+    func arrange(width: CGFloat?, subviews: Subviews) -> [Line] {
         let maxWidth = width ?? .infinity
+        let limit = maxWidth + Self.fitTolerance
         var lines: [Line] = []
         var current = Line()
         for index in subviews.indices {
             var size = subviews[index].sizeThatFits(.unspecified)
-            if size.width > maxWidth {
+            if size.width > limit {
                 // Too wide for any line: give it the whole width so its text wraps.
                 size = subviews[index].sizeThatFits(ProposedViewSize(width: maxWidth, height: nil))
                 size.width = min(size.width, maxWidth)
             }
             let needed = current.indices.isEmpty ? size.width : current.width + horizontalSpacing + size.width
-            if !current.indices.isEmpty && needed > maxWidth {
+            if !current.indices.isEmpty && needed > limit {
                 lines.append(current)
                 current = Line()
             }

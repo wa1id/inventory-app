@@ -6,7 +6,8 @@ import InventoryStrings
 
 /// Debug-only gallery of the shared components (see DebugGallery): every component in its main
 /// states, one page per launch: `-gallery components -galleryPage N`. Long pages scroll to a
-/// section with `-galleryAnchor <id>` (the ids are the section titles below, lower-cased).
+/// section with `-galleryAnchor <id>` (the ids are the section titles below, lower-cased), or
+/// show one section alone with `-gallerySection <title>`.
 struct ComponentsGallery: View {
     let page: Int
 
@@ -17,7 +18,7 @@ struct ComponentsGallery: View {
                 .navigationTitle(Text(verbatim: "\(current.rawValue). \(current.title)"))
                 .navigationBarTitleDisplayMode(.inline)
         }
-        .measuresLayoutWindowWidth()
+        .measuresComponentWindow()
     }
 }
 
@@ -94,6 +95,27 @@ private func galleryHeader(_ title: String) -> some View {
     Text(verbatim: title).id(title.lowercased())
 }
 
+/// `-gallerySection <title>` shows one section of a page alone, at the top, so the accessibility
+/// audit checks its components where growing text cannot push them off the screen.
+private struct GallerySectionFilter: ViewModifier {
+    let title: String
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if let only = UserDefaults.standard.string(forKey: "gallerySection"), only.lowercased() != title.lowercased() {
+            EmptyView()
+        } else {
+            content
+        }
+    }
+}
+
+private extension View {
+    func gallerySection(_ title: String) -> some View {
+        modifier(GallerySectionFilter(title: title))
+    }
+}
+
 // MARK: Pages
 
 private struct GalleryTokensPage: View {
@@ -105,8 +127,8 @@ private struct GalleryTokensPage: View {
                     Tape(code: "DRW-7K2M", size: .medium, spoken: true)
                     Tape(code: "CAB-J92R", size: .large)
                     Tape(code: "3", size: .badge)
-                } } header: { galleryHeader("Tape") }
-                Section { HStack(spacing: 24) { BrandMark(); BrandMark(size: .large) } } header: { galleryHeader("Mark") }
+                } } header: { galleryHeader("Tape") }.gallerySection("Tape")
+                Section { HStack(spacing: 24) { BrandMark(); BrandMark(size: .large) } } header: { galleryHeader("Mark") }.gallerySection("Mark")
                 Section {
                     HStack(spacing: 10) {
                         SpaceTile(icon: "🚗", color: "#5B8DEF", size: 32)
@@ -120,20 +142,21 @@ private struct GalleryTokensPage: View {
                     }
                     // Plain emoji, to tell a simulator without colour emoji from a tile bug.
                     Text(verbatim: "Emoji: 🚗 🧰 🛋\u{FE0F} 📥")
+                        .fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: 12) {
                         ForEach(SpacePalette.colors + ["#FFFFFF", "#000000"], id: \.self) { SpacePip(color: $0) }
                     }
-                } header: { galleryHeader("Tiles and pips") }
+                } header: { galleryHeader("Tiles and pips") }.gallerySection("Tiles and pips")
                 Section {
                     HighlightedText(text: "Spare batteries AA", terms: ["batt", "aa"]).textRole(.name)
-                } header: { galleryHeader("Highlight") }
+                } header: { galleryHeader("Highlight") }.gallerySection("Highlight")
                 Section {
                     WrappingHStack(horizontalSpacing: 14, verticalSpacing: 12) {
                         ForEach(Glyph.allCases, id: \.self) { glyph in
                             Image(glyph: glyph).font(.title3).frame(width: 28, height: 28)
                         }
                     }
-                } header: { galleryHeader("Glyphs") }
+                } header: { galleryHeader("Glyphs") }.gallerySection("Glyphs")
             }
         }
     }
@@ -162,12 +185,12 @@ private struct GalleryItemRowsChipPage: View {
                             )
                         }
                     }
-                } header: { galleryHeader("Chip") }
+                } header: { galleryHeader("Chip") }.gallerySection("Chip")
                 Section {
                     if let model = models[ComponentsFixtures.drill.id] {
                         ItemRow(item: ComponentsFixtures.drill, tool: .stepper(model), onPress: {})
                     }
-                } header: { galleryHeader("Stepper") }
+                } header: { galleryHeader("Stepper") }.gallerySection("Stepper")
             }
         }
     }
@@ -180,16 +203,16 @@ private struct GalleryItemRowsOtherPage: View {
                 Section {
                     ItemRow(item: ComponentsFixtures.unnamed, line: .added, tool: .file({}), now: ComponentsFixtures.now, onPress: {})
                     ItemRow(item: ComponentsFixtures.waiting, line: .added, tool: .file({}), now: ComponentsFixtures.now, thumb: 76, onPress: {})
-                } header: { galleryHeader("File") }
+                } header: { galleryHeader("File") }.gallerySection("File")
                 Section {
                     ItemRow(item: ComponentsFixtures.unnamed, line: .added, tool: .delete({}), now: ComponentsFixtures.now, onPress: {})
                     ItemRow(item: ComponentsFixtures.screws, line: .detail, tool: .delete({}), onPress: {})
-                } header: { galleryHeader("Delete") }
+                } header: { galleryHeader("Delete") }.gallerySection("Delete")
                 Section {
                     ItemRow(item: ComponentsFixtures.screws, tool: .none, onPress: {})
                     ItemRow(item: ComponentsFixtures.drill, line: .detail, tool: .none, onPress: {})
                     ItemRow(item: ComponentsFixtures.batteries, line: .detail, tool: .none, terms: ["spare", "aa"], onPress: {})
-                } header: { galleryHeader("None") }
+                } header: { galleryHeader("None") }.gallerySection("None")
             }
         }
     }
@@ -204,22 +227,22 @@ private struct GalleryPlaceRowsPage: View {
                 Section {
                     SpaceRow(space: ComponentsFixtures.spaces[0], onPress: {})
                     SpaceRow(space: ComponentsFixtures.spaces[2], onPress: {})
-                } header: { galleryHeader("Spaces") }
+                } header: { galleryHeader("Spaces") }.gallerySection("Spaces")
                 Section {
                     ContainerRow(container: ContainerRowData(id: "c1", name: "Tool chest", shortCode: "CAB-J92R", visualType: .cabinet, itemCount: 7, qrToken: "abc"), onPress: {})
                     ContainerRow(container: ContainerRowData(id: "c2", name: nil, shortCode: "BIN-4F2A", visualType: .bin, itemCount: 0), onPress: {})
-                } header: { galleryHeader("Containers") }
+                } header: { galleryHeader("Containers") }.gallerySection("Containers")
                 Section {
                     PlaceRow(hit: LocationSearchResult(kind: .space, id: "s-garage", title: "Garage", subtitle: "", spaceId: "s-garage", itemCount: 12), spaces: spaces, containers: containers, terms: ["gar"], onPress: {})
                     PlaceRow(hit: LocationSearchResult(kind: .container, id: "c-drawer", title: "Screws and nails", subtitle: "", spaceId: "s-garage", itemCount: 1), spaces: spaces, containers: containers, terms: ["screws"], onPress: {})
                     PlaceRow(hit: LocationSearchResult(kind: .container, id: "c-new", title: "Shoe rack", subtitle: "Container in Hall", spaceId: "s-hall", itemCount: 0), spaces: spaces, containers: containers, onPress: {})
-                } header: { galleryHeader("Search") }
+                } header: { galleryHeader("Search") }.gallerySection("Search")
                 Section {
                     LocationLine(place: ComponentsFixtures.filedPlace)
                     LocationLine(place: RowPlace(ComponentsFixtures.batteries))
                     LocationLine(place: ComponentsFixtures.dropZonePlace)
                     LocationLine(place: ComponentsFixtures.filedPlace, size: .inline, showsContainer: false)
-                } header: { galleryHeader("Location") }
+                } header: { galleryHeader("Location") }.gallerySection("Location")
             }
         }
     }
@@ -256,20 +279,20 @@ private struct GalleryQuantityPage: View {
                     QuantityStepper(value: compact, onChange: { compact = $0 }, size: .compact)
                     QuantityStepper(value: 9999, onChange: { _ in }, size: .compact)
                     QuantityStepper(value: 2, onChange: { _ in }, isDisabled: true)
-                } header: { galleryHeader("Stepper") }
+                } header: { galleryHeader("Stepper") }.gallerySection("Stepper")
                 Section {
                     SavedQuantityStepper(model: saved, itemName: "Wood screws")
                     SavedQuantityStepper(model: none, itemName: "Spare batteries")
                     SavedQuantityStepper(model: failing, itemName: "Cordless drill")
                         .task { failing.setQuantity(2) }
-                } header: { galleryHeader("Saved") }
+                } header: { galleryHeader("Saved") }.gallerySection("Saved")
                 Section {
                     HStack {
                         QuantityChip(quantity: 1, itemName: "Drill", itemId: "a", isExpanded: false, onToggle: {})
                         QuantityChip(quantity: 120, itemName: "Screws", itemId: "b", isExpanded: true, onToggle: {})
                         QuantityChip(quantity: 0, itemName: "Batteries", itemId: "c", isExpanded: false, onToggle: {})
                     }
-                } header: { galleryHeader("Chip") }
+                } header: { galleryHeader("Chip") }.gallerySection("Chip")
             }
         }
     }
@@ -283,7 +306,7 @@ private struct GalleryBannersPage: View {
                     BannerView(tone: .info, title: "Saved on this phone only", message: "Join a household to share it.", primary: BannerAction(label: "Join") {}, secondary: BannerAction(label: "Not now") {}, live: .off)
                     BannerView(tone: .warning, title: "Not saved", message: "Check the connection and try again. What you typed is still here.", primary: BannerAction(label: "Try again", isLoading: true) {}, onDismiss: {})
                     BannerView(tone: .info, message: "Showing what was last read.", live: .off, chrome: .row)
-                } header: { galleryHeader("Banner") }
+                } header: { galleryHeader("Banner") }.gallerySection("Banner")
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
                 .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
@@ -293,7 +316,7 @@ private struct GalleryBannersPage: View {
                     SuggestionBannerView(state: .stale(forName: "Angle grinder"), onRefresh: {})
                     SuggestionBannerView(state: .failed(.offline), onRetry: {})
                     SuggestionBannerView(state: .failed(.notConfigured), onRetry: {})
-                } header: { galleryHeader("Suggestion") }
+                } header: { galleryHeader("Suggestion") }.gallerySection("Suggestion")
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
                 .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
@@ -309,7 +332,7 @@ private struct GalleryButtonsPage: View {
                 Section {
                     SkeletonView(variant: .rows, rows: 2)
                     SkeletonView(variant: .options, rows: 3)
-                } header: { galleryHeader("Skeleton") }
+                } header: { galleryHeader("Skeleton") }.gallerySection("Skeleton")
                 .listRowBackground(Color.clear)
                 Section {
                     LoadingButton(label: "Save", glyph: .check, action: {})
@@ -319,7 +342,7 @@ private struct GalleryButtonsPage: View {
                     LoadingButton(label: "Delete space", glyph: .trash, variant: .destructive, action: {})
                     LoadingButton(label: "Disabled", isDisabled: true, action: {})
                     LoadingButton(label: "Save and add another item to this container", fullWidth: true, action: {})
-                } header: { galleryHeader("Buttons") }
+                } header: { galleryHeader("Buttons") }.gallerySection("Buttons")
                 Section {
                     ZStack {
                         LinearGradient(colors: [.orange, .indigo], startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -330,7 +353,7 @@ private struct GalleryButtonsPage: View {
                     }
                     .frame(height: 140)
                     .listRowInsets(EdgeInsets())
-                } header: { galleryHeader("Status pill") }
+                } header: { galleryHeader("Status pill") }.gallerySection("Status pill")
             }
         }
     }
@@ -338,6 +361,15 @@ private struct GalleryButtonsPage: View {
 
 private struct GalleryStatesPage: View {
     var body: some View {
+        // In a scroll view, as every screen has them (UI-KIT §4): the stock state view does not
+        // scroll by itself, so at the largest sizes its words and buttons would be cut off.
+        ScrollView {
+            states
+        }
+        .background(Color(uiColor: .systemGroupedBackground))
+    }
+
+    private var states: some View {
         VStack(spacing: 0) {
             EmptyStateView(
                 title: L10n.Picker.None.title,
@@ -349,7 +381,6 @@ private struct GalleryStatesPage: View {
             Divider()
             ErrorStateView(cause: .gone, subject: .item, onRetry: {}, secondary: StateAction(label: L10n.Common.goToHome) {})
         }
-        .background(Color(uiColor: .systemGroupedBackground))
     }
 }
 
@@ -368,10 +399,10 @@ private struct GalleryInputsPage: View {
                     LabeledTextField(label: L10n.SpaceForm.nameLabel, text: $name, error: L10n.SpaceForm.nameRequired, isRequired: true)
                     LabeledTextField(label: L10n.Forms.tagsLabel, text: $tags, hint: L10n.Forms.tagsHint, isOptional: true, counter: "12 of 26")
                     LabeledTextField(label: L10n.Forms.notesLabel, text: $notes, isMultiline: true)
-                } header: { galleryHeader("Text fields") }
+                } header: { galleryHeader("Text fields") }.gallerySection("Text fields")
                 Section {
                     CodeInput(label: "Recovery code", value: $code, hint: "From the paper you kept")
-                } header: { galleryHeader("Code") }
+                } header: { galleryHeader("Code") }.gallerySection("Code")
                 .listRowBackground(Color.clear)
                 Section {
                     NavigationLink { EmptyView() } label: {
@@ -387,7 +418,7 @@ private struct GalleryInputsPage: View {
                         SettingsRow(label: "Technical details", glyph: .settings)
                     }
                     FactRow(label: L10n.Forms.categoryLabel, text: "Tools")
-                } header: { galleryHeader("Settings") }
+                } header: { galleryHeader("Settings") }.gallerySection("Settings")
             }
         }
     }
@@ -410,14 +441,14 @@ private struct GalleryPickersPage: View {
                         TagChip(label: "Tools") {}
                         TagChip(label: "Kitchen", isSelected: true) {}
                     }
-                } header: { galleryHeader("Chips") }
+                } header: { galleryHeader("Chips") }.gallerySection("Chips")
                 Section {
                     SegmentedChoice(
                         options: [SegmentOption(value: "single", label: "Single"), SegmentOption(value: "several", label: "Several", glyph: .layers)],
                         selection: $mode,
                         accessibilityLabel: "Mode"
                     )
-                } header: { galleryHeader("Segmented") }
+                } header: { galleryHeader("Segmented") }.gallerySection("Segmented")
                 Section {
                     ChoiceList(
                         options: ComponentsFixtures.spaces.map { space in
@@ -426,10 +457,10 @@ private struct GalleryPickersPage: View {
                         selection: $space,
                         accessibilityLabel: "Space"
                     )
-                } header: { galleryHeader("Choice") }
-                Section { EmojiPicker(label: L10n.SpaceForm.iconLabel, value: $icon, color: color) } header: { galleryHeader("Emoji") }
-                Section { SwatchPicker(label: L10n.SpaceForm.colourLabel, value: $color) } header: { galleryHeader("Swatch") }
-                Section { TypeGrid(label: "Type", value: $type) } header: { galleryHeader("Type") }
+                } header: { galleryHeader("Choice") }.gallerySection("Choice")
+                Section { EmojiPicker(label: L10n.SpaceForm.iconLabel, value: $icon, color: color) } header: { galleryHeader("Emoji") }.gallerySection("Emoji")
+                Section { SwatchPicker(label: L10n.SpaceForm.colourLabel, value: $color) } header: { galleryHeader("Swatch") }.gallerySection("Swatch")
+                Section { TypeGrid(label: "Type", value: $type) } header: { galleryHeader("Type") }.gallerySection("Type")
             }
         }
     }
@@ -530,7 +561,7 @@ private struct GalleryThumbsPage: View {
                     Thumb(uri: "file:///nowhere/item-photos/missing.webp", size: 56)
                     Thumb(uri: nil, size: 76)
                 }
-            } header: { galleryHeader("Placeholder") }
+            } header: { galleryHeader("Placeholder") }.gallerySection("Placeholder")
             Section {
                 HStack(spacing: 12) {
                     Thumb(uri: photo, size: 40)
@@ -539,10 +570,10 @@ private struct GalleryThumbsPage: View {
                     Thumb(uri: photo, size: 76)
                     Thumb(uri: photo, size: 88, action: {}, accessibilityLabel: "Photo of the sample")
                 }
-            } header: { galleryHeader("Photo") }
+            } header: { galleryHeader("Photo") }.gallerySection("Photo")
             Section {
                 ItemRow(item: ComponentsFixtures.item(id: "photo", name: "Sample with photo", quantity: 2, photo: photo), tool: .none, thumb: 76, onPress: {})
-            } header: { galleryHeader("Row") }
+            } header: { galleryHeader("Row") }.gallerySection("Row")
         }
     }
 }
@@ -589,4 +620,5 @@ private struct GalleryTapsPage: View {
         }
     }
 }
+
 #endif

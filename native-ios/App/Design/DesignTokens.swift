@@ -19,10 +19,22 @@ extension Color {
 
 /// Colours the components draw with besides the asset catalog's.
 enum DesignColor {
-    /// Errors and "None left" (RN `signal`; 08 §4.5 maps it to the system red).
-    static let signal = Color.red
-    /// The warning banner's wash (RN `signalWash`).
-    static let signalWash = Color.red.opacity(0.12)
+    /// Errors and "None left" as text (RN `signal`, 08 §4.5): `#B3361A` light, `#FF9573` dark.
+    /// The system red (`#FF3B30`) measures 3.5:1 on white and fails WCAG AA for text; these keep
+    /// at least 4.5:1 on the cells, the page and ``signalWash`` in both schemes (6.1:1 on white,
+    /// 5.2:1 on the light wash, 6.8:1 on the dark wash).
+    static let signal = Color(uiColor: UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0xFF / 255, green: 0x95 / 255, blue: 0x73 / 255, alpha: 1)
+            : UIColor(red: 0xB3 / 255, green: 0x36 / 255, blue: 0x1A / 255, alpha: 1)
+    })
+    /// The warning banner's wash (RN `signalWash`): `#FBECE7` light, `#3A231C` dark, opaque so
+    /// the measured contrast holds over any surface.
+    static let signalWash = Color(uiColor: UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0x3A / 255, green: 0x23 / 255, blue: 0x1C / 255, alpha: 1)
+            : UIColor(red: 0xFB / 255, green: 0xEC / 255, blue: 0xE7 / 255, alpha: 1)
+    })
 }
 
 /// The opaque surface a space tile sits on. The tile mixes 24 % of the space colour into it, so
