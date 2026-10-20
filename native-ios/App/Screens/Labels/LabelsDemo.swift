@@ -30,6 +30,7 @@ import InventoryStrings
 /// | `scanBound` | a scan of the Tool chest's label: the Tool chest opens |
 /// | `scanUnknown` | a scan of a label of ours never linked: the label screen's bind picker |
 /// | `codeList` | the typed-code list (Type a code instead) |
+/// | `codeListFailed` | the typed-code list when the household's lists could not be read (Back to the camera stays) |
 /// | `labelResolving`, `labelFailed` | the label screen while its household lookup hangs, or after it failed |
 /// | `labelInvalid` | the label screen for a code that is not ours |
 /// | `labelDeleted` | a label whose container was deleted: linked to nothing again, so the bind picker |
@@ -79,7 +80,7 @@ enum LabelsDemo {
         case .noCamera: scannerFeed = { CameraController(use: .qrCodes, discover: { nil }) }
         }
         codes = demo.codes
-        if demo == .codeList { startScanInCodeList() }
+        if demo == .codeList || demo == .codeListFailed { startScanInCodeList() }
 
         let session = demo.household.map { _ in
             HouseholdSession(origin: "https://box.example", token: "demo-token", deviceId: "demo-device", deviceName: "iPhone", householdName: "Home")
@@ -100,7 +101,7 @@ enum LabelsDemo {
         guard let demo = LabelsDemoState(rawValue: state) else { return }
         let router = app.router
         switch demo {
-        case .camera, .permission, .blocked, .noCamera, .scanNotOurs, .scanOpening, .scanFailed, .scanBound, .scanUnknown, .codeList:
+        case .camera, .permission, .blocked, .noCamera, .scanNotOurs, .scanOpening, .scanFailed, .scanBound, .scanUnknown, .codeList, .codeListFailed:
             router.selectTab(.scan)
         case .labelResolving, .labelFailed:
             router.push(.label(token: AppContainerPreviewData.unboundLabelToken))
@@ -186,7 +187,7 @@ enum LabelsDemo {
 
 /// The labels area's demo states (see ``LabelsDemo``).
 enum LabelsDemoState: String, CaseIterable {
-    case camera, permission, blocked, noCamera, scanNotOurs, scanOpening, scanFailed, scanBound, scanUnknown, codeList
+    case camera, permission, blocked, noCamera, scanNotOurs, scanOpening, scanFailed, scanBound, scanUnknown, codeList, codeListFailed
     case labelResolving, labelFailed, labelInvalid, labelDeleted
     case qrLoading, qrFailed, qrGone
     case sticker, stickerPermission, stickerNotOurs, stickerReplace, stickerMove, stickerLinked, stickerAlready
@@ -225,7 +226,7 @@ enum LabelsDemoState: String, CaseIterable {
     /// The household this state joins, if any.
     var household: LabelsDemoTransport.Mode? {
         switch self {
-        case .scanFailed, .labelFailed, .qrFailed, .stickerContainerFailed: .offline
+        case .scanFailed, .codeListFailed, .labelFailed, .qrFailed, .stickerContainerFailed: .offline
         case .scanOpening, .labelResolving, .qrLoading: .hangs
         case .stickerChecking: .stickerContainer(scanHangs: true)
         case .stickerFailed: .stickerContainer(scanHangs: false)

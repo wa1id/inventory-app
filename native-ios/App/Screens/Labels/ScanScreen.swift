@@ -122,29 +122,33 @@ private struct ScanScreenContent: View {
     /// The camera, full bleed, with the hint, busy or error panel over the bottom of the picture
     /// (06 §8.2). No close button: the Scan tab has nothing to close.
     private var camera: some View {
-        ScreenFrame(.camera) {
-            QrScannerView(
-                model: scan.scanner,
-                onManual: { scan.typeCode() },
-                torchIdentifier: "scan-torch",
-                managesFocus: false,
-                makeFeed: { [feed] in feed }
-            ) {
-                CameraPanel(scan.panel) { action in
-                    switch action {
-                    case .scanAgain, .tryAgain: scan.scanAgain()
-                    case .typeCode: scan.typeCode()
+        VStack(spacing: 0) {
+            ScreenFrame(.camera) {
+                QrScannerView(
+                    model: scan.scanner,
+                    onManual: { scan.typeCode() },
+                    torchIdentifier: "scan-torch",
+                    managesFocus: false,
+                    makeFeed: { [feed] in feed }
+                ) {
+                    CameraPanel(scan.panel) { action in
+                        switch action {
+                        case .scanAgain, .tryAgain: scan.scanAgain()
+                        case .typeCode: scan.typeCode()
+                        }
                     }
                 }
             }
-        }
-        // The scene ends at the tab bar, as in RN: behind the bar is the page, not the picture,
-        // so its glass and the ink of the selected tab read as on every other tab (over a dark
-        // picture the glass turns dark and the ink would vanish).
-        .overlay(alignment: .bottom) {
-            Color.clear
-                .frame(height: 0)
-                .background(Color(.systemBackground).ignoresSafeArea(edges: .bottom))
+            // The scene ends at the tab bar, as in RN: behind the bar is the page, not the
+            // picture, so its glass and the ink of the selected tab read as on every other tab
+            // (over a dark picture the glass turns dark and the ink would vanish). The page is a
+            // one-point strip under the scene that reaches down behind the bar. Being a sibling
+            // rather than an overlay, it also keeps the permission screen's scroll view off the
+            // bottom edge: a scroll view there becomes the tab bar's content, and the bar took its
+            // dark scheme (the selected Scan tab drew grey on grey).
+            Color(.systemBackground)
+                .frame(height: 1)
+                .ignoresSafeArea(edges: .bottom)
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
         }
@@ -155,18 +159,25 @@ private struct ScanScreenContent: View {
 
     /// The typed-code list (06 §8.3): every container by name or by the code on its label, in
     /// the place picker's `open` mode (filter focused, capitals, no "New container in …"). Only a
-    /// container pick does anything. "Back to the camera" sits at the top of the list rather than
-    /// in the navigation bar, which the focused search field takes over, so it is always there.
+    /// container pick does anything. "Back to the camera" is pinned above the picker, as RN pinned
+    /// it beside the heading, rather than in the navigation bar, which the focused search field
+    /// takes over: so it is there while the lists load, when they failed, and however far the list
+    /// has scrolled.
     private var codeList: some View {
         ScreenFrame(.tabRoot) {
-            PlacePickerHost(mode: .open, placeholder: L10n.Scan.codePlaceholder) {
-                ScanBackToCamera { scan.backToCamera() }
-            } onPick: { place in
+            PlacePickerHost(mode: .open, placeholder: L10n.Scan.codePlaceholder) { place in
                 guard case .container(let option) = place else { return }
                 scan.openTyped(containerId: option.id)
             }
+            .safeAreaBar(edge: .top, spacing: 0) {
+                ScanBackToCamera { scan.backToCamera() }
+            }
         }
         .navigationBarTitleDisplayMode(.large)
+        // As over the camera: the pinned button sits outside the list's scroll view, so without
+        // one container to take the screen's identifier (`screen-scan`) it would replace the
+        // button's own (`scan-back-to-camera`).
+        .accessibilityElement(children: .contain)
     }
 }
 
@@ -183,8 +194,12 @@ private struct ScanBackToCamera: View {
             identifier: "scan-back-to-camera",
             action: action
         )
+        // Pinned above the list, outside its scroll view: past AX1 it would take a quarter of the
+        // screen at the largest sizes, as the connection banner would (08 §6).
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
+        .padding(.vertical, 4)
     }
 }
 

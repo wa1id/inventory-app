@@ -273,6 +273,39 @@ struct LabelsQrLabelWriteTests {
         #expect(model.state.labelsName == "label:c1:\(made)")
     }
 
+    @Test("a read already running when the label is replaced never brings the retired label back")
+    func staleReadAfterTheWrite() async {
+        let harness = LabelsQrLabelHarness(label: ScanTestData.token, confirm: [true], holdLookups: true)
+        let model = harness.model()
+        model.focusChanged(true, revision: 0)
+        await harness.qr.lookupLatch?.waitForArrivals(1)
+        await harness.qr.lookupLatch?.release()
+        await LabelsQrLabelHarness.settled(model)
+        #expect(model.state.labelsName == "label:c1:\(ScanTestData.token)")
+
+        // A write elsewhere: the label is read again, and that read (of the old label) is slow.
+        model.revisionChanged(1)
+        await harness.qr.lookupLatch?.waitForArrivals(2)
+
+        // Replace runs meanwhile; the view has not reported its revision bump yet.
+        await model.replace()
+        let made = ScanTestQr.madeToken(1)
+        #expect(model.state.labelsName == "label:c1:\(made)")
+
+        // The slow read answers the retired label: it must not end the hold.
+        await harness.qr.lookupLatch?.release()
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(model.state.labelsName == "label:c1:\(made)", "the retired label came back")
+        #expect(model.written?.token == made)
+
+        // The read set off by the write answers the new label and ends the hold.
+        await harness.qr.lookupLatch?.waitForArrivals(3)
+        await harness.qr.lookupLatch?.release()
+        await LabelsQrLabelHarness.settled(model)
+        #expect(model.written == nil)
+        #expect(model.state.labelsName == "label:c1:\(made)")
+    }
+
     @Test("a read that fails after a write keeps the written label, never the retired one, and no banner")
     func failedReadKeepsTheWrite() async {
         let harness = LabelsQrLabelHarness(label: ScanTestData.token, confirm: [true])

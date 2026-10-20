@@ -66,6 +66,43 @@ struct LabelsScreenWiringTests {
         #expect(router.selectedTab == .home)
     }
 
+    @Test("a linked label that resolves under another screen is replaced once it is back in front")
+    func replacedWhenBackInFront() async throws {
+        let app = await bootedApp()
+        let router = app.router
+        let toolChest = try await containerId("Tool chest", in: app)
+        let token = AppContainerPreviewData.toolChestLabelToken
+        let label = router.push(.label(token: token))
+        // A second screen lands on top before the lookup answers (another link, say).
+        let settings = router.push(.settings)
+        let model = LabelLinkScreen.makeModel(app: app, token: token, address: label.address)
+        router.onRemoval(of: label.address) { model.close() }
+        model.start()
+        await model.waitForLookup()
+        #expect(router.path(.home).map(\.route) == [.label(token: token), .settings], "nothing in front is replaced")
+
+        router.close(settings.address)
+        model.focusGained()
+        #expect(router.path(.home).map(\.route) == [.container(id: toolChest)])
+    }
+
+    @Test("a label that leads to a tab leaves no screen behind on the tab that opened it")
+    func tabDestinationsCloseTheLabel() async throws {
+        let app = await bootedApp()
+        let router = app.router
+        router.selectTab(.spaces)
+        let dropZoneLabel = router.push(.label(token: "a"))
+        LabelLinkScreen.navigate(.dropZoneTab, router: router, address: dropZoneLabel.address)
+        #expect(router.selectedTab == .dropZone)
+        #expect(router.path(.spaces).isEmpty, "the label would wait on Opening… for good")
+
+        router.selectTab(.spaces)
+        let invalidLabel = router.push(.label(token: "b"))
+        LabelLinkScreen.navigate(.home, router: router, address: invalidLabel.address)
+        #expect(router.selectedTab == .home)
+        #expect(router.path(.spaces).isEmpty)
+    }
+
     @Test("picking a container for an unlinked label links it, remembers the place, opens it and says so")
     func bindFromThePicker() async throws {
         let app = await bootedApp()

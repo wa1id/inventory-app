@@ -94,6 +94,16 @@ final class LabelsUITests: XCTestCase {
         XCTAssertTrue(button("scan-type-code").waitForExistence(timeout: 5))
     }
 
+    func testBackToTheCameraStaysWhenTheListsFail() throws {
+        launch(["-demoArea", "labels", "-demoState", "codeListFailed"])
+        XCTAssertTrue(button("error-retry").waitForExistence(timeout: 15))
+        let back = button("scan-back-to-camera")
+        XCTAssertTrue(back.exists)
+        attachScreenshot("scan-code-list-failed")
+        back.tap()
+        XCTAssertTrue(button("scan-type-code").waitForExistence(timeout: 5))
+    }
+
     func testScanningALinkedLabelOpensItsContainer() throws {
         launch(["-demoArea", "labels", "-demoState", "scanBound"])
         XCTAssertTrue(screen("screen-container").waitForExistence(timeout: 15))
@@ -166,6 +176,10 @@ final class LabelsUITests: XCTestCase {
         XCTAssertTrue(text("Not one of our labels").waitForExistence(timeout: 5))
         app.buttons["Go to Home"].tap()
         XCTAssertTrue(screen("screen-home").waitForExistence(timeout: 5))
+        // The label screen went with it: Spaces is back at its root.
+        app.tabBars.buttons["tab-spaces"].tap()
+        XCTAssertTrue(screen("screen-spaces").waitForExistence(timeout: 5))
+        XCTAssertFalse(screen("screen-label").exists)
     }
 
     // MARK: QR label and the sticker camera

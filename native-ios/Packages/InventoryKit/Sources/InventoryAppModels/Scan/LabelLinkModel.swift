@@ -58,6 +58,10 @@ public final class LabelLinkModel {
     @ObservationIgnored private var binding = false
     @ObservationIgnored private var isOpen = true
     @ObservationIgnored private var lookup: Task<Void, Never>?
+    /// The container that replaces this screen, once the label is known to open it (linked
+    /// already, or just linked here). Kept so a replacement that could not happen yet (this
+    /// screen was not the top of its stack) happens when it comes back to the front.
+    @ObservationIgnored private var opening: String?
 
     /// - Parameters:
     ///   - token: The route's `token`, already read with `ScanRules.tokenParam(_:)`.
@@ -115,6 +119,17 @@ public final class LabelLinkModel {
         lookup = nil
     }
 
+    /// The screen came back to the front. If its label already opens a container (the lookup
+    /// found it linked, or it was just linked here) but the container could not replace it then,
+    /// because another screen had been pushed over it meanwhile (a second label opened from the
+    /// system Camera), it replaces it now. Otherwise the screen would wait on "Opening that
+    /// label…", or on its locked list, for good.
+    // RN: app/c/[token].tsx:56-67 (`openRef`); native: the route must be on top to be replaced.
+    public func focusGained() {
+        guard isOpen, let opening else { return }
+        navigate(.replaceWithContainer(id: opening))
+    }
+
     /// Waits for the running lookup (tests; the screen never waits).
     public func waitForLookup() async {
         await lookup?.value
@@ -150,7 +165,12 @@ public final class LabelLinkModel {
             case .bound(let container, _):
                 telemetry.event("qr_deeplink", ["outcome": .string("bound")])
                 state = .resolving
-                navigate(container.id == DropZone.containerId ? .dropZoneTab : .replaceWithContainer(id: container.id))
+                if container.id == DropZone.containerId {
+                    navigate(.dropZoneTab)
+                } else {
+                    opening = container.id
+                    navigate(.replaceWithContainer(id: container.id))
+                }
             case .unknown(let token):
                 telemetry.event("qr_deeplink", ["outcome": .string("unknown")])
                 state = .unknown(token: token)
@@ -205,7 +225,10 @@ public final class LabelLinkModel {
             rememberPlace(option.id)
             haptics(.success)
             // Linked even if they left meanwhile: still say so, but open nothing.
-            if isOpen { navigate(.replaceWithContainer(id: option.id)) }
+            if isOpen {
+                opening = option.id
+                navigate(.replaceWithContainer(id: option.id))
+            }
             toasts.show(ToastOptions(message: L10n.DeepLink.linked(label: label)))
         } catch {
             binding = false

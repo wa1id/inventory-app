@@ -139,6 +139,46 @@ struct LabelLinkLookupTests {
         #expect(harness.telemetry.entries.isEmpty)
     }
 
+    @Test("a linked label whose container could not replace it yet replaces it once back in front")
+    func replacesWhenBackInFront() async {
+        let harness = LabelLinkHarness()
+        harness.qr.answer(ScanTestData.token, with: .success(.bound(container: ScanTestData.container("c9"), token: ScanTestData.token)))
+        let model = harness.model()
+        model.start()
+        await model.waitForLookup()
+        #expect(harness.navigation.destinations == [.replaceWithContainer(id: "c9")])
+
+        // The screen was not on top (the router refused): it is asked again when it is in front.
+        model.focusGained()
+        #expect(harness.navigation.destinations == [.replaceWithContainer(id: "c9"), .replaceWithContainer(id: "c9")])
+
+        // Once replaced (removed), nothing more.
+        model.close()
+        model.focusGained()
+        #expect(harness.navigation.destinations.count == 2)
+    }
+
+    @Test("focus alone opens nothing while the label is unknown, not ours, or in the drop zone")
+    func focusOpensNothingElse() async {
+        let harness = LabelLinkHarness()
+        harness.qr.answer("hello", with: .success(.invalid(raw: "hello")))
+        let invalid = harness.model(token: "hello")
+        invalid.start()
+        await invalid.waitForLookup()
+        invalid.focusGained()
+
+        let unknown = await harness.unknownLabel()
+        unknown.focusGained()
+
+        harness.qr.answer(ScanTestData.otherToken, with: .success(.bound(container: ScanTestData.container(DropZone.containerId, name: nil, shortCode: "DROP"), token: ScanTestData.otherToken)))
+        let dropZone = harness.model(token: ScanTestData.otherToken)
+        dropZone.start()
+        await dropZone.waitForLookup()
+        dropZone.focusGained()
+
+        #expect(harness.navigation.destinations == [.dropZoneTab])
+    }
+
     @Test("an answer for an older attempt is dropped")
     func olderAttempt() async {
         let harness = LabelLinkHarness(holdResolves: true)
@@ -184,6 +224,10 @@ struct LabelLinkLinkTests {
         #expect(model.busyId == "c1")
         await model.link(ScanTestData.option("c2"))
         #expect(harness.qr.lookups == ["c1"])
+        // Not replaced yet (another screen was on top): back in front, the container opens.
+        model.focusGained()
+        #expect(harness.navigation.destinations == [.replaceWithContainer(id: "c1"), .replaceWithContainer(id: "c1")])
+        #expect(harness.qr.bound.count == 1, "nothing is written again")
     }
 
     @Test("a label linked to that container meanwhile writes nothing but still opens it and says so")

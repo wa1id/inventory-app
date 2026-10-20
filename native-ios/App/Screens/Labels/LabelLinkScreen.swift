@@ -12,13 +12,15 @@ import InventoryStrings
 /// not one of ours. The lookup is `LabelLinkModel`'s one-shot read, started on appear; its
 /// `close()` runs when the route leaves its stack (`router.onRemoval`), never on `onDisappear`,
 /// because the picker's "New container in …" covers this screen with the container form and then
-/// links the container it made here.
+/// links the container it made here. A container that could not replace the screen when its
+/// label resolved (another screen was pushed over it) replaces it once it is back in front.
 struct LabelLinkScreen: View {
     /// `ScanRules.tokenParam`'s token (trimmed); the repository decides whether it is ours.
     let token: String
 
     @Environment(AppContainer.self) private var app
     @Environment(\.screenAddress) private var address
+    @Environment(\.isScreenFocused) private var isScreenFocused
     @State private var model: LabelLinkModel?
 
     init(token: String) {
@@ -42,6 +44,10 @@ struct LabelLinkScreen: View {
             model = made
             made.start()
             if let address { app.router.onRemoval(of: address) { made.close() } }
+        }
+        // Back in front with its container known: the replacement that had to wait happens now.
+        .onChange(of: isScreenFocused) { _, focused in
+            if focused { model?.focusGained() }
         }
     }
 
@@ -75,8 +81,13 @@ struct LabelLinkScreen: View {
             guard let address else { return false }
             return router.replace(address, with: .container(id: id))
         case .dropZoneTab:
+            // RN's `goToTab` dismissed the one root stack, this screen with it. With a stack per
+            // tab it would stay behind on the tab that opened it (Home, Spaces), still saying
+            // "Opening that label…" for good, so it closes first.
+            if let address { router.close(address) }
             router.goToTab(.dropZone)
         case .home:
+            if let address { router.close(address) }
             router.goToTab(.home)
         }
         return true
