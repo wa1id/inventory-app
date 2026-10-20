@@ -8,6 +8,7 @@
 #   scripts/mac.sh test [swift-test args]   swift test for Packages/InventoryKit (macOS host, no simulator)
 #   scripts/mac.sh build                    xcodegen + xcodebuild the app for the iOS simulator
 #   scripts/mac.sh apptest [xcodebuild args] run the app-hosted InventoryTests on this checkout's simulator
+#   scripts/mac.sh uitest [xcodebuild args]  run the InventoryUITests UI tests on this checkout's simulator
 #   scripts/mac.sh run [out.png] [args...]  build, install and launch on the simulator (with launch args), then save a screenshot
 #   scripts/mac.sh launch [out.png] [args...] relaunch the installed app with launch args (no build), then save a screenshot
 #   scripts/mac.sh openurl <url> [out.png]  open a URL (deep link) in the simulator, then save a screenshot
@@ -93,6 +94,11 @@ case "$cmd" in
     # otherwise), so sign ad hoc here; these later settings override CODE_SIGNING_ALLOWED=NO.
     run_logged apptest "$ensure_sim && $(xcbuild_app test 'id=$udid' "CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual $*")"
     ;;
+  uitest)
+    sync_up
+    # Its own scheme, so apptest keeps to the unit bundle. Signed ad hoc like apptest.
+    run_logged uitest "$ensure_sim && $generate && xcodebuild -project Inventory.xcodeproj -scheme InventoryUITests -configuration Debug -destination \"id=\$udid\" -derivedDataPath ~/$REMOTE_ROOT/DerivedData CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual $* test"
+    ;;
   run)
     out="${1:-$LOG_DIR/screenshot.png}"
     shift || true
@@ -126,6 +132,6 @@ case "$cmd" in
     echo "removed ~/$REMOTE_ROOT and simulator $SIM_NAME on $MAC_HOST"
     ;;
   *)
-    sed -n '2,20p' "${BASH_SOURCE[0]}"
+    sed -n '2,21p' "${BASH_SOURCE[0]}"
     ;;
 esac

@@ -18,6 +18,13 @@ import Synchronization
 ///   ``advance(by:)`` wakes one, lets it run to its next suspension point, then wakes the
 ///   next, so their effects land in that order and a loop that sleeps again inside the window
 ///   fires as often as it would in real time.
+/// - "Lets it run" waits for the woken work to go quiet, not for a fixed number of yields: the
+///   clock drains the main actor (a main-actor model's timer resumes there and re-arms a new
+///   Task there) and the cooperative pool, and only moves on once several rounds in a row saw
+///   no sleeper register, wake or leave. ``advance(by:)`` does the same before it starts, so a
+///   timer re-armed by the previous advance is asleep again before time moves. Under load this
+///   waits longer instead of letting a late sleeper register after `now` has jumped past its
+///   deadline (which made re-arming timers miss firings).
 /// - A sleep whose deadline has already passed returns at once, as on a real clock.
 /// - Cancelling a sleeping task wakes it with `CancellationError` and forgets the sleeper.
 /// - ``waitForSleepers(_:timeout:)`` suspends until that many sleepers are registered, so a
@@ -142,6 +149,9 @@ public final class ManualClock: Clock, Sendable {
     /// reads the earliest deadline, the sleeper that went to sleep first with that deadline
     /// wakes, and it gets to run to its next suspension point before the next one wakes.
     public func advance(to target: Instant) async {
+        // Work woken earlier (by the last advance, or started just before this call) registers
+        // its sleepers before time moves.
+        await settleUntilQuiet()
         while true {
             let due: Sleeper? = state.withLock { state in
                 // `min(by:)` keeps the first of equal deadlines: registration order.
@@ -157,9 +167,8 @@ public final class ManualClock: Clock, Sendable {
             }
             guard let due else { break }
             due.continuation.resume()
-            await Self.settle()
+            await settleUntilQuiet()
         }
-        await Self.settle()
     }
 
     /// Waits until at least `count` tasks are asleep on this clock.
@@ -201,11 +210,47 @@ public final class ManualClock: Clock, Sendable {
         }
     }
 
-    /// Gives the tasks that were just woken a chance to run to their next suspension point:
-    /// the caller yields repeatedly, each time behind a background-priority hop, so work
-    /// queued on the main actor and on the cooperative pool goes first.
-    private static func settle() async {
-        for _ in 0..<10 {
+    /// Consecutive settle rounds that must see no change before the woken work counts as quiet.
+    static let quietRounds = 3
+    /// The most settle rounds one wait takes, so a task that keeps sleeping and waking at an
+    /// already-passed deadline cannot stall a test for ever.
+    static let maximumRounds = 200
+
+    /// What changes whenever a sleeper (or a sleeper waiter) registers, wakes or is cancelled.
+    private var activity: Activity {
+        state.withLock { Activity(nextID: $0.nextID, sleepers: $0.sleepers.count) }
+    }
+
+    private struct Activity: Equatable {
+        let nextID: UInt64
+        let sleepers: Int
+    }
+
+    /// Lets the tasks that were just woken run until they suspend somewhere else: settle rounds
+    /// repeat until ``quietRounds`` of them in a row saw no sleeper activity.
+    private func settleUntilQuiet() async {
+        var last = activity
+        var quiet = 0
+        var rounds = 0
+        while quiet < Self.quietRounds, rounds < Self.maximumRounds {
+            await Self.settleRound()
+            rounds += 1
+            let current = activity
+            if current == last {
+                quiet += 1
+            } else {
+                quiet = 0
+                last = current
+            }
+        }
+    }
+
+    /// One round: drain the main actor (its queue is first in, first out, so every job enqueued
+    /// before this hop has run when it returns), then yield to the cooperative pool behind
+    /// background-priority hops, so work queued there at a higher priority goes first.
+    private static func settleRound() async {
+        await MainActor.run {}
+        for _ in 0..<3 {
             await Task.detached(priority: .background) { await Task.yield() }.value
             await Task.yield()
         }
