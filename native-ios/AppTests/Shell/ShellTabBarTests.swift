@@ -12,7 +12,12 @@ struct ShellTabBarTests {
         let app = AppContainer.preview()
         await app.boot.run()
         let tabBarChrome = ShellTabBarChrome()
-        let host = try ShellTestWindow(MainShell().shellEnvironment(app).environment(\.shellTabBarChrome, tabBarChrome))
+        // A phone-sized compact window, so an iPad shows the bottom bar too.
+        let host = try ShellTestWindow(
+            MainShell().shellEnvironment(app).environment(\.shellTabBarChrome, tabBarChrome),
+            size: CGSize(width: 402, height: 874),
+            horizontalSizeClass: .compact
+        )
         defer { host.close() }
 
         var controller: UITabBarController?
@@ -23,19 +28,6 @@ struct ShellTabBarTests {
         let tabBar = try #require(controller?.tabBar)
         await ShellTestWait.until("the badge") { app.dropZone.count == 4 }
         try await Task.sleep(for: .milliseconds(500))
-
-        // What UIKit built, for whoever has to change the bridge.
-        for view in tabBar.shellDescendants where view.isAccessibilityElement || view is UIControl {
-            print("tab bar view: \(type(of: view)) control=\(view is UIControl) element=\(view.isAccessibilityElement) label=\(view.accessibilityLabel ?? "-") id=\(view.accessibilityIdentifier ?? "-") hint=\(view.accessibilityHint ?? "-") frame=\(view.convert(view.bounds, to: tabBar))")
-        }
-        print("tab bar items: \((tabBar.items ?? []).map { "\($0.title ?? "-")|\($0.accessibilityIdentifier ?? "-")|\($0.badgeValue ?? "-")" })")
-        print("tab bar bounds: \(tabBar.bounds)")
-        let elements = tabBar.accessibilityElements ?? []
-        print("tab bar accessibility elements: \(tabBar.accessibilityElementCount()) / \(elements.count)")
-        for element in elements {
-            let object = element as AnyObject
-            print("tab bar element: \(type(of: object)) label=\((object as? NSObject)?.accessibilityLabel ?? "-") id=\((object as? UIAccessibilityIdentification)?.accessibilityIdentifier ?? "-")")
-        }
 
         #expect(tabBar.items?.map(\.title) == AppTab.allCases.map(\.title))
         let buttons = ShellTabBarCoordinator.itemButtons(in: tabBar)
@@ -48,7 +40,15 @@ struct ShellTabBarTests {
         }
         #expect(tabBar.items?.last?.badgeValue == "4")
         #expect(tabBar.items?.map(\.accessibilityIdentifier) == AppTab.allCases.map(\.accessibilityIdentifier))
-        #expect(tabBar.gestureRecognizers?.contains { ($0 as? UILongPressGestureRecognizer)?.minimumPressDuration == 0.35 } == true)
+        // The long press sits on the tab bar controller's view and takes touches on Add only.
+        let tabs = try #require(controller)
+        #expect(tabs.view.gestureRecognizers?.contains { ($0 as? UILongPressGestureRecognizer)?.minimumPressDuration == 0.35 } == true)
+        let addFrames = ShellTabBarCoordinator.addItemFrames(in: tabs)
+        #expect(addFrames.contains { $0.contains(add.convert(CGPoint(x: add.bounds.midX, y: add.bounds.midY), to: tabs.view)) })
+        // The badge is tape with ink text.
+        let badgeLabels = ShellTapeBadge.labels(in: tabBar).filter { $0.text == "4" }
+        #expect(!badgeLabels.isEmpty)
+        #expect(badgeLabels.allSatisfy { $0.textColor == ShellTabBarCoordinator.tapeInk && $0.superview?.backgroundColor == ShellTabBarCoordinator.tape })
 
         // The tab bar is the toasts' bottom chrome while nothing is presented. It never registers
         // with ToastCenter, where it could outrank a pushed screen's bottom bar.

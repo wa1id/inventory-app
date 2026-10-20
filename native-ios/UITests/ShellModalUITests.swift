@@ -43,7 +43,7 @@ final class ShellModalUITests: XCTestCase {
     func testSnapSeveralReplacesTheAddSheetWithTheCamera() throws {
         launch()
         XCTAssertTrue(screen("screen-home").waitForExistence(timeout: 15))
-        app.tabBars.buttons["tab-add"].tap()
+        app.shellTab("tab-add").tap()
         XCTAssertTrue(screen("screen-add").waitForExistence(timeout: 5))
 
         app.buttons["item-snap-several"].tap()
@@ -53,7 +53,7 @@ final class ShellModalUITests: XCTestCase {
         attachScreenshot("snap-several-camera")
         app.buttons["capture-close"].tap()
         XCTAssertTrue(screen("screen-home").waitForExistence(timeout: 5))
-        XCTAssertTrue(app.tabBars.buttons["tab-home"].isHittable)
+        XCTAssertTrue(app.shellTab("tab-home").isHittable)
     }
 
     func testTypeItInsteadReplacesTheCameraWithTheAddSheet() throws {
@@ -70,7 +70,7 @@ final class ShellModalUITests: XCTestCase {
         XCTAssertTrue(waitForAbsence(screen("screen-capture")))
         app.buttons["add-cancel"].tap()
         XCTAssertTrue(screen("screen-home").waitForExistence(timeout: 5))
-        XCTAssertTrue(app.tabBars.buttons["tab-home"].isHittable)
+        XCTAssertTrue(app.shellTab("tab-home").isHittable)
     }
 
     func testKeepShootingReplacesTheReviewWithANewCameraInTheSameCover() throws {
@@ -102,13 +102,13 @@ final class ShellModalUITests: XCTestCase {
 
         app.buttons["home-settings"].tap()
         XCTAssertTrue(screen("screen-settings").waitForExistence(timeout: 5))
-        app.tabBars.buttons["tab-home"].tap()
+        app.shellTab("tab-home").tap()
         XCTAssertTrue(screen("screen-home").waitForExistence(timeout: 5))
         XCTAssertTrue(waitForAbsence(screen("screen-settings")))
         // The pop is the whole answer: no "scroll to top / focus search" on top of it.
         XCTAssertEqual(screen("debug-home-reselections").label, "0")
 
-        app.tabBars.buttons["tab-home"].tap()
+        app.shellTab("tab-home").tap()
         let one = expectation(for: NSPredicate(format: "label == '1'"), evaluatedWith: screen("debug-home-reselections"))
         XCTAssertEqual(XCTWaiter().wait(for: [one], timeout: 5), .completed)
     }
@@ -120,7 +120,7 @@ final class ShellModalUITests: XCTestCase {
         attachScreenshot("toast-over-tabs")
 
         // The tab bar sits under the overlay window: the touch reaches it.
-        app.tabBars.buttons["tab-spaces"].tap()
+        app.shellTab("tab-spaces").tap()
         XCTAssertTrue(screen("screen-spaces").waitForExistence(timeout: 5))
         XCTAssertTrue(screen("toast").exists)
 
@@ -139,6 +139,6 @@ final class ShellModalUITests: XCTestCase {
 
         XCTAssertTrue(waitForAbsence(screen("revoked")))
         XCTAssertTrue(screen("screen-home").waitForExistence(timeout: 5))
-        XCTAssertTrue(app.tabBars.buttons["tab-home"].isHittable)
+        XCTAssertTrue(app.shellTab("tab-home").isHittable)
     }
 }

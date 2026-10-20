@@ -15,8 +15,8 @@ writing. When they change, update this file in the same commit.
 | `…/InventoryAppModels/{Home,Entities,Capture,Scan,Household,Sync,Shell,Query}/` | The wave-3 models (flows, stores, queries). They are UI-free and tested with `mac.sh test`. |
 | `…/InventoryAppModels/Screens/<Area>/` | The screens' own models and wiring (wave 5): `SpacesScreenModel`, `BackupScreenModel`, `QrLabelModel`, `ContainerDetailModel`, `ItemDetailModel`, … (§6). |
 | `…/InventoryAppModels/Components/`, `…/Media/` | The pure logic behind the components and media views (copy, layout rules, the thumbnail loader). |
-| `App/Shell/` | The root view, tabs, overlay window (toasts, removed-phone layer), `ScreenFrame`, `BottomBar`, focus modifiers, dialogs, haptics, the DEBUG demo. |
-| `App/Navigation/` | The tab stacks, the modal presentation and the route → screen switch. |
+| `App/Shell/` | The root view, tabs and the tab bar bridge, overlay window (toasts, removed-phone layer), `ScreenFrame`, `BottomBar`, focus modifiers, dialogs, haptics, the DEBUG demo (§7). |
+| `App/Navigation/` | The tab stacks, the modal presentation, the iPad's readable column and the route → screen switch (§7, §8). |
 | `App/Screens/<Area>/` | The screens (§6) and each area's DEBUG demo hooks (`<Area>Demo.swift`). |
 | `App/Screens/Shared/` | Screen-level views several areas embed: `PlacePickerHost`; the foundation gallery. |
 | `App/Design/` | Tokens, glyphs, type roles, `LayoutScale`, `WrappingHStack`, accessibility helpers. |
@@ -129,6 +129,7 @@ struct SpaceDetailScreen: View {
 | `\.shellWindowSize` | `CGSize` | The window size, safe area included. `.zero` until measured. |
 | `\.layoutWindowWidth` | `CGFloat` | The window width that `LayoutScale` reads. `RootView` sets it, and it is `.infinity` outside the app (previews), so there nothing stacks for width alone. |
 | `\.shellTabBarChrome` | `ShellTabBarChrome?` | The shell's own: the tab bar height for the toast position. |
+| `\.shellReadableColumn`, `\.shellColumnInset` | `Bool`, `CGFloat` | The shell's own: true inside its tab and sheet stacks, which keep their screens to the iPad's 640 pt column through the safe area (§8.2), and the padding on each side (0 on an iPhone or in a narrow window). `ScreenFrame` reads the first. |
 
 ### 1.4 `ScreenFrame` and `BottomBar`
 
@@ -141,9 +142,11 @@ ScreenFrame(_ kind: Kind, banner: Bool? = nil, background: Background = .grouped
   `.camera`. `.camera` is full bleed on black in a dark scheme with a white tint, and has no
   banner, but keeps the bottom bar.
 - The frame draws the connection banner in a top inset, outside any scroll view, so it never
-  scrolls away (`banner: false` turns it off). It keeps the content to a 640 pt column centred
-  on iPad, and puts `systemGroupedBackground` (`.grouped`) or `systemBackground` (`.plain`)
-  behind it.
+  scrolls away (`banner: false` turns it off), and puts `systemGroupedBackground` (`.grouped`)
+  or `systemBackground` (`.plain`) behind the content. On an iPad the content keeps to a 640 pt
+  centred column: in the shell's stacks the stack pads the safe area (the list still spans the
+  window and scrolls from anywhere, §8.2); outside them (galleries, previews) the frame caps the
+  content's width itself.
 - The bottom bar is an iOS 26 `safeAreaBar`: content scrolls under it and it rises with the
   keyboard. Forms put Save here, not in the toolbar.
 
@@ -316,7 +319,13 @@ stores and seams: `toasts: app.toasts`, `confirm: app.platform.confirm`,
   - `mac.sh apptest`: hosted SwiftUI and UIKit tests. `AppTests/Shell/ShellHostingSupport.swift`
     and `AppTests/Components/ComponentsHost.swift` host a view in a window.
   - `mac.sh uitest`: XCUITest in `UITests/`, launched with `-demo YES`. Find elements by the
-    RN testIDs kept as accessibility identifiers.
+    RN testIDs kept as accessibility identifiers. Find a tab with `app.shellTab("tab-spaces")`
+    (`UITests/ShellUITestSupport.swift`): on an iPad the tabs are not in `app.tabBars` (§7.1).
+  - `DEVICE=ipad` (iPad Pro 13") or `DEVICE=se` (iPhone SE, 375 pt) runs `apptest`, `uitest`,
+    `run`, `launch` and `openurl` on a second simulator. `ShellTestWindow(view, size:,
+    horizontalSizeClass:)` hosts a view in a window of any size and size class (a Split View
+    window), and hands it the scene's real phase (`\.scenePhase` is active on an iPhone, so cameras
+    start; the iPad simulator can keep the test host's scene inactive).
 
 ## 2. Shared components
 
@@ -488,8 +497,9 @@ draws its pieces in stock stacks (`ViewThatFits`: one line, else the tape under 
   builds stand in for the capture camera, `CaptureDemo`). A run with
   `CONTENT_SIZE=accessibility-extra-extra-extra-large` leaves the simulator at AX5, and the next
   `apptest`/`uitest` inherits it: run a plain `launch` first.
-- Check every screen in light and dark mode, at AX5 and on a 360 pt-wide window. The iPad
-  layout is untested so far.
+- Check every screen in light and dark mode, at AX5, on a 360 pt-wide window and on an iPad in
+  both orientations (§8). On an iPad a toolbar holds few buttons beside the top tab bar: more
+  than two trailing buttons fold into a "More" menu.
 
 ## 5. Screen foundation
 
@@ -781,3 +791,142 @@ It draws its own Cancel (`add-cancel`, which asks before discarding typing) and 
 Over the live camera the status bar is hidden (§4). Under `-demo` on the simulator,
 `CaptureDemo` installs a stand-in camera with permission granted for every capture screen,
 including the Add sheet's; a device and release builds use the real camera.
+
+## 7. The shell
+
+What `App/Shell` and `App/Navigation` do around the screens, for whoever changes them. Screens
+only use the environment (§1.3), `ScreenFrame` and `BottomBar` (§1.4) and the router (§1.6).
+
+| Piece | File | What it does |
+|---|---|---|
+| `RootView` | `Shell/RootView.swift` | The boot gate (failed, booting, onboarding, main); installs the overlay window once the gate has passed; measures the window (`shellWindowSize`, `layoutWindowWidth`). |
+| `MainShell` | `Shell/MainShell.swift` | `TabView` with `.sidebarAdaptable` (U4): Home · Spaces · Add · Scan · Drop zone. The selection binding refuses Add (the Add sheet and `tap` instead) and turns a re-tap into `reselections`; the Drop zone badge; Home's focus feeds `searchFocus`; the shared drop-zone read follows the tab shell's focus. |
+| `ShellTabBarBridge` | `Shell/ShellTabBarBridge.swift` | The UIKit side of whichever bar shows (§7.1): Add's long press, the tape badge, Add's VoiceOver hint and action, the items' identifiers, the toast chrome. |
+| `ShellTabStack`, `ShellModalPresentation`, `ShellModalScreen`, `ShellSheetCancel` | `Navigation/ShellStacks.swift` | Stacks bound to the router; one modal per level, the next one presented once the old one has gone (§1.1); the sheets' Cancel. |
+| `ShellReadableColumn`, `ShellStackProbe` | `Navigation/ShellReadableColumn.swift` | The iPad's readable column (§8.2) and the end of a pop (§7.2). |
+| Overlay window | `Shell/ShellOverlayWindow.swift`, `ToastHost.swift`, `RevokedOverlay.swift` | Toasts and the removed-phone layer above every sheet (D-8). |
+| Dialogs, haptics, platform | `Shell/ShellDialogs.swift`, `ShellHaptics.swift`, `ShellPlatform.swift` | `app.platform.confirm` / `.actionSheets`, the haptic engine, announcements. |
+| Quick actions | `Shell/ShellAppDelegate.swift`, `InventoryApp.swift` | The scene delegate posts the Home Screen quick action to the router, which opens it in front once the main shell shows. |
+
+### 7.1 Tabs
+
+- **Three bars, one `TabView`.** An iPhone, and an iPad in a compact window, show the bottom
+  `UITabBar` (symbols and titles). An iPad in a regular window shows the floating tab bar at the
+  top (titles only, with a button that opens the sidebar) in portrait, and the sidebar by
+  default in landscape. The system picks; the shell treats the three alike.
+- **Identifiers and labels.** Every item carries RN's testID (`tab-home` … `tab-drop-zone`) and
+  RN's label: "Add an item" with the long-press hint and a "Quick Snap" custom action, and
+  "Drop zone, 4 waiting" (the sidebar's own trailing count is hidden from VoiceOver, so the
+  number is read once). XCUITest sees the bottom bar's items as `tabBars.buttons`, the top bar's
+  as plain `buttons` and the sidebar's rows as `cells`: use `app.shellTab(id)`.
+- **Add.** A tap presents the Add sheet with the `tap` haptic and leaves the selected tab alone,
+  on every bar. A 350 ms press presents Quick Snap with `longPress`: the bridge puts one long
+  press on the tab bar controller's view that only takes touches on the Add item (the bottom
+  bar's button, the top bar's item or the sidebar's row, found by their title), and the bars'
+  own recognisers wait for it to fail, so a long press never also opens the Add sheet (a
+  selection on release is ignored for a second as well, `Router.addLongPressSuppression`).
+  VoiceOver users get "Quick Snap" as the item's custom action. The Home Screen quick action
+  "Quick Snap" opens it in front of whatever shows.
+- **Badge.** Yellow tape with ink text on every bar (U2: waiting is not an alarm). The bottom bar
+  takes it from its item (`badgeColor`) and appearance. The top bar ignores both and draws a
+  red capsule, which the bridge recolours where it is drawn (found by its number inside the
+  Drop zone item); the sidebar draws a grey count, which gets a tape capsule behind it
+  (`ShellTapeBadgeBackdrop`). The bars redraw their items after a touch, a selection, a new
+  count, a rotation, the sidebar opening or the keyboard coming and going, so the bridge styles
+  them again then, every 100 ms for 1.5 s while their animations settle, and once a second
+  while a regular-width bar shows (a pass that finds everything styled changes nothing). No
+  private API is called.
+- **Over the camera.** The floating bar's glass turns dark over the Scan tab's black camera, but
+  its selected item kept the light appearance's ink and vanished. While the Scan tab shows its
+  root, the bridge gives the top bar and the sidebar the dark appearance and the dark ink
+  (`darkChrome`); the bottom bar keeps its own look.
+- **Toast chrome.** Only a bar along the window's bottom edge lifts the toast: the bottom
+  `UITabBar` while the tab shell is in front. On an iPad's top bar or sidebar the toast keeps
+  to the bottom safe area.
+
+### 7.2 Navigation details
+
+- **Search after a pop.** `Router.focusSearch()` from a screen pushed on Home's own stack pops
+  that stack and waits for the pop to end before Home focuses its field (RN's root-stack
+  `transitionEnd`). The tab stack reports the end itself: each time its path gets shorter,
+  `ShellStackProbe` watches the navigation controller's transition and calls
+  `searchFocus.transitionEnded()` when it completes (a sheet's dismissal already reported
+  through `modalDismissalFinished()`). `HomeSearchFocus`'s 600 ms fallback stays for a pop with
+  no animation. On iOS 26 the pop's spring runs about 0.7 s on the simulator, longer than the
+  fallback, so the report, not the fallback, is what times the keyboard after the animation.
+  (Home's own `HomeTransitionProbe` does the same from inside Home and is now redundant.)
+- **Reduce Motion.** The shell animates nothing of its own but the toast (no rise and no fade
+  when reduced, `ToastHost`) and the removed-phone layer's fade (an opacity change, which Reduce
+  Motion keeps). Pushes, sheets, covers and the tab bars are the system's and follow the
+  setting themselves.
+- **Accessibility audits.** `UITests/ShellAccessibilityUITests.swift` runs Xcode's audit over
+  the tab items, the connection banner (`-demoHousehold offline`) and the removed-phone layer
+  (`-demoHousehold revoked`), on an iPhone and with `DEVICE=ipad`; each exception is written
+  next to the test with its reason.
+- **Scene phase in hosted tests.** `ShellTestWindow` hands its view the scene's real phase
+  (active while tests run on an iPhone, sometimes inactive on the iPad simulator); SwiftUI
+  only sets `\.scenePhase` for its own scenes, so a bare hosting controller reported
+  `.background`. Tests that force `.active` still work.
+
+## 8. iPad
+
+DECISIONS U4: iPad is supported, full screen and in multitasking windows, all orientations on
+iPad (the capture screen included) and portrait only on iPhone.
+
+### 8.1 What was checked, and how
+
+- Every tab and the main pushed and modal screens on the iPad Pro 13" simulator in portrait,
+  turned to landscape and back, light and dark: `IPadShellUITests.testEveryScreenInBothOrientations`
+  attaches a screenshot of each (Home, Spaces, Scan, Drop zone, Settings, a space, a container,
+  an item, the Add sheet, Move, Edit details, New space, Quick Snap, the photo, a toast and the
+  connection banner). Export them with `xcrun xcresulttool export attachments` from the newest
+  result bundle under `DerivedData/Logs/Test`. A landscape screenshot comes out in the
+  portrait frame buffer: turn it upright before looking. For dark mode, run a
+  `APPEARANCE=dark DEVICE=ipad mac.sh launch` first (the simulator keeps the appearance; a plain
+  `launch` sets it back).
+- Add in the top bar and in the sidebar (portrait and landscape), its long press, the badge's
+  label, and the Home Screen quick action through SpringBoard: `IPadShellUITests` (the quick
+  action test skips when SpringBoard shows the icon nowhere it can reach; the route itself is
+  device-independent and covered by `DeepLinkAndFocusTests` and `ShellRootViewTests`). Deep links:
+  `ShellDeepLinkUITests` run with `DEVICE=ipad`. The bars' internals (the long press on Add, the
+  tape badge on the top bar and in the sidebar, the column, the toast chrome): `ShellIPadTests`
+  (hosted; the iPad-only tests are skipped on an iPhone).
+- **Narrow windows.** The simulator cannot be put into Split View or Slide Over from a script,
+  so `ShellIPadTests.narrowWindow` hosts the shell in a 320 pt window with a compact size
+  class (what iPadOS gives a narrow Split View or Slide Over window): the bottom tab bar takes
+  over, Add's long press and the toast chrome follow it, and the column adds nothing.
+  `DEVICE=se` (375 pt) covers the narrowest iPhone; `LayoutScale` stacks below 360 pt.
+- **Rotation.** iPhone: portrait (and upside down on a Touch ID phone), from Info.plist, so the
+  capture cover is portrait too. iPad: all four orientations everywhere, the capture cover
+  included; its chrome lays out in both (checked with the demo's stand-in camera). The camera
+  preview and the photo's orientation follow the device through
+  `AVCaptureDevice.RotationCoordinator` (`CameraController`): only a real iPad can check them.
+- **Sheets and the keyboard.** Sheets keep iOS 26's default size on iPad: a centred form sheet
+  for the Add sheet, the forms, Move and Edit details; covers fill the screen. With the keyboard
+  up the sheet moves up and its bottom bar (Save) stays above the keyboard in both orientations.
+  The toast sits centred above the bottom safe area in both orientations.
+
+### 8.2 Decisions
+
+- **Readable column (U4).** RN capped the content at 640 pt (`CONTENT_MAX_WIDTH`). Stock iPad
+  apps put the large title and the search field at the window's leading margin, which over a
+  centred 640 pt list left a title far from its list and a search field four times as wide.
+  The native app keeps one column: in a stack wider than 640 pt (`ShellReadableColumn`), each
+  screen's safe area is padded on both sides, so rows, forms and bottom bars sit in the column
+  while the list itself spans the window (it scrolls and refreshes from anywhere, and the scroll
+  edge effect runs edge to edge); and the navigation bar's layout margins grow by the same
+  padding, so the large title and the search field line up on the column. The bar's buttons
+  stay at the window's edges: pulled into the column they no longer fit beside the top tab bar
+  and fold into a "More" menu. Sheets keep the column too (a form sheet is about as wide);
+  covers (the cameras, the photo) are full bleed. A window no wider than the column (every
+  iPhone, a narrow iPad window) gets nothing.
+- **Tabs.** `.sidebarAdaptable` as decided (U4): the top bar in portrait, the sidebar in
+  landscape, the bottom bar in a narrow window; search stays on Home (U5).
+- **Orientation.** No orientation lock in code: Info.plist alone (portrait on iPhone, all four on
+  iPad).
+
+### 8.3 Left to the screens' owners
+
+- Container detail opens with its large title already collapsed into the inline title (on an
+  iPhone as on an iPad in portrait; D-9 wants it large until the list scrolls). It shows large
+  after a rotation.

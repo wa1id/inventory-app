@@ -47,15 +47,14 @@ final class ShellDeepLinkUITests: XCTestCase {
         app.launchArguments = ["-demo", "YES"]
         app.launch()
         XCTAssertTrue(screen("screen-home").waitForExistence(timeout: 15))
-        app.tabBars.buttons["tab-spaces"].tap()
+        app.shellTab("tab-spaces").tap()
         XCTAssertTrue(screen("screen-spaces").waitForExistence(timeout: 5))
 
         try openLink()
 
         XCTAssertTrue(screen("screen-label").waitForExistence(timeout: 10))
         attachScreenshot("deeplink-warm")
-        print("tab states: \(app.tabBars.buttons.allElementsBoundByIndex.map { "\($0.identifier)=\($0.isSelected)" })")
-        XCTAssertTrue(app.tabBars.buttons["tab-spaces"].isSelected)
+        XCTAssertTrue(app.shellTab("tab-spaces").isSelected)
         app.navigationBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(screen("screen-spaces").waitForExistence(timeout: 5))
     }
@@ -72,7 +71,7 @@ final class ShellDeepLinkUITests: XCTestCase {
         // Welcome's "Use this phone on its own" finishes onboarding (the gate flips by itself).
         app.buttons["onboarding-local"].tap()
         XCTAssertTrue(screen("screen-label").waitForExistence(timeout: 10))
-        XCTAssertTrue(app.tabBars.buttons["tab-home"].isSelected)
+        XCTAssertTrue(app.shellTab("tab-home").isSelected)
         app.navigationBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(screen("screen-home").waitForExistence(timeout: 5))
     }
@@ -91,7 +90,7 @@ final class ShellDeepLinkUITests: XCTestCase {
         if onboarding.waitForExistence(timeout: 5) { onboarding.tap() }
         XCTAssertTrue(screen("screen-label").waitForExistence(timeout: 15))
         attachScreenshot("deeplink-cold")
-        XCTAssertTrue(app.tabBars.buttons["tab-home"].isSelected)
+        XCTAssertTrue(app.shellTab("tab-home").isSelected)
         app.navigationBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(screen("screen-home").waitForExistence(timeout: 5))
     }
