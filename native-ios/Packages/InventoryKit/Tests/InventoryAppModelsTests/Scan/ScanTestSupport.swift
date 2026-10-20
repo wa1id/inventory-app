@@ -6,7 +6,8 @@ import Testing
 @testable import InventoryAppModels
 
 /// A QR repository for the scan and label tests: scripted answers, optionally held until the test
-/// lets them through.
+/// lets them through. Writes (`bind`, `createAndBind`, `unbind`) change what `getByContainer`
+/// answers afterwards, as the real repositories do.
 final class ScanTestQr: QrRepository {
     private struct State {
         var outcomes: [String: Result<ScanOutcome, any Error>] = [:]
@@ -14,8 +15,13 @@ final class ScanTestQr: QrRepository {
         var existing: [String: QrBinding] = [:]
         var getError: (any Error)?
         var bindError: (any Error)?
+        var createError: (any Error)?
+        var unbindError: (any Error)?
         var bound: [(token: String, containerId: String)] = []
+        var created: [String] = []
+        var unbound: [String] = []
         var lookups: [String] = []
+        var madeCount = 0
     }
 
     private let state = Mutex(State())
@@ -26,10 +32,14 @@ final class ScanTestQr: QrRepository {
     /// When set, every `bind` waits for the test.
     let bindLatch: ScanTestLatch?
 
-    init(holdResolves: Bool = false, holdLookups: Bool = false, holdBinds: Bool = false) {
+    /// When set, every `createAndBind` and `unbind` waits for the test.
+    let writeLatch: ScanTestLatch?
+
+    init(holdResolves: Bool = false, holdLookups: Bool = false, holdBinds: Bool = false, holdWrites: Bool = false) {
         resolveLatch = holdResolves ? ScanTestLatch() : nil
         lookupLatch = holdLookups ? ScanTestLatch() : nil
         bindLatch = holdBinds ? ScanTestLatch() : nil
+        writeLatch = holdWrites ? ScanTestLatch() : nil
     }
 
     func answer(_ raw: String, with outcome: Result<ScanOutcome, any Error>) {
@@ -48,6 +58,26 @@ final class ScanTestQr: QrRepository {
     var bindError: (any Error)? {
         get { state.withLock { $0.bindError } }
         set { state.withLock { $0.bindError = newValue } }
+    }
+
+    var createError: (any Error)? {
+        get { state.withLock { $0.createError } }
+        set { state.withLock { $0.createError = newValue } }
+    }
+
+    var unbindError: (any Error)? {
+        get { state.withLock { $0.unbindError } }
+        set { state.withLock { $0.unbindError = newValue } }
+    }
+
+    /// The containers `createAndBind` made a label for, oldest first.
+    var created: [String] { state.withLock { $0.created } }
+    /// The containers `unbind` removed a label from, oldest first.
+    var unbound: [String] { state.withLock { $0.unbound } }
+
+    /// The token the `n`th `createAndBind` (from 1) writes: 32 hex digits of `n`.
+    static func madeToken(_ n: Int) -> String {
+        String(repeating: String(n % 10), count: 32)
     }
 
     var resolved: [String] { state.withLock { $0.resolved } }
@@ -81,13 +111,38 @@ final class ScanTestQr: QrRepository {
         let error = state.withLock { $0.bindError }
         if let bindLatch { await bindLatch.hold() }
         if let error { throw error }
-        state.withLock { $0.bound.append((token, containerId)) }
-        return QrBinding(id: "b1", token: token, containerId: containerId, createdAt: 1, updatedAt: 1)
+        let binding = QrBinding(id: "b1", token: token, containerId: containerId, createdAt: 1, updatedAt: 1)
+        state.withLock {
+            $0.bound.append((token, containerId))
+            $0.existing[containerId] = binding
+        }
+        return binding
     }
 
     func getByToken(_ token: String) async throws -> QrBinding? { nil }
-    func createAndBind(_ containerId: String) async throws -> QrBinding { throw ScanTestError() }
-    func unbind(_ containerId: String) async throws -> Bool { false }
+
+    func createAndBind(_ containerId: String) async throws -> QrBinding {
+        let error = state.withLock { $0.createError }
+        if let writeLatch { await writeLatch.hold() }
+        if let error { throw error }
+        return state.withLock { state in
+            state.madeCount += 1
+            let binding = QrBinding(id: "made-\(state.madeCount)", token: Self.madeToken(state.madeCount), containerId: containerId, createdAt: 2, updatedAt: 2)
+            state.created.append(containerId)
+            state.existing[containerId] = binding
+            return binding
+        }
+    }
+
+    func unbind(_ containerId: String) async throws -> Bool {
+        let error = state.withLock { $0.unbindError }
+        if let writeLatch { await writeLatch.hold() }
+        if let error { throw error }
+        return state.withLock { state in
+            state.unbound.append(containerId)
+            return state.existing.removeValue(forKey: containerId) != nil
+        }
+    }
 }
 
 /// Holds async calls until the test lets them through, oldest first.
