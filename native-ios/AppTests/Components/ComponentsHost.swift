@@ -75,7 +75,7 @@ enum ComponentsHost {
             .environment(\.layoutWindowWidth, width)
             .frame(width: width)
         let host = UIHostingController(rootView: root)
-        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: width, height: 1200))
+        let window = makeWindow(width: width)
         window.rootViewController = host
         window.makeKeyAndVisible()
         let fitting = host.sizeThatFits(in: CGSize(width: width, height: 20_000))
@@ -92,7 +92,7 @@ enum ComponentsHost {
             RunLoop.main.run(until: Date().addingTimeInterval(0.15))
         }
         var elements: [Element] = []
-        collect(host.view, into: &elements, depth: 0)
+        if let view = host.view { collect(view, into: &elements, depth: 0) }
         window.isHidden = true
         return Rendered(size: settled, elements: elements)
     }
@@ -104,7 +104,7 @@ enum ComponentsHost {
     static func renderAfter<V: View>(_ delay: Duration, _ view: V, width: CGFloat = 390) async -> Rendered {
         _ = accessibilityEnabled
         let host = UIHostingController(rootView: view.environment(\.layoutWindowWidth, width).frame(width: width))
-        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: width, height: 1200))
+        let window = makeWindow(width: width)
         window.rootViewController = host
         window.makeKeyAndVisible()
         host.view.frame = window.bounds
@@ -115,9 +115,19 @@ enum ComponentsHost {
         host.view.layoutIfNeeded()
         try? await Task.sleep(for: .milliseconds(150))
         var elements: [Element] = []
-        collect(host.view, into: &elements, depth: 0)
+        if let view = host.view { collect(view, into: &elements, depth: 0) }
         window.isHidden = true
         return Rendered(size: fitting, elements: elements)
+    }
+
+    /// A window in the test host's scene, at the given width (`UIWindow(frame:)` is deprecated).
+    private static func makeWindow(width: CGFloat) -> UIWindow {
+        guard let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first else {
+            preconditionFailure("The app-hosted tests run inside the app, which always has a window scene.")
+        }
+        let window = UIWindow(windowScene: scene)
+        window.frame = CGRect(x: 0, y: 0, width: width, height: 1200)
+        return window
     }
 
     private static func identifier(of object: NSObject) -> String {

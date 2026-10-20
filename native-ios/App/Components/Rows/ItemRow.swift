@@ -9,7 +9,9 @@ import InventoryStrings
 /// The quantity control sits beside the pressable row, never inside it. The row speaks as one
 /// sentence: name, where, how many. Value-typed, so a renamed space or container redraws it.
 struct ItemRow: View {
-    /// The control at the end of the row (RN `tool`).
+    /// The control at the end of the row (RN `tool`). The chip and stepper take the item's
+    /// `SavedQuantityModel`; a screen keeps them in an `ItemRowQuantityModels`, one per item id,
+    /// so a write outlives a row that scrolls away.
     enum Tool {
         /// The quantity chip at the end of the name's line; tapping it opens a large stepper
         /// under the row. The list keeps at most one row expanded.
@@ -101,6 +103,10 @@ struct ItemRow: View {
                     identifier: ItemRowText.fileIdentifier(item.id),
                     action: onFile
                 )
+                // A 44 pt target around the small button (RN: 40 pt plus slop), so a near miss
+                // files rather than opening the item.
+                .frame(minHeight: DesignMetrics.minTouchTarget)
+                .contentShape(Rectangle())
             }
         case .delete(let onDelete):
             RowWithTool {

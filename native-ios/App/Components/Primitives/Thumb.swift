@@ -68,6 +68,7 @@ struct Thumb: View {
     }
 
     private func load() async {
+        ThumbnailMemoryRelief.install()
         let key = key
         guard let uri, let url = resolver.resolve(uri) else {
             loaded = Loaded(key: key, image: nil)
@@ -77,6 +78,24 @@ struct Thumb: View {
         let image = await ThumbnailLoader.shared.thumbnail(at: url, minimumPixelSize: pixels)
         guard !Task.isCancelled else { return }
         loaded = Loaded(key: key, image: image)
+    }
+}
+
+/// Empties the thumbnail cache when the system runs low on memory; it refills as rows draw.
+@MainActor
+private enum ThumbnailMemoryRelief {
+    private static var installed = false
+
+    static func install() {
+        guard !installed else { return }
+        installed = true
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didReceiveMemoryWarningNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            Task { await ThumbnailLoader.shared.removeAll() }
+        }
     }
 }
 

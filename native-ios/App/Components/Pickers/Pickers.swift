@@ -20,6 +20,9 @@ struct TagChip: View {
             .buttonBorderShape(.capsule)
             .tint(isSelected ? .accentColor : nil)
             .overlay(Capsule().strokeBorder(isSelected ? Color.accentColor : .clear, lineWidth: 2))
+            // A 44 pt target around the pill (RN: a 40 pt pill plus slop).
+            .frame(minHeight: DesignMetrics.minTouchTarget)
+            .contentShape(Rectangle())
             .accessibilityAddTraits(isSelected ? .isSelected : [])
             .accessibilityIdentifierIfPresent(identifier)
         } else {
