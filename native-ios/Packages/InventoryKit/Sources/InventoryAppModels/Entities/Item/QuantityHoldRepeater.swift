@@ -108,6 +108,28 @@ public final class QuantityHoldRepeater {
         if !wasHeld, let direction { step(direction) }
     }
 
+    // A stock button in a scrolling list reports its pressed state and calls its action
+    // separately, in either order, and a scroll that takes the touch ends the press with no
+    // action. These two keep that from stepping twice, or stepping on a scroll.
+
+    /// The button stopped being pressed (released, slid away, or a scroll took the touch): the
+    /// hold and its repeats stop. Whether the press became a hold is kept for
+    /// ``buttonActivated(_:)``, which follows a release but never a cancelled press.
+    public func pressLifted() {
+        cancelHold()
+    }
+
+    /// The button's action: a tap steps once; the release of a hold in that direction does not
+    /// step again. Works whether or not the press was seen beginning (a quick tap can begin and
+    /// end between two updates).
+    public func buttonActivated(_ direction: Direction) {
+        let wasHeld = held && pressed == direction
+        cancelHold()
+        pressed = nil
+        held = false
+        if !wasHeld { step(direction) }
+    }
+
     /// The press was cancelled (the finger slid away, the view went): no step, repeating stops.
     public func pressCancelled() {
         cancelHold()
